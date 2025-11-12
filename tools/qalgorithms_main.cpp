@@ -297,21 +297,25 @@ int main(int argc, char *argv[])
 {
     using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
 
-    std::vector<RegressionGauss> validRegressions;
-    while (validRegressions.empty())
+    volatile bool debug = true;
+    if (debug)
     {
-        ProfileBlock block = {
-            {32, 475, 711, 472, 207, 132, 57, 14},
-            {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877},
-            {1, 2, 3, 4, 5, 6, 7, 8},
-            329,
-            338};
+        std::vector<RegressionGauss> validRegressions;
+        while (validRegressions.empty())
+        {
+            ProfileBlock block = {
+                {32, 475, 711, 472, 207, 132, 57, 14},
+                {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877},
+                {1, 2, 3, 4, 5, 6, 7, 8},
+                329,
+                338};
 
-        const size_t length = block.intensity.size();
-        const size_t maxScale = 8; // @todo not bound to centroid maxscale
-        std::vector<float> logIntensity;
-        logIntensity.reserve(length);
-        runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale);
+            const size_t length = block.intensity.size();
+            const size_t maxScale = 8; // @todo not bound to centroid maxscale
+            std::vector<float> logIntensity;
+            logIntensity.reserve(length);
+            runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale);
+        }
     }
 
     UserInputSettings userArgs = passCliArgs(argc, argv);

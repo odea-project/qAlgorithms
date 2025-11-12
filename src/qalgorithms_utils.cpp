@@ -8,6 +8,371 @@
 namespace qAlgorithms
 {
 
+    void beta_inc_2(double *a, double *b, double *x, double *y, double *w,
+                    double *w1)
+
+    //****************************************************************************80
+    //
+    //  Purpose:
+    //
+    //    BETA_INC evaluates the incomplete beta function IX(A,B).
+    //
+    //  Author:
+    //
+    //    Alfred H Morris, Jr,
+    //    Naval Surface Weapons Center,
+    //    Dahlgren, Virginia.
+    //
+    //  Parameters:
+    //
+    //    Input, double *A, *B, the parameters of the function.
+    //    A and B should be nonnegative.
+    //
+    //    Input, double *X, *Y.  X is the argument of the
+    //    function, and should satisy 0 <= X <= 1.  Y should equal 1 - X.
+    //
+    //    Output, double *W, *W1, the values of IX(A,B) and
+    //    1-IX(A,B).
+    //
+    {
+        assert(*a > 0);
+        assert(*b > 0);
+        assert((0 < *x) && (*x < 1));
+        assert((0 < *y) && (*y < 1));
+        *w = *w1 = 0.0e0;
+
+        static int K1 = 1;
+        static double a0, b0, eps, lambda, t, x0, y0, z;
+        static int ierr1, ind, n;
+        static double T2, T3, T4, T5;
+        //
+        //  EPS IS A MACHINE DEPENDENT CONSTANT. EPS IS THE SMALLEST
+        //  NUMBER FOR WHICH 1.0 + EPS .GT. 1.0
+        //
+        eps = dpmpar(&K1);
+
+        eps = fifdmax1(eps, 1.e-15);
+        if (fifdmax1(*a, *b) < 1.e-3 * eps)
+        {
+            //
+            //  PROCEDURE FOR A AND B .LT. 1.E-3*EPS
+            //
+            *w = *b / (*a + *b);
+            *w1 = *a / (*a + *b);
+            return;
+        }
+        ind = 0;
+        a0 = *a;
+        b0 = *b;
+        x0 = *x;
+        y0 = *y;
+        if (fifdmin1(a0, b0) > 1.0e0)
+        {
+            goto S40;
+        }
+        //
+        //  PROCEDURE FOR A0 .LE. 1 OR B0 .LE. 1
+        //
+        if (*x > 0.5e0)
+        {
+            ind = 1;
+            a0 = *b;
+            b0 = *a;
+            x0 = *y;
+            y0 = *x;
+        }
+        if (b0 < fifdmin1(eps, eps * a0))
+        {
+            //
+            //  EVALUATION OF THE APPROPRIATE ALGORITHM
+            //
+            *w = fpser(&a0, &b0, &x0, &eps);
+            *w1 = 0.5e0 + (0.5e0 - *w);
+            if (ind != 0)
+            {
+                t = *w;
+                *w = *w1;
+                *w1 = t;
+            }
+            return;
+        }
+        if (a0 < fifdmin1(eps, eps * b0) && b0 * x0 <= 1.0e0)
+        {
+            *w1 = apser(&a0, &b0, &x0, &eps);
+            *w = 0.5e0 + (0.5e0 - *w1);
+            if (ind != 0)
+            {
+                t = *w;
+                *w = *w1;
+                *w1 = t;
+            }
+            return;
+        }
+        if (fifdmax1(a0, b0) > 1.0e0)
+        {
+            goto S20;
+        }
+        if (a0 >= fifdmin1(0.2e0, b0))
+        {
+            *w = beta_pser(&a0, &b0, &x0, &eps);
+            *w1 = 0.5e0 + (0.5e0 - *w);
+            if (ind != 0)
+            {
+                t = *w;
+                *w = *w1;
+                *w1 = t;
+            }
+            return;
+        }
+        if (pow(x0, a0) <= 0.9e0)
+        {
+            *w = beta_pser(&a0, &b0, &x0, &eps);
+            *w1 = 0.5e0 + (0.5e0 - *w);
+            if (ind == 0)
+                return;
+            t = *w;
+            *w = *w1;
+            *w1 = t;
+            return;
+        }
+        if (x0 >= 0.3e0)
+            goto S120;
+        n = 20;
+        goto S140;
+    S20:
+        if (b0 <= 1.0e0)
+        {
+            *w = beta_pser(&a0, &b0, &x0, &eps);
+            *w1 = 0.5e0 + (0.5e0 - *w);
+            if (ind == 0)
+                return;
+            t = *w;
+            *w = *w1;
+            *w1 = t;
+            return;
+        }
+        if (x0 >= 0.3e0)
+        {
+            goto S120;
+        }
+        if (x0 >= 0.1e0)
+        {
+            goto S30;
+        }
+        if (pow(x0 * b0, a0) <= 0.7e0)
+        {
+            *w = beta_pser(&a0, &b0, &x0, &eps);
+            *w1 = 0.5e0 + (0.5e0 - *w);
+            if (ind == 0)
+                return;
+            t = *w;
+            *w = *w1;
+            *w1 = t;
+            return;
+        }
+    S30:
+        if (b0 > 15.0e0)
+        {
+            T3 = 15.0e0 * eps;
+            beta_grat(&b0, &a0, &y0, &x0, w1, &T3, &ierr1);
+            *w = 0.5e0 + (0.5e0 - *w1);
+            if (ind == 0)
+                return;
+            t = *w;
+            *w = *w1;
+            *w1 = t;
+            return;
+        }
+        n = 20;
+        goto S140;
+    S40:
+        //
+        //  PROCEDURE FOR A0 .GT. 1 AND B0 .GT. 1
+        //
+        if (*a > *b)
+        {
+            lambda = (*a + *b) * *y - *b;
+        }
+        else
+        {
+            lambda = *a - (*a + *b) * *x;
+        }
+        if (lambda < 0.0e0)
+        {
+            ind = 1;
+            a0 = *b;
+            b0 = *a;
+            x0 = *y;
+            y0 = *x;
+            lambda = fabs(lambda);
+        }
+        if (b0 < 40.0e0 && b0 * x0 <= 0.7e0)
+        {
+            *w = beta_pser(&a0, &b0, &x0, &eps);
+            *w1 = 0.5e0 + (0.5e0 - *w);
+            if (ind == 0)
+                return;
+            t = *w;
+            *w = *w1;
+            *w1 = t;
+            return;
+        }
+        if (b0 < 40.0e0)
+        {
+            goto S160;
+        }
+        if (a0 > b0)
+        {
+            goto S80;
+        }
+        if (a0 <= 100.0e0)
+        {
+            goto S130;
+        }
+        if (lambda > 0.03e0 * a0)
+        {
+            goto S130;
+        }
+        goto S200;
+    S80:
+        if (b0 <= 100.0e0)
+            goto S130;
+        if (lambda > 0.03e0 * b0)
+            goto S130;
+        goto S200;
+
+    S120:
+        *w1 = beta_pser(&b0, &a0, &y0, &eps);
+        *w = 0.5e0 + (0.5e0 - *w1);
+        if (ind == 0)
+            return;
+        t = *w;
+        *w = *w1;
+        *w1 = t;
+        return;
+    S130:
+        T2 = 15.0e0 * eps;
+        *w = beta_frac(&a0, &b0, &x0, &y0, &lambda, &T2);
+        *w1 = 0.5e0 + (0.5e0 - *w);
+        if (ind == 0)
+            return;
+        t = *w;
+        *w = *w1;
+        *w1 = t;
+        return;
+    S140:
+        *w1 = beta_up(&b0, &a0, &y0, &x0, &n, &eps);
+        b0 = b0 + (double)n;
+
+    S160:
+        n = (int)b0;
+        b0 -= (double)n;
+        if (b0 == 0.0e0)
+        {
+            n -= 1;
+            b0 = 1.0e0;
+        }
+        *w = beta_up(&b0, &a0, &y0, &x0, &n, &eps);
+        if (x0 <= 0.7e0)
+        {
+            *w = *w + beta_pser(&a0, &b0, &x0, &eps);
+            *w1 = 0.5e0 + (0.5e0 - *w);
+            if (ind == 0)
+                return;
+            t = *w;
+            *w = *w1;
+            *w1 = t;
+            return;
+        }
+        if (a0 > 15.0e0)
+        {
+            T4 = 15.0e0 * eps;
+            beta_grat(&a0, &b0, &x0, &y0, w, &T4, &ierr1);
+            *w1 = 0.5e0 + (0.5e0 - *w);
+            if (ind == 0)
+                return;
+            t = *w;
+            *w = *w1;
+            *w1 = t;
+            return;
+        }
+        n = 20;
+        *w = *w + beta_up(&a0, &b0, &x0, &y0, &n, &eps);
+        a0 = a0 + (double)n;
+
+    S200:
+        T5 = 100.0e0 * eps;
+        *w = beta_asym(&a0, &b0, &lambda, &T5);
+        *w1 = 0.5e0 + (0.5e0 - *w);
+        if (ind == 0)
+            return;
+        t = *w;
+        *w = *w1;
+        *w1 = t;
+        return;
+    }
+
+    void cumf_2(const double f, const double dfn, const double dfd,
+                double *cum, double *ccum)
+
+    //  Purpose:
+    //
+    //    CUMF evaluates the cumulative F distribution.
+    //
+    //  Discussion:
+    //
+    //    CUMF computes the integral from 0 to F of the F density with DFN
+    //    numerator and DFD denominator degrees of freedom.
+    //
+    //  Reference:
+    //
+    //    Milton Abramowitz and Irene Stegun,
+    //    Handbook of Mathematical Functions
+    //    1966, Formula 26.5.28.
+    //
+    //  Parameters:
+    //
+    //    Input, double *F, the upper limit of integration.
+    //
+    //    Input, double *DFN, *DFD, the number of degrees of
+    //    freedom for the numerator and denominator.
+    //
+    //    Output, double *CUM, *CCUM, the value of the F CDF and
+    //    the complementary F CDF.
+    //
+    {
+        assert(f > 0);
+
+        //
+        //     XX is such that the incomplete beta with parameters
+        //     DFD/2 and DFN/2 evaluated at XX is 1 - CUM or CCUM
+        //     YY is 1 - XX
+        //     Calculate the smaller of XX and YY accurately
+        //
+        double prod = dfn * f;
+        double dsum = dfd + prod;
+        double xx = dfd / dsum;
+        double yy;
+
+        if (xx > 0.5)
+        {
+            yy = prod / dsum;
+            xx = 1 - yy;
+        }
+        else
+        {
+            yy = 1 - xx;
+        }
+
+        double T1, T2;
+        int ierr;
+        T1 = dfd / 2;
+        T2 = dfn / 2;
+        beta_inc(&T1, &T2, &xx, &yy, ccum, cum, &ierr);
+        beta_inc_2(&T1, &T2, &xx, &yy, ccum, cum);
+        return;
+    }
+
     /*
         Calculates the F-value for a given set of alpha, the numerator
         degreees of freedom dfn and the denominator degrees of

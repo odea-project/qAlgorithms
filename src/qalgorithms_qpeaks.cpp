@@ -190,6 +190,9 @@ namespace qAlgorithms
 
 #pragma region "running regression"
 
+    volatile bool debug = false;
+    std::vector<int> failCodes;
+
     size_t validateRegressions(
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
@@ -207,6 +210,8 @@ namespace qAlgorithms
                                                 intensities,
                                                 intensities_log,
                                                 &reg);
+            failCodes.push_back(failpoint);
+
             validCount += failpoint == 0 ? 1 : 0;
             if (reg.isValid)
             {
@@ -214,6 +219,9 @@ namespace qAlgorithms
             }
         }
         assert(validCount == validRegressions->size());
+
+        failCodes.push_back(-1);
+
         return validCount;
     }
 
@@ -1000,24 +1008,27 @@ namespace qAlgorithms
         const size_t idxCenter = mutateReg->coeffs.x0;
         size_t rangeStart = idxCenter - scale;
         size_t rangeEnd = idxCenter + scale;
-        if (valleyPos == 0) [[likely]]
-        {
-            // no valley point exists
-            mutateReg->regSpan = {rangeStart, rangeEnd};
+
+        mutateReg->regSpan = {rangeStart, rangeEnd};
+        if (valleyPos == 0) // no valley point exists
             return;
-        }
-        size_t absValley = size_t(abs(valleyPos));
-        assert(absValley >= 2);
 
         // set start or end to the valley point if it is within the regression span
+        size_t absValley = size_t(abs(valleyPos));
         bool valleyLeft = valleyPos < 0;
         bool updateVal = absValley < scale;
-        size_t newStart = (valleyLeft && updateVal) ? idxCenter - absValley : rangeStart;
-        size_t newEnd = (valleyLeft && updateVal) ? idxCenter + absValley : rangeEnd;
-        mutateReg->regSpan = {newStart, newEnd};
+        if (!updateVal)
+            return;
 
+        if (valleyLeft)
+        {
+            mutateReg->regSpan.startIdx = idxCenter - absValley;
+        }
+        else
+        {
+            mutateReg->regSpan.endIdx = idxCenter + absValley;
+        }
         assert(mutateReg->regSpan.endIdx > mutateReg->regSpan.startIdx);
-        assert(mutateReg->regSpan.endIdx - mutateReg->regSpan.startIdx > 3);
     }
 
 #pragma endregion "validate Regression"
@@ -1881,13 +1892,14 @@ namespace qAlgorithms
                 err_R_covered = err_R - SQRTPI_2 * EXP_B13 - erf_approx_f((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13;
             }
         }
+        assert(x_left < x_right);
+
         double J_covered[4]; // Jacobian matrix for the covered peak area
         {
-            // b0 not used on purpose
+            // b0 not used on purpose, error is height independent
             const double y_left = exp_approx_d(b1 * x_left + b2 * x_left * x_left);
             const double y_right = exp_approx_d(b1 * x_right + b3 * x_right * x_right);
             const double dX = x_right - x_left;
-            assert(dX > 0);
 
             // calculate the Jacobian matrix terms
             const double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
@@ -2347,11 +2359,12 @@ namespace qAlgorithms
             const size_t idxR = ranges[i].endIdx;
 
             // copy real values
+            size_t newdf = 0;
             for (size_t M = idxL; M <= idxR; M++)
             {
                 insert_ms.push_back(spectrum_mz->at(M));
                 insert_int.push_back(spectrum_int->at(M));
-                size_t newdf = cumdf.back() + 1;
+                newdf += 1;
                 cumdf.push_back(newdf);
             }
 
