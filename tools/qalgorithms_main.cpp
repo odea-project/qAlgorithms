@@ -438,7 +438,7 @@ int main(int argc, char *argv[])
 
             for (size_t cenID = 1; cenID < centroids->size(); cenID++) // dummy value at idx 0 @todo
             {
-                size_t scanNumber = centroids->at(cenID).number_MS1 - 1;
+                size_t scanNumber = centroids->at(cenID).number_MS1;
                 size_t realRT_idx = rt_index.indexOfOriginalInInterpolated[scanNumber];
                 centroids->at(cenID).RT = rt_index.groups[realRT_idx].trueRT;
             }

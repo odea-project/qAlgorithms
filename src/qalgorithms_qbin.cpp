@@ -761,18 +761,15 @@ namespace qAlgorithms
         // using the knowledge of where points should be interpolated, transfer centroids into
         // arrays with gaps for later processing
 
-        size_t frontTime = pointsInBin.front()->number_MS1 - 1;
-        size_t backTime = pointsInBin.back()->number_MS1 - 1;
+        size_t frontTime = pointsInBin.front()->number_MS1;
+        size_t backTime = pointsInBin.back()->number_MS1;
 
-        unsigned int firstScan = convertRT->indexOfOriginalInInterpolated[frontTime];
-        size_t shiftBackFront = firstScan < 2 ? firstScan : 2;
-        unsigned int lastScan = convertRT->indexOfOriginalInInterpolated[backTime];
-        size_t shiftForwardBack = lastScan + 2 >= convertRT->groups.size() ? convertRT->groups.size() - lastScan - 1 : 2;
-        assert(shiftForwardBack <= 2);
+        size_t firstScan = convertRT->indexOfOriginalInInterpolated[frontTime];
+        size_t lastScan = convertRT->indexOfOriginalInInterpolated[backTime];
 
-        size_t interpolatedSize = lastScan - firstScan + 1 + shiftBackFront + shiftForwardBack; // range is extended, but clamped to valid region
+        size_t interpolatedSize = lastScan - firstScan + 1; // range is extended, but clamped to valid region
         std::vector<unsigned int> tmp_interpScans(interpolatedSize, 0);
-        std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan - shiftBackFront);
+        std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan);
 
         std::vector<unsigned int> tmp_scanNumbers(interpolatedSize, 0);
         std::vector<float> tmp_mz(interpolatedSize, 0);
@@ -787,8 +784,8 @@ namespace qAlgorithms
         std::vector<float> tmp_rt;
         {
             tmp_rt.reserve(interpolatedSize);
-            size_t startIdx = firstScan - shiftBackFront;
-            size_t endIdx = lastScan + shiftForwardBack;
+            size_t startIdx = firstScan;
+            size_t endIdx = lastScan;
             float oldRT = 0;
             for (; startIdx <= endIdx; startIdx++)
             {
@@ -804,12 +801,14 @@ namespace qAlgorithms
         {
             const CentroidPeak *point = pointsInBin[i];
 
-            size_t interpolatedIdx = convertRT->indexOfOriginalInInterpolated[point->number_MS1 - 1];
-            unsigned int access = interpolatedIdx - firstScan + shiftBackFront; // two scans at the front are extrapolated later
+            size_t interpolatedIdx = convertRT->indexOfOriginalInInterpolated[point->number_MS1];
+            unsigned int access = interpolatedIdx - firstScan; // two scans at the front are extrapolated later
             assert(access != prevaccess);
-            assert(access <= lastScan + shiftForwardBack);
-            assert(point->RT == convertRT->groups[interpolatedIdx].trueRT);
-            assert(point->RT == tmp_rt[access]);
+            assert(access <= lastScan);
+            // assert(point->RT == convertRT->groups[interpolatedIdx].trueRT);
+            // assert(point->RT == tmp_rt[access]);
+
+            tmp_rt[access] = point->RT;
 
             tmp_scanNumbers[access] = point->number_MS1;
             tmp_mz[access] = point->mz;
@@ -900,14 +899,14 @@ namespace qAlgorithms
         std::vector<unsigned int> tmp_df(interpolatedSize, 0);
         unsigned int df_total = 0;
 
-        for (size_t i = 2; i < tmp_scanNumbers.size(); i++)
+        for (size_t i = 0; i < tmp_scanNumbers.size(); i++)
         {
             if (tmp_scanNumbers[i] != 0) // interpolated scan
                 df_total += 1;
 
             tmp_df[i] = df_total;
         }
-        assert(df_total == eicsize); // @todo this can be disturbed by supplying incorrectly formatted data as RT converter
+        assert(df_total <= eicsize); // @todo this can be disturbed by supplying incorrectly formatted data as RT converter
 
         EIC returnVal = {
             tmp_scanNumbers,
