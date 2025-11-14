@@ -4,392 +4,12 @@
 #include <cmath>   // std::abs()
 #include <cassert>
 #include "../external/CDFlib/cdflib.hpp"
+#include "cephes.h"
 
 #include <unordered_map>
 
 namespace qAlgorithms
 {
-
-    void beta_inc_2(const double a, const double b,
-                    const double x, const double y,
-                    double *w, double *w1)
-
-    //****************************************************************************80
-    //
-    //  Purpose:
-    //
-    //    BETA_INC evaluates the incomplete beta function IX(A,B).
-    //
-    //  Author:
-    //
-    //    Alfred H Morris, Jr,
-    //    Naval Surface Weapons Center,
-    //    Dahlgren, Virginia.
-    //
-    //  Parameters:
-    //
-    //    Input, double a, *B, the parameters of the function.
-    //    A and B should be nonnegative.
-    //
-    //    Input, double *X, *Y.  X is the argument of the
-    //    function, and should satisy 0 <= X <= 1.  Y should equal 1 - X.
-    //
-    //    Output, double *W, *W1, the values of IX(A,B) and
-    //    1-IX(A,B).
-    //
-    {
-        assert(a > 0);
-        assert(b > 0);
-        assert((0 < x) && (x <= 1));
-        assert((0 < y) && (y <= 1));
-        *w = *w1 = 0;
-
-        //  EPS IS A MACHINE DEPENDENT CONSTANT. EPS IS THE SMALLEST
-        //  NUMBER FOR WHICH 1.0 + EPS .GT. 1.0
-        double eps = 1.e-15;
-        if (max(a, b) < 1.e-3 * eps)
-        {
-            //
-            //  PROCEDURE FOR A AND B .LT. 1.E-3*EPS
-            //
-            *w = b / (a + b);
-            *w1 = a / (a + b);
-            return;
-        }
-
-        bool ind = false;
-        double a0 = a;
-        double b0 = b;
-        double x0 = x;
-        double y0 = y;
-        if (min(a0, b0) > 1)
-        {
-            double lambda;
-            //
-            //  PROCEDURE FOR A0 .GT. 1 AND B0 .GT. 1
-            //
-            if (a > b)
-            {
-                lambda = (a + b) * y - b;
-            }
-            else
-            {
-                lambda = a - (a + b) * x;
-            }
-            if (lambda < 0)
-            {
-                ind = true;
-                a0 = b;
-                b0 = a;
-                x0 = y;
-                y0 = x;
-                lambda = fabs(lambda);
-            }
-
-            if (b0 < 40)
-            {
-                if (b0 * x0 <= 0.7)
-                {
-                    *w = beta_pser(&a0, &b0, &x0, &eps);
-                    *w1 = 1 - *w;
-                    goto flipIfInd;
-                }
-
-                int n = (int)b0;
-                b0 -= (double)n; // b0 is always < 1
-                if (b0 == 0)
-                {
-                    n -= 1;
-                    b0 = 1;
-                }
-
-                *w = beta_up(&b0, &a0, &y0, &x0, &n, &eps);
-                if (x0 <= 0.7)
-                {
-                    *w = *w + beta_pser(&a0, &b0, &x0, &eps);
-                    *w1 = 1 - *w;
-                    goto flipIfInd;
-                }
-                if (a0 > 15.0)
-                {
-                    double T4 = 15.0 * eps;
-                    int ierr1;
-                    beta_grat(&a0, &b0, &x0, &y0, w, &T4, &ierr1);
-                    *w1 = 1 - *w;
-                    goto flipIfInd;
-                }
-                n = 20;
-                *w = *w + beta_up(&a0, &b0, &x0, &y0, &n, &eps);
-                // a0 = a0 + (double)n;
-                return;
-            }
-            if (a0 > b0)
-            {
-                if ((lambda > 0.03 * b0) || (b0 <= 100))
-                {
-                    double T2 = 15.0 * eps;
-                    *w = beta_frac(&a0, &b0, &x0, &y0, &lambda, &T2);
-                }
-                else
-                {
-                    double T5 = 100 * eps;
-                    *w = beta_asym(&a0, &b0, &lambda, &T5);
-                }
-            }
-            else
-            {
-                if ((a0 <= 100) || (lambda > 0.03 * a0))
-                {
-                    double T2 = 15.0 * eps;
-                    *w = beta_frac(&a0, &b0, &x0, &y0, &lambda, &T2);
-                }
-                else
-                {
-                    double T5 = 100 * eps;
-                    *w = beta_asym(&a0, &b0, &lambda, &T5);
-                }
-            }
-            *w1 = 1 - *w;
-            goto flipIfInd;
-        }
-        //
-        //  PROCEDURE FOR A0 .LE. 1 OR B0 .LE. 1
-        //
-        if (x > 0.5)
-        {
-            ind = true;
-            a0 = b;
-            b0 = a;
-            x0 = y;
-            y0 = x;
-        }
-        if (b0 < min(eps, eps * a0))
-        {
-            //
-            //  EVALUATION OF THE APPROPRIATE ALGORITHM
-            //
-            *w = fpser(&a0, &b0, &x0, &eps);
-            *w1 = 1 - *w;
-            goto flipIfInd;
-        }
-        if (a0 < min(eps, eps * b0) && b0 * x0 <= 1)
-        {
-            *w1 = apser(&a0, &b0, &x0, &eps);
-            *w = 1 - *w1;
-            goto flipIfInd;
-        }
-        if (max(a0, b0) <= 1)
-        {
-            if ((a0 >= min(0.2, b0)) || (pow(x0, a0) <= 0.9))
-            {
-                *w = beta_pser(&a0, &b0, &x0, &eps);
-                *w1 = 1 - *w;
-                goto flipIfInd;
-            }
-            if (x0 >= 0.3)
-            {
-                *w1 = beta_pser(&b0, &a0, &y0, &eps);
-                *w = 1 - *w1;
-                goto flipIfInd;
-            }
-        }
-        else
-        {
-            bool use_beta_pser = b0 <= 1;
-            use_beta_pser = use_beta_pser || ((pow(x0 * b0, a0) <= 0.7) && (x0 < 0.1));
-            if (use_beta_pser)
-            {
-                *w = beta_pser(&a0, &b0, &x0, &eps);
-                *w1 = 1 - *w;
-                goto flipIfInd;
-            }
-
-            if (x0 >= 0.3)
-            {
-                *w1 = beta_pser(&b0, &a0, &y0, &eps);
-                *w = 1 - *w1;
-                goto flipIfInd;
-            }
-            if (b0 > 15.0)
-            {
-                double T3 = 15.0 * eps;
-                int ierr1;
-                beta_grat(&b0, &a0, &y0, &x0, w1, &T3, &ierr1);
-                *w = 1 - *w1;
-                goto flipIfInd;
-            }
-        }
-        {
-            int m = 20;
-            *w1 = beta_up(&b0, &a0, &y0, &x0, &m, &eps);
-            // b0 = b0 + (double)m;
-        }
-
-    flipIfInd:
-        if (ind)
-        {
-            double t = *w;
-            *w = *w1;
-            *w1 = t;
-        }
-        return;
-    }
-
-    void cumf_2(const double f, const double dfn, const double dfd,
-                double *cum, double *ccum)
-
-    //  Purpose:
-    //
-    //    CUMF evaluates the cumulative F distribution.
-    //
-    //  Discussion:
-    //
-    //    CUMF computes the integral from 0 to F of the F density with DFN
-    //    numerator and DFD denominator degrees of freedom.
-    //
-    //  Reference:
-    //
-    //    Milton Abramowitz and Irene Stegun,
-    //    Handbook of Mathematical Functions
-    //    1966, Formula 26.5.28.
-    //
-    //  Parameters:
-    //
-    //    Input, double *F, the upper limit of integration.
-    //
-    //    Input, double *DFN, *DFD, the number of degrees of
-    //    freedom for the numerator and denominator.
-    //
-    //    Output, double *CUM, *CCUM, the value of the F CDF and
-    //    the complementary F CDF.
-    //
-    {
-        if (f <= 0)
-        {
-            *cum = 0;
-            *ccum = 1;
-            return;
-        }
-
-        //
-        //     XX is such that the incomplete beta with parameters
-        //     DFD/2 and DFN/2 evaluated at XX is 1 - CUM or CCUM
-        //     YY is 1 - XX
-        //     Calculate the smaller of XX and YY accurately
-        //
-        double prod = dfn * f;
-        double dsum = dfd + prod;
-        double xx = dfd / dsum;
-        double yy;
-
-        if (xx > 0.5)
-        {
-            yy = prod / dsum;
-            xx = 1 - yy;
-        }
-        else
-        {
-            yy = 1 - xx;
-        }
-
-        int ierr;
-        double T1 = dfd / 2;
-        double T2 = dfn / 2;
-
-        double T1a = dfd / 2;
-        double T2a = dfn / 2;
-        double xxa = xx;
-        double yya = yy;
-
-        double ccuma = *ccum;
-        double cuma = *cum;
-
-        beta_inc(&T1, &T2, &xx, &yy, ccum, cum, &ierr);
-
-        // @todo error here
-        // beta_inc_2(T1a, T2a, xxa, yya, &ccuma, &cuma);
-        // assert(*ccum == ccuma);
-        // assert(float(*cum) == float(cuma));
-
-        return;
-    }
-
-    /*
-        Calculates the F-value for a given set of alpha, the numerator
-        degreees of freedom dfn and the denominator degrees of
-        freedom dfd.
-
-        returns an error code:
-        0: Successful execution
-        1: Search resulted in a value < 0
-        2: Search exceeded the limit of e^300
-
-        Function is adapted from CDFF, mostly removal of gotos and
-        unnecessary functionality.
-    */
-    int calc_fval(double alpha, double dfn, double dfd,
-                  double *f)
-    {
-        assert(alpha > 0 && alpha < 1);
-        assert(dfn > 0);
-        assert(dfd > 0);
-
-        { // @todo find out if this call is actually necessary. Documentation implies it is, but this also works
-            static double T3 = 1.0e300;
-            static double T6 = (1.0e-50);
-            static double T7 = (1.0e-8);
-            static double K2 = 0;
-            static double K4 = 0.5;
-            static double K5 = 5;
-            dstinv(&K2, &T3, &K4, &K4, &K5, &T6, &T7);
-            assert(K2 == 0);
-            assert(T3 == 1.0e300);
-            assert(K4 == 0.5);
-            assert(T6 == 1.0e-50);
-            assert(T7 == 1.0e-8);
-            assert(K5 == 5);
-        }
-
-        static double fx, cum, ccum;
-        static unsigned long qhi, qleft;
-        int status = 0;
-        *f = 5;
-        dinvr(&status, f, &fx, &qleft, &qhi);
-
-        double p = 1 - alpha;
-
-        while (status == 1)
-        {
-            double f2 = *f;
-            double cum2 = cum;
-            double ccum2 = ccum;
-
-            cumf(f, &dfn, &dfd, &cum, &ccum);
-
-            cumf_2(f2, dfn, dfd, &cum2, &ccum2);
-            assert(f2 == *f);
-            assert(ccum2 == ccum);
-            assert(cum2 == cum);
-
-            // select minimum of p or q
-            fx = p <= alpha ? cum - p : ccum - alpha;
-
-            dinvr(&status, f, &fx, &qleft, &qhi);
-        }
-
-        if (status != -1)
-            return 0;
-
-        if (qleft)
-        {
-            return 1;
-        }
-        else
-        {
-            return 2;
-        }
-    }
-
     size_t hashm(int a, int b)
     {
         size_t a2 = a;
@@ -397,7 +17,7 @@ namespace qAlgorithms
         return a2 | b;
     }
     // this global hashmap is used to avoid recalculating the f value every time
-    std::unordered_map<size_t, double> global_fhash;
+    std::unordered_map<size_t, double> global_fhash_5perc;
 
     // @todo separate out the library functions into something better readable with less flexible error checking
     double cdflib_F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints)
@@ -407,6 +27,20 @@ namespace qAlgorithms
         assert(params_complex > params_simple);
         assert(alpha > 0);
         assert(alpha < 1);
+
+        // @todo this is not multithreading capable!
+        int dfn_int = params_complex - params_simple;
+        int dfd_int = numPoints - params_complex;
+        size_t key = hashm(dfn_int, dfd_int);
+        if (global_fhash_5perc.contains(key) && (alpha == 0.05))
+        {
+            double Fhash = global_fhash_5perc[key];
+            // assert(float(Fhash) == float(F));
+            return Fhash;
+        }
+        // double f = 0;
+        // calc_fval(q, dfn, dfd, &f); // @todo does not work for all input params
+        // assert(float(f) == float(F));
 
         double q = alpha;
         double dfn = double(params_complex - params_simple); // numerator degrees of freedom
@@ -420,23 +54,13 @@ namespace qAlgorithms
             int status = 1;
             cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
             assert(status == 0);
+
+            double F2 = cephes::fdtri(dfn_int, dfd_int, alpha);
+
+            assert(float(F2) == float(F));
         }
 
-        // @todo this is not multithreading capable!
-        int dfn_int = params_complex - params_simple;
-        int dfd_int = numPoints - params_complex;
-        size_t key = hashm(dfn_int, dfd_int);
-        if (global_fhash.contains(key))
-        {
-            double Fhash = global_fhash[key];
-            assert(float(Fhash) == float(F));
-            return Fhash;
-        }
-        double f = 0;
-        calc_fval(q, dfn, dfd, &f); // @todo does not work for all input params
-        assert(float(f) == float(F));
-
-        global_fhash[key] = F;
+        global_fhash_5perc[key] = F;
 
         return F;
     }

@@ -38,10 +38,10 @@ add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wform
 # add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
 # Set include directories
-include_directories(include "external/simdutf/")
+include_directories(include "external/simdutf/" "external/cephes")
 
 # Source files
-file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp" "external/simdutf/simdutf.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp" "external/simdutf/simdutf.cpp" "external/cephes/cephes.cpp")
 
 # flags for static compile 
 # set(BUILD_SHARED_LIBS OFF)
