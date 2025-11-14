@@ -6,24 +6,24 @@ project(qAlgorithms VERSION 0.2 LANGUAGES CXX)
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 26)
 # set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_COMPILER "g++") # clang does not work<
+set(CMAKE_CXX_COMPILER "g++") # requires std::sqrt to be constexpr, either g++ or c++26 and later
 
 ## Set compiler flags
 option(OPTIMISE "turn on optimisations" OFF)
 
 if (false)
-    add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native -O2) 
+    add_compile_options(-O2) 
     # hardening flags 
-    add_compile_options(-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS)
-# compile options - optimisation / required
-
+    add_compile_options(-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3)
 else()
-
-add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native -O0)
-
+    add_compile_options(-O0)
 endif()
+
 # debug-related flags
 add_compile_options(-g -ggdb3)
+
+add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native 
+                    -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS)
 
 # enabled warnings
 add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wformat=2 -Wformat-truncation -Wimplicit-fallthrough 
@@ -38,10 +38,11 @@ add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wform
 # add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
 # Set include directories
-include_directories(include "external/simdutf/")
+include_directories(include "external/simdutf/" "external/cephes")
 
 # Source files
-file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp" "external/simdutf/simdutf.cpp")
+<<<<<<< HEAD
+file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp" "external/simdutf/simdutf.cpp" "external/cephes/cephes.cpp")
 # Remove test/main file(s) from the library list
 message(SOURCES="${SOURCES}")
 list(FILTER SOURCES EXCLUDE REGEX "qalgorithms_main\\.cpp")

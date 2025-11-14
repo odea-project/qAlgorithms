@@ -26,6 +26,413 @@ namespace qAlgorithms
     // this module-local variable is used to prevent negative intensities from occurring
     float lowestAreaLog = 0;
 
+    void findComponents_new(
+        // note: both features and bins contain a "componentID" field that is 0 by default.
+        // the componentisation function updates these fields in addition to returning the component regressions
+        std::vector<FeaturePeak> *features,
+        std::vector<EIC> *bins)
+    {
+        // sort features by RT
+
+        // find pre-groups by checking if apexes are further apart than the last smallest distance
+
+        // for every pre group, construct an exclusion matrix
+        // -- ensure that the apex position is respected
+        // -- ? (efficiency) Do a second pass and find potential subgroups from exclusion info
+        // -- do the pairwise comparision
+        // -- -- maximum scale: determined by maximum present scale in features (+1 for saftey?)
+        // -- ? some additional prefilter based on exclusions
+        // -- add features to groups in order of match score
+        // produce group information based on matrix shape
+
+        // for every group, calculate shape score
+    }
+
+    // note: ranges are only returned for two or more points
+    std::vector<Range_i> preGroup_new(const std::vector<FeaturePeak> *features)
+    {
+        // assumes RT-sorted vector as input
+        std::vector<Range_i> ret;
+
+#define position(x) features->at(x).retentionTime
+#define uncert(x) features->at(x).RT_Uncertainty
+
+        struct Point
+        {
+            size_t index = 0;
+            double position = 0;
+            double uncert = 0;
+
+            void upd(size_t idx, double pos, double un)
+            {
+                index = idx;
+                position = pos;
+                uncert = un;
+            }
+            double rb()
+            {
+                return position + uncert;
+            }
+        };
+
+        // the group has the following relevant points:
+        // 1) the point which determines the right limit of the range by its position
+        // 2) the point which determines the right limit of the range by outermost point
+        //
+        // the grouping can only consider a point if it is within the range given by these two values.
+        // If the points are identical, all comparisons are trivial.
+        // If the outer limit is caused by a different point, it is necessary to check in reverse order
+        // (until point 2 is reached or the difference of the compared point is exceeded)
+        // all points that are elements of the group.
+        //
+        // we can only be sure that a group is complete when the current position exceeds the limit
+        // as set by point 2. This is because any peak could just be very small and be placed
+        // inbetween two points with a very large span. Also note that the minimum reasonable uncertainty
+        // is one point to each side of the apex.
+
+        size_t groupStart = 0;
+
+        Point point1;
+        point1.position = position(0);
+        point1.uncert = uncert(0);
+        Point point2 = point1;
+
+        for (size_t i = 1; i < features->size(); i++)
+        {
+            double pos_n = position(i);
+            double uncert_n = uncert(i);
+            if (pos_n > point2.rb())
+            {
+                // the group is complete
+                point1.upd(i, pos_n, uncert_n);
+                point2 = point1;
+            }
+            else if (pos_n - uncert_n > point1.position)
+            {
+                bool continueGroup = false;
+                for (size_t j = i + 1; j < features->size(); j++)
+                {
+                    pos_n = position(j);
+                    uncert_n = uncert(j);
+
+                    if (pos_n > point2.rb())
+                        break;
+
+                    if (pos_n - uncert_n > point1.position)
+                        continue;
+
+                    point1.upd(j, pos_n, uncert_n);
+                    if (pos_n + uncert_n > point2.rb())
+                        point2.upd(j, pos_n, uncert_n);
+                    continueGroup = true;
+                    i = j;
+                }
+
+                if (!continueGroup)
+                {
+                    // the group is complete
+                    point1.upd(i, pos_n, uncert_n);
+                    point2 = point1;
+                }
+            }
+            else if (point1.index == point2.index)
+            {
+                // only check if the point could be added once
+                double minUN = point1.uncert < uncert_n ? point1.uncert : uncert_n;
+                double diff = pos_n - point1.position;
+                if (diff < minUN)
+                {
+                    // the point belongs into the group
+                    point1.upd(i, pos_n, uncert_n);
+                    if (pos_n + uncert_n > point2.rb())
+                        point2.upd(i, pos_n, uncert_n);
+                }
+                else
+                {
+                    // the group is complete
+                    point1.upd(i, pos_n, uncert_n);
+                    point2 = point1;
+                }
+            }
+            else
+            {
+                // there are two limits relevant to the computation, and the point could be within the
+                // relevant region.
+                bool addToGroup = false;
+
+                // check if another point exists which could be within the relevant distance
+                for (size_t check = point1.index; check >= point2.index; check--)
+                {
+                    double pos_c = position(check);
+                    double uncert_c = uncert(check);
+                    double minUN = uncert_c < uncert_n ? uncert_c : uncert_n;
+                    double diff = pos_n - pos_c;
+                    if (diff < minUN)
+                    {
+                        addToGroup = true;
+                        break;
+                    }
+                }
+
+                if (addToGroup)
+                {
+                    // the point belongs into the group
+                    point1.upd(i, pos_n, uncert_n);
+                    if (pos_n + uncert_n > point2.rb())
+                        point2.upd(i, pos_n, uncert_n);
+                }
+            }
+        }
+
+        // @todo close last group
+
+        return ret;
+
+#undef position
+#undef uncert
+    }
+
+    size_t ExcludeMatrix::indexOf(size_t first, size_t second)
+    {
+        // the structure of the matrix is triangular, so only half of it has to be stored.
+        // points cannot sensibly be compared with themselves
+        assert(first != second);
+        size_t smaller = first < second ? first : second;
+        size_t bigger = first > second ? first : second;
+        return bigger * (bigger - 1) / 2 + smaller;
+    }
+    void ExcludeMatrix::invalidate(size_t first, size_t second)
+    {
+        size_t access = indexOf(first, second);
+        storage[access] = 0;
+    }
+    bool ExcludeMatrix::isInvalid(size_t first, size_t second)
+    {
+        if (first == second)
+            return true;
+        size_t access = indexOf(first, second);
+        return storage[access] == 0;
+    }
+    double *ExcludeMatrix::at(size_t first, size_t second)
+    {
+        size_t access = indexOf(first, second);
+        return storage.data() + access;
+    }
+    void ExcludeMatrix::fill(size_t n)
+    {
+        featureCount = n;
+        size_t maxcount = n * (n - 1) / 2 + n;
+        storage.resize(maxcount);
+        for (size_t i = 0; i < maxcount; i++)
+            storage[i] = NAN;
+    }
+    size_t ExcludeMatrix::countMatches(size_t row)
+    {
+        size_t matches = 0;
+        for (size_t i = 0; i < featureCount; i++)
+        {
+            if (!isInvalid(i, row))
+                matches += 1;
+        }
+        return matches;
+    }
+
+    void pairwiseMatch(const Range_i *region,
+                       const std::vector<FeaturePeak> *features,
+                       const std::vector<EIC> *eics,
+                       ExcludeMatrix *excludeMatrix)
+    {
+        size_t nonExcludes = 0;
+// in a first pass, establish if the two points fit in terms of position
+#define position(x) features->at(x).retentionTime
+#define uncert(x) features->at(x).RT_Uncertainty
+        for (size_t i = region->startIdx; i < region->endIdx; i++)
+        {
+            for (size_t j = i + 1; j < region->endIdx + 1; j++)
+            {
+                double pos_i = position(i);
+                double uncert_i = uncert(i);
+                double pos_j = position(j);
+                double uncert_j = uncert(j);
+                double minUncert = uncert_i < uncert_j ? uncert_i : uncert_j;
+                double posDiff = pos_j - pos_i;
+                if (posDiff > minUncert)
+                    excludeMatrix->invalidate(i, j);
+            }
+        }
+#undef position
+#undef uncert
+
+        // next, establish that the profile in a pairwise match is OK.
+        for (size_t i = region->startIdx; i < region->endIdx; i++)
+        {
+            for (size_t j = i + 1; j < region->endIdx + 1; j++)
+            {
+                if (excludeMatrix->isInvalid(i, j))
+                    continue;
+                // do the regression test up to the largest scale applicable to both points
+                const FeaturePeak *feature_I = features->data() + i;
+                const FeaturePeak *feature_J = features->data() + j;
+                const EIC *eic_I = eics->data() + i;
+                const EIC *eic_J = eics->data() + j;
+                const double msePair = evalPair(feature_I, eic_I, feature_J, eic_J);
+                *excludeMatrix->at(i, j) = msePair;
+                nonExcludes += msePair > 0 ? 1 : 0;
+            }
+        }
+        // @todo consider including the number of not-invalid comparisons as return value
+    }
+
+    double evalPair(const FeaturePeak *feat_A, const EIC *eic_A,
+                    const FeaturePeak *feat_B, const EIC *eic_B)
+    {
+        // this is a special case of the normal multiregression with only two b0 values.
+        const FeaturePeak *feats[2] = {feat_A, feat_B};
+        const size_t featCount = 2;
+        const EIC *eics[2] = {eic_A, eic_B};
+
+        // the range is the scan region within which regressions of size maxscale will be searched for
+        Range_i range;
+        size_t maxscale;
+        size_t minscale;
+        scanRegion(feats, featCount, &range, &maxscale, &minscale);
+
+        // construct the sum vector and individual vector of log intensities.
+        // this requires the maximum regression window to be known ahead of time.
+        // @todo performing the regression in log space intensifies the baseline significantly when
+        // summing up everything, consider a means of documenting the how much for every signal
+
+        auto regTarget = logVectors_multireg(eics, 2, &range);
+
+        // perform the multireg
+        auto regs = findCoefficients_multi_new(&regTarget.logInt_single, &regTarget.logInt_sum, featCount, maxscale);
+
+        // validate regressions
+        size_t pointsPerScale = rangeLen(&range) - 2 * maxscale;
+        size_t startidx = minscale * pointsPerScale;
+        double lowestMSE = INFINITY;
+        size_t bestRegIdx = 0;
+        std::vector<MultiRegression> validRegs;
+        for (size_t i = startidx; i < regs.size(); i++)
+        {
+            // modulus(position / first index at which scale == 2) + scale at which multireg starts
+            size_t scale = (i % (maxscale - 1)) + 2;
+            // minscale is imposed so that regressions are not narrowed too much compared to the input regressions
+            auto coeff = regs[i];
+
+            // validation
+
+            // mse calculation and comparison
+            // Note: Since we know that at most one regression can be applied to the region, we only accept
+            // an answer with one single valid regression, that being the best by mse in exponential form.
+        }
+    }
+
+    double compareMulti(const FeaturePeak **featArray, const EIC **eics, size_t numFeats)
+    {
+        // same as above, just less explicit - merge functions eventually? @todo
+    }
+
+    void scanRegion(const FeaturePeak **featArray, const size_t length, Range_i *scanRange, size_t *maxscale, size_t *minscale)
+    {
+        size_t maxLowerScan = -1;
+        size_t minUpperScan = 0;
+        *maxscale = 0;
+        *minscale = INFINITY;
+
+        for (size_t i = 0; i < length; i++)
+        {
+            size_t lower = (*featArray)[i].scanPeakStart;
+            size_t upper = (*featArray)[i].scanPeakEnd;
+            size_t scale = (*featArray)[i].scale;
+
+            maxLowerScan = lower > maxLowerScan ? lower : maxLowerScan;
+            minUpperScan = upper < minUpperScan ? upper : minUpperScan;
+            *maxscale = scale > *maxscale ? scale : *maxscale;
+            *minscale = scale < *minscale ? scale : *minscale;
+        }
+        *maxscale += 1; // safety margain, can this be reasoned about?
+
+        assert(maxLowerScan < minUpperScan);
+        assert(maxLowerScan > *maxscale);
+        // in order for the range to account for the existing regressions, at least the
+        // largest observed scale must be possible for the multiregression
+        *scanRange = {maxLowerScan - *maxscale, minUpperScan + *maxscale};
+    }
+
+    MergeVectors logVectors_multireg(const EIC **eics, const size_t length, const Range_i *scanRange)
+    {
+        // note: scan range describes the region in which the apex of the regression can be. Since there is no need
+        // to check for larger peaks than we previously found, the maxscale is limited to the maximum scale of compared
+        // features (+ the number of minimal degrees of freedom to account for potenial merges of two features distorted
+        // into different directions) This adjustment is made when calling this function. All this function does is
+        // extract a region of data that goes from scanrange.start - maxscale to scanrange.end + maxscale
+
+        size_t span = rangeLen(scanRange);
+        assert(span >= 5); // despite having more degrees of freedom, we still need five points for the individual peaks to make sense
+
+        std::vector<float> logInt_sum(span, 0);
+        std::vector<float> logInt_single(span * length, NAN);
+        std::vector<size_t> df_sum(span, 0);
+        std::vector<size_t> df_single(span * length, 0);
+
+        for (size_t elem = 0; elem < length; elem++)
+        {
+            const EIC *currentEIC = eics[elem];
+            size_t eicSize = currentEIC->mz.size();
+
+            // first, identify the start and end of the region in the given EIC.
+            size_t currentIdx = 0;
+            size_t endIdx = 0;
+            size_t startIdx = 0;
+            // All ends of EICs have already been extrapolated. The halving process is fairly
+            // aggessive, so there should be no need to add additional complexity to the system
+            // through some further extrapolation. All EICs are also fully interpolated, so no
+            // logic is needed for that either.
+            // As such, this function really just copies data from the individual EICs into the
+            // less cluttered container struct
+
+            for (; currentIdx < eicSize; currentIdx++)
+            {
+                size_t scan = currentEIC->scanNumbers[currentIdx];
+                if (scan >= scanRange->startIdx)
+                    break;
+            }
+            // @todo solve case of the regression extending past the border
+            // first relevant degree of freedom required to avoid re-addition
+            size_t df_start = currentEIC->df[currentIdx];
+            df_start -= currentIdx == 0 ? 0 : currentEIC->df[currentIdx - 1];
+            for (; currentIdx < eicSize; currentIdx++)
+            {
+                size_t scan = currentEIC->scanNumbers[currentIdx];
+                if (scan > scanRange->endIdx)
+                    break;
+
+                double logint = log(currentEIC->ints_area[currentIdx]);
+                size_t df = currentEIC->df[currentIdx] - df_start;
+
+                size_t access_sum = scan - scanRange->startIdx;
+                logInt_sum[access_sum] += logint;
+                df_sum[access_sum] += df;
+
+                size_t access_single = scan - scanRange->startIdx + span * elem;
+                logInt_single[access_single] = logint;
+                df_single[access_single] = df;
+            }
+        }
+        // the degrees of freedom should be cummulative
+
+        MergeVectors res;
+        res.numFeats = length;
+        res.lengthSingle = span;
+        res.df_single = df_single;
+        res.df_sum = df_sum;
+        res.logInt_single = logInt_single;
+        res.logInt_sum = logInt_sum;
+
+        return res;
+    }
+
     std::vector<MultiRegression> findComponents(
         std::vector<FeaturePeak> *peaks, // the peaks are updated as part of componentisation
         std::vector<EIC> *bins,
@@ -727,8 +1134,8 @@ namespace qAlgorithms
         // mutateReg->uncertainty_pos = calcUncertaintyPos(mse, mutateReg->coeffs, mutateReg->apex_position, scale);
         // mutateReg->df = df_sum - 4; // @todo add explanation for -4
         mutateReg->apex_position += float(idx_x0);
-        mutateReg->scale = int(scale);
-        mutateReg->idxCenter = int(idx_x0);
+        mutateReg->coeffs.scale = scale;
+        // mutateReg->idxCenter = int(idx_x0);
         // mutateReg->mse = mse; // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->isValid = true;
         return;
@@ -1042,12 +1449,14 @@ namespace qAlgorithms
                 }
 
                 const double *inv = INV_ARRAY.data() + scale * 6;
-                const double inv_A = inv[0];
-                const double inv_B = inv[1];
-                const double inv_C = inv[2];
-                const double inv_D = inv[3];
-                const double inv_E = inv[4];
-                const double inv_F = inv[5];
+                const double inv_A1 = inv[0] - 2 * INV_ARRAY[1] / numPeaks;
+                // A2 is only defined for numPeaks > 1, set it to 0 to avoid conditional in loops
+                const double inv_A2 = -2 * inv[1] / numPeaks;
+                const double inv_B = inv[1] / numPeaks;
+                const double inv_C = inv[2] / numPeaks;
+                const double inv_D = inv[3] / numPeaks;
+                const double inv_E = inv[4] / numPeaks;
+                const double inv_F = inv[5] / numPeaks;
 
                 const double inv_B_b0 = inv_B * product_sum_b0;
                 const double inv_D_b1 = inv_D * product_sum_b1;
@@ -1060,7 +1469,8 @@ namespace qAlgorithms
 
                 for (size_t i = 0; i < numPeaks; i++)
                 {
-                    b0s[access][i] = inv_A * single_sums_b0[i] + inv_B * (product_sum_b2 + product_sum_b3);
+                    b0s[access][i] = inv_A2 * product_sum_b0 + (inv_A1 - inv_A2) * single_sums_b0[i] +
+                                     inv_B * (product_sum_b2 + product_sum_b3);
                 }
             }
             scale5Count += 1;

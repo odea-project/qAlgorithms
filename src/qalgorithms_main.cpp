@@ -297,21 +297,25 @@ int main(int argc, char *argv[])
 {
     using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
 
-    std::vector<RegressionGauss> validRegressions;
-    while (validRegressions.empty())
+    volatile bool debug = true;
+    if (debug)
     {
-        ProfileBlock block = {
-            {0.5, 1, 2, 4, 8, 16, 32, 475, 711, 472, 207, 132, 57, 14, 7, 3.5, 1.75, 0.8, 0.4, 0.2, 0.1},
-            {205.110107, 205.115082, 205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877, 205.159851, 205.164825, 205.16980},
-            {0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 10, 10, 10},
-            329,
-            338};
+        std::vector<RegressionGauss> validRegressions;
+        while (validRegressions.empty())
+        {
+            ProfileBlock block = {
+                {32, 475, 711, 472, 207, 132, 57, 14},
+                {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877},
+                {1, 2, 3, 4, 5, 6, 7, 8},
+                329,
+                338};
 
-        const size_t length = block.intensity.size();
-        const size_t maxScale = 8; // @todo not bound to centroid maxscale
-        std::vector<float> logIntensity;
-        logIntensity.reserve(length);
-        runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale, length - 2);
+            const size_t length = block.intensity.size();
+            const size_t maxScale = 8; // @todo not bound to centroid maxscale
+            std::vector<float> logIntensity;
+            logIntensity.reserve(length);
+            runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale);
+        }
     }
 
     UserInputSettings userArgs = passCliArgs(argc, argv);
@@ -434,7 +438,7 @@ int main(int argc, char *argv[])
 
             for (size_t cenID = 1; cenID < centroids->size(); cenID++) // dummy value at idx 0 @todo
             {
-                size_t scanNumber = centroids->at(cenID).number_MS1 - 1;
+                size_t scanNumber = centroids->at(cenID).number_MS1;
                 size_t realRT_idx = rt_index.indexOfOriginalInInterpolated[scanNumber];
                 centroids->at(cenID).RT = rt_index.groups[realRT_idx].trueRT;
             }

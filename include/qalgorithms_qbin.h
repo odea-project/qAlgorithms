@@ -42,8 +42,7 @@ namespace qAlgorithms
     {
     public:
         std::vector<const CentroidPeak *> pointsInBin;
-        std::vector<float> DQSB_base;   // DQSB when all distances are considered equal @todo remove this eventually
-        std::vector<float> DQSB_scaled; // DQSB if a gaussian falloff is assumed
+        std::vector<float> DQSB;
 
         float mzMin = -1;
         float mzMax = -1;
@@ -53,6 +52,9 @@ namespace qAlgorithms
 
         bool unchanged = false;     // if this is true after every test has run once, the bin is viable
         bool duplicateScan = false; // are two points with the same scan number in this bin?
+        bool mz_stable = false;
+        bool rt_stable = false;
+
         bool l_maxdist_tooclose = false;
         bool r_maxdist_tooclose = false; // Check if there is a point within maxdist
 
@@ -87,7 +89,7 @@ namespace qAlgorithms
     // every index at bin stage is the "original" index of the MS1 spectrum.
     // they need to be converted to the corrected scan index which accounts for
     // interpolation.
-    EIC binToEIC(const Bin *sourceBin, const RT_Converter *convertRT);
+    EIC binToEIC(Bin *sourceBin, const std::vector<size_t> *convertIndex);
 
     void interpolateEIC(EIC *eic);
 
@@ -113,7 +115,7 @@ namespace qAlgorithms
     void subsetBins(BinContainer &bincontainer);
 
     // remove points with duplicate scans from a bin by choosing the one closest to the median
-    void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin bin);
+    void deduplicateBin(std::vector<Bin> *target, std::vector<const CentroidPeak *> *notInBins, Bin *bin);
 
 #pragma endregion "Bin Container"
 

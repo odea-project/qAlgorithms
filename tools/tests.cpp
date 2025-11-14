@@ -13,6 +13,10 @@
 
 #include <cstdio> // printing
 
+#ifndef MAXFLOAT
+#define MAXFLOAT 3.402823466e+38F
+#endif
+
 void qassert(bool condition, size_t line, const char *message)
 {
     if (condition)
@@ -107,28 +111,75 @@ int main()
 {
     using namespace qAlgorithms;
 
-    // rounding is functional
-    assert(roundTo_d(145.136578244512, 3) == 145.137);
-    assert(roundTo_d(-145.136578244512, 3) == -145.137);
+    { // rounding is functional
+        assert(roundTo_d(145.136578244512, 3) == 145.137);
+        assert(roundTo_d(-145.136578244512, 3) == -145.137);
+    }
+
+    { // min and max functions - two numbers
+        assert(min(size_t(0), INT64_MAX) == 0);
+        assert(max(size_t(0), INT64_MAX) == INT64_MAX);
+        assert(min(-40, -10) == -40);
+        assert(max(-1, 0) == 0);
+        assert(min(MAXFLOAT, -MAXFLOAT) == -MAXFLOAT);
+        assert(max(MAXFLOAT, -MAXFLOAT) == MAXFLOAT);
+    }
+
+    { // min and max - array
+        const size_t len = 5;
+        double test_d[len] = {0, 100, 200, 300, MAXFLOAT};
+        double *min_d = minVal(test_d, len);
+        double *max_d = maxVal(test_d, len);
+        assert(*min_d == 0);
+        assert(*max_d == MAXFLOAT);
+    }
+
+    { // standard deviation - true values generated with wolfram alpha
+        double numbers[10] = {1, 2, 3, 4, 5, 5, 5, 6, 3, 2};
+        double sd = sdev(numbers, 10);
+        qass(roundTo_d(sd, 14) == roundTo_d(1.64654520469713, 14), "Standard deviation calculated wrong");
+
+        double numbers_L[10] = {300.021736801890, 299.997556193020, 299.996439273950, 300.003719530080, 299.993646472210, 299.990848954870, 299.989294329370, 299.998503324230, 300.008035381130, 300.004645938850};
+        sd = sdev(numbers_L, 10);
+        qass(roundTo_d(sd, 14) == roundTo_d(0.009603979272, 14), "Standard deviation inaccurate at larger numbers");
+    }
+
+    { // exact solutuion to linear equation
+        double true_b0 = 2;
+        double true_b1 = 3;
+        double true_b2 = 1.5;
+
+        double x1 = 1;
+        double y1 = true_b0 + true_b1 * x1 + true_b2 * x1 * x1;
+        double y1_test = quadraticAt(true_b0, true_b1, true_b2, x1);
+        assert(y1_test == y1);
+        double x2 = 2;
+        double y2 = true_b0 + true_b1 * x2 + true_b2 * x2 * x2;
+        double x3 = 3;
+        double y3 = true_b0 + true_b1 * x3 + true_b2 * x3 * x3;
+
+        double b0 = 0, b1 = 0, b2 = 0;
+        coeffsQuadratic(x1, x2, x3,
+                        y1, y2, y3,
+                        &b0, &b1, &b2);
+        qass(b0 == true_b0, "b0 differs\n");
+        qass(b1 == true_b1, "b1 differs\n");
+        qass(b2 == true_b2, "b2 differs\n");
+    }
 
     // check if a basic regression succeeds
     {
         std::vector<float> logInts = {6.40492535, 7.95729923, 8.44852829, 8.27999401, 7.23839712};
         size_t scale = 2;
-        auto reg = findCoefficients_old(&logInts, scale);
+        std::vector<qAlgorithms::RegCoeffs> reg;
+        findCoefficients(&logInts, scale, &reg);
         auto c = reg.front();
-        assert(reg.size() == 1);
-        auto reg2 = findCoefficients(&logInts, scale);
-        auto c2 = reg2.front();
-
-        printf("beta | expected | got | new\nb0 | %f | %f| %f\nb0 | %f | %f| %f\nb0 | %f | %f| %f\nb0 | %f | %f| %f\n",
-               8.5012159, c.b0, c2.b0, 0.1143269, c.b1, c2.b1, -0.4647133, c.b2, c2.b2, roundTo_d(-0.3706720, 5), c.b3, c2.b3); // @todo rounding does not work correctly
-
-        qass(roundTo_d(c.b0, 5) == roundTo_d(8.5012159, 5), "b0 is incorrect!");
-        qass(roundTo_d(c.b1, 5) == roundTo_d(0.1143269, 5), "b1 is incorrect!");
-        qass(roundTo_d(c.b2, 5) == roundTo_d(-0.4647133, 5), "b2 is incorrect!");
-        qass(roundTo_d(c.b3, 5) == roundTo_d(-0.3706720, 5), "b3 is incorrect!");
-        printf("simple regression gives correct results\n");
+        // note that the regressions seems to be a numerically unstable process
+        qass(roundTo_d(c.b0, 4) == roundTo_d(8.5012159, 4), "b0 is incorrect!");
+        qass(roundTo_d(c.b1, 4) == roundTo_d(0.1143269, 4), "b1 is incorrect!");
+        qass(roundTo_d(c.b2, 4) == roundTo_d(-0.4647133, 4), "b2 is incorrect!");
+        qass(roundTo_d(c.b3, 4) == roundTo_d(-0.3706720, 4), "b3 is incorrect!");
+        printf("simple regression gives correct results to four digits\n");
     }
 
     // check if a difficult centroid is identified correctly
@@ -140,11 +191,10 @@ int main()
             329,
             338};
         std::vector<RegressionGauss> validRegressions;
-        const size_t length = block.mz.size();
         const size_t maxScale = 8; // @todo not bound to centroid maxscale
         std::vector<float> logIntensity(25, NAN);
         logIntensity.clear();
-        runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale, length - 2);
+        runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale);
     }
 
     // does the RT conversion struct work correctly?

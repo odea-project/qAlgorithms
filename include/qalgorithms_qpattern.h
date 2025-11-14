@@ -28,22 +28,62 @@ namespace qAlgorithms
         float DQS;
     };
 
-    std::vector<MultiRegression> findComponents_new(
+    void findComponents_new(
         // note: both features and bins contain a "componentID" field that is 0 by default.
         // the componentisation function updates these fields in addition to returning the component regressions
         std::vector<FeaturePeak> *features,
-        std::vector<EIC> *bins,
-        const std::vector<float> *convertRT, // this is needed to perform interpolation at the same RT as in qPeaks
-        size_t *featuresInComponents);
+        std::vector<EIC> *bins);
 
     std::vector<Range_i> preGroup_new(const std::vector<FeaturePeak> *features);
 
+    struct ExcludeMatrix
+    {
+        // something to store the data, should probably not be a vector
+        std::vector<double> storage;
+        size_t featureCount = 0;
+
+        void fill(size_t n);
+
+        // mismatch is always maked by a field being 0
+        void invalidate(size_t first, size_t second);
+        bool isInvalid(size_t first, size_t second);
+        size_t indexOf(size_t first, size_t second);
+        double *at(size_t first, size_t second);
+        size_t countMatches(size_t row);
+    };
+
+    ExcludeMatrix makeExcludeMat(const size_t numFeatures);
+
     // function to create the exclusion matrix
-    void pairwiseMatch(const Range_i *region, const std::vector<FeaturePeak> *features);
+    void pairwiseMatch(const Range_i *region,
+                       const std::vector<FeaturePeak> *features,
+                       const std::vector<EIC> *eics,
+                       ExcludeMatrix *excludeMatrix);
 
     // calculate mse / some other regression param for the pair. Since a combined regression only makes sense
     // if it has at least two points to each side for every regression, the EICs do not need to be expanded
-    double comparePair(const FeaturePeak *feat_A, const EIC *eic_A, const FeaturePeak *feat_B, const EIC *eic_B);
+    double evalPair(const FeaturePeak *feat_A, const EIC *eic_A,
+                    const FeaturePeak *feat_B, const EIC *eic_B);
+
+    void scanRegion(const FeaturePeak **featArray, const size_t length, Range_i *scanRange, size_t *maxscale, size_t *minscale);
+
+    struct MergeVectors
+    {
+        std::vector<float> logInt_sum;
+        std::vector<float> logInt_single;
+        std::vector<size_t> df_sum;
+        std::vector<size_t> df_single;
+        size_t numFeats = 0;
+        size_t lengthSingle = 0;
+    };
+
+    MergeVectors logVectors_multireg(const EIC **eics, const size_t length, const Range_i *scanRange);
+
+    std::vector<RegCoeffs> findCoefficients_multi_new(
+        const std::vector<float> *intensity_log_b0,
+        const std::vector<float> *intensity_log_sum, // note: consider not just summing up the extrapolated values
+        const size_t numPeaks,
+        const size_t maxScale);
 
     // main function to execute a componentiation step on data
     std::vector<MultiRegression> findComponents(

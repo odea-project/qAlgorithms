@@ -33,6 +33,24 @@ namespace qAlgorithms
      */
     double cdflib_F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints);
 
+    // simplified linear regression using a positive integer axis for x
+    void linReg_intx(const float *yvals,
+                     const size_t length,
+                     double *slope, double *intercept);
+
+    void weightedLinReg(const double *xvals,
+                        const double *yvals,
+                        const double *variance,
+                        const size_t length,
+                        double *slope, double *intercept);
+
+    // exact solution for quadratic equation with three points and thing to get the y for a given x
+    void coeffsQuadratic(const double x1, const double x2, const double x3,
+                         const double y1, const double y2, const double y3,
+                         double *b0, double *b1, double *b2);
+    double quadraticAt(const double b0, const double b1, const double b2,
+                       const double x);
+
     /**
      * @brief Fast exponential approximation base on Bit Manipulation.
      * @details This function is a fast approximation of the exponential
@@ -81,6 +99,13 @@ namespace qAlgorithms
     // @todo better documentation
     double binningCritVal(unsigned int n, double uncertainty); // critical value for deciding if a bin exists or not
 
+    size_t min(size_t a, size_t b);
+    size_t max(size_t a, size_t b);
+    int min(int a, int b);
+    int max(int a, int b);
+    double min(double a, double b);
+    double max(double a, double b);
+
     float *minVal(float *const arrayStart, const size_t length);
     const float *minVal(const float *const arrayStart, const size_t length);
     double *minVal(double *const arrayStart, const size_t length);
@@ -93,5 +118,8 @@ namespace qAlgorithms
 
     double meanOfCumulative(double *const cumArray, const size_t startIdx, const size_t endIdx);
     double meanOfCumulative(const double *const cumArray, const size_t startIdx, const size_t endIdx);
+
+    double sdev(double *const array, const size_t n);
+    double sdev(const double *const array, const size_t n);
 }
 #endif // QALGORITHMS_UTILS_H

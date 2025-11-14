@@ -4,88 +4,20 @@
 #include <cmath>   // std::abs()
 #include <cassert>
 #include "../external/CDFlib/cdflib.hpp"
+#include "cephes.h"
+
+#include <unordered_map>
 
 namespace qAlgorithms
 {
-
-    void calc_fval(double p, double dfn, double dfd,      // input
-                   double *f, int *status, double *bound) // output
+    size_t hashm(int a, int b)
     {
-        //    Control Input
-        if (p < 0 || 1 < p)
-        {
-            *status = -2;
-            return;
-        }
-        if (dfn <= 0.0e0)
-        {
-            *bound = 0.0e0;
-            *status = -5;
-            return;
-        }
-        if (dfd <= 0.0e0)
-        {
-            *bound = 0.0e0;
-            *status = -6;
-            return;
-        }
-
-        //    Calculating F
-        static double T3 = 1.0e300;
-        static double T6 = 1.0e-50;
-        static double T7 = 1.0e-8;
-        static double K2 = 0.0e0;
-        static double K4 = 0.5e0;
-        static double K5 = 5.0e0;
-        dstinv(&K2, &T3, &K4, &K4, &K5, &T6, &T7);
-
-        static double fx, cum, ccum;
-        static unsigned long qhi, qleft;
-
-        *status = 0;
-        dinvr(status, f, &fx, &qleft, &qhi);
-
-        *f = 5.0e0;
-        double q = 1 - p;
-        printf("\n");
-
-        if (p <= q)
-        {
-            while (*status == 1)
-            {
-                cumf(f, &dfn, &dfd, &cum, &ccum);
-                fx = cum - p;
-                dinvr(status, f, &fx, &qleft, &qhi);
-            }
-        }
-        else
-        {
-            while (*status == 1)
-            {
-                cumf(f, &dfn, &dfd, &cum, &ccum);
-                fx = ccum - q;
-                dinvr(status, f, &fx, &qleft, &qhi);
-                printf("%f, ", *f);
-            }
-        }
-
-        if (*status != -1)
-            return;
-
-        if (qleft)
-        {
-            *status = 1;
-            *bound = 0.0e0;
-        }
-        else
-        {
-            *status = 2;
-            *bound = 1.0e300;
-        }
-        printf("\n");
-        printf("\n");
-        return;
+        size_t a2 = a;
+        a2 = a2 << __INT_WIDTH__;
+        return a2 | b;
     }
+    // this global hashmap is used to avoid recalculating the f value every time
+    std::unordered_map<size_t, double> global_fhash_5perc;
 
     // @todo separate out the library functions into something better readable with less flexible error checking
     double cdflib_F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints)
@@ -96,24 +28,39 @@ namespace qAlgorithms
         assert(alpha > 0);
         assert(alpha < 1);
 
-        double F = 0; // return value
+        // @todo this is not multithreading capable!
+        int dfn_int = params_complex - params_simple;
+        int dfd_int = numPoints - params_complex;
+        size_t key = hashm(dfn_int, dfd_int);
+        if (global_fhash_5perc.contains(key) && (alpha == 0.05))
+        {
+            double Fhash = global_fhash_5perc[key];
+            // assert(float(Fhash) == float(F));
+            return Fhash;
+        }
+        // double f = 0;
+        // calc_fval(q, dfn, dfd, &f); // @todo does not work for all input params
+        // assert(float(f) == float(F));
 
-        int which = 2;
-
-        double p = 1 - alpha; // area of the covered distribution
         double q = alpha;
         double dfn = double(params_complex - params_simple); // numerator degrees of freedom
         double dfd = double(numPoints - params_complex);     // denominator degrees of freedom
 
-        int status = 1;   // result invalid if this is not 0
-        double bound = 0; // allows recovery from non-0 status @todo
+        double F = 0; // return value
+        {
+            double p = 1 - alpha; // area of the covered distribution
+            int which = 2;
+            double bound = 0;
+            int status = 1;
+            cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
+            assert(status == 0);
 
-        cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
-        assert(status == 0);
+            double F2 = cephes::fdtri(dfn_int, dfd_int, alpha);
 
-        double f = 0;
-        calc_fval(p, dfn, dfd, &f, &status, &bound); // @todo does not work for all input params
-        assert(float(f) == float(F));
+            assert(float(F2) == float(F));
+        }
+
+        global_fhash_5perc[key] = F;
 
         return F;
     }
@@ -131,6 +78,106 @@ namespace qAlgorithms
         double RSS_ratio = (RSS_H0 - RSS_model) / RSS_model;
         double params_ratio = double(n - params_model) / double(params_model - params_H0);
         return RSS_ratio * params_ratio;
+    }
+
+    void linReg_intx(const float *yvals,
+                     const size_t length,
+                     double *slope, double *intercept)
+    {
+        assert(length > 2); // regression through two points is nonsensical;
+
+        double s = 0, s_x = 0, s_y = 0, s_xx = 0, s_xy = 0; // accumulators for the different sums
+
+        s = double(length);
+        for (size_t x = 0; x < length; x++)
+        {
+            double y = yvals[x];
+
+            s_x += double(x);
+            s_y += y;
+            s_xx += double(x * x);
+            s_xy += double(x) * y;
+        }
+
+        double delta = 1 / (s * s_xx - s_x * s_x);
+        *intercept = (s_xx * s_y - s_x * s_xy) * delta;
+        *slope = (s * s_xy - s_x * s_y) * delta;
+    }
+
+    void weightedLinReg(const double *xvals,
+                        const double *yvals,
+                        const double *variance,
+                        const size_t length,
+                        double *slope, double *intercept)
+    {
+        /*
+            The weighted linear regression as discussed in chapter 15.2 of numerical recepies (ISBN 0-521-43108-5).
+            Variable names are taken from the text, not the included code example. The control for significance
+            using the gamma function is skipped since there should always be a significant correlation. This could be
+            replaced by a check against the mse when just using the mean.
+        */
+        assert(length > 2); // regression through two points is nonsensical;
+
+        double s = 0, s_x = 0, s_y = 0, s_xx = 0, s_xy = 0; // accumulators for the different sums
+
+        if (variance == nullptr)
+        {
+            s = double(length);
+            for (size_t i = 0; i < length; i++)
+            {
+                double y = yvals[i];
+                double x = xvals[i];
+
+                s_x += x;
+                s_y += y;
+                s_xx += x * x;
+                s_xy += x * y;
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < length; i++)
+            {
+                double inverse = 1 / (variance[i] * variance[i]);
+
+                double y = yvals[i];
+                double x = xvals[i];
+
+                s += inverse;
+                s_x += x * inverse;
+                s_y += y * inverse;
+                s_xx += x * x * inverse;
+                s_xy += x * y * inverse;
+            }
+        }
+
+        // now, the two linear systems a * s + b * s_x = s_y and a * s_x + b * s_xx = s_xy can be solved for a and b
+        // a is the inclination and b the intercept
+
+        double delta = 1 / (s * s_xx - s_x * s_x);
+        *intercept = (s_xx * s_y - s_x * s_xy) * delta;
+        *slope = (s * s_xy - s_x * s_y) * delta;
+
+        // calculate the uncertainties of a and b @todo
+    }
+
+    void coeffsQuadratic(const double x1, const double x2, const double x3,
+                         const double y1, const double y2, const double y3,
+                         double *b0, double *b1, double *b2)
+    {
+        // y1 = b2 x1^2 + b1 * x1 + b0 etc.
+        const double div_x_23 = 1 / (x2 - x3);
+        const double x22 = x2 * x2;
+        const double x33 = x3 * x3;
+        *b2 = ((y1 - y2) - (y2 - y3) * (x1 - x2) * div_x_23) / ((x1 * x1 - x22) - (x22 - x33) * (x1 - x2) * div_x_23);
+        *b1 = (y2 - y3 + *b2 * (x33 - x22)) * div_x_23;
+        *b0 = y3 - x33 * *b2 - x3 * *b1;
+    }
+
+    double quadraticAt(const double b0, const double b1, const double b2,
+                       const double x)
+    {
+        return b0 + (b1 + x * b2) * x;
     }
 
     double exp_approx_d(const double x)
@@ -199,6 +246,31 @@ namespace qAlgorithms
     double binningCritVal(unsigned int n, double stdDev)
     {
         return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
+    }
+
+    size_t min(size_t a, size_t b)
+    {
+        return a < b ? a : b;
+    }
+    size_t max(size_t a, size_t b)
+    {
+        return a > b ? a : b;
+    }
+    int min(int a, int b)
+    {
+        return a < b ? a : b;
+    }
+    int max(int a, int b)
+    {
+        return a > b ? a : b;
+    }
+    double min(double a, double b)
+    {
+        return a < b ? a : b;
+    }
+    double max(double a, double b)
+    {
+        return a > b ? a : b;
     }
 
     float *minVal(float *const arrayStart, const size_t length)
@@ -298,4 +370,37 @@ namespace qAlgorithms
         return totalSum / (endIdx - startIdx + 1);
     }
 
+    double sdev(double *const array, const size_t n)
+    {
+        assert(n > 2); // while standard deviation of two numbers is possible, it makes no sense
+        double mean = 0;
+        double sdev = 0;
+        for (size_t i = 0; i < n; i++)
+        {
+            mean += array[i];
+        }
+        mean /= n;
+        for (size_t i = 0; i < n; i++)
+        {
+            sdev += (array[i] - mean) * (array[i] - mean);
+        }
+        return sqrt(sdev / (n - 1));
+    }
+
+    double sdev(const double *const array, const size_t n)
+    {
+        assert(n > 2); // while standard deviation of two numbers is possible, it makes no sense
+        double mean = 0;
+        double sdev = 0;
+        for (size_t i = 0; i < n; i++)
+        {
+            mean += array[i];
+        }
+        mean /= n;
+        for (size_t i = 0; i < n; i++)
+        {
+            sdev += (array[i] - mean) * (array[i] - mean);
+        }
+        return sqrt(sdev / (n - 1));
+    }
 }
