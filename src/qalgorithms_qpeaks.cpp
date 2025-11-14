@@ -225,6 +225,7 @@ namespace qAlgorithms
         return validCount;
     }
 
+#ifdef _RM
     void extrapolate_old(std::vector<float> *intensities_log, const size_t fillCount)
     {
         { // extrapolate left using the first point and dividing by two fillcount times
@@ -311,6 +312,7 @@ namespace qAlgorithms
             }
         }
     }
+#endif
 
     void runningRegression(
         const std::vector<float> *intensities,
@@ -327,6 +329,7 @@ namespace qAlgorithms
     {
         const size_t length = intensities->size();
 
+#ifdef _RM
         volatile bool extrapolate = false;
         if (extrapolate)
         { // prepare the log intensity vector, including extrapolation
@@ -345,12 +348,14 @@ namespace qAlgorithms
             {
                 intensities_log->push_back(0);
             }
+
             extrapolateLogInt(intensities_log, fillCount);
             volatile bool swapInOld = false;
             if (swapInOld)
                 extrapolate_old(intensities_log, fillCount);
         }
         else
+#endif
         {
             intensities_log->reserve(length);
             for (size_t i = 0; i < length; i++)
@@ -453,54 +458,6 @@ namespace qAlgorithms
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
-
-        // size_t access = 0;
-        // const size_t backLim = length - GLOBAL_MINSCALE;
-        // for (size_t scale = 2; scale <= maxScale; scale++)
-        // {
-        //     // @todo: refactor this so that the regressions are all validated at once.
-        //     // preserve space by inserting an invalid regression after every scale is
-        //     // done so that following operations can just stop once the first with
-        //     // mz == 0 or something similar occurs
-        //     for (size_t idxCenter = GLOBAL_MINSCALE; idxCenter < backLim; idxCenter++)
-        //     {
-        //         RegressionGauss reg;
-        //         reg.coeffs = coefficients[access];
-        //         // reg.scale = scale;
-        //         // reg.idxCenter = idxCenter;
-        //         int failpoint = makeValidRegression(degreesOfFreedom_cum,
-        //                                             intensities,
-        //                                             intensities_log,
-        //                                             &reg);
-
-        //         failures.push_back(failpoint);
-        //         x0s.push_back(idxCenter);
-
-        //         if (reg.isValid)
-        //         {
-        //             validRegsAtScale.push_back(reg);
-        //         }
-        //         access += 1;
-        //     }
-
-        //     // no valid peaks if the size of validRegsTemp is 0
-        //     if (validRegsAtScale.size() == 1)
-        //     {
-        //         // only one valid peak, no fitering necessary
-        //         validRegressions->push_back(std::move(validRegsAtScale[0]));
-        //     }
-        //     else if (validRegsAtScale.size() > 1)
-        //     {
-        //         findBestScales(validRegressions, &validRegsAtScale, intensities, degreesOfFreedom_cum);
-        //     }
-
-        //     // reset loop
-        //     validRegsAtScale.clear();
-        // }
-        // assert(access == coefficients.size());
-
-        // // there can be 0, 1 or more than one regressions in validRegressions
-        // mergeRegressionsOverScales(validRegressions, intensities);
     }
 
     void findCoefficients(
@@ -527,10 +484,8 @@ namespace qAlgorithms
             coeffs->resize(totalRegs);
         }
 
-        // the first and last n points of every region are extrapolated, where n is the maximum scale -2.
-        // as such, the last point at which a regression is possible is maxscale points from the back.
+        // the first and last MINSCALE elements of the data do not need to be checked for x0, since they are invalid by definition
         const size_t limit = length - GLOBAL_MINSCALE;
-
         for (size_t x0 = GLOBAL_MINSCALE; x0 < limit; x0++)
         {
             const float *cen = intensity_log->data() + x0; // this is initially the third real point
@@ -602,6 +557,7 @@ namespace qAlgorithms
         return;
     }
 
+#ifdef _RM
     RegCoeffs hardRegression(std::vector<float> *intensity_log, const size_t startIdx, const size_t endIdx)
     {
         // 1) find the position 0 - this should generally be the maximum of the region
@@ -619,6 +575,7 @@ namespace qAlgorithms
 
         return {0};
     }
+#endif
 
 #pragma endregion "running regression"
 
@@ -1282,6 +1239,8 @@ namespace qAlgorithms
         {
             const RegressionGauss *regression = validRegressionsVec->data() + i;
             assert(regression->isValid);
+            size_t maxIdx = convertRT->groups.back().interpolatedIndex;
+            assert(regression->regSpan.endIdx <= maxIdx);
 
             FeaturePeak peak;
             // add height
@@ -1292,13 +1251,7 @@ namespace qAlgorithms
 
             // calculate the apex position in RT
             size_t idx_leftOfApex = (size_t)regression->apex_position;
-            size_t idx_leftOfApex_absolute = convertRT->indexOfOriginalInInterpolated[idx_leftOfApex];
-
-            // @todo fix peak detection
-            if (idx_leftOfApex < 2)
-            {
-                continue;
-            }
+            size_t idx_leftOfApex_absolute = convertRT->groups[idx_leftOfApex].interpolatedIndex;
 
             assert(idx_leftOfApex > 1); // at least two points to the left
             size_t idx_rightOfApex_absolute = idx_leftOfApex_absolute + 1;
@@ -2156,19 +2109,6 @@ namespace qAlgorithms
             {
                 FeaturePeak currentPeak = tmpPeaks[j];
 
-                // @todo make sure these hold true somewhere else
-                if (currentPeak.idxCenter_offset < 2)
-                {
-                    assert(false);
-                }
-                if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart - currentPeak.idxCenter_offset < 2)
-                {
-                    assert(false);
-                }
-                if (currentPeak.idxPeakEnd - currentPeak.idxPeakStart + 2 < currentPeak.idxCenter_offset)
-                {
-                    assert(false);
-                }
                 // the correct limits in the non-interpolated EIC need to be determined. They are already included
                 // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
                 // use the index df[limit] - 1 into the original, non-interpolated vector
@@ -2238,8 +2178,10 @@ namespace qAlgorithms
 
             size_t ID_spectrum = selectedIndices->at(i);
             data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
-            // ### @todo this is for development only, highly inefficient at scale! ###
-            // hardFilter(&spectrum_mz, &spectrum_int, 247.1, 247.3);
+
+#ifdef _RM
+            // ### this is for development only, highly inefficient at scale! ###
+            hardFilter(&spectrum_mz, &spectrum_int, 247.1, 247.3);
             if (spectrum_mz.empty())
                 continue;
 
@@ -2257,10 +2199,9 @@ namespace qAlgorithms
             volatile bool debug = false;
             if (debug)
                 centroids.clear();
-
+#endif
             // @todo every group is just an index range into three same-length vectors if we do not
-            // perform interpolation. Should interpolation be necessary (includes extrapolation),
-            // add these values into the actual data(?)
+            // perform interpolation. The "ProfileBlock" struct is unnecessary.
             size_t maxWindowSize = pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int);
             if (maxWindowSize == 0) // this is also relevant to filtering, add a warning if no filter?
                 continue;
