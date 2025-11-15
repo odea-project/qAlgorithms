@@ -1253,7 +1253,7 @@ namespace qAlgorithms
             size_t idx_leftOfApex = (size_t)regression->apex_position;
             size_t idx_leftOfApex_absolute = convertRT->groups[idx_leftOfApex].interpolatedIndex;
 
-            assert(idx_leftOfApex > 1); // at least two points to the left
+            assert(idx_leftOfApex != 0); // at least two points to the left if apex is > 1
             size_t idx_rightOfApex_absolute = idx_leftOfApex_absolute + 1;
 
             if (idx_rightOfApex_absolute > convertRT->groups.size() - 1)

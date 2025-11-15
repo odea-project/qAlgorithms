@@ -32,33 +32,30 @@ namespace qAlgorithms
         int dfn_int = params_complex - params_simple;
         int dfd_int = numPoints - params_complex;
         size_t key = hashm(dfn_int, dfd_int);
-        if (global_fhash_5perc.contains(key) && (alpha == 0.05))
+        if (global_fhash_5perc.contains(key) && (alpha == 0.05)) // @todo generalise for all alpha
         {
             double Fhash = global_fhash_5perc[key];
             // assert(float(Fhash) == float(F));
             return Fhash;
         }
-        // double f = 0;
-        // calc_fval(q, dfn, dfd, &f); // @todo does not work for all input params
-        // assert(float(f) == float(F));
 
-        double q = alpha;
-        double dfn = double(params_complex - params_simple); // numerator degrees of freedom
-        double dfd = double(numPoints - params_complex);     // denominator degrees of freedom
+        double F = cephes::F_density(dfn_int, dfd_int, alpha);
 
-        double F = 0; // return value
+#if false
+        double F_old = 0; // return value
         {
-            double p = 1 - alpha; // area of the covered distribution
+            double q = alpha;
+            double dfn = double(params_complex - params_simple); // numerator degrees of freedom
+            double dfd = double(numPoints - params_complex);     // denominator degrees of freedom
+            double p = 1 - alpha;                                // area of the covered distribution
             int which = 2;
             double bound = 0;
             int status = 1;
-            cdff(&which, &p, &q, &F, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
+            cdff(&which, &p, &q, &F_old, &dfn, &dfd, &status, &bound); // library function, see https://people.math.sc.edu/Burkardt/cpp_src/cdflib/cdflib.html
             assert(status == 0);
-
-            double F2 = cephes::fdtri(dfn_int, dfd_int, alpha);
-
-            assert(float(F2) == float(F));
         }
+        assert(float(F) == float(F_old));
+#endif
 
         global_fhash_5perc[key] = F;
 

@@ -49,354 +49,143 @@ namespace cephes
         return (ans);
     }
 
+    double F_density(const int dfn, const int dfd, const double alpha)
+    {
+        return fdtri(dfn, dfd, alpha);
+    }
+
     double fdtri(int df1, int df2, double p)
     {
         assert(df1 > 0);
         assert(df2 > 0);
         assert((0 < p) && (p <= 1));
 
-        double a = df1;
-        double b = df2;
-        double w, x;
+        double df1_d = df1;
+        double df2_d = df2;
+        double ret;
 
         /* Compute probability for x = 0.5.  */
-        w = incbet(0.5 * b, 0.5 * a, 0.5);
+        double w = incbeta(0.5 * df2_d, 0.5 * df1_d, 0.5);
         /* If that is greater than y, then the solution w < .5.
            Otherwise, solve at 1-y to remove cancellation in (b - b*w).  */
         if (w > p || p < 0.001)
         {
-            w = incbi(0.5 * b, 0.5 * a, p);
-            x = (b - b * w) / (a * w);
+            w = incbi(0.5 * df2_d, 0.5 * df1_d, p);
+            ret = (df2_d - df2_d * w) / (df1_d * w);
         }
         else
         {
-            w = incbi(0.5 * a, 0.5 * b, 1.0 - p);
-            x = b * w / (a * (1.0 - w));
+            w = incbi(0.5 * df1_d, 0.5 * df2_d, 1.0 - p);
+            ret = df2_d * w / (df1_d * (1.0 - w));
         }
-        return (x);
+        return (ret);
     }
 
-    // functions internally used by incbet
-    const double big = 4.503599627370496e15;
-    const double biginv = 2.22044604925031308085e-16;
-
-    double incbcf(double a, double b, double x);
-    double incbd(double a, double b, double x);
-    double pseries(double a, double b, double x);
-
-    double incbet(double aa, double bb, double xx)
-    {
-        assert(aa > 0);
-        assert(bb > 0);
-        assert((0 <= xx) && (xx <= 1));
-
-        double a, b, t, x, xc, w, y;
-
-        if (xx == 0.0)
-            return (0.0);
-        if (xx == 1.0)
-            return (1.0);
-
-        int flag = 0;
-        if ((bb * xx) <= 1.0 && xx <= 0.95)
-        {
-            t = pseries(aa, bb, xx);
-            goto done;
-        }
-
-        w = 1.0 - xx;
-
-        /* Reverse a and b if x is greater than the mean. */
-        if (xx > (aa / (aa + bb)))
-        {
-            flag = 1;
-            a = bb;
-            b = aa;
-            xc = xx;
-            x = w;
-        }
-        else
-        {
-            a = aa;
-            b = bb;
-            xc = w;
-            x = xx;
-        }
-
-        if (flag == 1 && (b * x) <= 1.0 && x <= 0.95)
-        {
-            t = pseries(a, b, x);
-            goto done;
-        }
-
-        /* Choose expansion for better convergence. */
-        y = x * (a + b - 2.0) - (a - 1.0);
-        if (y < 0.0)
-            w = incbcf(a, b, x);
-        else
-            w = incbd(a, b, x) / xc;
-
-        /* Multiply w by the factor
-             a      b   _             _     _
-            x  (1-x)   | (a+b) / ( a | (a) | (b) ) .   */
-
-        y = a * log(x);
-        t = b * log(xc);
-        if ((a + b) < MAXGAM && fabs(y) < MAXLOG && fabs(t) < MAXLOG)
-        {
-            t = pow(xc, b);
-            t *= pow(x, a);
-            t /= a;
-            t *= w;
-            t *= tgamma(a + b) / (tgamma(a) * tgamma(b));
-            goto done;
-        }
-        /* Resort to logarithms.  */
-        y += t + lgamma(a + b) - lgamma(a) - lgamma(b);
-        y += log(w / a);
-        if (y < MINLOG)
-            t = 0.0;
-        else
-            t = exp(y);
-
-    done:
-
-        if (flag == 1)
-        {
-            if (t <= MACHEP)
-                t = 1.0 - MACHEP;
-            else
-                t = 1.0 - t;
-        }
-        return (t);
-    }
-
-    /* Continued fraction expansion #1
-     * for incomplete beta integral
+    /*
+     * zlib License
+     *
+     * Regularized Incomplete Beta Function
+     *
+     * Copyright (c) 2016, 2017 Lewis Van Winkle
+     * http://CodePlea.com
+     *
+     * This software is provided 'as-is', without any express or implied
+     * warranty. In no event will the authors be held liable for any damages
+     * arising from the use of this software.
+     *
+     * Permission is granted to anyone to use this software for any purpose,
+     * including commercial applications, and to alter it and redistribute it
+     * freely, subject to the following restrictions:
+     *
+     * 1. The origin of this software must not be misrepresented; you must not
+     *    claim that you wrote the original software. If you use this software
+     *    in a product, an acknowledgement in the product documentation would be
+     *    appreciated but is not required.
+     * 2. Altered source versions must be plainly marked as such, and must not be
+     *    misrepresented as being the original software.
+     * 3. This notice may not be removed or altered from any source distribution.
      */
 
-    double incbcf(double a, double b, double x)
+#define STOP 1.0e-8
+#define TINY 1.0e-30
+
+    double incbeta(double a, double b, double x)
     {
-        double xk, pk, pkm1, pkm2, qk, qkm1, qkm2;
-        double k1, k2, k3, k4, k5, k6, k7, k8;
-        double r, t, ans, thresh;
-        int n;
+        // modification due to https://github.com/codeplea/incbeta/issues/3
+        assert(a > 0);
+        assert(a > 0);
 
-        k1 = a;
-        k2 = a + b;
-        k3 = a;
-        k4 = a + 1.0;
-        k5 = 1.0;
-        k6 = b - 1.0;
-        k7 = k4;
-        k8 = a + 2.0;
+        if (x < 0.0 || x > 1.0)
+            return INFINITY; // modification due to https://github.com/codeplea/incbeta/issues/2
 
-        pkm2 = 0.0;
-        qkm2 = 1.0;
-        pkm1 = 1.0;
-        qkm1 = 1.0;
-        ans = 1.0;
-        r = 1.0;
-        n = 0;
-        thresh = 3.0 * MACHEP;
-        do
+        /*The continued fraction converges nicely for x < (a+1)/(a+b+2)*/
+        if (x > (a + 1.0) / (a + b + 2.0))
         {
+            return (1.0 - incbeta(b, a, 1.0 - x)); /*Use the fact that beta is symmetrical.*/
+        }
 
-            xk = -(x * k1 * k2) / (k3 * k4);
-            pk = pkm1 + pkm2 * xk;
-            qk = qkm1 + qkm2 * xk;
-            pkm2 = pkm1;
-            pkm1 = pk;
-            qkm2 = qkm1;
-            qkm1 = qk;
+        /*Find the first part before the continued fraction.*/
+        const double lbeta_ab = lgamma(a) + lgamma(b) - lgamma(a + b);
+        const double front = exp(log(x) * a + log(1.0 - x) * b - lbeta_ab) / a;
 
-            xk = (x * k5 * k6) / (k7 * k8);
-            pk = pkm1 + pkm2 * xk;
-            qk = qkm1 + qkm2 * xk;
-            pkm2 = pkm1;
-            pkm1 = pk;
-            qkm2 = qkm1;
-            qkm1 = qk;
+        /*Use Lentz's algorithm to evaluate the continued fraction.*/
+        double f = 1.0, c = 1.0, d = 0.0;
 
-            if (qk != 0)
-                r = pk / qk;
-            if (r != 0)
+        int i, m;
+        for (i = 0; i <= 200; ++i)
+        {
+            m = i / 2;
+
+            double numerator;
+            if (i == 0)
             {
-                t = fabs((ans - r) / r);
-                ans = r;
+                numerator = 1.0; /*First numerator is 1.0.*/
+            }
+            else if (i % 2 == 0)
+            {
+                numerator = (m * (b - m) * x) / ((a + 2.0 * m - 1.0) * (a + 2.0 * m)); /*Even term.*/
             }
             else
-                t = 1.0;
-
-            if (t < thresh)
-                goto cdone;
-
-            k1 += 1.0;
-            k2 += 1.0;
-            k3 += 2.0;
-            k4 += 2.0;
-            k5 += 1.0;
-            k6 -= 1.0;
-            k7 += 2.0;
-            k8 += 2.0;
-
-            if ((fabs(qk) + fabs(pk)) > big)
             {
-                pkm2 *= biginv;
-                pkm1 *= biginv;
-                qkm2 *= biginv;
-                qkm1 *= biginv;
+                numerator = -((a + m) * (a + b + m) * x) / ((a + 2.0 * m) * (a + 2.0 * m + 1)); /*Odd term.*/
             }
-            if ((fabs(qk) < biginv) || (fabs(pk) < biginv))
-            {
-                pkm2 *= big;
-                pkm1 *= big;
-                qkm2 *= big;
-                qkm1 *= big;
-            }
-        } while (++n < 300);
 
-    cdone:
-        return (ans);
+            /*Do an iteration of Lentz's algorithm.*/
+            d = 1.0 + numerator * d;
+            if (fabs(d) < TINY)
+                d = TINY;
+            d = 1.0 / d;
+
+            c = 1.0 + numerator / c;
+            if (fabs(c) < TINY)
+                c = TINY;
+
+            const double cd = c * d;
+            f *= cd;
+
+            /*Check for stop.*/
+            if (fabs(1.0 - cd) < STOP)
+            {
+                return front * (f - 1.0);
+            }
+        }
+
+        return INFINITY; /*Needed more loops, did not converge.*/
     }
 
-    /* Continued fraction expansion #2
-     * for incomplete beta integral
-     */
-
-    double incbd(double a, double b, double x)
+    double student_t_cdf(double t, double v)
     {
-        double xk, pk, pkm1, pkm2, qk, qkm1, qkm2;
-        double k1, k2, k3, k4, k5, k6, k7, k8;
-        double r, t, ans, z, thresh;
-        int n;
-
-        k1 = a;
-        k2 = b - 1.0;
-        k3 = a;
-        k4 = a + 1.0;
-        k5 = 1.0;
-        k6 = a + b;
-        k7 = a + 1.0;
-        ;
-        k8 = a + 2.0;
-
-        pkm2 = 0.0;
-        qkm2 = 1.0;
-        pkm1 = 1.0;
-        qkm1 = 1.0;
-        z = x / (1.0 - x);
-        ans = 1.0;
-        r = 1.0;
-        n = 0;
-        thresh = 3.0 * MACHEP;
-        do
-        {
-
-            xk = -(z * k1 * k2) / (k3 * k4);
-            pk = pkm1 + pkm2 * xk;
-            qk = qkm1 + qkm2 * xk;
-            pkm2 = pkm1;
-            pkm1 = pk;
-            qkm2 = qkm1;
-            qkm1 = qk;
-
-            xk = (z * k5 * k6) / (k7 * k8);
-            pk = pkm1 + pkm2 * xk;
-            qk = qkm1 + qkm2 * xk;
-            pkm2 = pkm1;
-            pkm1 = pk;
-            qkm2 = qkm1;
-            qkm1 = qk;
-
-            if (qk != 0)
-                r = pk / qk;
-            if (r != 0)
-            {
-                t = fabs((ans - r) / r);
-                ans = r;
-            }
-            else
-                t = 1.0;
-
-            if (t < thresh)
-                goto cdone;
-
-            k1 += 1.0;
-            k2 -= 1.0;
-            k3 += 2.0;
-            k4 += 2.0;
-            k5 += 1.0;
-            k6 += 1.0;
-            k7 += 2.0;
-            k8 += 2.0;
-
-            if ((fabs(qk) + fabs(pk)) > big)
-            {
-                pkm2 *= biginv;
-                pkm1 *= biginv;
-                qkm2 *= biginv;
-                qkm1 *= biginv;
-            }
-            if ((fabs(qk) < biginv) || (fabs(pk) < biginv))
-            {
-                pkm2 *= big;
-                pkm1 *= big;
-                qkm2 *= big;
-                qkm1 *= big;
-            }
-        } while (++n < 300);
-    cdone:
-        return (ans);
-    }
-
-    /* Power series for incomplete beta integral.
-       Use when b*x is small and x not too close to 1.  */
-
-    double pseries(double a, double b, double x)
-    {
-        double s, t, u, v, n, t1, z, ai;
-
-        ai = 1.0 / a;
-        u = (1.0 - b) * x;
-        v = u / (a + 1.0);
-        t1 = v;
-        t = u;
-        n = 2.0;
-        s = 0.0;
-        z = MACHEP * ai;
-        while (fabs(v) > z)
-        {
-            u = (n - b) * x / n;
-            t *= u;
-            v = t / (a + n);
-            s += v;
-            n += 1.0;
-        }
-        s += t1;
-        s += ai;
-
-        u = a * log(x);
-        if ((a + b) < MAXGAM && fabs(u) < MAXLOG)
-        {
-            t = tgamma(a + b) / (tgamma(a) * tgamma(b));
-            s = s * t * pow(x, a);
-        }
-        else
-        {
-            t = lgamma(a + b) - lgamma(a) - lgamma(b) + u + log(s);
-            if (t < MINLOG)
-                s = 0.0;
-            else
-                s = exp(t);
-        }
-        return (s);
+        /*The cumulative distribution function (CDF) for Student's t distribution*/
+        double x = (t + sqrt(t * t + v)) / (2.0 * sqrt(t * t + v));
+        double prob = incbeta(v / 2.0, v / 2.0, x);
+        return prob;
     }
 
     double incbi(double aa, double bb, double yy0)
     {
         double a, b, y0, d, y, x, x0, x1, lgm, yp, di, dithresh, yl, yh, xt;
-        int i, rflg, dir, nflg;
+        int i, dir;
+        bool rflag, nflag;
 
         i = 0;
         if (yy0 <= 0)
@@ -407,17 +196,17 @@ namespace cephes
         yl = 0.0;
         x1 = 1.0;
         yh = 1.0;
-        nflg = 0;
+        nflag = false;
 
         if (aa <= 1.0 || bb <= 1.0)
         {
             dithresh = 1.0e-6;
-            rflg = 0;
+            rflag = false;
             a = aa;
             b = bb;
             y0 = yy0;
             x = a / (a + b);
-            y = incbet(a, b, x);
+            y = incbeta(a, b, x);
             goto ihalve;
         }
         else
@@ -430,7 +219,7 @@ namespace cephes
 
         if (yy0 > 0.5)
         {
-            rflg = 1;
+            rflag = true;
             a = bb;
             b = aa;
             y0 = 1.0 - yy0;
@@ -438,7 +227,7 @@ namespace cephes
         }
         else
         {
-            rflg = 0;
+            rflag = false;
             a = aa;
             b = bb;
             y0 = yy0;
@@ -454,7 +243,7 @@ namespace cephes
             goto under;
         }
         x = a / (a + b * exp(d));
-        y = incbet(a, b, x);
+        y = incbeta(a, b, x);
         yp = (y - y0) / y0;
         if (fabs(yp) < 0.2)
             goto newt;
@@ -478,7 +267,7 @@ namespace cephes
                     if (x == 0.0)
                         goto under;
                 }
-                y = incbet(a, b, x);
+                y = incbeta(a, b, x);
                 yp = (x1 - x0) / (x1 + x0);
                 if (fabs(yp) < dithresh)
                     goto newt;
@@ -504,22 +293,22 @@ namespace cephes
                 dir += 1;
                 if (x0 > 0.75)
                 {
-                    if (rflg == 1)
+                    if (rflag)
                     {
-                        rflg = 0;
+                        rflag = false;
                         a = aa;
                         b = bb;
                         y0 = yy0;
                     }
                     else
                     {
-                        rflg = 1;
+                        rflag = true;
                         a = bb;
                         b = aa;
                         y0 = 1.0 - yy0;
                     }
                     x = 1.0 - x;
-                    y = incbet(a, b, x);
+                    y = incbeta(a, b, x);
                     x0 = 0.0;
                     yl = 0.0;
                     x1 = 1.0;
@@ -530,7 +319,7 @@ namespace cephes
             else
             {
                 x1 = x;
-                if (rflg == 1 && x1 < MACHEP)
+                if (rflag && x1 < MACHEP)
                 {
                     x = 0.0;
                     goto done;
@@ -566,16 +355,16 @@ namespace cephes
 
     newt:
 
-        if (nflg)
+        if (nflag)
             goto done;
-        nflg = 1;
+        nflag = true;
         lgm = lgamma(a + b) - lgamma(a) - lgamma(b);
 
         for (i = 0; i < 8; i++)
         {
             /* Compute the function at this point. */
             if (i != 0)
-                y = incbet(a, b, x);
+                y = incbeta(a, b, x);
             if (y < yl)
             {
                 x = x0;
@@ -632,7 +421,7 @@ namespace cephes
 
     done:
 
-        if (rflg)
+        if (rflag)
         {
             if (x <= MACHEP)
                 x = 1.0 - MACHEP;

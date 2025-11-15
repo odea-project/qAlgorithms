@@ -5,6 +5,9 @@
 // the parts of the library oriented towards outdated systems have been removed.
 // error handling for function input has been replaced by assertions.
 
+#ifndef CEPHES
+#define CEPHES
+
 namespace cephes
 {
     /**
@@ -86,6 +89,7 @@ namespace cephes
      * Cephes Math Library Release 2.8: June, 2000
      * Copyright 1984, 1987, 1995, 2000 by Stephen L. Moshier
      */
+    double F_density(const int df1, const int df2, const double alpha);
     double fdtri(int df1, int df2, double p);
 
     /**
@@ -117,27 +121,20 @@ namespace cephes
      * The integral is evaluated using either a continued fraction expansion
      * or, when b * x is small, by a power series.
      *
-     * @section accuracy Accuracy
-     * Tested at uniformly distributed random points (a,b,x) with a and b
-     * in the defined domain and x between 0 and 1.
-     *
-     * | arithmetic | domain   | # trials | Peak        | RMS         |
-     * |------------|----------|----------|-------------|-------------|
-     * | IEEE       | 0,5      | 10000    | 6.9e-15     | 4.5e-16     |
-     * | IEEE       | 0,85     | 250000   | 2.2e-13     | 1.7e-14     |
-     * | IEEE       | 0,1000   | 30000    | 5.3e-12     | 6.3e-13     |
-     * | IEEE       | 0,10000  | 250000   | 9.3e-11     | 7.1e-12     |
-     * | IEEE       | 0,100000 | 10000    | 8.7e-10     | 4.8e-11     |
-     *
-     * Outputs smaller than the IEEE gradual underflow threshold
-     * were excluded from these statistics.
-     *
+     * @section Accuracy
+     * @todo
      *
      * @note
-     * Cephes Math Library, Release 2.8: June, 2000
-     * Copyright 1984, 1995, 2000 by Stephen L. Moshier
+     * zlib License
+     *
+     * Regularized Incomplete Beta Function
+     *
+     * Copyright (c) 2016, 2017 Lewis Van Winkle
+     * http://CodePlea.com
      */
-    double incbet(double aa, double bb, double xx);
+    double incbeta(double a, double b, double x);
+
+    double student_t_cdf(double t, double v);
 
     /**
      * @brief Inverse of incomplete beta integral.
@@ -150,12 +147,12 @@ namespace cephes
      * @details
      * Given y, this function finds x such that:
      *
-     * incbet(a, b, x) = y.
+     * incbeta(a, b, x) = y.
      *
      * The routine performs interval halving or Newton iterations to find the
-     * root of incbet(a, b, x) - y = 0.
+     * root of incbeta(a, b, x) - y = 0.
      *
-     * @section accuracy Accuracy
+     * @section Accuracy
      *
      * | arithmetic | x    | a,b   | domain   | # trials | Peak        | RMS         |
      * |------------|------|-------|----------|----------|-------------|-------------|
@@ -216,3 +213,4 @@ namespace cephes
      */
     double ndtri(double y0);
 }
+#endif
