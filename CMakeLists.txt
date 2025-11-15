@@ -41,7 +41,6 @@ add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wform
 include_directories(include "external/simdutf/" "external/cephes")
 
 # Source files
-<<<<<<< HEAD
 file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp" "external/simdutf/simdutf.cpp" "external/cephes/cephes.cpp")
 # Remove test/main file(s) from the library list
 message(SOURCES="${SOURCES}")
