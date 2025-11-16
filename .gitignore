@@ -32,6 +32,8 @@ CMakeCache.txt
 CMakeFiles
 CMakeScripts
 Testing
+#ignore the test directory
+tests_bin 
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json

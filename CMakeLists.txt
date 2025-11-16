@@ -74,6 +74,13 @@ include(CTest)
 enable_testing()
 
 file(GLOB_RECURSE TESTFILES "${TESTS_DIR}/*.cpp")
+list(FILTER TESTFILES EXCLUDE REGEX ".*/test/shared/.*") # lets just assume that no one is stupid enough to have a second test/shared folder in this project
+
+# Make the shared test code into a small library
+file(GLOB_RECURSE TEST_SHARED_SOURCES "${TESTS_DIR}/shared/*.cpp")
+add_library(test_shared_lib STATIC ${TEST_SHARED_SOURCES})
+# TODO not sure which dirs we need to include here. 
+target_include_directories(test_shared_lib PUBLIC ${TESTS_DIR}/shared ${INCLUDE_DIR} ${EXTERNAL_DIR})
 
 # Now lets make the tests
 foreach(src IN LISTS TESTFILES)
@@ -85,7 +92,8 @@ foreach(src IN LISTS TESTFILES)
   message(NEW_TEST: "${target_name}")
 
   add_executable(${target_name} "${src}")
-  target_link_libraries(${target_name} PRIVATE qalgo_lib PUBLIC z)
+  set_target_properties(${target_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests_bin)
+  target_link_libraries(${target_name} PRIVATE qalgo_lib test_shared_lib PUBLIC z)
   add_test(NAME ${target_name} COMMAND ${target_name})
 endforeach()
 
