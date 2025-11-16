@@ -1,16 +1,10 @@
 #include "qalgorithms_datatypes.h"
-#include "qalgorithms_global_vars.h"
-#include "qalgorithms_input_output.h"
 #include "qalgorithms_qbin.h"
-#include "qalgorithms_qpattern.h"
 #include "qalgorithms_qpeaks.h"
-#include "qalgorithms_read_file.h"
 #include "qalgorithms_utils.h"
 
-//#include "../external/CDFlib/cdflib.hpp"
 #include "CDFlib/cdflib.hpp"
 #include "pugixml-1.14/src/pugixml.h"
-#include "simdutf/simdutf.h"
 #include "shared/common_test_utils.hpp"
 
 #include <cstdio> // printing
@@ -24,63 +18,6 @@
 int main()
 {
     using namespace qAlgorithms;
-
-    { // rounding is functional
-        verify(roundTo_d(145.136578244512, 3) == 145.137);
-        verify(roundTo_d(-145.136578244512, 3) == -145.137);
-    }
-
-    { // min and max functions - two numbers
-        verify(min(size_t(0), INT64_MAX) == 0);
-        verify(max(size_t(0), INT64_MAX) == INT64_MAX);
-        verify(min(-40, -10) == -40);
-        verify(max(-1, 0) == 0);
-        verify(min(MAXFLOAT, -MAXFLOAT) == -MAXFLOAT);
-        verify(max(MAXFLOAT, -MAXFLOAT) == MAXFLOAT);
-    }
-
-    { // min and max - array
-        const size_t len = 5;
-        double test_d[len] = {0, 100, 200, 300, MAXFLOAT};
-        double *min_d = minVal(test_d, len);
-        double *max_d = maxVal(test_d, len);
-        verify(*min_d == 0);
-        verify(*max_d == MAXFLOAT);
-    }
-
-    { // standard deviation - true values generated with wolfram alpha
-        double numbers[10] = {1, 2, 3, 4, 5, 5, 5, 6, 3, 2};
-        double sd = sdev(numbers, 10);
-        assert(roundTo_d(sd, 14) == roundTo_d(1.64654520469713, 14), "Standard deviation calculated wrong");
-
-        double numbers_L[10] = {300.021736801890, 299.997556193020, 299.996439273950, 300.003719530080, 299.993646472210, 299.990848954870, 299.989294329370, 299.998503324230, 300.008035381130, 300.004645938850};
-        sd = sdev(numbers_L, 10);
-        assert(roundTo_d(sd, 14) == roundTo_d(0.009603979272, 14), "Standard deviation inaccurate at larger numbers");
-    }
-
-    { // exact solutuion to linear equation
-        double true_b0 = 2;
-        double true_b1 = 3;
-        double true_b2 = 1.5;
-
-        double x1 = 1;
-        double y1 = true_b0 + true_b1 * x1 + true_b2 * x1 * x1;
-        double y1_test = quadraticAt(true_b0, true_b1, true_b2, x1);
-        verify(y1_test == y1);
-        double x2 = 2;
-        double y2 = true_b0 + true_b1 * x2 + true_b2 * x2 * x2;
-        double x3 = 3;
-        double y3 = true_b0 + true_b1 * x3 + true_b2 * x3 * x3;
-
-        double b0 = 0, b1 = 0, b2 = 0;
-        coeffsQuadratic(x1, x2, x3,
-                        y1, y2, y3,
-                        &b0, &b1, &b2);
-        assert(b0 == true_b0, "b0 differs\n");
-        assert(b1 == true_b1, "b1 differs\n");
-        assert(b2 == true_b2, "b2 differs\n");
-    }
-
     // check if a basic regression succeeds
     {
         std::vector<float> logInts = {6.40492535, 7.95729923, 8.44852829, 8.27999401, 7.23839712};

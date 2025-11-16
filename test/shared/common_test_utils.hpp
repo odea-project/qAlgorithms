@@ -18,7 +18,7 @@ inline void default_assertion_handler(const char *assertion_as_cstring, const ch
 {
 	const char *message_string = "Assertion Failed in File: %s::%d\n" 
                                  "Assertion: %s\n"
-                                 "Message: ";
+								 "Message:";
     va_list argument_list;
     va_start(argument_list, format_string);
 	// warnings dont matter, though we would usually want static checking for our format strings @TODO
@@ -28,7 +28,7 @@ inline void default_assertion_handler(const char *assertion_as_cstring, const ch
     putchar('\n'); // the format string will not contain a newline
 	exit(1);
 }
-#define verify(condition) assert(condition,"")
+#define verify(condition) assert(condition,"Verify Failed")
 #undef assert
 #define assert(cond, message, ...) \
     ((cond) ? (void)0 : default_assertion_handler(#cond, __FILE__, __LINE__, message __VA_OPT__(, ) __VA_ARGS__))
