@@ -1,8 +1,8 @@
 ## Usage Notice
 At this moment, `qAlgorithms` is provided purely for reasons of scientific transparency. There are
 still known flaws in the concrete implementation, and we are steadily working on finding a useful
-way to vaidate the rest in a sensible manner. For this reason, <b>you should not use `qAlgorithms`
-to answer your research questions<b> (yet). 
+way to vaidate the rest in a sensible manner. For this reason, **you should not use `qAlgorithms`
+to answer your research questions** (yet). 
 
 ## Introduction
 
