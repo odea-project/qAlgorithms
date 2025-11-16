@@ -30,6 +30,10 @@ add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wform
                     -Wshadow -Wnon-virtual-dtor -Wextra -Wcast-align -Wunused -Wduplicated-cond -Wduplicated-branches
                     -Wlogical-op -Wnull-dereference -Wuseless-cast -Wchanges-meaning) 
 
+# flags for static compile 
+# set(BUILD_SHARED_LIBS OFF)
+# set(CMAKE_EXE_LINKER_FLAGS "-static")
+
 # warnings that produce too much noise when building - @todo add these in eventually
 # add_compile_options(-Wdouble-promotion -Wconversion -Weffc++)
 # add_compile_options(-Wconversion)
@@ -37,25 +41,51 @@ add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wform
 # add_compile_options(-fsanitize=address) # @todo find a way to use this (not supported under mingw)
 # add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
+# lets make the directories into variables so we dont have to type CMAKE_CURRENT_SOURCE_DIR everywhere... 
+set(TESTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test"  )     # "Directory containing test files and shared test resources")
+set(EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")# "Directory containing external headers/libs")
+set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")       # "Directory containing the Source Files")
+set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")  # "Directory containing the Include Files")
+
 # Set include directories
-include_directories(include "external/simdutf/" "external/cephes")
+include_directories(include "external/simdutf/" "external/cephes")  #TODO this is terrible practice. Lets not do it
 
 # Source files
-file(GLOB_RECURSE SOURCES "src/*.cpp" "external/CDFlib/cdflib.cpp" "external/simdutf/simdutf.cpp" "external/cephes/cephes.cpp")
-# Remove test/main file(s) from the library list
-message(SOURCES="${SOURCES}")
-list(FILTER SOURCES EXCLUDE REGEX "qalgorithms_main\\.cpp")
-message(TRUE_SOURCES="${SOURCES}")
+# TODO we currently list external files manually. Thats not great. 
+file(GLOB_RECURSE SOURCES "${SOURCE_DIR}/*.cpp" "${EXTERNAL_DIR}/CDFlib/cdflib.cpp" "${EXTERNAL_DIR}/simdutf/simdutf.cpp" "${EXTERNAL_DIR}/cephes/cephes.cpp")
+list(FILTER SOURCES EXCLUDE REGEX "qalgorithms_main\\.cpp") # Remove test/main file(s) from the library list
 
-# flags for static compile 
-# set(BUILD_SHARED_LIBS OFF)
-# set(CMAKE_EXE_LINKER_FLAGS "-static")
+# Now we make a library from our sources that we can then link main.cpp and all the tests against
+add_library(qalgo_lib ${SOURCES})
+# Expose include dirs to consumers (app + tests)
+target_include_directories(qalgo_lib PUBLIC
+  ${INCLUDE_DIR}
+  ${TESTS_DIR}/shared
+  ${EXTERNAL_DIR}
+)
 
-# Add executable target
-add_executable(${PROJECT_NAME} ${SOURCES} "src/qalgorithms_main.cpp")
 
-add_executable(tests ${SOURCES} "tools/tests.cpp")
+# PROGRAM SOURCE
+add_executable(${PROJECT_NAME} "${SOURCE_DIR}/qalgorithms_main.cpp")
+target_link_libraries(${PROJECT_NAME} PUBLIC z PRIVATE qalgo_lib) # "z" is the linker flag for zlib
 
-# Linker flags
-target_link_libraries(${PROJECT_NAME} PUBLIC z) # "z" is the linker flag for zlib
-target_link_libraries(tests PUBLIC z) 
+# TESTS
+include(CTest)
+enable_testing()
+
+file(GLOB_RECURSE TESTFILES "${TESTS_DIR}/*.cpp")
+
+# Now lets make the tests
+foreach(src IN LISTS TESTFILES)
+  # create a unique target name from relative path under tests/
+  file(RELATIVE_PATH rel "${TESTS_DIR}" "${src}")
+  string(REPLACE "/" "_" rel_safe "${rel}") # replace / with _
+  string(REGEX REPLACE "\\.cpp$" "" rel_safe "${rel_safe}") # remove .cpp extension from filename
+  set(target_name "test_${rel_safe}")
+  message(NEW_TEST: "${target_name}")
+
+  add_executable(${target_name} "${src}")
+  target_link_libraries(${target_name} PRIVATE qalgo_lib PUBLIC z)
+  add_test(NAME ${target_name} COMMAND ${target_name})
+endforeach()
+
