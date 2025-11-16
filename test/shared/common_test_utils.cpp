@@ -3,7 +3,7 @@
 #include "common_test_utils.hpp"
 
 #include <cmath>
-#include <cstdio> // printing
+#include <stdint.h> // printing
 
 float ran0(long *idum)
 {
@@ -26,7 +26,6 @@ float ran0(long *idum)
     *idum ^= MASK;
     return ans;
 }
-
 
 // produce a random double value in the range (lower, upper). If no seed is supplied, the seed is also random
 double randRange_d(double lower, double upper, long seed)

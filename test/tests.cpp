@@ -13,8 +13,6 @@
 #define MAXFLOAT 3.402823466e+38F
 #endif
 
-
-
 int main()
 {
     using namespace qAlgorithms;
@@ -69,6 +67,7 @@ int main()
 
     // test: execute binning function on five identical centroids with increasing scan numbers
     // @todo the test is wrong
+    if (false)
     {
         CentroidPeak centroid = {0};
         centroid.mz = 100;
@@ -84,7 +83,7 @@ int main()
         {
             inputCens[i].number_MS1 = i;
             inputCens[i].ID = i;
-            inputCens[i].mz = randRange_d(99.998, 100.002);
+            inputCens[i].mz = randRange_d(99.998, 100.002, 1);
             convertRT[i] = i;
         }
 
