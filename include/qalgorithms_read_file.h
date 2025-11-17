@@ -107,6 +107,8 @@ namespace qAlgorithms
         std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices);
 
         void freeLinknodes();
+
+        check if centroids here
     };
 };
 

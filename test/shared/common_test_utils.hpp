@@ -4,6 +4,10 @@
 #include <ctime>
 #include <vector>
 
+#ifndef MAXFLOAT
+#define MAXFLOAT 3.402823466e+38F
+#endif
+
 inline void qassert(bool condition, size_t line, const char *message)
 {
     if (condition)

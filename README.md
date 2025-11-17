@@ -31,14 +31,18 @@ Here, we have also provided example files for trying out `qAlgorithms`.
 
 ### Windows
 The entire `qAlgorithms` workflow is provided as an executable under ["Releases"](https://github.com/odea-project/qAlgorithms/releases) 
-on our github repository. There is no need to download the source code.
+on our github repository. **There is no need to download or compile the source code.**
 
 On windows, double-clicking the .exe will open `qAlgorithms` in interactive mode. This mode
 is extremely primitive and not officially supported. 
 We recommend all users to start `qAlgorithms.exe` using powershell, which is pre-installed on all windows PCs.
 If you are unfamiliar with using the shell, refer to [the basic powershell demonstration for `qAlgorithms`](https://github.com/odea-project/qAlgorithms/wiki/Tutorial-for-Novice-Users).
 
-To build from source, follow the instructions for linux after installing [mingw](). 
+To build from source, follow the instructions for linux after installing [mingw](https://www.msys2.org/). After installation, run the command
+```sh
+pacman -Syu mingw-w64-x86_64-zlib
+```
+from the installed UCRT environment. 
 
 ### Linux / Mac
 Currently, no Linux releases are provided. We recommend you to clone the repository
@@ -90,7 +94,7 @@ file and saved to the "results" directory:
 Some things to keep in mind:
 * `qAlgorithms` can only process profile mode data at this point. We rely on uncertainty data 
   generated during centroiding for following steps and have not found a way to esitmate them so
-  far. The ability to process centroids will be added once that problem is solved
+  far. The ability to process centroids will be added once that problem is solved.
   
 * Check out the [Wiki page](https://github.com/odea-project/qAlgorithms/wiki/Questions-regarding-the-use-of-qAlgorithms) for more details on using `qAlgorithms`.
 * If you do not specify which results you want, no output will be written when using the command line interface.
@@ -111,7 +115,7 @@ The algorithms within `qAlgorithms` are rooted in well-established statistical
 tests and employ standard linear regression as the main problem solving strategy.
 This allows us to be fully deterministic without requiring the user to supply 
 and optimise algorithm parameters, which is a time-consuming and error-prone
-process which requires domain experts.
+process even for domain experts.
 
 While this design allows users to treat processing as a "black box", we always
 provide additional data which communicates which points a feature actually covers

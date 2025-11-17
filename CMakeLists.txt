@@ -42,13 +42,13 @@ add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wform
 # add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
 # lets make the directories into variables so we dont have to type CMAKE_CURRENT_SOURCE_DIR everywhere... 
-set(TESTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test"  )     # "Directory containing test files and shared test resources")
-set(EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")# "Directory containing external headers/libs")
-set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")       # "Directory containing the Source Files")
-set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")  # "Directory containing the Include Files")
+set(TESTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test")        # Directory containing test files and shared test resources
+set(EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external") # Directory containing external headers/libs
+set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")        # Directory containing the Source Files
+set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")   # Directory containing the Include Files
 
 # Set include directories
-include_directories(include "external/simdutf/" "external/cephes")  #TODO this is terrible practice. Lets not do it
+include_directories(include "external/simdutf/" "external/cephes")  # @todo this is terrible practice. Lets not do it
 
 # Source files
 # TODO we currently list external files manually. Thats not great. 
@@ -59,15 +59,22 @@ list(FILTER SOURCES EXCLUDE REGEX "qalgorithms_main\\.cpp") # Remove test/main f
 add_library(qalgo_lib ${SOURCES})
 # Expose include dirs to consumers (app + tests)
 target_include_directories(qalgo_lib PUBLIC
-  ${INCLUDE_DIR}
-  ${TESTS_DIR}/shared
-  ${EXTERNAL_DIR}
+    ${INCLUDE_DIR}
+    ${TESTS_DIR}/shared
+    ${EXTERNAL_DIR}
 )
 
+# link against zlib on windows (?) // does not work @todo
+if(WIN32)
+    set(ZLIB_INCLUDE_DIR "C:/msys64/ucrt64/include")
+    set(ZLIB_LIBRARY "C:/msys64/ucrt64/lib/libz.a")
+    set(ZLIB_USE_STATIC_LIBS "ON")
+endif()
+find_package(ZLIB REQUIRED)
 
 # PROGRAM SOURCE
 add_executable(${PROJECT_NAME} "${SOURCE_DIR}/qalgorithms_main.cpp")
-target_link_libraries(${PROJECT_NAME} PUBLIC z PRIVATE qalgo_lib) # "z" is the linker flag for zlib
+target_link_libraries(${PROJECT_NAME} qalgo_lib ZLIB::ZLIB) 
 
 # TESTS
 include(CTest)
@@ -84,16 +91,18 @@ target_include_directories(test_shared_lib PUBLIC ${TESTS_DIR}/shared ${INCLUDE_
 
 # Now lets make the tests
 foreach(src IN LISTS TESTFILES)
-  # create a unique target name from relative path under tests/
-  file(RELATIVE_PATH rel "${TESTS_DIR}" "${src}")
-  string(REPLACE "/" "_" rel_safe "${rel}") # replace / with _
-  string(REGEX REPLACE "\\.cpp$" "" rel_safe "${rel_safe}") # remove .cpp extension from filename
-  set(target_name "test_${rel_safe}")
-  message(NEW_TEST: "${target_name}")
+    # create a unique target name from relative path under tests/
+    file(RELATIVE_PATH rel "${TESTS_DIR}" "${src}")
+    string(REPLACE "/" "_" rel_safe "${rel}") # replace / with _
+    string(REGEX REPLACE "\\.cpp$" "" rel_safe "${rel_safe}") # remove .cpp extension from filename
+    set(target_name "test_${rel_safe}")
+    message(NEW_TEST: "${target_name}")
 
-  add_executable(${target_name} "${src}")
-  set_target_properties(${target_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests_bin)
-  target_link_libraries(${target_name} PRIVATE qalgo_lib test_shared_lib PUBLIC z)
-  add_test(NAME ${target_name} COMMAND ${target_name})
+    add_executable(${target_name} "${src}")
+    set_target_properties(${target_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests_bin)
+    target_link_libraries(${target_name} PRIVATE qalgo_lib test_shared_lib PUBLIC  ZLIB::ZLIB)
+    add_test(NAME ${target_name} COMMAND ${target_name})
 endforeach()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
