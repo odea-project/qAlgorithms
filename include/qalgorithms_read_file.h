@@ -108,7 +108,7 @@ namespace qAlgorithms
 
         void freeLinknodes();
 
-        check if centroids here
+        bool isCentroided();
     };
 };
 

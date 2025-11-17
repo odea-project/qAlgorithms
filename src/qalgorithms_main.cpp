@@ -393,15 +393,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        std::vector<bool> spectrum_mode = inputFile.get_spectra_mode(); // get spectrum mode (centroid or profile)
-        std::vector<int> spectrum_mode = inputFile.ge;
-
-        // cancel if data is centroided
-        int num_centroided_spectra = std::count(spectrum_mode.begin(), spectrum_mode.end(), false);
-
-        if (num_centroided_spectra > spectrum_mode.size() / 2) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
+        if (inputFile.isCentroided()) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
         {
-            std::cout << " file centroided, error\n";
             std::cerr << "Error: centroided data is not supported by qAlgorithms for the time being.\n";
             counter++;
             continue;
@@ -445,9 +438,7 @@ int main(int argc, char *argv[])
                 centroids->at(cenID).RT = rt_index.groups[realRT_idx].trueRT;
             }
 
-            // filterCentroids_mz(centroids, &filterRanges);
-
-            if (centroids->size() == 1) // one empty element is always pushed back.
+            if (centroids->empty())
             {
                 if (userArgs.verboseProgress)
                 {

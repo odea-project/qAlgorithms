@@ -589,4 +589,34 @@ namespace qAlgorithms
         indices.shrink_to_fit();
         return indices;
     }
+
+    bool XML_File::isCentroided()
+    {
+        size_t centroided = 0;
+        size_t profile = 0;
+
+        for (size_t i = 0; i < this->number_spectra; ++i)
+        {
+            pugi::xml_node spec = (*linknodes)[i];
+
+            pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
+            int level = level_node.attribute("value").as_int();
+            bool isMS1 = 1 == level;
+            if (!isMS1)
+                continue;
+
+            if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000128"))
+            {
+                profile += 1;
+                continue; // profile mode
+            }
+            centroided += 1;
+        }
+
+        if (centroided == 0)
+            return true;
+
+        if (profile / centroided < 2)
+            return false;
+    }
 }
