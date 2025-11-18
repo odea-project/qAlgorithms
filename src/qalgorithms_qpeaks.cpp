@@ -43,18 +43,14 @@ namespace qAlgorithms
         assert(endIdx > 0);
 
         std::vector<double> res;
+        res.reserve(endIdx - startIdx + 1);
 
         int idx = startIdx;
-        while (idx <= 0)
+        for (size_t idx = startIdx; idx <= endIdx; idx++)
         {
-            res.push_back(regExpAt_L(reg, idx));
-            idx += 1;
+            res.push_back(regExpAt(reg, idx));
         }
-        while (idx <= endIdx)
-        {
-            res.push_back(regExpAt_R(reg, idx));
-            idx += 1;
-        }
+
         return res;
     }
 
@@ -1337,23 +1333,10 @@ namespace qAlgorithms
     {
         const size_t idxCenter = mutateReg->coeffs.x0;
         double RSS = 0.0;
-        // left side
-        for (size_t idx = mutateReg->regSpan.startIdx; idx < idxCenter; idx++)
+        for (size_t idx = mutateReg->regSpan.startIdx; idx < mutateReg->regSpan.endIdx + 1; idx++)
         {
             double new_x = -1 * double(idxCenter - idx);
-            double y_predict = regAt_L(&mutateReg->coeffs, new_x);
-            double difference = y_start->at(idx) - y_predict;
-
-            RSS += difference * difference;
-        }
-        // center point
-        RSS += (y_start->at(idxCenter) - mutateReg->coeffs.b0) * (y_start->at(idxCenter) - mutateReg->coeffs.b0); // x = 0 -> (b0 - y)^2
-
-        // right side
-        for (size_t idx = idxCenter + 1; idx < mutateReg->regSpan.endIdx + 1; idx++) // iSegment = 0 is center point calculated above
-        {
-            double new_x = double(idx - idxCenter);
-            double y_predict = regAt_R(&mutateReg->coeffs, new_x);
+            double y_predict = regAt(&mutateReg->coeffs, new_x);
             double difference = y_start->at(idx) - y_predict;
 
             RSS += difference * difference;
@@ -1436,21 +1419,10 @@ namespace qAlgorithms
     { // @todo this does not account for asymmetric RT distances, will that be a problem?
         size_t idxCenter = coeff->x0;
         double result = 0.0;
-        // left side
-        for (size_t iSegment = regSpan->startIdx; iSegment < idxCenter; iSegment++)
+        for (size_t iSegment = regSpan->startIdx; iSegment < regSpan->endIdx + 1; iSegment++)
         {
             double new_x = double(iSegment) - double(idxCenter); // always negative
-            double y_predict = regExpAt_L(coeff, new_x);
-            double y_current = (*y_start)[iSegment];
-            double newdiff = (y_current - y_predict) * (y_current - y_predict);
-            result += newdiff;
-        }
-        result += ((*y_start)[idxCenter] - exp_approx_d(coeff->b0)) * ((*y_start)[idxCenter] - exp_approx_d(coeff->b0)); // x = 0 -> (b0 - y)^2
-        // right side
-        for (size_t iSegment = idxCenter + 1; iSegment < regSpan->endIdx + 1; iSegment++) // start one past the center, include right limit index
-        {
-            double new_x = double(iSegment) - double(idxCenter); // always positive
-            double y_predict = regExpAt_R(coeff, new_x);
+            double y_predict = regExpAt(coeff, new_x);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
             result += newdiff;
@@ -1462,23 +1434,10 @@ namespace qAlgorithms
     {
         double result = 0.0;
         const size_t x0 = mutateReg->coeffs.x0;
-        // left side
-        for (size_t iSegment = mutateReg->regSpan.startIdx; iSegment < x0; iSegment++)
+        for (size_t iSegment = mutateReg->regSpan.startIdx; iSegment < mutateReg->regSpan.endIdx + 1; iSegment++)
         {
             double new_x = double(iSegment) - double(x0);
-            double y_predict = regExpAt_L(&mutateReg->coeffs, new_x);
-            double y_current = (*y_start)[iSegment];
-            double newdiff = (y_current - y_predict) * (y_current - y_predict);
-            result += newdiff / y_predict;
-        }
-        // center point, x = 0 -> (b0 - y)^2
-        double exp_b0 = exp_approx_d(mutateReg->coeffs.b0);
-        result += (((*y_start)[x0] - exp_b0) * ((*y_start)[x0] - exp_b0)) / exp_b0;
-
-        for (size_t iSegment = x0 + 1; iSegment < mutateReg->regSpan.endIdx + 1; iSegment++) // iSegment = 0 is center point (calculated above)
-        {
-            double new_x = double(iSegment) - double(x0);
-            double y_predict = regExpAt_R(&mutateReg->coeffs, new_x);
+            double y_predict = regExpAt(&mutateReg->coeffs, new_x);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
             result += newdiff / y_predict;
@@ -2338,28 +2297,10 @@ namespace qAlgorithms
         return maxRangeSpan;
     }
 
-    double regAt_L(const RegCoeffs *coeff, const double x)
-    {
-        return coeff->b0 + (coeff->b1 + x * coeff->b2) * x;
-    }
-    double regAt_R(const RegCoeffs *coeff, const double x)
-    {
-        return coeff->b0 + (coeff->b1 + x * coeff->b3) * x;
-    }
-    // @todo use the generic function
     double regAt(const RegCoeffs *coeff, const double x)
     {
         double b23 = x < 0 ? coeff->b2 : coeff->b3;
         return coeff->b0 + (coeff->b1 + x * b23) * x;
-    }
-
-    double regExpAt_L(const RegCoeffs *coeff, const double x)
-    {
-        return exp_approx_d(coeff->b0 + (coeff->b1 + x * coeff->b2) * x);
-    }
-    double regExpAt_R(const RegCoeffs *coeff, const double x)
-    {
-        return exp_approx_d(coeff->b0 + (coeff->b1 + x * coeff->b3) * x);
     }
 
     double regExpAt(const RegCoeffs *coeff, const double x)

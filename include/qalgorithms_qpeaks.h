@@ -247,10 +247,8 @@ namespace qAlgorithms
                                         const Range_i regSpan);
 
     // utility functions for calculating regression values
-    double regAt_L(const RegCoeffs *coeff, const double x);
-    double regAt_R(const RegCoeffs *coeff, const double x);
-    double regExpAt_L(const RegCoeffs *coeff, const double x);
-    double regExpAt_R(const RegCoeffs *coeff, const double x);
+    double regAt(const RegCoeffs *coeff, const double x);
+    double regExpAt(const RegCoeffs *coeff, const double x);
 
     double medianVec(const std::vector<float> *vec);
 
