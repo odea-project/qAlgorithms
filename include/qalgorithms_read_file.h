@@ -60,7 +60,7 @@ namespace qAlgorithms
     private:
         std::vector<BinaryMetadata> spectra_binary_metadata;
 
-        BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
+        BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin, int *warn);
 
         double extract_scan_RT(const pugi::xml_node &spec);
 

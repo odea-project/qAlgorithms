@@ -141,9 +141,10 @@ namespace qAlgorithms
 
             size_t counter = 0;
 
+            int warn = 0;
             for (const pugi::xml_node &bin : binary_list.children("binaryDataArray"))
             {
-                BinaryMetadata mtd = extract_binary_metadata(bin);
+                BinaryMetadata mtd = extract_binary_metadata(bin, &warn);
 
                 mtd.index = counter;
 
@@ -151,6 +152,9 @@ namespace qAlgorithms
 
                 counter++;
             }
+            if (warn == 1)
+                fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
+
             number_spectra_binary_arrays = counter;
         }
 
@@ -164,7 +168,7 @@ namespace qAlgorithms
         linknodes = spectra;
     };
 
-    BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin)
+    BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin, int *warn)
     {
         BinaryMetadata mtd;
 
@@ -179,16 +183,16 @@ namespace qAlgorithms
         }
         else if (node_float_32)
         {
-            std::cerr << "Warning: it is unexpected that data is stored as 32-bit float.\n";
+            *warn = *warn == 0 ? 1 : *warn;
             mtd.isDouble = false;
         }
-        else if (node_integer_64)
+        else if (node_integer_64) // @todo this is not necessarily equivalent
         {
             mtd.isDouble = true;
         }
         else if (node_integer_32)
         {
-            // std::cerr << "Warning: it is unexpected that data is stored as 32-bit float.\n";
+            *warn = *warn == 0 ? 1 : *warn;
             mtd.isDouble = false;
         }
         else
