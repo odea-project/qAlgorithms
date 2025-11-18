@@ -774,6 +774,33 @@ namespace qAlgorithms
 
     void updateRegRange(RegressionGauss *mutateReg, const double valleyPos);
 
+    double correctLogBias(const std::vector<float> *intensities, const RegCoeffs *coeff)
+    {
+        // problem: after the log transform, regression residuals are not directly transferable to
+        // the retransformed model. The error Err of the log model is: y_log = b0 + b1 * x + b23 * x^2 + Err
+        // (b23 depending on the regression half). After the exponential retransform, the error term is exp(Err)
+        // refer to: https://doi.org/10.1002/etc.5620120618
+        // as follows from eq. 9, the error for the coefficients is log(sum(exp(residual_(0:n))) / n)
+
+        // this function calculates the error term for a given set of regression coefficients
+
+        double expError = 0;
+        int start = coeff->x0 - coeff->scale;
+        int end = coeff->x0 + coeff->scale;
+        for (int i = start; i <= end; i++)
+        {
+            double xval = i - coeff->x0;
+            double reg = regExpAt(coeff, xval);
+            double real = intensities->at(i);
+            double residual = real - reg;
+            expError = exp(residual);
+        }
+        expError /= intensities->size();
+        double bias = log(expError);
+
+        return bias;
+    }
+
     int makeValidRegression( // returns the number of the failed test
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
@@ -795,13 +822,6 @@ namespace qAlgorithms
         {
             return 1;
         }
-
-        // the model parameters can only be calculated if the coefficients are significantly different from 0
-        // significance is determined as the precision of float as the intermediate storage representation here
-        // if (std::abs(mutateReg->coeffs.b2) < 10e-8 || std::abs(mutateReg->coeffs.b3) < 10e-8)
-        // {
-        //     return 1;
-        // }
 
         /*
           Apex and Valley Position Filter:

@@ -99,6 +99,8 @@ namespace qAlgorithms
         std::vector<RegressionGauss> *validRegressions,
         const size_t maxScale);
 
+    double correctLogBias(const std::vector<float> *intensities, const RegCoeffs *coeff);
+
     int makeValidRegression(
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
