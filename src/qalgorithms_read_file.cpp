@@ -614,9 +614,14 @@ namespace qAlgorithms
         }
 
         if (centroided == 0)
+            return false;
+
+        if (profile == 0)
             return true;
 
         if (profile / centroided < 2)
-            return false;
+            return true;
+
+        return false;
     }
 }
