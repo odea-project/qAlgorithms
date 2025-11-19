@@ -1,5 +1,4 @@
 #include "qalgorithms_utils.h"
-#include "qalgorithms_global_vars.h"
 #include <cstdint> // uint64_t
 #include <cmath>   // std::abs()
 #include <cassert>
@@ -10,17 +9,27 @@
 
 namespace qAlgorithms
 {
+    bool F_test_regs(const double RSS_complex, const double RSS_simple,
+                     const double params_complex, const double params_simple,
+                     const double n, const double alpha)
+    {
+        const double fval = F_value(RSS_complex, RSS_simple, params_complex, params_simple, n);
+        const double F_refval = F_stat(alpha, params_complex, params_simple, n);
+        const bool f_ok = fval > F_refval; // reject H0, complex regression is significantly better than simple model
+        return f_ok;
+    }
+
     size_t hashm(int a, int b)
     {
         size_t a2 = a;
         a2 = a2 << __INT_WIDTH__;
         return a2 | b;
     }
-    // this global hashmap is used to avoid recalculating the f value every time
+    // this global hashmap is used to avoid recalculating the f value every time - better solution possible? @todo
     std::unordered_map<size_t, double> global_fhash_5perc;
 
     // @todo separate out the library functions into something better readable with less flexible error checking
-    double cdflib_F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints)
+    double F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints)
     {
         // wrapper around the cdflib library function cdff with the correct presets
         // for calculating the area of F from 0 to 1 - alpha.
@@ -62,18 +71,19 @@ namespace qAlgorithms
         return F;
     }
 
-    double f_value(const double RSS_model, const double RSS_H0,
-                   const size_t params_model, const size_t params_H0,
-                   const size_t n)
+    double F_value(const double RSS_complex, const double RSS_simple,
+                   const double params_complex, const double params_simple,
+                   const double n)
     {
         // Calculate F value of two models by their residual sum of squares (RSS) and number of regression
         // parameters (params). H0 is the model being compared against. n is the number of real points
         // both regressions are applied to. Refer to https://en.wikipedia.org/wiki/F-test#Regression_problems
-        assert(params_model > params_H0);
-        assert(RSS_model > 0);
-        assert(RSS_H0 > 0);
-        double RSS_ratio = (RSS_H0 - RSS_model) / RSS_model;
-        double params_ratio = double(n - params_model) / double(params_model - params_H0);
+        assert(params_complex > params_simple);
+        assert(RSS_complex > 0);
+        assert(RSS_simple > 0);
+        assert(n > 1);
+        double RSS_ratio = (RSS_simple - RSS_complex) / RSS_complex;
+        double params_ratio = (n - params_complex) / (params_complex - params_simple);
         return RSS_ratio * params_ratio;
     }
 
@@ -240,8 +250,11 @@ namespace qAlgorithms
     }
 
     // critical order space of two normally distributed populations
-    double binningCritVal(unsigned int n, double stdDev)
+    double binningCritVal(const int n, const double stdDev)
     {
+        // these values are determined empirically (see https://github.com/GeRe87/OS_critVal)
+        const double OS_CRIT_A = 0.1443340625173891;
+        const double OS_CRIT_B = 3.2412322699344687;
         return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
     }
 

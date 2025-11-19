@@ -1,6 +1,5 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_utils.h"
-#include "qalgorithms_global_vars.h"
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_read_file.h" // @todo remove coupling
 
@@ -45,8 +44,7 @@ namespace qAlgorithms
         std::vector<double> res;
         res.reserve(endIdx - startIdx + 1);
 
-        int idx = startIdx;
-        for (size_t idx = startIdx; idx <= endIdx; idx++)
+        for (int idx = startIdx; idx <= endIdx; idx++)
         {
             res.push_back(regExpAt(reg, idx));
         }
@@ -1335,7 +1333,7 @@ namespace qAlgorithms
         double RSS = 0.0;
         for (size_t idx = mutateReg->regSpan.startIdx; idx < mutateReg->regSpan.endIdx + 1; idx++)
         {
-            double new_x = -1 * double(idxCenter - idx);
+            double new_x = double(idx) - double(idxCenter);
             double y_predict = regAt(&mutateReg->coeffs, new_x);
             double difference = y_start->at(idx) - y_predict;
 
@@ -1395,33 +1393,31 @@ namespace qAlgorithms
     {
         // during the tests, the RSS for the regression has already been calculated in calcRSS_reg
         assert(RSS_reg > 0);
+        const size_t length = rangeLen(range);
+        double RSS_H0;
+        bool f_ok;
 
-        { // test against mean
-            double RSS_H0 = calcRSS_H0_cf1(observed, range);
-            double fval = f_value(RSS_reg, RSS_H0, 4, 1, observed->size());
-            const size_t length = rangeLen(range);
-            double F_refval = cdflib_F_stat(0.05, 4, 1, length);
-            bool f_ok = fval > F_refval; // reject H0, significant difference from y = b
-            if (!f_ok)
-                return false;
-        }
-        { // test against straight line
-            double RSS_H0 = calcRSS_H0_cf2(observed, range);
-            double fval = f_value(RSS_reg, RSS_H0, 4, 2, observed->size());
-            const size_t length = rangeLen(range);
-            double F_refval = cdflib_F_stat(0.05, 4, 2, length);
-            bool f_ok = fval > F_refval; // reject H0, significant difference from y = b0 + b1 * x
-            return f_ok;
-        }
+        RSS_H0 = calcRSS_H0_cf1(observed, range); // y = b
+        f_ok = F_test_regs(RSS_reg, RSS_H0, 4, 1, length, 0.05);
+        if (!f_ok)
+            return false;
+
+        RSS_H0 = calcRSS_H0_cf2(observed, range); // y = b0 + b1 * x
+        f_ok = F_test_regs(RSS_reg, RSS_H0, 4, 1, length, 0.05);
+        if (!f_ok)
+            return false; // reject H0, significant difference from
+
+        // no alternatives were accepted
+        return true;
     }
 
     double calcSSE_exp(const RegCoeffs *coeff, const std::vector<float> *y_start, const Range_i *regSpan)
     { // @todo this does not account for asymmetric RT distances, will that be a problem?
-        size_t idxCenter = coeff->x0;
+        double idxCenter = double(coeff->x0);
         double result = 0.0;
         for (size_t iSegment = regSpan->startIdx; iSegment < regSpan->endIdx + 1; iSegment++)
         {
-            double new_x = double(iSegment) - double(idxCenter); // always negative
+            double new_x = double(iSegment) - idxCenter;
             double y_predict = regExpAt(coeff, new_x);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
@@ -1433,14 +1429,14 @@ namespace qAlgorithms
     double calcSSE_chisqared(const RegressionGauss *mutateReg, const std::vector<float> *y_start)
     {
         double result = 0.0;
-        const size_t x0 = mutateReg->coeffs.x0;
+        const double idxCenter = mutateReg->coeffs.x0;
         for (size_t iSegment = mutateReg->regSpan.startIdx; iSegment < mutateReg->regSpan.endIdx + 1; iSegment++)
         {
-            double new_x = double(iSegment) - double(x0);
+            double new_x = double(iSegment) - idxCenter;
             double y_predict = regExpAt(&mutateReg->coeffs, new_x);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
-            result += newdiff / y_predict;
+            result += newdiff / y_predict; // this part is different from the above function, do not try to merge them!
         }
         return result;
     }

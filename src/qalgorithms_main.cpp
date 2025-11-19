@@ -3,7 +3,6 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_qbin.h"
 #include "qalgorithms_qpattern.h"
-#include "qalgorithms_global_vars.h"
 #include "qalgorithms_input_output.h"
 #include "qalgorithms_metafiles.h" // new organisation of program - this and the library header should be the only two qalgo includes!
 #include "qalgorithms_read_file.h"
@@ -300,6 +299,7 @@ int main(int argc, char *argv[])
     volatile bool debug = true;
     if (debug)
     {
+        size_t failcount = 0;
         std::vector<RegressionGauss> validRegressions;
         while (validRegressions.empty())
         {
@@ -315,6 +315,7 @@ int main(int argc, char *argv[])
             std::vector<float> logIntensity;
             logIntensity.reserve(length);
             runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale);
+            assert(failcount < 1000);
         }
     }
 

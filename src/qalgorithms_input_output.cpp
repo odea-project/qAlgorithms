@@ -9,7 +9,6 @@
 
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_input_output.h"
-#include "qalgorithms_global_vars.h"
 
 #include "qalgorithms_qpattern.h" // @todo move the multiregression struct into datatypes once it no longer changes regularly
 

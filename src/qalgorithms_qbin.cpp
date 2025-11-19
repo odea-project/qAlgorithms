@@ -1,5 +1,4 @@
 #include "qalgorithms_qbin.h"
-#include "qalgorithms_global_vars.h"
 #include "qalgorithms_utils.h"
 
 #include <cassert>

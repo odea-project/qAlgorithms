@@ -2,7 +2,6 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_qpattern.h"
 #include "qalgorithms_datatypes.h"
-#include "qalgorithms_global_vars.h"
 // temporary dependencies
 #include "./../external/CDFlib/cdflib.hpp"
 
