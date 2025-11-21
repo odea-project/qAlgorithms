@@ -430,9 +430,9 @@ int main(int argc, char *argv[])
             RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-            *centroids = findCentroids(inputFile, &selectedIndices); // it is guaranteed that only profile mode data is used
+            int centroidCount = findCentroids(inputFile, &selectedIndices, centroids); // it is guaranteed that only profile mode data is used
 
-            for (size_t cenID = 1; cenID < centroids->size(); cenID++) // dummy value at idx 0 @todo
+            for (size_t cenID = 1; cenID < centroidCount; cenID++) // dummy value at idx 0 @todo
             {
                 size_t scanNumber = centroids->at(cenID).number_MS1;
                 size_t realRT_idx = rt_index.indexOfOriginalInInterpolated[scanNumber];
@@ -486,11 +486,10 @@ int main(int argc, char *argv[])
             }
 
             assert(!centroids->empty());
-            size_t centroidCount = centroids->size() - 1; // added noise value
 
             // find lowest intensity among all centroids to use as baseline during componentisation
             float minCenArea = INFINITY;
-            for (size_t cenID = 1; cenID < centroids->size(); cenID++)
+            for (size_t cenID = 1; cenID < centroidCount; cenID++)
             {
                 float currentInt = centroids->at(cenID).area;
                 minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
@@ -499,7 +498,7 @@ int main(int argc, char *argv[])
 
             double meanDQSC = 0;
 
-            for (size_t i = 1; i < centroids->size() - 1; i++)
+            for (size_t i = 1; i < centroidCount - 1; i++)
             {
                 // correlate centroid error with nearest neighbour distance in one scan somehow?
                 meanDQSC += centroids->at(i).DQSC;
@@ -511,8 +510,8 @@ int main(int argc, char *argv[])
 
             if (!userArgs.silent)
             {
-                std::cout << "    produced " << centroidCount - 1 << " centroids from " << totalScans
-                          << " spectra in " << timePassed.count() << " s\n";
+                printf("    produced %d centroids from %zu spectra in %f s\n",
+                       centroidCount, totalScans, timePassed.count());
             }
 
 #pragma region "binning"

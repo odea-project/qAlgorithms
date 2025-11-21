@@ -2118,9 +2118,9 @@ namespace qAlgorithms
         return sum / (retention_times->size() - 1);
     }
 
-    std::vector<CentroidPeak> findCentroids( // this function needs to be reworked further
-        XML_File &data,                      // @todo get rid of the direct coupling to pugixml
-        const std::vector<unsigned int> *selectedIndices)
+    int findCentroids(XML_File &data, // @todo get rid of the direct coupling to pugixml
+                      const std::vector<unsigned int> *selectedIndices,
+                      std::vector<CentroidPeak> *centroids)
     /* ### allocations ###
         spectrum_mz: size unknown at time of function call
         spectrum_int: same as spectrum_mz
@@ -2134,9 +2134,6 @@ namespace qAlgorithms
     */
     {
         const size_t countSelected = selectedIndices->size();
-
-        std::vector<CentroidPeak> centroids;
-        centroids.reserve(countSelected * 100);
 
         std::vector<double> spectrum_mz(1000);
         std::vector<double> spectrum_int(1000);
@@ -2173,7 +2170,7 @@ namespace qAlgorithms
 
             volatile bool debug = false;
             if (debug)
-                centroids.clear();
+                centroids->clear();
 #endif
             // @todo every group is just an index range into three same-length vectors if we do not
             // perform interpolation. The "ProfileBlock" struct is unnecessary.
@@ -2181,16 +2178,16 @@ namespace qAlgorithms
             if (maxWindowSize == 0) // this is also relevant to filtering, add a warning if no filter?
                 continue;
 
-            findCentroidPeaks(&centroids, &groupedData, i, ID_spectrum, maxWindowSize);
+            findCentroidPeaks(centroids, &groupedData, i, ID_spectrum, maxWindowSize);
 
             if (debug)
             {
                 // write a file with the processed spectrum and the assumed intensity
                 // profile of the finalised centroids
                 std::vector<double> predictedInt(spectrum_mz.size(), 0);
-                for (size_t db = 0; db < centroids.size(); db++)
+                for (size_t db = 0; db < centroids->size(); db++)
                 {
-                    CentroidPeak cen = centroids[db];
+                    CentroidPeak cen = centroids->at(db);
                     size_t idxStart = cen.trace.start;
                     size_t idxEnd = cen.trace.end;
                     assert(predictedInt[idxStart] == 0);
@@ -2199,12 +2196,12 @@ namespace qAlgorithms
                 }
             }
         }
-        for (unsigned int i = 0; i < centroids.size(); i++)
+        for (unsigned int i = 0; i < centroids->size(); i++)
         {
-            centroids[i].ID = i;
+            centroids->at(i).ID = i;
         }
 
-        return centroids;
+        return centroids->size();
     }
 
     size_t pretreatDataCentroids(

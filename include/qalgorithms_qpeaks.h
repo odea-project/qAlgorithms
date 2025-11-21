@@ -112,9 +112,9 @@ namespace qAlgorithms
 
     // ### Centroiding-specific Code ### //
 
-    std::vector<CentroidPeak> findCentroids(
-        XML_File &data, // @todo replace with custom struct for a generic parsed file
-        const std::vector<unsigned int> *selectedIndices);
+    int findCentroids(XML_File &data, // @todo get rid of the direct coupling to pugixml
+                      const std::vector<unsigned int> *selectedIndices,
+                      std::vector<CentroidPeak> *centroids);
 
     size_t pretreatDataCentroids(
         std::vector<ProfileBlock> *groupedData,
