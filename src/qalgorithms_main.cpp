@@ -4,7 +4,6 @@
 #include "qalgorithms_qbin.h"
 #include "qalgorithms_qpattern.h"
 #include "qalgorithms_input_output.h"
-#include "qalgorithms_metafiles.h" // new organisation of program - this and the library header should be the only two qalgo includes!
 #include "qalgorithms_read_file.h"
 // #include "qalgorithms_measurement_data.h"
 
@@ -254,42 +253,6 @@ namespace qAlgorithms
         }
         return removedCount;
     }
-}
-
-int main2(int argc, char *argv[])
-{
-    using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
-
-    UserInputSettings userArgs = passCliArgs(argc, argv);
-
-    if (!inputsAreSensible(userArgs))
-    {
-        exit(1);
-    }
-
-    bool argument_for_making_a_tasklist = false;
-    if (argument_for_making_a_tasklist)
-    {
-        // make the tasklist
-        std::cout << "### qAlgorithms successfully created a tasklist at " << "TASKLIST PATH HERE!" << " ###\n";
-        exit(0);
-    }
-
-    std::vector<TaskItem_action> actions;
-    std::vector<TaskItem_data> data;
-
-    // auto polarity_file = inputFile.get_polarity_mode(100); // checks first 100 spectra
-    Polarities polarity_file = unknown_polarity;
-    if (polarity_file == Polarities::positive || polarity_file == Polarities::mixed)
-    {
-        /* this does the processing for positive files - keep it to the function call and handle logging / output through master function arguments */
-    }
-    if (polarity_file == Polarities::negative || polarity_file == Polarities::mixed)
-    {
-        // see above
-    }
-
-    return 0;
 }
 
 int main(int argc, char *argv[])
