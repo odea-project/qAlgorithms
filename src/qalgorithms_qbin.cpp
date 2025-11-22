@@ -456,7 +456,7 @@ namespace qAlgorithms
         return res;
     }
 
-    const std::vector<double> makeOrderSpace(const Bin *bin)
+    std::vector<double> makeOrderSpace(const Bin *bin)
     {
         // this function assumes that the centroids are sorted by mz
         auto points = bin->pointsInBin;
@@ -470,15 +470,15 @@ namespace qAlgorithms
         return OS;
     }
 
-    const std::vector<double> makeCumError(const std::vector<const qAlgorithms::CentroidPeak *> *bin)
+    std::vector<double> makeCumError(const std::vector<const qAlgorithms::CentroidPeak *> *bin)
     {
         std::vector<double> cumError;
         cumError.reserve(bin->size());
-        for (size_t i = 0; i < bin->size(); i++)
+        cumError.push_back(bin->front()->mzUncertainty);
+        for (size_t i = 1; i < bin->size(); i++)
         {
-            cumError.push_back(bin->at(i)->mzUncertainty);
+            cumError.push_back(bin->at(i)->mzUncertainty + cumError[i - 1]);
         }
-        std::partial_sum(cumError.begin(), cumError.end(), cumError.begin()); // cumulative sum
         return cumError;
     }
 
@@ -512,8 +512,6 @@ namespace qAlgorithms
                     notInBins->push_back(pointsInSourceBin->at(i));
                     pointsProcessed += 1;
                 }
-
-                // printf("region: %zu : %zu | add to notInBins\n", range.startIdx, range.endIdx);
                 continue;
             }
 
@@ -540,7 +538,6 @@ namespace qAlgorithms
                 pointsProcessed += output.pointsInBin.size();
                 bincontainer->push_back(output);
 
-                // printf("region: %zu : %zu | add to Bin\n", range.startIdx, range.endIdx);
                 continue;
             }
 
@@ -548,19 +545,15 @@ namespace qAlgorithms
 
             {
                 assert(cutpos >= range.startIdx);
-                // printf("region: %zu : %zu | add to Stack\n", range.startIdx, cutpos);
                 stack->push_back({range.startIdx, cutpos});
             }
             {
                 assert(cutpos < range.endIdx);
-                // printf("region: %zu : %zu | add to Stack\n", cutpos + 1, range.endIdx);
                 stack->push_back({cutpos + 1, range.endIdx});
             }
-            assert(pointsProcessed < pointsInSourceBin->size());
         }
         assert(pointsProcessed == pointsInSourceBin->size());
 
-        // printf("completed one stack of mz subsets\n");
         return 0;
     }
 

@@ -255,6 +255,11 @@ namespace qAlgorithms
     }
 }
 
+struct Filepath
+{
+    std::filesystem::path path;
+};
+
 int main(int argc, char *argv[])
 {
     using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
@@ -292,47 +297,30 @@ int main(int argc, char *argv[])
     // auto filterRanges = processFilters(&pfasFilter, true); // @todo make optional
 
     // the final task list contains only unique files, sorted by filesize
-    std::vector<std::filesystem::__cxx11::path> tasklist = controlInput(&userArgs.inputPaths);
+    std::vector<std::filesystem::path> tasklist = controlInput(&userArgs.inputPaths);
     if (tasklist.size() <= userArgs.skipAhead)
     {
         std::cerr << "Error: skipped more entries than were in taks list (" << tasklist.size() << ").\n";
         exit(1);
     }
+
+    size_t skipAhead = userArgs.skipAhead;
     if (userArgs.skipAhead != 0)
     {
         std::cerr << "Warning: removing the first " << userArgs.skipAhead << " elements from the tasklist.\n";
-        tasklist.erase(tasklist.begin(), tasklist.begin() + userArgs.skipAhead);
     }
 
     auto absoluteStart = std::chrono::high_resolution_clock::now();
-
-    // Temporary diagnostics file creation, rework this into the log function?
-    std::filesystem::path pathLogging{argv[0]};
-    // std::string logfileName = "log_qAlgorithms.csv";
-    // pathLogging = std::filesystem::canonical(pathLogging.parent_path());
-    // pathLogging = logfileName;
-    std::string logfileName = "_log.csv";
-    pathLogging = std::filesystem::canonical(pathLogging);
-    pathLogging += logfileName;
-    std::fstream logWriter;
-    if (userArgs.doLogging)
-    /// @todo make a separate logging object
-    {
-        if (std::filesystem::exists(pathLogging))
-        {
-            std::cerr << "Warning: the processing log has been overwritten\n";
-        }
-        logWriter.open(pathLogging, std::ios::out);
-        logWriter << "filename, numSpectra, numCentroids, meanDQSC, numBins, binsTooLarge, meanDQSB, numFeatures, badFeatures, meanInterpolations, meanDQSF, numComponentRegs, numComponentFeatures\n";
-        logWriter.close();
-    }
 
 #pragma region file processing
     std::string filename;
     size_t counter = 1;
     size_t errorCount = 0;
-    for (std::filesystem::path pathSource : tasklist)
+    for (size_t pathIdx = skipAhead; pathIdx < tasklist.size(); pathIdx++)
+
+    // for (std::filesystem::path pathSource : tasklist)
     {
+        std::filesystem::path pathSource = tasklist[pathIdx];
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!userArgs.silent)
         {
@@ -395,7 +383,7 @@ int main(int argc, char *argv[])
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             int centroidCount = findCentroids(inputFile, &selectedIndices, centroids); // it is guaranteed that only profile mode data is used
 
-            for (size_t cenID = 1; cenID < centroidCount; cenID++) // dummy value at idx 0 @todo
+            for (int cenID = 1; cenID < centroidCount; cenID++) // dummy value at idx 0 @todo
             {
                 size_t scanNumber = centroids->at(cenID).number_MS1;
                 size_t realRT_idx = rt_index.indexOfOriginalInInterpolated[scanNumber];
@@ -452,28 +440,19 @@ int main(int argc, char *argv[])
 
             // find lowest intensity among all centroids to use as baseline during componentisation
             float minCenArea = INFINITY;
-            for (size_t cenID = 1; cenID < centroidCount; cenID++)
+            for (int cenID = 1; cenID < centroidCount; cenID++)
             {
                 float currentInt = centroids->at(cenID).area;
                 minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
             }
             size_t totalScans = centroids->back().number_MS1;
 
-            double meanDQSC = 0;
-
-            for (size_t i = 1; i < centroidCount - 1; i++)
-            {
-                // correlate centroid error with nearest neighbour distance in one scan somehow?
-                meanDQSC += centroids->at(i).DQSC;
-            }
-            meanDQSC /= double(centroidCount);
-
             auto timeEnd = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
 
             if (!userArgs.silent)
             {
-                printf("    produced %d centroids from %zu spectra in %f s\n",
+                printf("    produced %d centroids from %zu spectra in %0.3f s\n",
                        centroidCount, totalScans, timePassed.count());
             }
 
@@ -523,28 +502,6 @@ int main(int argc, char *argv[])
                 }
             }
             delete centroids;
-
-            // @todo remove diagnostics
-            // int count = 0;
-            // int badBinCount = 0;
-            // double meanDQSB = 0;
-            // for (auto EIC : binnedData)
-            // {
-            //     assert(EIC.scanNumbers.back() <= retentionTimes.size());
-            //     for (double dqsb : EIC.DQSB)
-            //     {
-            //         if (dqsb == -1)
-            //         {
-            //             badBinCount++;
-            //             break;
-            //         }
-            //         ++count;
-            //         meanDQSB += dqsb;
-            //     }
-            // }
-            // meanDQSB /= count;
-            size_t badBinCount = 0;
-            double meanDQSB = 0;
 
             // continue; // @todo ensure centroiding and binning work as best they can first
 
@@ -678,16 +635,6 @@ int main(int argc, char *argv[])
             if (userArgs.term == TerminateAfter::components)
             {
                 continue;
-            }
-
-            if (userArgs.doLogging) // @todo logging should account for early terminate
-            {
-                logWriter.open(pathLogging, std::ios::app);
-                logWriter << filename << ", " << inputFile.number_spectra << ", " << centroidCount << ", "
-                          << meanDQSC << ", " << binnedData.size() << ", " << badBinCount << ", " << meanDQSB
-                          << ", " << features.size() << ", " << peaksWithMassGaps << ", " << meanInterpolations << ", " << meanDQSF
-                          << components.size() << ", " << featuresInComponents << "\n";
-                logWriter.close();
             }
         }
         // @todo this function really needs to be shortened

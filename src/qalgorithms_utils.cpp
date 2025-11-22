@@ -380,6 +380,14 @@ namespace qAlgorithms
         return totalSum / (endIdx - startIdx + 1);
     }
 
+    unsigned int sumOfCumulative(const unsigned int *const cumArray, const size_t startIdx, const size_t endIdx)
+    {
+        assert(startIdx <= endIdx);
+        unsigned int subtractor = startIdx == 0 ? 0 : cumArray[startIdx - 1];
+        unsigned int totalSum = cumArray[endIdx] - subtractor;
+        return totalSum;
+    }
+
     double sdev(double *const array, const size_t n)
     {
         assert(n > 2); // while standard deviation of two numbers is possible, it makes no sense

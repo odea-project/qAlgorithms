@@ -653,20 +653,20 @@ namespace qAlgorithms
 
             // within this range, find the best mse. conflictReg is always the
             // better of the two.
-            size_t df_sum = calcDF_cum(degreesOfFreedom_cum, limits);
-            double bestMSE = calcSSE_exp(&conflictReg->coeffs,
+            double df_sum = calcDF_cum(degreesOfFreedom_cum, limits) - 4;
+            double bestMSE = calcMSE_exp(&conflictReg->coeffs,
                                          intensities,
-                                         &limits);
-            bestMSE /= (df_sum - 4);
+                                         &limits,
+                                         df_sum);
 
             for (; i < lookAhead; i++) // at least one conflict needs to be resolved if the loop gets this far
             {
                 reg = validRegressions->data() + i;
 
-                double mse = calcSSE_exp(&reg->coeffs,
+                double mse = calcMSE_exp(&reg->coeffs,
                                          intensities,
-                                         &limits);
-                mse /= (df_sum - 4);
+                                         &limits,
+                                         df_sum);
 
                 bool replace = mse < bestMSE;
                 if (replace)
@@ -873,7 +873,7 @@ namespace qAlgorithms
             return 6; // invalid apex to edge ratio
         }
 
-        double RSS_reg = calcRSS_reg(mutateReg, intensities_log); // @todo we should use the exponential for this
+        double RSS_reg = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
 
         /*
         competing regressions filter:
@@ -1009,10 +1009,6 @@ namespace qAlgorithms
     /* ### allocations ###
         exponentialMSE: known at function call
         validRegressionsInGroup: size unknown
-
-       ### called functions ###
-        calcSSE_exp
-        shrink_to_fit
     */
     {
         if (validRegressions->size() < 2)
@@ -1030,9 +1026,10 @@ namespace qAlgorithms
         */
 
         // iterate over the validRegressions vector
+        RegressionGauss *firstReg = validRegressions->data();
         for (size_t i = 0; i < validRegressions->size(); i++)
         {
-            RegressionGauss *activeReg = &(*validRegressions)[i];
+            RegressionGauss *activeReg = firstReg + i;
             assert(activeReg->isValid);
             double MSE_group = 0;
             int DF_group = 0;
@@ -1042,11 +1039,9 @@ namespace qAlgorithms
             validRegressionsInGroup.reserve(64);
             size_t competitors = 0; // a competitor is a mutually exclusive alternative regression
 
-            // iterate over the validRegressions vector till the new peak
-            // first iteration always false
             for (size_t j = 0; j < i; j++)
             {
-                RegressionGauss *secondReg = &(*validRegressions)[j];
+                RegressionGauss *secondReg = firstReg + j;
                 if (!secondReg->isValid) // check is needed because regressions are set to invalid in the outer loop
                     continue;
 
@@ -1062,21 +1057,13 @@ namespace qAlgorithms
                 if (secondReg->apex_position > activeReg->regSpan.endIdx)
                     continue;
 
-                // if ( // check for the overlap of the peaks
-                //     (
-                //         secondReg->apex_position > activeReg->left_limit &&   // ref peak matches the left limit
-                //         secondReg->apex_position < activeReg->right_limit) || // ref peak matches the right limit
-                //     (
-                //         activeReg->apex_position > secondReg.left_limit && // new peak matches the left limit
-                //         activeReg->apex_position < secondReg.right_limit)) // new peak matches the right limit
-
                 if (exponentialMSE[j] == 0.0)
-                { // calculate the mse of the reference peak
-                    exponentialMSE[j] = calcSSE_exp(
+                {
+                    exponentialMSE[j] = calcMSE_exp(
                         &secondReg->coeffs,
                         intensities,
-                        &secondReg->regSpan);
-                    exponentialMSE[j] /= secondReg->df;
+                        &secondReg->regSpan,
+                        secondReg->df);
                 }
                 DF_group += secondReg->df;                      // add the degree of freedom
                 MSE_group += exponentialMSE[j] * secondReg->df; // add the sum of squared errors
@@ -1096,18 +1083,18 @@ namespace qAlgorithms
 
             if (exponentialMSE[i] == 0.0)
             { // calculate the mse of the current peak
-                exponentialMSE[i] = calcSSE_exp(
+                exponentialMSE[i] = calcMSE_exp(
                     &activeReg->coeffs,
                     intensities,
-                    &activeReg->regSpan);
-                exponentialMSE[i] /= activeReg->df;
+                    &activeReg->regSpan,
+                    activeReg->df);
             }
             if (exponentialMSE[i] < MSE_group)
             {
                 // Set isValid to false for the candidates from the group
                 for (size_t it_ref_peak : validRegressionsInGroup)
                 {
-                    (*validRegressions)[it_ref_peak].isValid = false;
+                    firstReg[it_ref_peak].isValid = false;
                 }
                 // only advance competitor count if regression is actually better
                 activeReg->numCompetitors = competitors;
@@ -1129,7 +1116,6 @@ namespace qAlgorithms
             }
         }
         validRegressions->resize(accessID);
-        validRegressions->shrink_to_fit();
     }
 #pragma endregion "validate regression"
 
@@ -1326,7 +1312,7 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
-    double calcRSS_reg(const RegressionGauss *mutateReg, const std::vector<float> *y_start)
+    double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start)
     // no allocations
     {
         const size_t idxCenter = mutateReg->coeffs.x0;
@@ -1391,7 +1377,7 @@ namespace qAlgorithms
 
     bool f_testRegression(const std::vector<float> *observed, double RSS_reg, const Range_i *range)
     {
-        // during the tests, the RSS for the regression has already been calculated in calcRSS_reg
+        // during the tests, the RSS for the regression has already been calculated in calcRSS_log
         assert(RSS_reg > 0);
         const size_t length = rangeLen(range);
         double RSS_H0;
@@ -1411,8 +1397,11 @@ namespace qAlgorithms
         return true;
     }
 
-    double calcSSE_exp(const RegCoeffs *coeff, const std::vector<float> *y_start, const Range_i *regSpan)
-    { // @todo this does not account for asymmetric RT distances, will that be a problem?
+    double calcMSE_exp(const RegCoeffs *coeff, // @todo this does not account for asymmetric RT distances, will that be a problem?
+                       const std::vector<float> *y_start,
+                       const Range_i *regSpan,
+                       const double df)
+    {
         double idxCenter = double(coeff->x0);
         double result = 0.0;
         for (size_t iSegment = regSpan->startIdx; iSegment < regSpan->endIdx + 1; iSegment++)
@@ -1423,7 +1412,7 @@ namespace qAlgorithms
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
             result += newdiff;
         }
-        return result;
+        return result / df;
     }
 
     double calcSSE_chisqared(const RegressionGauss *mutateReg, const std::vector<float> *y_start)
@@ -1542,25 +1531,22 @@ namespace qAlgorithms
         size_t right_limit = 0;
         for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
-
             const RegressionGauss *reg = &(*regressions)[i];
             left_limit = min(left_limit, reg->regSpan.startIdx);
             right_limit = max(right_limit, reg->regSpan.endIdx);
         }
-        // the new df_sum is only needed since the function limits are adjusted above, correct that?
-        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, regSpan);
 
+        double df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), regSpan.startIdx, regSpan.endIdx);
+        df_sum -= 4; // four coefficients
         for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
             const RegressionGauss *reg = &(*regressions)[i];
             const Range_i range = {left_limit, right_limit};
-            double mse = calcSSE_exp(&reg->coeffs,
+            double mse = calcMSE_exp(&reg->coeffs,
                                      intensities,
-                                     &range);
-            mse /= (df_sum - 4);
-            // assert(mse == reg->mse); // @todo harmonise this eventually
-
+                                     &range,
+                                     df_sum);
             if (mse < best_mse)
             {
                 best_mse = mse;

@@ -72,9 +72,9 @@ namespace qAlgorithms
 
     Bin makeBin_mz(const std::vector<const CentroidPeak *> *const centroids, const Range_i *range);
 
-    const std::vector<double> makeOrderSpace(const Bin *bin);
+    std::vector<double> makeOrderSpace(const Bin *bin);
 
-    const std::vector<double> makeCumError(const std::vector<const CentroidPeak *> *bin);
+    std::vector<double> makeCumError(const std::vector<const CentroidPeak *> *bin);
 
     // returns number of elements added to the stack?
     int subsetMZ_stack(std::vector<Range_i> *stack,

@@ -151,13 +151,14 @@ namespace qAlgorithms
         const RT_Converter *convertRT,
         const std::vector<float> *RTs);
 
-    double calcRSS_reg(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
+    double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
 
     bool f_testRegression(const std::vector<float> *observed, double RSS_reg, const Range_i *range);
 
-    double calcSSE_exp(const RegCoeffs *coeff,
+    double calcMSE_exp(const RegCoeffs *coeff,
                        const std::vector<float> *y_start,
-                       const Range_i *regSpan);
+                       const Range_i *regSpan,
+                       const double df);
 
     double calcSSE_chisqared(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
 
