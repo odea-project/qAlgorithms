@@ -12,7 +12,7 @@ set(CMAKE_CXX_COMPILER "g++") # requires std::sqrt to be constexpr, either g++ o
 option(OPTIMISE "turn on optimisations" OFF)
 
 if (false)
-    add_compile_options(-O2) 
+    add_compile_options(-Ofast) 
     # hardening flags 
     add_compile_options(-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3)
 else()

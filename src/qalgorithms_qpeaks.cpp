@@ -107,6 +107,7 @@ namespace qAlgorithms
     }
 
 #pragma region "find peaks"
+
     void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
                            const std::vector<ProfileBlock> *treatedData,
                            const size_t scanNumber,
@@ -125,7 +126,10 @@ namespace qAlgorithms
 
         std::vector<float> logIntensity(maxWindowSize + 2 * GLOBAL_MAXSCALE_CENTROID, NAN);
 
-        assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
+        static_assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
+
+        std::vector<float> fullSpec;
+        std::vector<float> withCens;
 
         std::vector<RegressionGauss> validRegressions;
         validRegressions.reserve(treatedData->size() / 2); // probably too large, shouldn't matter
@@ -134,6 +138,14 @@ namespace qAlgorithms
             const ProfileBlock *const block = treatedData->data() + i;
 
             assert(block->intensity.size() == block->mz.size());
+
+            for (size_t dbg = 0; dbg < block->mz.size(); dbg++)
+            {
+                fullSpec.push_back(block->intensity[dbg]);
+                withCens.push_back(0);
+            }
+            fullSpec.push_back(-1);
+            withCens.push_back(-1);
 
             // this is now filled inside the function, the vector only reserves space. We do not
             // perform this step in the function so that it is explicitly empty. This should be
@@ -469,14 +481,15 @@ namespace qAlgorithms
         assert(length > 4);
         maxScale = min(maxScale, (length - 1) / 2);
 
+        size_t totalRegs = 0;
+        for (size_t scale = 2; scale <= maxScale; scale++)
         {
-            size_t totalRegs = 0;
-            for (size_t scale = 2; scale <= maxScale; scale++)
-            {
-                totalRegs += length - 2 * scale;
-            }
-            coeffs->resize(totalRegs);
+            totalRegs += length - 2 * scale;
         }
+        coeffs->resize(totalRegs);
+
+        // #include <cfenv>
+        //         fesetround(FE_UPWARD);
 
         // the first and last MINSCALE elements of the data do not need to be checked for x0, since they are invalid by definition
         const size_t limit = length - GLOBAL_MINSCALE;
@@ -496,22 +509,32 @@ namespace qAlgorithms
             // b3 is 0, 0, 1
             double product_sum_b3 = cen[1];
 
+            size_t maxScale_absolute = 0;
+            { // the largest valid scale depends on x0
+                size_t maxScale_left = x0;
+                size_t maxScale_right = length - x0 - 1;
+                size_t maxScale_limits = min(maxScale_left, maxScale_right);
+                maxScale_absolute = min(maxScale_limits, maxScale);
+            }
+
             // var for access in inner loop
             size_t offset_prev = 0;
-            for (size_t scale = GLOBAL_MINSCALE; scale <= maxScale; scale++)
+            for (size_t scale = GLOBAL_MINSCALE; scale <= maxScale_absolute; scale++)
             {
-                if (x0 + scale == length)
-                    break;
+                // random access is difficult to vectorise
+                double leftVal = cen[-scale];
+                double rightVal = cen[scale];
 
                 // expand the kernel to the left and right of the intensity_log.
                 // b0 is expanded by the two outer points * 1
-                product_sum_b0 += cen[-scale] + cen[scale];
+                product_sum_b0 += leftVal + rightVal;
                 // b1 is expanded by the points * scale, negative to the left
-                product_sum_b1 += -double(scale) * cen[-scale] + double(scale) * cen[scale];
+                // product_sum_b1 += -double(scale) * leftVal + double(scale) * rightVal;
+                product_sum_b1 += double(scale) * (rightVal - leftVal);
                 // b2 and b3 are expanded by scale^2 the outermost point to the left or right
                 double scale_sqr = double(scale * scale);
-                product_sum_b2 += scale_sqr * cen[-scale];
-                product_sum_b3 += scale_sqr * cen[scale];
+                product_sum_b2 += scale_sqr * leftVal;
+                product_sum_b3 += scale_sqr * rightVal;
 
                 const double *inv = INV_ARRAY.data() + scale * 6;
                 const double inv_A = inv[0];
@@ -531,6 +554,7 @@ namespace qAlgorithms
                 //          2 * length - scale * 4 + 6 + x0 - scale
                 const size_t offset_front = x0 - scale;
                 const size_t access = offset_front + offset_prev;
+                assert(access < totalRegs);
 #define current (*coeffs)[access]
                 current.b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
                 current.b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
@@ -539,11 +563,7 @@ namespace qAlgorithms
                 current.scale = scale;
                 current.x0 = x0;
 #undef current
-
                 // next scale would access front of vector
-                if (offset_front == 0)
-                    break;
-
                 offset_prev += length - 2 * scale;
             }
         }
@@ -960,14 +980,10 @@ namespace qAlgorithms
         // @todo: implement smearing.second for the uncertainty of b0
 
         calcUncertaintyPos(mutateReg);
-        mutateReg->df = df_sum - 4; // @todo add explanation for -4
+        mutateReg->df = df_sum - 4; // we lose one degree of freedom per coefficient
         mutateReg->apex_position += mutateReg->coeffs.x0;
-
-        // @todo is it actually a problem if the apex is within a two-point region?
-        // if (mutateReg->apex_position < 2 || mutateReg->apex_position > maxApexPos)
-        // { // this situation implies that only one half of the peak has the minimum data points for a gaussian
-        //     return 14;
-        // }
+        assert(mutateReg->apex_position > 1); // @todo this should be superfluous
+        assert(mutateReg->apex_position < length - 1);
 
         mutateReg->isValid = true;
         return 0;
@@ -1291,13 +1307,6 @@ namespace qAlgorithms
             assert(peak.idxPeakEnd > peak.idxCenter_offset);
             assert(peak.idxPeakEnd - peak.idxPeakStart >= 4); // at least five points
 
-            // params needed to merge two peaks
-            bool apexLeft = regression->apex_position < coeff.x0;
-            assert(apexLeft == (coeff.b1 <= 0));
-
-            coeff.b1 /= delta_rt;
-            coeff.b2 /= delta_rt * delta_rt;
-            coeff.b3 /= delta_rt * delta_rt;
             peak.coefficients = coeff;
             peak.mse_base = regression->mse;
 
@@ -1580,18 +1589,20 @@ namespace qAlgorithms
         if (valley_right && (!apexLeft))
             return 1;
 
-        // position maximum / minimum of b2 or b3. This is just the frst derivative of the peak half equation (b0 + b1 x + b23 x^2)
+        // position maximum / minimum of b2 or b3. This is just the frst derivative of the peak half equation
+        // (d of y = b0 + b1 x + b23 x^2 => y b1 + 2 * b23 x) solved for y = 0
         double position_b2 = -mutateReg->coeffs.b1 / (2 * mutateReg->coeffs.b2);
         double position_b3 = -mutateReg->coeffs.b1 / (2 * mutateReg->coeffs.b3);
 
         // the apex must be at least minscale different from the valley, if it exists
         if (valley_left || valley_right)
         {
-            if ((position_b3 - position_b2) < GLOBAL_MINSCALE)
+            if ((position_b3 - position_b2) <= GLOBAL_MINSCALE)
                 return 2;
 
             *valley_position = apexLeft ? position_b3 : position_b2;
         }
+        // at this stage, the apex position is relating to x0. This is adjusted at a later point
         mutateReg->apex_position = apexLeft ? position_b2 : position_b3;
 
         // if this difference from 0 (rounded down) is exceeded by the apex position,
