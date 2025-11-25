@@ -76,6 +76,10 @@ namespace qAlgorithms
             {
                 outstring.append(outbuffer, zs.total_out - outstring.size());
             }
+            else
+            {
+                assert(false);
+            }
         }
         assert(inflateEnd(&zs) == Z_OK);
 
@@ -251,10 +255,10 @@ namespace qAlgorithms
 
     void XML_File::get_spectrum( // this obviously only extracts data that is in profile mode.
         std::vector<double> *const spectrum_mz,
-        std::vector<double> *const spectrum_RT,
+        std::vector<double> *const spectrum_int,
         size_t index)
     {
-        assert(spectrum_mz->empty() && spectrum_RT->empty());
+        assert(spectrum_mz->empty() && spectrum_int->empty());
         assert(!this->defective);
 
         if (linknodes->size() == 0)
@@ -320,9 +324,9 @@ namespace qAlgorithms
                 decompress_zlib(&decoded_string); // @todo is there a case where this doesn't apply for all spectra?
             }
 
-            *spectrum_RT = decode_little_endian(decoded_string, spectra_binary_metadata[1].isDouble);
+            *spectrum_int = decode_little_endian(decoded_string, spectra_binary_metadata[1].isDouble);
 
-            assert(spectrum_RT->size() == number_traces); // this happens if an index is tried which does not exist in the data
+            assert(spectrum_int->size() == number_traces); // this happens if an index is tried which does not exist in the data
             assert(spectra_binary_metadata[1].data_name_short == "intensity");
         }
     };
