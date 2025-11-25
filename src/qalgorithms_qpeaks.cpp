@@ -1962,11 +1962,11 @@ namespace qAlgorithms
             totalRTs.push_back({i, interpScan, (*retentionTimes)[i], false});
             idxToGrouping[i] = interpScan;
 
-            if (diffs[i] >= critDiff)
+            if (diffs[i] > critDiff + FLT_EPSILON) // this is necessary since for truly equidistant data, critDiff can be greater than diff even if they should be identical
             {
                 // interpolate at least one point
-                size_t numInterpolations = size_t(diffs[i] / expectedDiff + 0.5 - FLT_EPSILON); // + 0.5 since value is truncated (round up)
-                assert(numInterpolations > 1);
+                size_t numInterpolations = size_t(diffs[i] / expectedDiff + 0.5 - FLT_EPSILON); // + 0.5 since value is truncated (round up), see above for epsilon
+                assert(numInterpolations != 0);
 
                 float RTstep = diffs[i] / (numInterpolations);
                 for (size_t j = 1; j < numInterpolations; j++) // +1 since the span is between two points
