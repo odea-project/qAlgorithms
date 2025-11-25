@@ -47,43 +47,29 @@ namespace qAlgorithms
     };
 
     // Decompresses a string using the zlib library (https://zlib.net/).
-    void decompress_zlib(std::vector<char> *compressed_string)
+    void decompress_zlib(const std::vector<char> *compressed_string, std::vector<char> *output_string)
     {
-        z_stream zs;
+        // max expected compression is factor 6
+        output_string->resize(compressed_string->size() * 6);
+        // zlib struct
+        z_stream infstream;
+        infstream.zalloc = Z_NULL;
+        infstream.zfree = Z_NULL;
+        infstream.opaque = Z_NULL;
+        // setup input and output
+        infstream.avail_in = compressed_string->size();         // size of input
+        infstream.next_in = (Bytef *)compressed_string->data(); // input char array
+        infstream.avail_out = output_string->size();            // maximum size of output
+        infstream.next_out = (Bytef *)output_string->data();    // output char array
 
-        memset(&zs, 0, sizeof(zs));
-
-        inflateInit(&zs);
-
-        zs.next_in = (Bytef *)compressed_string->data();
-
-        zs.avail_in = compressed_string->size();
-
-        char outbuffer[32768]; // @todo why this size?
-
-        std::string outstring; // @todo get rid of the string here
-
-        int ret = Z_OK;
-        while (ret == Z_OK)
-        {
-            zs.next_out = reinterpret_cast<Bytef *>(outbuffer);
-
-            zs.avail_out = sizeof(outbuffer);
-
-            ret = inflate(&zs, 0);
-
-            if (outstring.size() < zs.total_out)
-            {
-                outstring.append(outbuffer, zs.total_out - outstring.size());
-            }
-            else
-            {
-                assert(false);
-            }
-        }
-        assert(inflateEnd(&zs) == Z_OK);
-
-        *compressed_string = std::vector<char>(outstring.begin(), outstring.end());
+        // the actual DE-compression work.
+        inflateInit(&infstream);
+        auto ret_1 = inflate(&infstream, Z_NO_FLUSH);
+        assert(ret_1 == 1);
+        auto ret_2 = inflateEnd(&infstream);
+        assert(ret_2 == 0);
+        // since resize does not deallocate, this just ensures we can use the vector without making compromises later
+        output_string->resize(infstream.total_out);
     };
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
@@ -276,6 +262,8 @@ namespace qAlgorithms
 
         auto bin = node_binary_list.children("binaryDataArray").begin();
         assert(bin != node_binary_list.children("binaryDataArray").end());
+
+        std::vector<char> buffer;
         { // extract mz values
             pugi::xml_node node_binary = bin->child("binary");
             std::string encoded_string = node_binary.child_value();
@@ -290,14 +278,16 @@ namespace qAlgorithms
                 return; // implement a defined way to skip the current file? @todo
             }
 
-            std::string decoded_string1;
             if (spectra_binary_metadata[0].compressed)
             {
-                // @todo is there a case where this doesn't apply for all spectra?
-                decompress_zlib(&decoded_string);
+                buffer.clear();
+                decompress_zlib(&decoded_string, &buffer);
+                *spectrum_mz = decode_little_endian(buffer, spectra_binary_metadata[0].isDouble);
             }
-
-            *spectrum_mz = decode_little_endian(decoded_string, spectra_binary_metadata[0].isDouble);
+            else
+            {
+                *spectrum_mz = decode_little_endian(decoded_string, spectra_binary_metadata[0].isDouble);
+            }
 
             assert(spectrum_mz->size() == number_traces); // this happens if an index is tried which does not exist in the data
         }
@@ -321,10 +311,14 @@ namespace qAlgorithms
 
             if (spectra_binary_metadata[1].compressed)
             {
-                decompress_zlib(&decoded_string); // @todo is there a case where this doesn't apply for all spectra?
+                buffer.clear();
+                decompress_zlib(&decoded_string, &buffer);
+                *spectrum_int = decode_little_endian(buffer, spectra_binary_metadata[1].isDouble);
             }
-
-            *spectrum_int = decode_little_endian(decoded_string, spectra_binary_metadata[1].isDouble);
+            else
+            {
+                *spectrum_int = decode_little_endian(decoded_string, spectra_binary_metadata[1].isDouble);
+            }
 
             assert(spectrum_int->size() == number_traces); // this happens if an index is tried which does not exist in the data
             assert(spectra_binary_metadata[1].data_name_short == "intensity");
