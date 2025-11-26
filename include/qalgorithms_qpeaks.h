@@ -99,7 +99,8 @@ namespace qAlgorithms
         std::vector<RegressionGauss> *validRegressions,
         const size_t maxScale);
 
-    double correctLogBias(const std::vector<float> *intensities, const RegCoeffs *coeff);
+    // mutate b0 so that it is optimal for the exponential case if b1, b2 and b3 are identical
+    double correctB0(const std::vector<float> *intensities, RegCoeffs *coeff);
 
     int makeValidRegression(
         const std::vector<unsigned int> *degreesOfFreedom_cum,

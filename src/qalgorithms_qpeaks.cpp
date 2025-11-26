@@ -788,31 +788,12 @@ namespace qAlgorithms
 
     void updateRegRange(RegressionGauss *mutateReg, const double valleyPos);
 
-    double correctLogBias(const std::vector<float> *intensities, const RegCoeffs *coeff)
+    double correctB0(const std::vector<float> *intensities, RegCoeffs *coeff)
     {
         // problem: after the log transform, regression residuals are not directly transferable to
-        // the retransformed model. The error Err of the log model is: y_log = b0 + b1 * x + b23 * x^2 + Err
-        // (b23 depending on the regression half). After the exponential retransform, the error term is exp(Err)
-        // refer to: https://doi.org/10.1002/etc.5620120618
-        // as follows from eq. 9, the error for the coefficients is log(sum(exp(residual_(0:n))) / n)
-
-        // this function calculates the error term for a given set of regression coefficients
-
-        double expError = 0;
-        int start = coeff->x0 - coeff->scale;
-        int end = coeff->x0 + coeff->scale;
-        for (int i = start; i <= end; i++)
-        {
-            double xval = i - coeff->x0;
-            double reg = regExpAt(coeff, xval);
-            double real = intensities->at(i);
-            double residual = real - reg;
-            expError = exp(residual);
-        }
-        expError /= intensities->size();
-        double bias = log(expError);
-
-        return bias;
+        // the retransformed model. This is corrected by adjusting b0 so that the MSE in the
+        // exponential case is minimal. We perform another regression taking e^(x b1 + x^2 b23) as a constant
+        // and adjusting e^b0 so that (intensities - e^b0 * constant)^2 is minimal.
     }
 
     int makeValidRegression( // returns the number of the failed test

@@ -267,23 +267,42 @@ int main(int argc, char *argv[])
     volatile bool debug = true;
     if (debug)
     {
+        ProfileBlock block = {
+            {32, 475, 711, 472, 207, 132, 57, 14},
+            {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877},
+            {1, 2, 3, 4, 5, 6, 7, 8},
+            329,
+            338};
         size_t failcount = 0;
         std::vector<RegressionGauss> validRegressions;
-        while (validRegressions.empty())
-        {
-            ProfileBlock block = {
-                {32, 475, 711, 472, 207, 132, 57, 14},
-                {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877},
-                {1, 2, 3, 4, 5, 6, 7, 8},
-                329,
-                338};
 
+        volatile bool repeat = false;
+        while (validRegressions.empty() || repeat)
+        {
             const size_t length = block.intensity.size();
             const size_t maxScale = 8; // @todo not bound to centroid maxscale
             std::vector<float> logIntensity;
             logIntensity.reserve(length);
+            validRegressions.clear();
             runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale);
             assert(failcount < 1000);
+            assert(!validRegressions.empty());
+
+            double predict[8] = {0};
+            RegCoeffs test = validRegressions.front().coeffs;
+            for (int i = 0; i < 8; i++)
+            {
+                int x = i - test.x0;
+                predict[i] = regExpAt(&test, x);
+            }
+            double diffs[8] = {0};
+            double totallErr = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                diffs[i] = block.intensity[i] - predict[i];
+                totallErr += abs(diffs[i]);
+            }
+            printf("b0 = %f: %f; ", test.b0, totallErr);
         }
     }
 
