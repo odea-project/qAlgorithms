@@ -788,12 +788,33 @@ namespace qAlgorithms
 
     void updateRegRange(RegressionGauss *mutateReg, const double valleyPos);
 
-    double correctB0(const std::vector<float> *intensities, RegCoeffs *coeff)
+    double correctB0(const std::vector<float> *intensities, const Range_i *r, RegCoeffs *coeff)
     {
         // problem: after the log transform, regression residuals are not directly transferable to
         // the retransformed model. This is corrected by adjusting b0 so that the MSE in the
         // exponential case is minimal. We perform another regression taking e^(x b1 + x^2 b23) as a constant
         // and adjusting e^b0 so that (intensities - e^b0 * constant)^2 is minimal.
+        // This is the same as scaling the regression by a constant c.
+
+        // The (XtX)^-1 term collapses into a scalar, 1 / sum(predict^2). Xt * y is also scalar, sum(predict * intensities).
+        // The corrective factor is then sum(predict * intensities) / sum(predict^2).
+
+        double sum_predictSq = 0;
+        double sum_predictReal = 0;
+
+        // Regression correction is only calculated from the range in which the regression is relevant initially.
+        for (size_t i = r->startIdx; i <= r->endIdx; i++)
+        {
+            double x = double(i) - double(coeff->x0);
+            double pred = regExpAt(coeff, x);
+            sum_predictSq += pred * pred;
+            sum_predictReal += pred * intensities->at(i);
+        }
+        double factor = sum_predictReal / sum_predictSq;
+
+        // exp(a) * exp(b) == exp(a * b), so b0 + log(factor) is the same as predict * factor
+        coeff->b0 += log(factor);
+        return factor;
     }
 
     int makeValidRegression( // returns the number of the failed test
@@ -861,13 +882,22 @@ namespace qAlgorithms
         }
 
         /*
+            Adjustment of b0 coefficient:
+            When working with log-transformed data, the coefficients are suboptimal for the exponential case.
+            Since we must work with a log system to perform a linear regression, there is a bias in the
+            results which is somewhat corrected here. While correction could occur before validation, the
+            initial tests filter out a lot of bad regressions which reduces processing time. The tests are
+            presumed to be better when using the transformed coefficients in terms of applicability of the results
+        */
+        correctB0(intensities, &mutateReg->regSpan, &mutateReg->coeffs);
+
+        /*
           Apex to Edge Filter:
           This block of code implements the apex to edge filter. It calculates
           the ratio of the apex signal to the edge signal and ensures that the
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
         */
-
         float apexToEdge = apexToEdgeRatio(mutateReg, intensities);
         if (!(apexToEdge > 2))
         {
@@ -875,6 +905,7 @@ namespace qAlgorithms
         }
 
         double RSS_reg = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
+        assert(RSS_reg > 0);
 
         /*
         competing regressions filter:
@@ -2277,6 +2308,6 @@ namespace qAlgorithms
     double regExpAt(const RegCoeffs *coeff, const double x)
     {
         double b23 = x < 0 ? coeff->b2 : coeff->b3;
-        return exp_approx_d(coeff->b0 + (coeff->b1 + x * b23) * x);
+        return exp(coeff->b0 + (coeff->b1 + x * b23) * x);
     }
 }
