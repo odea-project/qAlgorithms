@@ -851,17 +851,6 @@ namespace qAlgorithms
         {
             return 2; // invalid apex and valley positions
         }
-        /*
-          Area Pre-Filter:
-          This test is used to check if the later-used arguments for exp and erf
-          functions are within the range for which both are defined, i.e., |x^2| < 25. x is in this case
-          -apex_position * b1 / 2 and -valley_position * b1 / 2.
-          The test is moved here instead of isValidPeakArea to save computation time @todo is this measureable?
-        */
-        if (mutateReg->apex_position * mutateReg->coeffs.b1 > 50 || valley_position * mutateReg->coeffs.b1 < -50)
-        {
-            return 3; // invalid area pre-filter
-        }
 
         updateRegRange(mutateReg, valley_position);
         assert(mutateReg->regSpan.endIdx < length);
@@ -870,7 +859,7 @@ namespace qAlgorithms
         {
             // only one half of the regression applies to the data, since the
             // degrees of freedom for the "squished" half results in an invalid regression
-            return 4;
+            return 3;
         }
 
         size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->regSpan);
@@ -878,7 +867,7 @@ namespace qAlgorithms
         {
             // degree of freedom less than 5; i.e., less than 5 measured data points.
             // Four points or less are not enough to fit a regression with four coefficients
-            return 5;
+            return 4;
         }
 
         /*
@@ -891,6 +880,10 @@ namespace qAlgorithms
         */
         correctB0(intensities, &mutateReg->regSpan, &mutateReg->coeffs);
 
+        // @todo new error correction here. Previous covariance matrix was mse (log) * (XtX)^-1,
+        // multiply with matrix U, where first four terms are partial derivative of equation in
+        // correctB0 by original coefficients
+
         /*
           Apex to Edge Filter:
           This block of code implements the apex to edge filter. It calculates
@@ -901,7 +894,7 @@ namespace qAlgorithms
         float apexToEdge = apexToEdgeRatio(mutateReg, intensities);
         if (!(apexToEdge > 2))
         {
-            return 6; // invalid apex to edge ratio
+            return 5; // invalid apex to edge ratio
         }
 
         double RSS_reg = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
@@ -913,10 +906,10 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo test this function
         */
-        bool f_ok = f_testRegression(intensities, RSS_reg, &mutateReg->regSpan);
+        bool f_ok = f_testRegression(intensities_log, RSS_reg, &mutateReg->regSpan);
         if (!f_ok)
         {
-            return 7; // H0 holds, the two distributions are not noticeably different
+            return 6; // H0 holds, the two distributions are not noticeably different
         }
 
         // mean squared error with respect to the degrees of freedom - @todo is the -4 correct?
@@ -925,11 +918,11 @@ namespace qAlgorithms
 
         if (!isValidQuadraticTerm(mutateReg, df_sum))
         {
-            return 8; // statistical insignificance of the quadratic term
+            return 7; // statistical insignificance of the quadratic term
         }
         if (!isValidPeakArea(mutateReg, df_sum))
         {
-            return 9; // statistical insignificance of the area
+            return 8; // statistical insignificance of the area
         }
 
         /*
@@ -942,14 +935,8 @@ namespace qAlgorithms
         calcPeakHeightUncert(mutateReg);
         if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
         {
-            return 10;
+            return 9;
         }
-        // at this point without height, i.e., to get the real uncertainty
-        // multiply with height later. This is done to avoid exp function at this point
-        // if (!isValidPeakHeight(mutateReg, valley_position, df_sum, apexToEdge))
-        // {
-        //     return 11; // statistical insignificance of the height
-        // }
 
         /*
           Area Filter:
@@ -963,7 +950,7 @@ namespace qAlgorithms
         calcPeakAreaUncert(mutateReg);
         if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
         {
-            return 12; // statistical insignificance of the area
+            return 11; // statistical insignificance of the area
         }
 
         /*
@@ -976,20 +963,8 @@ namespace qAlgorithms
         float chiSquare = calcSSE_chisqared(mutateReg, intensities);
         if (chiSquare < CHI_SQUARES[df_sum - 5])
         {
-            return 13; // statistical insignificance of the chi-square value
+            return 12; // statistical insignificance of the chi-square value
         }
-
-        /*
-          Smearing Correction:
-          The coefficient beta_0 is corrected by the smearing approach from Naihua Duan.
-          The new cofficient is then b0* = b0 + logC, where C is the correction factor.
-          first: logC; second: variance of logC
-
-          NOTE: Results can be distorted for the worse when applying smearing correction
-        */
-        // auto smearing = smearingCorrection(&predictLog, &selectLog, scale);
-        // mutateReg->coeffs.b0 += smearing.log_C; // b0* = b0 + logC
-        // @todo: implement smearing.second for the uncertainty of b0
 
         calcUncertaintyPos(mutateReg);
         mutateReg->df = df_sum - 4; // we lose one degree of freedom per coefficient
@@ -1452,91 +1427,6 @@ namespace qAlgorithms
     }
 
 #pragma endregion calcSSE
-
-#pragma region "smearing correction"
-
-    /// @brief Updates the intercept (b0) for log-linear regression models after back-transformation,
-    ///        by calculating the optimal scaling correction. Returns the new b0 (to be used in exp(new_b0 + ...)).
-    ///        This replaces the old b0 in your model for unbiased prediction after exp-transformation.
-    /// @param yLogHatInWindow Vector of predicted log(y) (including b0!).
-    /// @param yInWindow       Vector of original (not log-transformed) y values.
-    /// @param b0              The old intercept (from log regression).
-    /// @return                The updated b0 (corrected).
-
-    float updateB0Scaling( // @todo how and why does this work?
-        const std::vector<float> &yLogHatInWindow,
-        const std::vector<float> &yInWindow,
-        const float b0)
-    {
-        assert(yLogHatInWindow.size() == yInWindow.size());
-
-        size_t n = yInWindow.size();
-
-        double sum_y_yhat = 0.0f;
-        double sum_yhat2 = 0.0f;
-
-        // Use yLogHat[i] - b0 to get the prediction without intercept
-        for (size_t i = 0; i < n; ++i)
-        {
-            double yhat_wo_b0 = exp_approx_d(yLogHatInWindow[i] - b0);
-            sum_y_yhat += yInWindow[i] * yhat_wo_b0;
-            sum_yhat2 += yhat_wo_b0 * yhat_wo_b0;
-        }
-        return std::log(sum_y_yhat / sum_yhat2);
-    }
-
-    // @todo implement this
-    CorrectionFactors smearingCorrection(
-        const std::vector<float> *predictLog,
-        const std::vector<float> *selectLog)
-    /* ### allocations ###
-        none!
-
-       ### called functions ###
-        exp_approx_d
-        std::log
-    */
-    {
-        assert(predictLog->size() == selectLog->size());
-        // This function calculates the smearing correction factor logC and the
-        // corresponding variance var(logC) which will be used to correct the
-        // beta_0 coefficient of the regression. The idea is to correct the
-        // underestimation bias from the log transformation when reconstructing the
-        // original data. The smearing correction is based on the following formula:
-        // y = exp(log(y)) * C = exp(log(y) + logC) = exp(b0 + logC + b1 * x + ...)
-        // where C is the smearing correction factor and logC is the log of C. The
-        // new beta_0 is then calculated as b0 + logC. The variance of logC is also
-        // calculated to account for the uncertainty in the smearing correction.
-        // For Var(logC), we consider:
-        // Var(logC) = Var(C) / C^2
-        //
-        // reference:
-        // Duan, N. (1983). Smearing Estimate: A Nonparametric Retransformation Method.
-        // Journal of the American Statistical Association, 78(383), 605–610.
-        // https://doi.org/10.1080/01621459.1983.10478017
-
-        size_t n = predictLog->size();
-
-        double sumR = 0.0;  // sum of exp(ε̂_i), i.e., exponential of the residuals
-        double sumR2 = 0.0; // sum of (exp(ε̂_i))^2, i.e., square of the exponential of the residuals
-        // loop to calculate sum of exp(ε̂_i) and sum of (exp(ε̂_i))^2
-        for (size_t i = 0; i < n; ++i)
-        {
-            // ri = exp(ε̂_i) = exp(log y_i - log ŷ_i) residuals
-            double ri = exp_approx_d(selectLog->at(i) - predictLog->at(i));
-            sumR += ri;
-            sumR2 += ri * ri;
-        }
-
-        // calculate the smearing correction factor C and its variance varC
-        double C = sumR / double(n);                                   // C = mean(exp(ε̂_i)) = mean(r_i)
-        double s2 = (sumR2 - sumR * sumR / double(n)) / double(n - 1); // s² = Var(r_i)
-        double varC = s2 / double(n);                                  // Var(C) = s²/n
-        double varLogC = varC / (C * C);                               // Var(log C) via Delta-Method
-
-        return {std::log(C), varLogC};
-    }
-#pragma endregion "smearing correction"
 
     RegPair findBestRegression(
         const std::vector<float> *intensities,

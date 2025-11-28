@@ -40,48 +40,51 @@ namespace qAlgorithms
         const size_t maxScale,
         std::vector<RegressionGauss> *detectedPeaks);
 
-    /*
-        This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
-        (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
-        Only six values of the final matrix are required for the simple case, see below:
+    /// @brief calculate all coefficients for all valid, symmetrical scales
+    /// @details This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
+    ///     (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
+    ///     Only six values of the final matrix are required for the simple case, see below:
 
-        xT is the transpose of the design matrix X.
-        for scale = 2:
-        xT = | 1  1  1  1  1 |    : all ones
-             |-2 -1  0  1  2 |    : from -scale to scale
-             | 4  1  0  0  0 |    : x^2 values for x < 0
-             | 0  0  0  1  4 |    : x^2 values for x > 0
+    ///     xT is the transpose of the design matrix X.
+    ///     for scale = 2:
+    ///     xT = | 1  1  1  1  1 |    : all ones
+    ///          |-2 -1  0  1  2 |    : from -scale to scale
+    ///          | 4  1  0  0  0 |    : x^2 values for x < 0
+    ///          | 0  0  0  1  4 |    : x^2 values for x > 0
 
-        It contains one additional row of all ones for every additional peak that is added into the model
+    ///     It contains one additional row of all ones for every additional peak that is added into the model
 
-        When adding multiple peaks to the regression model, we need to adjust the inverse values.
-        This will change the number of unique values in the inv_values array from 6 to 7.
-        Here we use the inv_array[1] position and shift all values from that point onwards to the right.
-        example for num_peaks = 2:
-        original matrix with the unique values [a, b, c, d, e, f] (six unique values)
-        | a  0  b  b |
-        | 0  c  d -d |
-        | b  d  e  f |
-        | b -d  f  e |
+    ///     When adding multiple peaks to the regression model, we need to adjust the inverse values.
+    ///     This will change the number of unique values in the inv_values array from 6 to 7.
+    ///     Here we use the inv_array[1] position and shift all values from that point onwards to the right.
+    ///     example for num_peaks = 2:
+    ///     original matrix with the unique values [a, b, c, d, e, f] (six unique values)
+    ///     | a  0  b  b |
+    ///     | 0  c  d -d |
+    ///     | b  d  e  f |
+    ///     | b -d  f  e |
 
-        new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
-        | A1  A2  0  B  B |
-        | A2  A1  0  B  B |
-        | 0   0   C  D -D |
-        | B   B   D  E  F |
-        | B   B  -D  F  E |
+    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+    ///     | A1  A2  0  B  B |
+    ///     | A2  A1  0  B  B |
+    ///     | 0   0   C  D -D |
+    ///     | B   B   D  E  F |
+    ///     | B   B  -D  F  E |
 
-        for num_peaks = 3:
-        new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
-        | A1  A2  A2  0  B  B |
-        | A2  A1  A2  0  B  B |
-        | A2  A2  A1  0  B  B |
-        | 0   0   0   C  D -D |
-        | B   B   B   D  E  F |
-        | B   B   B  -D  F  E |
+    ///     for num_peaks = 3:
+    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
+    ///     | A1  A2  A2  0  B  B |
+    ///     | A2  A1  A2  0  B  B |
+    ///     | A2  A2  A1  0  B  B |
+    ///     | 0   0   0   C  D -D |
+    ///     | B   B   B   D  E  F |
+    ///     | B   B   B  -D  F  E |
 
-        Note that no more than seven different values are needed per scale, even for a multidimensional approach.
-    */
+    ///     Note that no more than seven different values are needed per scale, even for a multidimensional approach.
+    /// @param intensity_log logarithmy of the intensity values. This is the y axis of the fit. The x axis is required to be equidistant.
+    /// @param maxscale maximum scale of a peak that should be attempted to fit.
+    /// @param coeffs Sets of coefficients for all possible regressions. They are written out in the order scale = 2, scale = 3, ... , scale = maxscale
+    ///               Note that not all scales have the same number of regressions
     void findCoefficients(
         const std::vector<float> *intensity_log,
         size_t maxscale,
@@ -100,8 +103,20 @@ namespace qAlgorithms
         const size_t maxScale);
 
     // mutate b0 so that it is optimal for the exponential case if b1, b2 and b3 are identical
+
+    /// @brief adjust the height of a regression to better fit the exponential data
+    /// @param intensities non-logarithmic intensity values the regression was fitted to
+    /// @param r range of the regression
+    /// @param coeff coefficients that should be updated
+    /// @return used correction factor
     double correctB0(const std::vector<float> *intensities, const Range_i *r, RegCoeffs *coeff);
 
+    /// @brief perform various statistical tests to see if a regression describes a valid peak
+    /// @param degreesOfFreedom_cum cumulative degrees of freedom (only relevant for interpolated data)
+    /// @param intensities measured intensities
+    /// @param intensities_log log of measured intensities - must have same length as intensities
+    /// @param mutateReg regression that should be mutated by this function
+    /// @return 0 if the regression is valid, otherwise the filter step which kicked it out
     int makeValidRegression(
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
@@ -152,8 +167,17 @@ namespace qAlgorithms
         const RT_Converter *convertRT,
         const std::vector<float> *RTs);
 
+    /// @brief calculate the residual sum of squares for the log regression / data
+    /// @param mutateReg relevant regression
+    /// @param y_start log data
+    /// @return RSS value
     double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
 
+    /// @brief performs two F-tests against the log data. First H0 is the mean, second y = mx + b
+    /// @param observed log data (or normal data, depends on the use case)
+    /// @param RSS_reg previously calculated residual sum of squares of the complex model. Hard assumpion of four coefficients.
+    /// @param range range of the regression.
+    /// @return true: Regression is significant; false: Regression is not better than either alternative.
     bool f_testRegression(const std::vector<float> *observed, double RSS_reg, const Range_i *range);
 
     double calcMSE_exp(const RegCoeffs *coeff,
@@ -162,16 +186,6 @@ namespace qAlgorithms
                        const double df);
 
     double calcSSE_chisqared(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
-
-    struct CorrectionFactors
-    {
-        double log_C;
-        double varLog_C;
-    };
-
-    CorrectionFactors smearingCorrection(
-        const std::vector<float> *predictLog,
-        const std::vector<float> *selectLog);
 
     struct RegPair
     {
