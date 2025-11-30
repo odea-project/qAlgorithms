@@ -38,7 +38,7 @@ add_compile_options(
     -Wpedantic                 # Enforces standard compliance
     -Wuninitialized            # Warns about uninitialized variables
     -Wformat=2                 # Check calls to printf and scanf, etc., to make sure that the arguments have types appropriate to the format string
-    -Wformat-truncation=2      # Warns about potential truncation of output in snprintf etc.
+    -Wformat-truncation=1      # Warns about potential truncation of output in snprintf etc. @todo refactor so that =2 does not produce so many warnings
     -Wimplicit-fallthrough     # Warns on missing break in switch case block
     -Wshadow                   # Warns when variable with same name as already declared variable is declared in lower scope
     -Wnon-virtual-dtor         # Warns if a class has a non-virtual destructor
@@ -76,7 +76,13 @@ include_directories(include "external/simdutf/" "external/cephes")  # @todo this
 
 # Source files
 # TODO we currently list external files manually. Thats not great. 
-file(GLOB_RECURSE SOURCES "${SOURCE_DIR}/*.cpp" "${EXTERNAL_DIR}/CDFlib/cdflib.cpp" "${EXTERNAL_DIR}/simdutf/simdutf.cpp" "${EXTERNAL_DIR}/cephes/cephes.cpp")
+file(GLOB_RECURSE SOURCES 
+    "${SOURCE_DIR}/*.cpp" 
+    "${EXTERNAL_DIR}/CDFlib/cdflib.cpp"
+    "${EXTERNAL_DIR}/simdutf/simdutf.cpp" 
+    "${EXTERNAL_DIR}/cephes/cephes.cpp"
+    "${EXTERNAL_DIR}/fastexp.h")
+
 list(FILTER SOURCES EXCLUDE REGEX "qalgorithms_main\\.cpp") # Remove test/main file(s) from the library list
 
 # Now we make a library from our sources that we can then link main.cpp and all the tests against
