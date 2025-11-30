@@ -8,27 +8,51 @@ set(CMAKE_CXX_STANDARD 26)
 # set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_COMPILER "g++") # requires std::sqrt to be constexpr, either g++ or c++26 and later
 
-## Set compiler flags
-option(OPTIMISE "turn on optimisations" OFF)
-
+# @todo add a variable to decide debug / optimised as command line argument 
 if (false)
-    add_compile_options(-Ofast) 
+    add_compile_options(-O3) 
     # hardening flags 
     add_compile_options(-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3)
 else()
-    add_compile_options(-O0)
+    add_compile_options(-Og -fno-omit-frame-pointer)
 endif()
 
-# debug-related flags
-add_compile_options(-g -ggdb3)
+# debug-related flags - @todo remove for actual release build?
+add_compile_options(-ggdb3)
 
-add_compile_options(-std=c++2c -fno-math-errno -mavx2 -march=native 
-                    -fstrict-flex-arrays=3 -fdiagnostics-color=always -fstack-clash-protection -D_GLIBCXX_ASSERTIONS)
+# general stuff
+add_compile_options(
+    -std=c++2c                 # Use C++20 standard or later, required for sqrt in constexpr function
+    -fno-math-errno            # Disables math functions setting errno, might result in speedup
+    -fno-signed-zeros          # no difference between +0 and -0, might increase performance
+    -mavx2                     # Enables AVX2, @todo is AVX512 detected also?
+    -march=native              # Optimize the code for the architecture of the current build machine
+    -fstrict-flex-arrays=3     # Size of arrays at the end of a struct must be known at compile time
+    -D_GLIBCXX_ASSERTIONS      # Activates assertions for the Standard C++ Library, useful for debugging
+)
 
-# enabled warnings
-add_compile_options(-Wall -Wpedantic -Wuninitialized -Wno-unknown-pragmas -Wformat=2 -Wformat-truncation -Wimplicit-fallthrough 
-                    -Wshadow -Wnon-virtual-dtor -Wextra -Wcast-align -Wunused -Wduplicated-cond -Wduplicated-branches
-                    -Wlogical-op -Wnull-dereference -Wuseless-cast -Wchanges-meaning) 
+# Enabled warnings
+add_compile_options(
+    -Wall                      # Enables all recommended warnings
+    -Wextra                    # Enables additional warnings
+    -Wpedantic                 # Enforces standard compliance
+    -Wuninitialized            # Warns about uninitialized variables
+    -Wformat=2                 # Check calls to printf and scanf, etc., to make sure that the arguments have types appropriate to the format string
+    -Wformat-truncation=2      # Warns about potential truncation of output in snprintf etc.
+    -Wimplicit-fallthrough     # Warns on missing break in switch case block
+    -Wshadow                   # Warns when variable with same name as already declared variable is declared in lower scope
+    -Wnon-virtual-dtor         # Warns if a class has a non-virtual destructor
+    -Wcast-align               # Warns about pointer casts that may misalign data
+    -Wunused                   # Warns about unused variables or functions
+    -Wduplicated-cond          # Warns if both arguments of conditional statement are the same
+    -Wduplicated-branches      # Warn when an if-else has identical branches. This warning also warns for conditional operators
+    -Wlogical-op               # Warns about suspicious logical operations like (a < 0 && a < 0)
+    -Wnull-dereference         # Warns about dereferencing null pointers
+    -Wuseless-cast             # Warns casting expression to its own type
+    -Wchanges-meaning          # @todo what does this do exactly?
+    -Wstrict-overflow=4        # Warns about cases where the compiler optimizes based on the assumption that signed overflow does not occur
+    -fdiagnostics-color=always # Enables colored output for diagnostics
+)
 
 # flags for static compile 
 # set(BUILD_SHARED_LIBS OFF)
@@ -64,7 +88,7 @@ target_include_directories(qalgo_lib PUBLIC
     ${EXTERNAL_DIR}
 )
 
-# link against zlib on windows (?) // does not work @todo
+# link against zlib on windows - requires explicit path under mingw for some reason
 if(WIN32)
     set(ZLIB_INCLUDE_DIR "C:/msys64/ucrt64/include")
     set(ZLIB_LIBRARY "C:/msys64/ucrt64/lib/libz.a")

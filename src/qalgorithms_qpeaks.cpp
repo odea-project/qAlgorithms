@@ -2159,7 +2159,7 @@ namespace qAlgorithms
         maxRangeSpan += 2 * maxExtra;
         std::vector<float> insert_ms(maxRangeSpan, NAN);
         std::vector<float> insert_int(maxRangeSpan, NAN);
-        std::vector<unsigned int> cumdf(maxRangeSpan, NAN);
+        std::vector<unsigned int> cumdf(maxRangeSpan, 0);
 
         for (size_t i = 0; i < ranges.size(); i++)
         {
