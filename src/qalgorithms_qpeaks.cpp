@@ -869,6 +869,7 @@ namespace qAlgorithms
             // Four points or less are not enough to fit a regression with four coefficients
             return 4;
         }
+        df_sum -= 4; // four coefficients
 
         /*
             Adjustment of b0 coefficient:
@@ -914,7 +915,7 @@ namespace qAlgorithms
 
         // mean squared error with respect to the degrees of freedom - @todo is the -4 correct?
         // the quadratic mse is used for the weighted mean of the coefficients later
-        mutateReg->mse = RSS_reg / double(df_sum - 4);
+        mutateReg->mse = RSS_reg / double(df_sum);
 
         if (!isValidQuadraticTerm(mutateReg, df_sum))
         {
@@ -933,7 +934,7 @@ namespace qAlgorithms
           matrix of the coefficients.
         */
         calcPeakHeightUncert(mutateReg);
-        if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum - 5]) // statistical significance of the peak height
+        if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum]) // statistical significance of the peak height
         {
             return 9;
         }
@@ -948,7 +949,7 @@ namespace qAlgorithms
         */
         // it might be preferential to combine both functions again or store the common matrix somewhere
         calcPeakAreaUncert(mutateReg);
-        if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum - 5])
+        if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum])
         {
             return 11; // statistical insignificance of the area
         }
@@ -961,13 +962,13 @@ namespace qAlgorithms
           value in the CHI_SQUARES, the regression is invalid.
         */
         float chiSquare = calcSSE_chisqared(mutateReg, intensities);
-        if (chiSquare < CHI_SQUARES[df_sum - 5])
+        if (chiSquare < CHI_SQUARES[df_sum])
         {
             return 12; // statistical insignificance of the chi-square value
         }
 
         calcUncertaintyPos(mutateReg);
-        mutateReg->df = df_sum - 4; // we lose one degree of freedom per coefficient
+        mutateReg->df = df_sum;
         mutateReg->apex_position += mutateReg->coeffs.x0;
         assert(mutateReg->apex_position > 1); // @todo this should be superfluous
         assert(mutateReg->apex_position < length - 1);
@@ -1203,7 +1204,7 @@ namespace qAlgorithms
 
             // add scaled apex position (mz)
             peak.mz = mz0 + delta_mz * (regression->apex_position - std::floor(regression->apex_position));
-            peak.mzUncertainty = regression->uncertainty_pos * delta_mz * T_VALUES[regression->df + 1] * sqrt(1 + 1 / (regression->df + 4));
+            peak.mzUncertainty = regression->uncertainty_pos * delta_mz * T_VALUES[regression->df] * sqrt(1 + 1 / (regression->df + 4));
 
             // quality params
             peak.DQSC = 1 - erf_approx_f(regression->uncertainty_area / regression->area);
@@ -1540,7 +1541,7 @@ namespace qAlgorithms
         double abs2 = std::abs(mutateReg->coeffs.b2);
         double abs3 = std::abs(mutateReg->coeffs.b3);
         double tValue = abs2 > abs3 ? abs2 : abs3;
-        return tValue > T_VALUES[df_sum - 5] * divisor; // statistical significance of the quadratic term
+        return tValue > T_VALUES[df_sum] * divisor; // statistical significance of the quadratic term
         // note that the tvalue would have to be divided by the divisor, but this is not always compiled to a multiplication
     }
 
@@ -1588,7 +1589,7 @@ namespace qAlgorithms
         float uncertainty_apexToEdge = calcUncertainty(jacobianHeight, mutateReg->coeffs.scale, mutateReg->mse);
 
         // @todo why -2? Just to account for position?
-        bool peakHeightSignificant = (apexToEdge - 2) > T_VALUES[df_sum - 5] * (apexToEdge * uncertainty_apexToEdge);
+        bool peakHeightSignificant = (apexToEdge - 2) > T_VALUES[df_sum] * (apexToEdge * uncertainty_apexToEdge);
         return peakHeightSignificant;
     }
 
@@ -1756,7 +1757,7 @@ namespace qAlgorithms
         float area_uncertainty_covered = calcUncertainty(J_covered, mutateReg->coeffs.scale, mutateReg->mse);
 
         // J[0] / uncertainty > Tval
-        bool J_is_significant = J_covered[0] > T_VALUES[df_sum - 5] * area_uncertainty_covered;
+        bool J_is_significant = J_covered[0] > T_VALUES[df_sum] * area_uncertainty_covered;
 
         return J_is_significant;
     }
