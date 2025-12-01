@@ -109,7 +109,9 @@ namespace qAlgorithms
     /// @param r range of the regression
     /// @param coeff coefficients that should be updated
     /// @return used correction factor
-    double correctB0(const std::vector<float> *intensities, const Range_i *r, RegCoeffs *coeff);
+    double correctB0(const std::vector<float> *intensities,
+                     const std::vector<float> *predicted,
+                     const Range_i *r, RegCoeffs *coeff);
 
     /// @brief perform various statistical tests to see if a regression describes a valid peak
     /// @param degreesOfFreedom_cum cumulative degrees of freedom (only relevant for interpolated data)
@@ -185,7 +187,9 @@ namespace qAlgorithms
                        const Range_i *regSpan,
                        const double df);
 
-    double calcSSE_chisqared(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
+    double calcSSE_chisqared(const RegressionGauss *mutateReg,
+                             const std::vector<float> *y_start,
+                             const std::vector<float> *predict);
 
     struct RegPair
     {

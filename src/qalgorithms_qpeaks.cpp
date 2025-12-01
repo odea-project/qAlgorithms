@@ -788,7 +788,9 @@ namespace qAlgorithms
 
     void updateRegRange(RegressionGauss *mutateReg, const double valleyPos);
 
-    double correctB0(const std::vector<float> *intensities, const Range_i *r, RegCoeffs *coeff)
+    double correctB0(const std::vector<float> *intensities,
+                     const std::vector<float> *predicted,
+                     const Range_i *r, RegCoeffs *coeff) // @todo coeff is no longer necessary
     {
         // problem: after the log transform, regression residuals are not directly transferable to
         // the retransformed model. This is corrected by adjusting b0 so that the MSE in the
@@ -806,7 +808,7 @@ namespace qAlgorithms
         for (size_t i = r->startIdx; i <= r->endIdx; i++)
         {
             double x = double(i) - double(coeff->x0);
-            double pred = regExpAt(coeff, x);
+            double pred = predicted->at(i);
             sum_predictSq += pred * pred;
             sum_predictReal += pred * intensities->at(i);
         }
@@ -872,6 +874,19 @@ namespace qAlgorithms
         df_sum -= 4; // four coefficients
 
         /*
+            Prediction for coefficients that are not b0. Since any "true" prediction
+            value is produced by multiplying with exp(b0), this only needs to be calculated
+            once, at least until regressions are compared. @todo consider having this at
+            higher scope of validation
+        */
+        std::vector<float> predict(length, 0);
+        for (int i = 0; i < length; i++)
+        {
+            double x = i - double(mutateReg->coeffs.x0);
+            predict[i] = regExpAt(&mutateReg->coeffs, x);
+        }
+
+        /*
             Adjustment of b0 coefficient:
             When working with log-transformed data, the coefficients are suboptimal for the exponential case.
             Since we must work with a log system to perform a linear regression, there is a bias in the
@@ -879,7 +894,11 @@ namespace qAlgorithms
             initial tests filter out a lot of bad regressions which reduces processing time. The tests are
             presumed to be better when using the transformed coefficients in terms of applicability of the results
         */
-        correctB0(intensities, &mutateReg->regSpan, &mutateReg->coeffs);
+        correctB0(intensities, &predict, &mutateReg->regSpan, &mutateReg->coeffs);
+
+        // this is the error term for the corrected regression. Of the original 4 x 4 matrix,
+        // only the first row is needed
+        double errorMat[4] = {0};
 
         // @todo new error correction here. Previous covariance matrix was mse (log) * (XtX)^-1,
         // multiply with matrix U, where first four terms are partial derivative of equation in
@@ -898,8 +917,8 @@ namespace qAlgorithms
             return 5; // invalid apex to edge ratio
         }
 
-        double RSS_reg = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
-        assert(RSS_reg > 0);
+        double RSS_log = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
+        assert(RSS_log > 0);
 
         /*
         competing regressions filter:
@@ -907,7 +926,7 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo test this function
         */
-        bool f_ok = f_testRegression(intensities_log, RSS_reg, &mutateReg->regSpan);
+        bool f_ok = f_testRegression(intensities_log, RSS_log, &mutateReg->regSpan);
         if (!f_ok)
         {
             return 6; // H0 holds, the two distributions are not noticeably different
@@ -915,7 +934,7 @@ namespace qAlgorithms
 
         // mean squared error with respect to the degrees of freedom - @todo is the -4 correct?
         // the quadratic mse is used for the weighted mean of the coefficients later
-        mutateReg->mse = RSS_reg / double(df_sum);
+        mutateReg->mse = RSS_log / double(df_sum);
 
         if (!isValidQuadraticTerm(mutateReg, df_sum))
         {
@@ -961,7 +980,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid.
         */
-        float chiSquare = calcSSE_chisqared(mutateReg, intensities);
+        double chiSquare = calcSSE_chisqared(mutateReg, intensities, &predict);
         if (chiSquare < CHI_SQUARES[df_sum])
         {
             return 12; // statistical insignificance of the chi-square value
@@ -1412,14 +1431,16 @@ namespace qAlgorithms
         return result / df;
     }
 
-    double calcSSE_chisqared(const RegressionGauss *mutateReg, const std::vector<float> *y_start)
+    double calcSSE_chisqared(const RegressionGauss *mutateReg,
+                             const std::vector<float> *y_start,
+                             const std::vector<float> *predict)
     {
         double result = 0.0;
         const double idxCenter = mutateReg->coeffs.x0;
         for (size_t iSegment = mutateReg->regSpan.startIdx; iSegment < mutateReg->regSpan.endIdx + 1; iSegment++)
         {
-            double new_x = double(iSegment) - idxCenter;
-            double y_predict = regExpAt(&mutateReg->coeffs, new_x);
+            // double new_x = double(iSegment) - idxCenter;
+            double y_predict = predict->at(iSegment);
             double y_current = (*y_start)[iSegment];
             double newdiff = (y_current - y_predict) * (y_current - y_predict);
             result += newdiff / y_predict; // this part is different from the above function, do not try to merge them!
