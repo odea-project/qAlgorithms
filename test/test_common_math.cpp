@@ -2,6 +2,8 @@
 #include "common_test_utils.hpp"
 #include <cmath>
 #include <cstdint>
+#include "../../external/fastexp.h"
+#include <chrono>
 
 using namespace qAlgorithms;
 
@@ -63,6 +65,68 @@ void test_linear_solve() // TODO not sure about the name here
     assert(b2 == true_b2, "b2:%f should have been %f\n", b2, true_b2);
 }
 
+void test_exp_approx()
+{
+    size_t len = 1000000;
+    std::vector<float> numbers(len, 0);
+    std::vector<float> expLibc(len, 0);
+    std::vector<float> approx1(len, 0);
+    std::vector<float> approx2(len, 0);
+    std::vector<float> approx3(len, 0);
+    for (size_t i = 0; i < len; i++)
+    {
+        numbers[i] = double(rand() % 5000) / 100;
+    }
+    auto timeStart = std::chrono::high_resolution_clock::now();
+    for (size_t i = 0; i < len; i++)
+    {
+        expLibc[i] = exp(numbers[i]);
+    }
+    auto timeEnd = std::chrono::high_resolution_clock::now();
+    float timePassed_exp = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count();
+
+    timeStart = std::chrono::high_resolution_clock::now();
+    for (size_t i = 0; i < len; i++)
+    {
+        approx1[i] = exp_approx_d(numbers[i]);
+    }
+    timeEnd = std::chrono::high_resolution_clock::now();
+    float timePassed_app1 = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count();
+
+    timeStart = std::chrono::high_resolution_clock::now();
+    for (size_t i = 0; i < len; i++)
+    {
+        approx2[i] = fast_exp_1(numbers[i]);
+    }
+    timeEnd = std::chrono::high_resolution_clock::now();
+    float timePassed_app2 = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count();
+
+    timeStart = std::chrono::high_resolution_clock::now();
+    for (size_t i = 0; i < len; i++)
+    {
+        approx3[i] = fast_exp_2(numbers[i]);
+    }
+    timeEnd = std::chrono::high_resolution_clock::now();
+    float timePassed_app3 = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart).count();
+
+    double meanDiff_1 = 0;
+    double meanDiff_2 = 0;
+    double meanDiff_3 = 0;
+
+    for (size_t i = 0; i < len; i++)
+    {
+        meanDiff_1 += abs(approx1[i] - expLibc[i]);
+        meanDiff_2 += abs(approx2[i] - expLibc[i]);
+        meanDiff_3 += abs(approx3[i] - expLibc[i]);
+    }
+    meanDiff_1 /= len;
+    meanDiff_2 /= len;
+    meanDiff_3 /= len;
+
+    printf("### exp approximation timing results:\n Base time: %f s\n Approx 1: %f s, mean diff = %f\n Approx 2: %f s, mean diff = %f\n Approx 3: %f s, mean diff = %f\n",
+           timePassed_exp, timePassed_app1, meanDiff_1, timePassed_app2, meanDiff_2, timePassed_app3, meanDiff_3);
+}
+
 int main()
 {
     // This could be automated using compile time execution
@@ -71,4 +135,5 @@ int main()
     test_array_min_max();
     test_standard_deviation();
     test_linear_solve();
+    // test_exp_approx();
 }

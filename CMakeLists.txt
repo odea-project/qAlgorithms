@@ -81,7 +81,7 @@ file(GLOB_RECURSE SOURCES
     "${EXTERNAL_DIR}/CDFlib/cdflib.cpp"
     "${EXTERNAL_DIR}/simdutf/simdutf.cpp" 
     "${EXTERNAL_DIR}/cephes/cephes.cpp"
-    "${EXTERNAL_DIR}/fastexp.h")
+    "${EXTERNAL_DIR}/fastexp.h" "${EXTERNAL_DIR}/exptables.h")
 
 list(FILTER SOURCES EXCLUDE REGEX "qalgorithms_main\\.cpp") # Remove test/main file(s) from the library list
 
