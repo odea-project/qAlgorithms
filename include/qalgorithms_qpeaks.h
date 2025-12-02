@@ -107,11 +107,13 @@ namespace qAlgorithms
     /// @brief adjust the height of a regression to better fit the exponential data
     /// @param intensities non-logarithmic intensity values the regression was fitted to
     /// @param r range of the regression
+    /// @param predicted empty vector that the predicted values for intensity (AFTER correction) are written to
     /// @param coeff coefficients that should be updated
     /// @return used correction factor
     double correctB0(const std::vector<float> *intensities,
-                     const std::vector<float> *predicted,
-                     const Range_i *r, RegCoeffs *coeff);
+                     const Range_i *r,
+                     std::vector<float> *predicted,
+                     RegCoeffs *coeff);
 
     /// @brief perform various statistical tests to see if a regression describes a valid peak
     /// @param degreesOfFreedom_cum cumulative degrees of freedom (only relevant for interpolated data)
@@ -174,6 +176,10 @@ namespace qAlgorithms
     /// @param y_start log data
     /// @return RSS value
     double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
+
+    double calcRSS_exp(const std::vector<float> *predict, // @todo this makes sense in utils
+                       const std::vector<float> *observed,
+                       const Range_i *range);
 
     /// @brief performs two F-tests against the log data. First H0 is the mean, second y = mx + b
     /// @param observed log data (or normal data, depends on the use case)
@@ -269,6 +275,9 @@ namespace qAlgorithms
     // utility functions for calculating regression values
     double regAt(const RegCoeffs *coeff, const double x);
     double regExpAt(const RegCoeffs *coeff, const double x);
+
+    // this one does not include b0
+    double regExp_fac(const RegCoeffs *coeff, const double x);
 
     double medianVec(const std::vector<float> *vec);
 

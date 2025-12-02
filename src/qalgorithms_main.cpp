@@ -291,10 +291,6 @@ int main(int argc, char *argv[])
             double predict[8] = {0};
             RegCoeffs test = validRegressions.front().coeffs;
 
-            bool adjust = false;
-            if (adjust)
-                correctB0(&block.intensity, &validRegressions.front().regSpan, &test);
-
             for (int i = 0; i < 8; i++)
             {
                 int x = i - test.x0;

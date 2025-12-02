@@ -789,8 +789,9 @@ namespace qAlgorithms
     void updateRegRange(RegressionGauss *mutateReg, const double valleyPos);
 
     double correctB0(const std::vector<float> *intensities,
-                     const std::vector<float> *predicted,
-                     const Range_i *r, RegCoeffs *coeff) // @todo coeff is no longer necessary
+                     const Range_i *r,
+                     std::vector<float> *predicted,
+                     RegCoeffs *coeff)
     {
         // problem: after the log transform, regression residuals are not directly transferable to
         // the retransformed model. This is corrected by adjusting b0 so that the MSE in the
@@ -801,21 +802,38 @@ namespace qAlgorithms
         // The (XtX)^-1 term collapses into a scalar, 1 / sum(predict^2). Xt * y is also scalar, sum(predict * intensities).
         // The corrective factor is then sum(predict * intensities) / sum(predict^2).
 
+        // predict intensity only within range to prevent unnecessary exp operations.
+        // prediction is incomplete, so it has to be multiplied with exp(b0)
+        for (int i = r->startIdx; i <= r->endIdx; i++)
+        {
+            double x = i - double(coeff->x0);
+            predicted->at(i) = regExp_fac(coeff, x);
+        }
+
         double sum_predictSq = 0;
         double sum_predictReal = 0;
+        double b0_exp = exp(coeff->b0);
 
         // Regression correction is only calculated from the range in which the regression is relevant initially.
         for (size_t i = r->startIdx; i <= r->endIdx; i++)
         {
             double x = double(i) - double(coeff->x0);
-            double pred = predicted->at(i);
+            double pred = predicted->at(i) * b0_exp;
             sum_predictSq += pred * pred;
             sum_predictReal += pred * intensities->at(i);
         }
-        double factor = sum_predictReal / sum_predictSq;
+        double correction = sum_predictReal / sum_predictSq;
 
-        // exp(a) * exp(b) == exp(a * b), so b0 + log(factor) is the same as predict * factor
-        coeff->b0 += log(factor);
+        // exp(a) * exp(b) == exp(a + b), so b0 + log(correction) is the same as predict * correction
+        coeff->b0 += log(correction);
+
+        // adjust the now incorrect values for predict. Remember that the previous prediciton was incomplete!
+        double factor = exp(coeff->b0);
+        for (int i = r->startIdx; i <= r->endIdx; i++)
+        {
+            predicted->at(i) *= factor;
+        }
+
         return factor;
     }
 
@@ -880,11 +898,6 @@ namespace qAlgorithms
             higher scope of validation
         */
         std::vector<float> predict(length, 0);
-        for (int i = 0; i < length; i++)
-        {
-            double x = i - double(mutateReg->coeffs.x0);
-            predict[i] = regExpAt(&mutateReg->coeffs, x);
-        }
 
         /*
             Adjustment of b0 coefficient:
@@ -892,9 +905,10 @@ namespace qAlgorithms
             Since we must work with a log system to perform a linear regression, there is a bias in the
             results which is somewhat corrected here. While correction could occur before validation, the
             initial tests filter out a lot of bad regressions which reduces processing time. The tests are
-            presumed to be better when using the transformed coefficients in terms of applicability of the results
+            presumed to be better when using the transformed coefficients in terms of applicability of the results.
+            This function also modifies the "predict" vector supplied as its argument!
         */
-        correctB0(intensities, &predict, &mutateReg->regSpan, &mutateReg->coeffs);
+        correctB0(intensities, &mutateReg->regSpan, &predict, &mutateReg->coeffs);
 
         // this is the error term for the corrected regression. Of the original 4 x 4 matrix,
         // only the first row is needed
@@ -910,6 +924,7 @@ namespace qAlgorithms
           the ratio of the apex signal to the edge signal and ensures that the
           ratio is greater than 2. This is a pre-filter for later
           signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
+          @todo this is not a relevant test
         */
         float apexToEdge = apexToEdgeRatio(mutateReg, intensities);
         if (!(apexToEdge > 2))
@@ -919,6 +934,7 @@ namespace qAlgorithms
 
         double RSS_log = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
         assert(RSS_log > 0);
+        double RSS_exp = calcRSS_exp(&predict, intensities, &mutateReg->regSpan);
 
         /*
         competing regressions filter:
@@ -927,6 +943,10 @@ namespace qAlgorithms
         is the mean of all predicted values. @todo test this function
         */
         bool f_ok = f_testRegression(intensities_log, RSS_log, &mutateReg->regSpan);
+        // @todo is it a good idea to perform an f test on the exponential data? Especially for small and narrow
+        // peaks, the factor four penalty on df is often too harsh even for shapes that pass a visual "inspection"
+        bool f_ok_exp = f_testRegression(intensities, RSS_exp, &mutateReg->regSpan);
+        assert(f_ok == f_ok_exp);
         if (!f_ok)
         {
             return 6; // H0 holds, the two distributions are not noticeably different
@@ -1025,6 +1045,38 @@ namespace qAlgorithms
         assert(mutateReg->regSpan.endIdx > mutateReg->regSpan.startIdx);
     }
 
+    double signalToNoise(const std::vector<float> *predict,
+                         const Range_i *range,
+                         const double mse)
+    {
+        /*
+          basic idea of this test:
+          under the assumption that the MSE is the total variance caused by noise, we can set a critical
+          signal to noise ratio for every regression. This is done via the f-test. We compare the total
+          variance of the signal to the total variance of the noise (mse). Since this function only returns
+          the f-value, the test itself has to be performed in addition.
+        */
+        double varSignal = 0; // variance of predicted intensities
+
+        size_t start = range->startIdx;
+        size_t end = range->endIdx + 1;
+        size_t len = end - start;
+        double meanSignal;
+        for (size_t i = start; i < end; i++)
+        {
+            meanSignal += predict->at(i);
+        }
+        meanSignal /= len;
+
+        for (size_t i = start; i < end; i++)
+        {
+            double diff = predict->at(i) - meanSignal;
+            varSignal += diff * diff;
+        }
+        varSignal /= len;
+
+        return varSignal / mse;
+    }
 #pragma endregion "validate Regression"
 
     void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
@@ -1340,6 +1392,19 @@ namespace qAlgorithms
             double difference = y_start->at(idx) - y_predict;
 
             RSS += difference * difference;
+        }
+        return RSS;
+    }
+
+    double calcRSS_exp(const std::vector<float> *predict, // @todo this makes sense in utils
+                       const std::vector<float> *observed,
+                       const Range_i *range)
+    {
+        double RSS = 0;
+        for (size_t i = range->startIdx; i <= range->endIdx; i++)
+        {
+            double diff = predict->at(i) - observed->at(i);
+            RSS += diff * diff;
         }
         return RSS;
     }
@@ -2221,5 +2286,11 @@ namespace qAlgorithms
     {
         double b23 = x < 0 ? coeff->b2 : coeff->b3;
         return exp(coeff->b0 + (coeff->b1 + x * b23) * x);
+    }
+
+    double regExp_fac(const RegCoeffs *coeff, const double x)
+    {
+        double b23 = x < 0 ? coeff->b2 : coeff->b3;
+        return exp((coeff->b1 + x * b23) * x);
     }
 }
