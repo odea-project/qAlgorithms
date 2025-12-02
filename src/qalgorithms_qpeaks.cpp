@@ -425,6 +425,7 @@ namespace qAlgorithms
                                                 degreesOfFreedom_cum,
                                                 &coefficients,
                                                 &validRegsTmp);
+        assert(validCount <= coefficients.size());
 
         // @todo find out how impactful the adjusted region where a regression holds true is
         // potentially refactor the elimination such that it is one fucntion to handle within
@@ -789,7 +790,7 @@ namespace qAlgorithms
     void updateRegRange(RegressionGauss *mutateReg, const double valleyPos);
 
     double correctB0(const std::vector<float> *intensities,
-                     const Range_i *r,
+                     const Range_i *range,
                      std::vector<float> *predicted,
                      RegCoeffs *coeff)
     {
@@ -804,7 +805,11 @@ namespace qAlgorithms
 
         // predict intensity only within range to prevent unnecessary exp operations.
         // prediction is incomplete, so it has to be multiplied with exp(b0)
-        for (int i = r->startIdx; i <= r->endIdx; i++)
+        int start = int(range->startIdx);
+        assert(0 <= start);
+        int end = int(range->endIdx) + 1;
+        assert(start < end);
+        for (int i = start; i < end; i++)
         {
             double x = i - double(coeff->x0);
             predicted->at(i) = regExp_fac(coeff, x);
@@ -815,7 +820,7 @@ namespace qAlgorithms
         double b0_exp = exp(coeff->b0);
 
         // Regression correction is only calculated from the range in which the regression is relevant initially.
-        for (size_t i = r->startIdx; i <= r->endIdx; i++)
+        for (size_t i = start; i < end; i++)
         {
             double x = double(i) - double(coeff->x0);
             double pred = predicted->at(i) * b0_exp;
@@ -829,7 +834,7 @@ namespace qAlgorithms
 
         // adjust the now incorrect values for predict. Remember that the previous prediciton was incomplete!
         double factor = exp(coeff->b0);
-        for (int i = r->startIdx; i <= r->endIdx; i++)
+        for (int i = start; i < end; i++)
         {
             predicted->at(i) *= factor;
         }
@@ -856,7 +861,7 @@ namespace qAlgorithms
         // for a regression to be valid, at least one coefficient must be < 0
         if (mutateReg->coeffs.b2 >= 0 && mutateReg->coeffs.b3 >= 0)
         {
-            return 1;
+            return 1; // b0 independent
         }
 
         /*
@@ -869,7 +874,7 @@ namespace qAlgorithms
         int failure = calcApexAndValleyPos(mutateReg, &valley_position);
         if (failure != 0) // something went wrong
         {
-            return 2; // invalid apex and valley positions
+            return 2; // invalid apex and valley positions, b0 independent
         }
 
         updateRegRange(mutateReg, valley_position);
@@ -879,7 +884,7 @@ namespace qAlgorithms
         {
             // only one half of the regression applies to the data, since the
             // degrees of freedom for the "squished" half results in an invalid regression
-            return 3;
+            return 3; // b0 independent
         }
 
         size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->regSpan);
@@ -887,7 +892,7 @@ namespace qAlgorithms
         {
             // degree of freedom less than 5; i.e., less than 5 measured data points.
             // Four points or less are not enough to fit a regression with four coefficients
-            return 4;
+            return 4; // b0 independent
         }
         df_sum -= 4; // four coefficients
 
@@ -929,9 +934,10 @@ namespace qAlgorithms
         float apexToEdge = apexToEdgeRatio(mutateReg, intensities);
         if (!(apexToEdge > 2))
         {
-            return 5; // invalid apex to edge ratio
+            return 5; // invalid apex to edge ratio // b0 independent
         }
 
+        // everything involving the RSS is dependent on b0!
         double RSS_log = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
         assert(RSS_log > 0);
         double RSS_exp = calcRSS_exp(&predict, intensities, &mutateReg->regSpan);
@@ -956,11 +962,11 @@ namespace qAlgorithms
         // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->mse = RSS_log / double(df_sum);
 
-        if (!isValidQuadraticTerm(mutateReg, df_sum))
+        if (!isValidQuadraticTerm(mutateReg, df_sum)) // call includes mse
         {
             return 7; // statistical insignificance of the quadratic term
         }
-        if (!isValidPeakArea(mutateReg, df_sum))
+        if (!isValidPeakArea(mutateReg, df_sum)) // mse used in the "calcUncertainty" function call
         {
             return 8; // statistical insignificance of the area
         }
@@ -972,7 +978,7 @@ namespace qAlgorithms
           uncertainty of the height based on the Jacobian matrix and the variance-covariance
           matrix of the coefficients.
         */
-        calcPeakHeightUncert(mutateReg);
+        calcPeakHeightUncert(mutateReg);                           // mse use, again
         if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum]) // statistical significance of the peak height
         {
             return 9;
@@ -1061,7 +1067,7 @@ namespace qAlgorithms
         size_t start = range->startIdx;
         size_t end = range->endIdx + 1;
         size_t len = end - start;
-        double meanSignal;
+        double meanSignal = 0;
         for (size_t i = start; i < end; i++)
         {
             meanSignal += predict->at(i);
@@ -1849,23 +1855,24 @@ namespace qAlgorithms
     }
 #pragma endregion isValidPeakArea
 
-    void calcUncertaintyPos(RegressionGauss *mutateReg)
+    void calcUncertaintyPos(RegressionGauss *mutateReg) // @todo make this mse independent first
     {
-        double _b1 = 1 / mutateReg->coeffs.b1;
-        double _b2 = 1 / mutateReg->coeffs.b2;
-        double _b3 = 1 / mutateReg->coeffs.b3;
-        double J[4]; // Jacobian matrix
-        J[0] = 0.f;
-        J[1] = mutateReg->apex_position * _b1;
+        const double b1 = mutateReg->coeffs.b1;
+        const double b2 = mutateReg->coeffs.b2;
+        const double b3 = mutateReg->coeffs.b3;
+        const double apex = mutateReg->apex_position;
+        double J[4] = {0}; // Jacobian matrix
+
+        J[1] = mutateReg->apex_position / b1;
         if (mutateReg->apex_position < 0)
         {
-            J[2] = -mutateReg->apex_position * _b2;
-            J[3] = 0;
+            J[2] = -mutateReg->apex_position / b2;
+            // J[3] = 0;
         }
         else
         {
-            J[2] = 0;
-            J[3] = -mutateReg->apex_position * _b3;
+            // J[2] = 0;
+            J[3] = -mutateReg->apex_position / b3;
         }
 
         mutateReg->uncertainty_pos = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
@@ -1874,7 +1881,7 @@ namespace qAlgorithms
 
 #pragma region "convolve regression"
 
-    double calcUncertainty(const double J[4], const size_t scale, const double mse)
+    double calcUncertainty(const double J[4], const size_t scale, const double mse) // @todo the transpose should be mse independent
     {
         assert(mse > 0);
         // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation
@@ -1888,6 +1895,20 @@ namespace qAlgorithms
         double uncertainty = std::sqrt(mse * vecMatrxTranspose);
         return uncertainty;
     }
+
+    double matProductReg(const double J[4], const size_t scale) // @todo the transpose should be mse independent
+    {
+        // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation
+        const double *inv = INV_ARRAY.data() + scale * 6;
+        double vecMatrxTranspose = J[0] * J[0] * inv[0] +
+                                   J[1] * J[1] * inv[2] +
+                                   (J[2] * J[2] + J[3] * J[3]) * inv[4] +
+                                   2 * (J[2] * J[3] * inv[5] +
+                                        J[0] * (J[1] + J[3]) * inv[1] +
+                                        J[1] * (J[2] - J[3]) * inv[3]);
+        return vecMatrxTranspose;
+    }
+
 #pragma endregion "convolve regression"
 
 #pragma region "Feature Detection"
