@@ -620,7 +620,6 @@ namespace qAlgorithms
                 continue;
 
             // the first round of comparisons is only concerned with peaks within one scale
-            // @todo is this the correct approach?
             if (reg->coeffs.scale != currentScale)
             {
                 // reset the comparison
@@ -652,7 +651,8 @@ namespace qAlgorithms
                 continue;
             }
 
-            // expand the range until no overlap between regressions exists @todo should this be updated in the chosen regression?
+            // expand the range until no overlap between regressions exists
+            // @todo should this be updated in the chosen regression? - I tend towards yes
             Range_i limits = conflictReg->regSpan;
 
             size_t lookAhead = i;
@@ -766,7 +766,6 @@ namespace qAlgorithms
           multiple peaks, the peak with the lowest MSE is selected as the representative of the group
           and pushed to the valid regressions.
         */
-        // @todo use a "ridges" approach here (gaussian mixture model)
         for (size_t groupIdx = 0; groupIdx < groups.size(); groupIdx += 2)
         {
             if (groups[groupIdx].startIdx == groups[groupIdx].endIdx)
@@ -787,7 +786,7 @@ namespace qAlgorithms
         }
     }
 
-    void updateRegRange(RegressionGauss *mutateReg, const double valleyPos);
+    void updateRegRange(const RegCoeffs *coeffs, const double valleyPos, Range_i *regSpan);
 
     double correctB0(const std::vector<float> *intensities,
                      const Range_i *range,
@@ -809,9 +808,10 @@ namespace qAlgorithms
         assert(0 <= start);
         int end = int(range->endIdx) + 1;
         assert(start < end);
+        double x0 = double(coeff->x0);
         for (int i = start; i < end; i++)
         {
-            double x = i - double(coeff->x0);
+            double x = double(i) - x0;
             predicted->at(i) = regExp_fac(coeff, x);
         }
 
@@ -820,9 +820,8 @@ namespace qAlgorithms
         double b0_exp = exp(coeff->b0);
 
         // Regression correction is only calculated from the range in which the regression is relevant initially.
-        for (size_t i = start; i < end; i++)
+        for (int i = start; i < end; i++)
         {
-            double x = double(i) - double(coeff->x0);
             double pred = predicted->at(i) * b0_exp;
             sum_predictSq += pred * pred;
             sum_predictReal += pred * intensities->at(i);
@@ -840,6 +839,80 @@ namespace qAlgorithms
         }
 
         return factor;
+    }
+
+    int validRegWidth(
+        const std::vector<float> *intensities,
+        const std::vector<float> *intensities_log,
+        const RegCoeffs *coeffs,
+        Range_i *range)
+    {
+        // test regression validity without depending on b0 or the degrees of freedom
+        const bool valley_left = coeffs->b2 >= 0;
+        const bool valley_right = coeffs->b3 >= 0;
+        if (valley_left >= 0 && valley_right >= 0)
+        {
+            // there is no peak since both halves have a minimum
+            return 1;
+        }
+
+        const bool apexLeft = coeffs->b1 < 0;
+        // the apex cannot be on the same side as the valley point
+        if (valley_left && apexLeft)
+            return 2;
+        if (valley_right && (!apexLeft))
+            return 2;
+
+        // position maximum / minimum of b2 or b3. This is just the frst derivative of the peak half equation
+        // (d of y = b0 + b1 x + b23 x^2 => y b1 + 2 * b23 x) solved for y = 0
+        double position_b2 = -coeffs->b1 / (2 * coeffs->b2);
+        double position_b3 = -coeffs->b1 / (2 * coeffs->b3);
+
+        // the apex must be at least minscale different from the valley, if it exists
+        if (valley_left || valley_right)
+        {
+            if ((position_b3 - position_b2) <= GLOBAL_MINSCALE)
+                return 2;
+
+            *valley_position = apexLeft ? position_b3 : position_b2;
+        }
+        // at this stage, the apex position is relating to x0. This is adjusted at a later point
+        mutateReg->apex_position = apexLeft ? position_b2 : position_b3;
+
+        // if this difference from 0 (rounded down) is exceeded by the apex position,
+        // there are not enough points to validate the peak half left
+        // example: at a scale of 2, the apex position must always be smaller than 1
+        double maxApexDist = double(mutateReg->coeffs.scale - GLOBAL_MINSCALE + 1);
+        if (abs(mutateReg->apex_position) > maxApexDist)
+            return 3;
+
+        const size_t scale = coeffs->scale;
+        const size_t idxCenter = coeffs->x0;
+        size_t rangeStart = idxCenter - scale;
+        size_t rangeEnd = idxCenter + scale;
+
+        *regSpan = {rangeStart, rangeEnd};
+        if (valleyPos == 0) // no valley point exists
+            return;
+
+        // set start or end to the valley point if it is within the regression span
+        size_t absValley = size_t(abs(valleyPos));
+        bool valleyLeft = valleyPos < 0;
+        bool updateVal = absValley < scale;
+        if (!updateVal)
+            return;
+
+        if (valleyLeft)
+        {
+            regSpan->startIdx = idxCenter - absValley;
+        }
+        else
+        {
+            regSpan->endIdx = idxCenter + absValley;
+        }
+        assert(regSpan->endIdx > regSpan->startIdx);
+
+        return 0;
     }
 
     int makeValidRegression( // returns the number of the failed test
@@ -877,7 +950,7 @@ namespace qAlgorithms
             return 2; // invalid apex and valley positions, b0 independent
         }
 
-        updateRegRange(mutateReg, valley_position);
+        updateRegRange(&mutateReg->coeffs, valley_position, &mutateReg->regSpan);
         assert(mutateReg->regSpan.endIdx < length);
         if (mutateReg->coeffs.x0 - mutateReg->regSpan.startIdx < 2 ||
             (mutateReg->regSpan.endIdx - mutateReg->coeffs.x0 < 2))
@@ -949,8 +1022,6 @@ namespace qAlgorithms
         is the mean of all predicted values. @todo test this function
         */
         bool f_ok = f_testRegression(intensities_log, RSS_log, &mutateReg->regSpan);
-        // @todo is it a good idea to perform an f test on the exponential data? Especially for small and narrow
-        // peaks, the factor four penalty on df is often too harsh even for shapes that pass a visual "inspection"
         bool f_ok_exp = f_testRegression(intensities, RSS_exp, &mutateReg->regSpan);
         assert(f_ok == f_ok_exp);
         if (!f_ok)
@@ -958,8 +1029,6 @@ namespace qAlgorithms
             return 6; // H0 holds, the two distributions are not noticeably different
         }
 
-        // mean squared error with respect to the degrees of freedom - @todo is the -4 correct?
-        // the quadratic mse is used for the weighted mean of the coefficients later
         mutateReg->mse = RSS_log / double(df_sum);
 
         if (!isValidQuadraticTerm(mutateReg, df_sum)) // call includes mse
@@ -976,7 +1045,7 @@ namespace qAlgorithms
           This block of code implements the height filter. It calculates the height
           of the peak based on the coefficients matrix B. Then it calculates the
           uncertainty of the height based on the Jacobian matrix and the variance-covariance
-          matrix of the coefficients.
+          matrix of the coefficients. @todo this is not what the function actually does!
         */
         calcPeakHeightUncert(mutateReg);                           // mse use, again
         if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum]) // statistical significance of the peak height
@@ -1022,14 +1091,14 @@ namespace qAlgorithms
         return 0;
     }
 
-    void updateRegRange(RegressionGauss *mutateReg, const double valleyPos)
+    void updateRegRange(const RegCoeffs *coeffs, const double valleyPos, Range_i *regSpan)
     {
-        const size_t scale = mutateReg->coeffs.scale;
-        const size_t idxCenter = mutateReg->coeffs.x0;
+        const size_t scale = coeffs->scale;
+        const size_t idxCenter = coeffs->x0;
         size_t rangeStart = idxCenter - scale;
         size_t rangeEnd = idxCenter + scale;
 
-        mutateReg->regSpan = {rangeStart, rangeEnd};
+        *regSpan = {rangeStart, rangeEnd};
         if (valleyPos == 0) // no valley point exists
             return;
 
@@ -1042,13 +1111,13 @@ namespace qAlgorithms
 
         if (valleyLeft)
         {
-            mutateReg->regSpan.startIdx = idxCenter - absValley;
+            regSpan->startIdx = idxCenter - absValley;
         }
         else
         {
-            mutateReg->regSpan.endIdx = idxCenter + absValley;
+            regSpan->endIdx = idxCenter + absValley;
         }
-        assert(mutateReg->regSpan.endIdx > mutateReg->regSpan.startIdx);
+        assert(regSpan->endIdx > regSpan->startIdx);
     }
 
     double signalToNoise(const std::vector<float> *predict,
@@ -1386,23 +1455,23 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
-    double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start)
-    // no allocations
+    double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *observed)
     {
-        const size_t idxCenter = mutateReg->coeffs.x0;
+        const double idxCenter = mutateReg->coeffs.x0;
+        double x = double(mutateReg->regSpan.startIdx) - idxCenter;
         double RSS = 0.0;
-        for (size_t idx = mutateReg->regSpan.startIdx; idx < mutateReg->regSpan.endIdx + 1; idx++)
+        for (size_t i = mutateReg->regSpan.startIdx; i < mutateReg->regSpan.endIdx + 1; i++)
         {
-            double new_x = double(idx) - double(idxCenter);
-            double y_predict = regAt(&mutateReg->coeffs, new_x);
-            double difference = y_start->at(idx) - y_predict;
-
+            // double new_x = double(i) - idxCenter;
+            double pred = regAt(&mutateReg->coeffs, x);
+            double difference = observed->at(i) - pred;
+            x += 1.0;
             RSS += difference * difference;
         }
         return RSS;
     }
 
-    double calcRSS_exp(const std::vector<float> *predict, // @todo this makes sense in utils
+    double calcRSS_exp(const std::vector<float> *predict,
                        const std::vector<float> *observed,
                        const Range_i *range)
     {
@@ -1484,37 +1553,36 @@ namespace qAlgorithms
         return true;
     }
 
-    double calcMSE_exp(const RegCoeffs *coeff, // @todo this does not account for asymmetric RT distances, will that be a problem?
-                       const std::vector<float> *y_start,
+    double calcMSE_exp(const RegCoeffs *coeff,
+                       const std::vector<float> *observed,
                        const Range_i *regSpan,
                        const double df)
     {
         double idxCenter = double(coeff->x0);
+        double x = double(regSpan->startIdx) - idxCenter;
         double result = 0.0;
-        for (size_t iSegment = regSpan->startIdx; iSegment < regSpan->endIdx + 1; iSegment++)
+        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
         {
-            double new_x = double(iSegment) - idxCenter;
-            double y_predict = regExpAt(coeff, new_x);
-            double y_current = (*y_start)[iSegment];
-            double newdiff = (y_current - y_predict) * (y_current - y_predict);
+            double pred = regExpAt(coeff, x);
+            double obs = (*observed)[i];
+            double newdiff = (obs - pred) * (obs - pred);
             result += newdiff;
+            x += 1.0;
         }
         return result / df;
     }
 
     double calcSSE_chisqared(const RegressionGauss *mutateReg,
-                             const std::vector<float> *y_start,
+                             const std::vector<float> *observed,
                              const std::vector<float> *predict)
     {
         double result = 0.0;
-        const double idxCenter = mutateReg->coeffs.x0;
-        for (size_t iSegment = mutateReg->regSpan.startIdx; iSegment < mutateReg->regSpan.endIdx + 1; iSegment++)
+        for (size_t i = mutateReg->regSpan.startIdx; i < mutateReg->regSpan.endIdx + 1; i++)
         {
-            // double new_x = double(iSegment) - idxCenter;
-            double y_predict = predict->at(iSegment);
-            double y_current = (*y_start)[iSegment];
-            double newdiff = (y_current - y_predict) * (y_current - y_predict);
-            result += newdiff / y_predict; // this part is different from the above function, do not try to merge them!
+            double pred = predict->at(i);
+            double obs = (*observed)[i];
+            double newdiff = (obs - pred) * (obs - pred);
+            result += newdiff / pred; // this part is different from the above function, do not try to merge them!
         }
         return result;
     }
@@ -1653,7 +1721,9 @@ namespace qAlgorithms
         }
         // at this point without height, i.e., to get the real uncertainty
         // multiply with height later. This is done to avoid exp function at this point
-        mutateReg->uncertainty_height = calcUncertainty(Jacobian_height, mutateReg->coeffs.scale, mutateReg->mse);
+        // mutateReg->uncertainty_height = calcUncertainty(Jacobian_height, mutateReg->coeffs.scale, mutateReg->mse);
+        double uncertainty = sqrt(matProductReg(Jacobian_height, mutateReg->coeffs.scale) * mutateReg->mse);
+        mutateReg->uncertainty_height = uncertainty;
         return;
     }
 
@@ -1663,7 +1733,7 @@ namespace qAlgorithms
         const size_t df_sum,
         const double apexToEdge)
     {
-        // check if the peak height is significantly greater than edge signal @todo this should be solved by the f test
+        // check if the peak height is significantly greater than edge signal - deprecated!
         double apex = mutateReg->apex_position;
         assert(apex != 0);
         const bool apexLeft = apex < 0;
@@ -1678,7 +1748,8 @@ namespace qAlgorithms
         const double j3 = apexLeft ? 0 : j23;
         const double jacobianHeight[4]{0, j1, j2, j3};
 
-        float uncertainty_apexToEdge = calcUncertainty(jacobianHeight, mutateReg->coeffs.scale, mutateReg->mse);
+        // float uncertainty_apexToEdge = calcUncertainty(jacobianHeight, mutateReg->coeffs.scale, mutateReg->mse);
+        double uncertainty_apexToEdge = sqrt(matProductReg(jacobianHeight, mutateReg->coeffs.scale) * mutateReg->mse);
 
         // @todo why -2? Just to account for position?
         bool peakHeightSignificant = (apexToEdge - 2) > T_VALUES[df_sum] * (apexToEdge * uncertainty_apexToEdge);
@@ -1724,13 +1795,15 @@ namespace qAlgorithms
 
         // at this point the area is without exp(b0), i.e., to get the real area multiply with exp(b0) later. This is done to avoid exp function at this point
         mutateReg->area = J[0];
-        mutateReg->uncertainty_area = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
+        // mutateReg->uncertainty_area = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
+        double uncertainty = sqrt(matProductReg(J, mutateReg->coeffs.scale) * mutateReg->mse);
+        mutateReg->uncertainty_area = uncertainty;
 
         return;
     }
 
     bool isValidPeakArea(const RegressionGauss *mutateReg, const size_t df_sum)
-    // no allocations
+    // @todo this function re-checks regression limits, we should always use the regression range for that
     {
         double doubleScale = double(mutateReg->coeffs.scale);
         double b1 = mutateReg->coeffs.b1;
@@ -1743,7 +1816,7 @@ namespace qAlgorithms
         double B1_2_B3 = b1 / 2 / b3;
 
         double err_L_covered = 0;
-        double x_left = -doubleScale; // @todo we use the last point before the valley as limit later, keep this in?
+        double x_left = -doubleScale;
         {
             double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
             double EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
@@ -1779,7 +1852,7 @@ namespace qAlgorithms
         }
 
         double err_R_covered = 0;
-        double x_right = doubleScale; // right limit due to the window @todo this is already adjusted earlier
+        double x_right = doubleScale; // right limit due to the window
         {
             double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
             double EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
@@ -1846,7 +1919,8 @@ namespace qAlgorithms
         if (J_covered[0] < 0)
             return false;
 
-        float area_uncertainty_covered = calcUncertainty(J_covered, mutateReg->coeffs.scale, mutateReg->mse);
+        // float area_uncertainty_covered = calcUncertainty(J_covered, mutateReg->coeffs.scale, mutateReg->mse);
+        double area_uncertainty_covered = sqrt(matProductReg(J_covered, mutateReg->coeffs.scale) * mutateReg->mse);
 
         // J[0] / uncertainty > Tval
         bool J_is_significant = J_covered[0] > T_VALUES[df_sum] * area_uncertainty_covered;
@@ -1875,13 +1949,15 @@ namespace qAlgorithms
             J[3] = -mutateReg->apex_position / b3;
         }
 
-        mutateReg->uncertainty_pos = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
+        // mutateReg->uncertainty_pos = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
+        double uncertainty = matProductReg(J, mutateReg->coeffs.scale);
+        mutateReg->uncertainty_pos = sqrt(uncertainty * mutateReg->mse);
         return;
     }
 
 #pragma region "convolve regression"
 
-    double calcUncertainty(const double J[4], const size_t scale, const double mse) // @todo the transpose should be mse independent
+    double calcUncertainty(const double J[4], const size_t scale, const double mse)
     {
         assert(mse > 0);
         // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation
@@ -1896,7 +1972,7 @@ namespace qAlgorithms
         return uncertainty;
     }
 
-    double matProductReg(const double J[4], const size_t scale) // @todo the transpose should be mse independent
+    double matProductReg(const double J[4], const size_t scale)
     {
         // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation
         const double *inv = INV_ARRAY.data() + scale * 6;
@@ -1913,7 +1989,7 @@ namespace qAlgorithms
 
 #pragma region "Feature Detection"
 
-    double medianVec(const std::vector<float> *vec) // @todo this should be the mode, not the median
+    double medianVec(const std::vector<float> *vec)
     {
         std::vector<float> tmpDiffs = *vec;
         std::sort(tmpDiffs.begin(), tmpDiffs.end());
@@ -1935,9 +2011,6 @@ namespace qAlgorithms
         diffs: known at time of function call
         forwardConv: s.o.
         backwardConv: size calculated in function
-
-       ### called functions ###
-        medianVec allocates a vector the size of diffs
     */
     {
         // This function interpolates the existing RTs of MS1 spectra and produces a vector that contains,
@@ -1953,6 +2026,7 @@ namespace qAlgorithms
         }
         assert(!diffs.empty());
 
+        // @todo this should be the mode, not the median
         float expectedDiff = medianVec(&diffs);
         // if this is not given, there are severe distortions at some point in the data. We accept one non-compliance,
         // at the first scan in the spectrum only, which is generally one of the first recorded scans
@@ -2211,6 +2285,8 @@ namespace qAlgorithms
         return centroids->size();
     }
 
+    size_t removedPoints = 0;
+
     size_t pretreatDataCentroids(
         std::vector<ProfileBlock> *groupedData,
         const std::vector<double> *spectrum_mz,
@@ -2247,6 +2323,10 @@ namespace qAlgorithms
                     maxRangeSpan = maxRangeSpan > span ? maxRangeSpan : span;
                 }
                 rangeStart = pos + 1;
+            }
+            else
+            {
+                removedPoints += 1;
             }
         }
 

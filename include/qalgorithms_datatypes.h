@@ -88,6 +88,16 @@ namespace qAlgorithms
         size_t startPos, endPos;
     };
 
+    // instead of managing the data, provide start element of each array
+    // @todo we could also just pass start idx and length independently
+    struct ProfileSlice
+    {
+        float *intensity;
+        float *mz;
+        int length;
+        int offset; // the first point in the slice is the nth point in the full spectrum
+    };
+
     struct RegCoeffs
     {
         double b0 = 0, b1 = 0, b2 = 0, b3 = 0;

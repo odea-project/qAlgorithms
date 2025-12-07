@@ -127,6 +127,10 @@ namespace qAlgorithms
         const std::vector<float> *intensities_log,
         RegressionGauss *mutateReg);
 
+    int validRegWidth(
+        const std::vector<float> *intensities,
+        const std::vector<float> *intensities_log);
+
     void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
                                     const std::vector<float> *intensities);
 
@@ -223,7 +227,9 @@ namespace qAlgorithms
         RegressionGauss *mutateReg,
         double *valley_position);
 
+    // take a jacobian matrix as input and return the transpose at scale
     double calcUncertainty(const double J[4], const size_t scale, const double mse);
+    double matProductReg(const double J[4], const size_t scale);
 
     double apexToEdgeRatio(const RegressionGauss *mutateReg, const std::vector<float> *intensities);
 
