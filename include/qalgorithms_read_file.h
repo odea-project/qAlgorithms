@@ -21,6 +21,15 @@ namespace qAlgorithms
         bool isDouble;
     };
 
+    enum SourceFileType
+    {
+        unknown_filetype,
+        mzML,
+        mzxML,
+        hdf5,
+        json,
+    };
+
     struct SpectrumData // this information is required by qAlgorithms to function
     {
         size_t spectrum_index = 0;     // start at 1

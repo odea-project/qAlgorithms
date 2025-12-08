@@ -127,9 +127,7 @@ namespace qAlgorithms
         const std::vector<float> *intensities_log,
         RegressionGauss *mutateReg);
 
-    int validRegWidth(
-        const std::vector<float> *intensities,
-        const std::vector<float> *intensities_log);
+    int validRegWidth(const RegCoeffs *coeffs, Range_i *range);
 
     void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
                                     const std::vector<float> *intensities);

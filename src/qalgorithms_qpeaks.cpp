@@ -199,7 +199,7 @@ namespace qAlgorithms
     volatile bool debug = false;
     std::vector<int> failCodes;
 
-    size_t validateRegressions(
+    size_t validateRegressions( // @todo this should be specific to centroids, features or components
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
@@ -209,13 +209,19 @@ namespace qAlgorithms
         size_t validCount = 0;
         for (size_t i = 0; i < coefficients->size(); i++)
         {
+            Range_i range;
+            int failpoint = validRegWidth(&(coefficients->at(i)), &range);
+
+            if (failpoint != 0)
+                continue;
 
             RegressionGauss reg;
             reg.coeffs = coefficients->at(i);
-            int failpoint = makeValidRegression(degreesOfFreedom_cum,
-                                                intensities,
-                                                intensities_log,
-                                                &reg);
+            reg.regSpan = range;
+            failpoint = makeValidRegression(degreesOfFreedom_cum,
+                                            intensities,
+                                            intensities_log,
+                                            &reg);
             failCodes.push_back(failpoint);
 
             validCount += failpoint == 0 ? 1 : 0;
@@ -841,16 +847,12 @@ namespace qAlgorithms
         return factor;
     }
 
-    int validRegWidth(
-        const std::vector<float> *intensities,
-        const std::vector<float> *intensities_log,
-        const RegCoeffs *coeffs,
-        Range_i *range)
+    int validRegWidth(const RegCoeffs *coeffs, Range_i *range)
     {
         // test regression validity without depending on b0 or the degrees of freedom
         const bool valley_left = coeffs->b2 >= 0;
         const bool valley_right = coeffs->b3 >= 0;
-        if (valley_left >= 0 && valley_right >= 0)
+        if (valley_left && valley_right)
         {
             // there is no peak since both halves have a minimum
             return 1;
@@ -867,50 +869,23 @@ namespace qAlgorithms
         // (d of y = b0 + b1 x + b23 x^2 => y b1 + 2 * b23 x) solved for y = 0
         double position_b2 = -coeffs->b1 / (2 * coeffs->b2);
         double position_b3 = -coeffs->b1 / (2 * coeffs->b3);
+        double x0d = double(coeffs->x0);
 
-        // the apex must be at least minscale different from the valley, if it exists
-        if (valley_left || valley_right)
-        {
-            if ((position_b3 - position_b2) <= GLOBAL_MINSCALE)
-                return 2;
+        size_t apex = size_t(x0d + (apexLeft ? position_b2 : position_b3)); // cast to int because we are interested in number of points, not absolute distance
 
-            *valley_position = apexLeft ? position_b3 : position_b2;
-        }
-        // at this stage, the apex position is relating to x0. This is adjusted at a later point
-        mutateReg->apex_position = apexLeft ? position_b2 : position_b3;
+        size_t lim_l = valley_left ? size_t(position_b2) + 1 : coeffs->x0 - coeffs->scale; // +1 since casting truncates, so otherwise this would overestimate the left DF by one
+        size_t lim_r = valley_right ? size_t(position_b2) : coeffs->x0 + coeffs->scale;
+        assert(lim_l < apex);
+        assert(lim_r > apex);
 
-        // if this difference from 0 (rounded down) is exceeded by the apex position,
-        // there are not enough points to validate the peak half left
-        // example: at a scale of 2, the apex position must always be smaller than 1
-        double maxApexDist = double(mutateReg->coeffs.scale - GLOBAL_MINSCALE + 1);
-        if (abs(mutateReg->apex_position) > maxApexDist)
+        size_t dist_l = apex - lim_l + 1; // truncation means the point left of the apex is otherwise not included in DF (cancels out lim_l modification)
+        size_t dist_r = lim_r - apex;
+
+        // there must be at least two points in every half of the regression - check for degrees of freedom later
+        if (min(dist_l, dist_r) < 2)
             return 3;
 
-        const size_t scale = coeffs->scale;
-        const size_t idxCenter = coeffs->x0;
-        size_t rangeStart = idxCenter - scale;
-        size_t rangeEnd = idxCenter + scale;
-
-        *regSpan = {rangeStart, rangeEnd};
-        if (valleyPos == 0) // no valley point exists
-            return;
-
-        // set start or end to the valley point if it is within the regression span
-        size_t absValley = size_t(abs(valleyPos));
-        bool valleyLeft = valleyPos < 0;
-        bool updateVal = absValley < scale;
-        if (!updateVal)
-            return;
-
-        if (valleyLeft)
-        {
-            regSpan->startIdx = idxCenter - absValley;
-        }
-        else
-        {
-            regSpan->endIdx = idxCenter + absValley;
-        }
-        assert(regSpan->endIdx > regSpan->startIdx);
+        *range = {lim_l, lim_r};
 
         return 0;
     }
@@ -950,6 +925,7 @@ namespace qAlgorithms
             return 2; // invalid apex and valley positions, b0 independent
         }
 
+        Range_i comp = mutateReg->regSpan;
         updateRegRange(&mutateReg->coeffs, valley_position, &mutateReg->regSpan);
         assert(mutateReg->regSpan.endIdx < length);
         if (mutateReg->coeffs.x0 - mutateReg->regSpan.startIdx < 2 ||
@@ -959,6 +935,8 @@ namespace qAlgorithms
             // degrees of freedom for the "squished" half results in an invalid regression
             return 3; // b0 independent
         }
+        assert(comp.startIdx == mutateReg->regSpan.startIdx);
+        assert(comp.endIdx == mutateReg->regSpan.endIdx);
 
         size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->regSpan);
         if (df_sum < 5)
@@ -1937,16 +1915,16 @@ namespace qAlgorithms
         const double apex = mutateReg->apex_position;
         double J[4] = {0}; // Jacobian matrix
 
-        J[1] = mutateReg->apex_position / b1;
+        J[1] = apex / b1;
         if (mutateReg->apex_position < 0)
         {
-            J[2] = -mutateReg->apex_position / b2;
+            J[2] = -apex / b2;
             // J[3] = 0;
         }
         else
         {
             // J[2] = 0;
-            J[3] = -mutateReg->apex_position / b3;
+            J[3] = -apex / b3;
         }
 
         // mutateReg->uncertainty_pos = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
