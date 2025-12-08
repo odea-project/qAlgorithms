@@ -871,12 +871,23 @@ namespace qAlgorithms
         double position_b3 = -coeffs->b1 / (2 * coeffs->b3);
         double x0d = double(coeffs->x0);
 
-        size_t apex = size_t(x0d + (apexLeft ? position_b2 : position_b3)); // cast to int because we are interested in number of points, not absolute distance
+        // cast to int because we are interested in number of points, not absolute distance
+        double apexd = apexLeft ? position_b2 : position_b3;
+        if (abs(apexd) >= double(coeffs->scale - 1))
+            return 3;
+        size_t apex = size_t(x0d + apexd);
 
-        size_t lim_l = valley_left ? size_t(position_b2) + 1 : coeffs->x0 - coeffs->scale; // +1 since casting truncates, so otherwise this would overestimate the left DF by one
-        size_t lim_r = valley_right ? size_t(position_b2) : coeffs->x0 + coeffs->scale;
-        assert(lim_l < apex);
-        assert(lim_r > apex);
+        size_t lim_l = coeffs->x0 - coeffs->scale;
+        if (valley_left)
+            // +1 since casting truncates, so otherwise this would overestimate the left DF by one
+            lim_l = max(lim_l, coeffs->x0 + size_t(position_b2) + 1);
+
+        size_t lim_r = coeffs->x0 + coeffs->scale;
+        if (valley_right)
+            lim_r = min(lim_r, coeffs->x0 + size_t(position_b3));
+
+        assert(lim_l <= apex);
+        assert(lim_r >= apex);
 
         size_t dist_l = apex - lim_l + 1; // truncation means the point left of the apex is otherwise not included in DF (cancels out lim_l modification)
         size_t dist_r = lim_r - apex;

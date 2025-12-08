@@ -14,7 +14,7 @@ if (false)
     # hardening flags 
     add_compile_options(-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3)
 else()
-    add_compile_options(-Og -fno-omit-frame-pointer)
+    add_compile_options(-O0 -fno-omit-frame-pointer)
 endif()
 
 # debug-related flags - @todo remove for actual release build?
