@@ -810,6 +810,15 @@ namespace qAlgorithms
 
         // predict intensity only within range to prevent unnecessary exp operations.
         // prediction is incomplete, so it has to be multiplied with exp(b0)
+
+        // uncertainties of this prediction are derived from the general equation for every coefficient.
+        // the derivative is the following general form where bx' depends on the derived coefficient (1 for b0, x for b1, x^2 for b23)
+        // b0' + ln(sum(exp(b0 + b1 x + b23 x^2) * y_i)) * sum(exp(b0 + b1 x + b23 x^2) * y_i * bx')
+        //     - ln(sum(exp(b0 + b1 x + b23 x^2)^2)) * sum(exp(b0 + b1 x + b23 x^2)^2 * bx'^2)
+        // note that the value of bx' depends on x and cannot be removed from the sum. Precalculation is also not
+        // possible due to the value of y being required. This is not a large performance concern since we can combine it
+        // with the calculations that are already necessary for obntaining the modified b0.
+
         int start = int(range->startIdx);
         assert(0 <= start);
         int end = int(range->endIdx) + 1;
@@ -2382,5 +2391,51 @@ namespace qAlgorithms
     {
         double b23 = x < 0 ? coeff->b2 : coeff->b3;
         return exp((coeff->b1 + x * b23) * x);
+    }
+
+    double derivSum_b1(
+        const RegCoeffs *coeff,
+        const float *observed, // pointer to first intensity within range
+        const int x_start,
+        const size_t width)
+    {
+        double sumNum = 0;
+        double sumDenom = 0;
+        double b1 = coeff->b1;
+        double x = x_start;
+        for (size_t i = 0; i < width; i++)
+        {
+            double b23 = x < 0 ? coeff->b2 : coeff->b3;
+            double y = observed[i];
+            double val = exp((b1 + b23 * x) * x) * y;
+            sumNum += val * x;
+            sumDenom += val;
+
+            x += 1;
+        }
+        return sumNum / sumDenom;
+    }
+
+    double derivSum_b1(
+        const RegCoeffs *coeff,
+        const float *observed, // pointer to first intensity within range
+        const int x_start,
+        const size_t width)
+    {
+        double sumNum = 0;
+        double sumDenom = 0;
+        double b1 = coeff->b1;
+        double x = x_start;
+        for (size_t i = 0; i < width; i++)
+        {
+            double b23 = x < 0 ? coeff->b2 : coeff->b3;
+            double y = observed[i];
+            double val = exp((b1 + b23 * x) * x) * y;
+            sumNum += val * x;
+            sumDenom += val;
+
+            x += 1;
+        }
+        return sumNum / sumDenom;
     }
 }
