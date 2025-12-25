@@ -125,6 +125,7 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
+        const size_t df_sum,
         RegressionGauss *mutateReg);
 
     int validRegWidth(const RegCoeffs *coeffs, Range_i *range);

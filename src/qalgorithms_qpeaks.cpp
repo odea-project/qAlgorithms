@@ -218,9 +218,16 @@ namespace qAlgorithms
             RegressionGauss reg;
             reg.coeffs = coefficients->at(i);
             reg.regSpan = range;
+
+            size_t df_sum = calcDF_cum(degreesOfFreedom_cum, range);
+            if (df_sum < 5)
+                continue;
+            df_sum -= 4; // four coefficients, adjust for components
+
             failpoint = makeValidRegression(degreesOfFreedom_cum,
                                             intensities,
                                             intensities_log,
+                                            df_sum,
                                             &reg);
             failCodes.push_back(failpoint);
 
@@ -883,29 +890,46 @@ namespace qAlgorithms
         // cast to int because we are interested in number of points, not absolute distance
         double apexd = apexLeft ? position_b2 : position_b3;
         if (abs(apexd) >= double(coeffs->scale - 1))
-            return 3;
+            return 3; // apex outside of regression window
+
         size_t apex = size_t(x0d + apexd);
-
         size_t lim_l = coeffs->x0 - coeffs->scale;
-        if (valley_left)
-            // +1 since casting truncates, so otherwise this would overestimate the left DF by one
-            lim_l = max(lim_l, coeffs->x0 + size_t(position_b2) + 1);
-
         size_t lim_r = coeffs->x0 + coeffs->scale;
-        if (valley_right)
-            lim_r = min(lim_r, coeffs->x0 + size_t(position_b3));
+        *range = {lim_l, lim_r};
 
+        if (!(valley_left || valley_right))
+            return 0; // all ok by definition
+
+        double dscale = double(coeffs->scale);
+        if (valley_left)
+        {
+
+            if (position_b2 >= -2)
+                return 3; // left regression half has less than two points
+
+            if (position_b2 <= -dscale)
+                return 0; // valley does not matter
+
+            // new cast already rounds value down
+            lim_l = max(lim_l, coeffs->x0 - size_t(-position_b2));
+        }
+        else // if (valley_right)
+        {
+            if (position_b3 <= 2)
+                return 3;
+
+            if (position_b3 >= dscale)
+                return 0;
+
+            lim_r = min(lim_r, coeffs->x0 + size_t(position_b3));
+        }
         assert(lim_l <= apex);
         assert(lim_r >= apex);
 
-        size_t dist_l = apex - lim_l + 1; // truncation means the point left of the apex is otherwise not included in DF (cancels out lim_l modification)
-        size_t dist_r = lim_r - apex;
-
-        // there must be at least two points in every half of the regression - check for degrees of freedom later
-        if (min(dist_l, dist_r) < 2)
-            return 3;
-
         *range = {lim_l, lim_r};
+
+        assert(lim_l != coeffs->x0);
+        assert(lim_r != coeffs->x0);
 
         return 0;
     }
@@ -914,6 +938,7 @@ namespace qAlgorithms
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
+        const size_t df_sum,
         RegressionGauss *mutateReg)
     /* ### allocations ###
         selectLog: size calculated in function, max size known
@@ -958,14 +983,14 @@ namespace qAlgorithms
         assert(comp.startIdx == mutateReg->regSpan.startIdx);
         assert(comp.endIdx == mutateReg->regSpan.endIdx);
 
-        size_t df_sum = calcDF_cum(degreesOfFreedom_cum, mutateReg->regSpan);
+        assert(df_sum == calcDF_cum(degreesOfFreedom_cum, mutateReg->regSpan) - 4);
         if (df_sum < 5)
         {
             // degree of freedom less than 5; i.e., less than 5 measured data points.
             // Four points or less are not enough to fit a regression with four coefficients
-            return 4; // b0 independent
+            // return 4; // b0 independent
         }
-        df_sum -= 4; // four coefficients
+        // df_sum -= 4; // four coefficients
 
         /*
             Prediction for coefficients that are not b0. Since any "true" prediction
@@ -1019,9 +1044,9 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo test this function
         */
-        bool f_ok = f_testRegression(intensities_log, RSS_log, &mutateReg->regSpan);
-        bool f_ok_exp = f_testRegression(intensities, RSS_exp, &mutateReg->regSpan);
-        assert(f_ok == f_ok_exp);
+        // bool f_ok_log = f_testRegression(intensities_log, RSS_log, &mutateReg->regSpan);
+        bool f_ok = f_testRegression(intensities, RSS_exp, &mutateReg->regSpan);
+        // assert(f_ok == f_ok_exp);
         if (!f_ok)
         {
             return 6; // H0 holds, the two distributions are not noticeably different
@@ -2391,29 +2416,6 @@ namespace qAlgorithms
     {
         double b23 = x < 0 ? coeff->b2 : coeff->b3;
         return exp((coeff->b1 + x * b23) * x);
-    }
-
-    double derivSum_b1(
-        const RegCoeffs *coeff,
-        const float *observed, // pointer to first intensity within range
-        const int x_start,
-        const size_t width)
-    {
-        double sumNum = 0;
-        double sumDenom = 0;
-        double b1 = coeff->b1;
-        double x = x_start;
-        for (size_t i = 0; i < width; i++)
-        {
-            double b23 = x < 0 ? coeff->b2 : coeff->b3;
-            double y = observed[i];
-            double val = exp((b1 + b23 * x) * x) * y;
-            sumNum += val * x;
-            sumDenom += val;
-
-            x += 1;
-        }
-        return sumNum / sumDenom;
     }
 
     double derivSum_b1(
