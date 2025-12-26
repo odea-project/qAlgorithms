@@ -128,9 +128,6 @@ namespace qAlgorithms
 
         static_assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
 
-        std::vector<float> fullSpec;
-        std::vector<float> withCens;
-
         std::vector<RegressionGauss> validRegressions;
         validRegressions.reserve(treatedData->size() / 2); // probably too large, shouldn't matter
         for (size_t i = 0; i < treatedData->size(); i++)   // 185
@@ -139,19 +136,17 @@ namespace qAlgorithms
 
             assert(block->intensity.size() == block->mz.size());
 
-            for (size_t dbg = 0; dbg < block->mz.size(); dbg++)
-            {
-                fullSpec.push_back(block->intensity[dbg]);
-                withCens.push_back(0);
-            }
-            fullSpec.push_back(-1);
-            withCens.push_back(-1);
-
             // this is now filled inside the function, the vector only reserves space. We do not
             // perform this step in the function so that it is explicitly empty. This should be
             // replaced by a non-malloc calling scratch space eventually
             logIntensity.clear();
-            runningRegression(&block->intensity, &logIntensity, &block->cumdf, &validRegressions, GLOBAL_MAXSCALE_CENTROID);
+            runningRegression(
+                &block->intensity,
+                &logIntensity,
+                &block->cumdf,
+                &validRegressions,
+                block->intensity.size(),
+                GLOBAL_MAXSCALE_CENTROID);
 
             volatile bool purge = false;
             if (purge)
@@ -164,32 +159,6 @@ namespace qAlgorithms
             createCentroidPeaks(retPeaks, &validRegressions, block, scanNumber, accessor);
             validRegressions.clear();
         }
-        // if (retPeaks->size() == 0)
-        // {
-        //     // debug: print relevant data to file
-        //     FILE *f = fopen("errorspec.csv", "w");
-        //     if (f == NULL)
-        //     {
-        //         printf("Error opening file!\n");
-        //         exit(1);
-        //     }
-
-        //     fprintf(f, "ID, mz, int, df\n");
-        //     for (size_t i = 0; i < treatedData->size(); i++)
-        //     {
-        //         auto mz = treatedData->at(i).mz;
-        //         auto intensity = treatedData->at(i).intensity;
-        //         auto df = treatedData->at(i).cumdf;
-        //         assert(mz.size() == intensity.size());
-        //         for (size_t j = 0; j < mz.size(); j++)
-        //         {
-        //             fprintf(f, "%zu, %f, %f, %u\n", i, mz[j], intensity[j], df[j]);
-        //         }
-        //     }
-
-        //     fclose(f);
-        //     exit(1);
-        // }
     }
 
 #pragma endregion "find peaks"
@@ -197,7 +166,7 @@ namespace qAlgorithms
 #pragma region "running regression"
 
     volatile bool debug = false;
-    std::vector<int> failCodes;
+    std::vector<invalid> failCodes;
 
     size_t validateRegressions( // @todo this should be specific to centroids, features or components
         const std::vector<float> *intensities,
@@ -210,9 +179,9 @@ namespace qAlgorithms
         for (size_t i = 0; i < coefficients->size(); i++)
         {
             Range_i range;
-            int failpoint = validRegWidth(&(coefficients->at(i)), &range);
+            invalid failpoint = validRegWidth(&(coefficients->at(i)), &range);
 
-            if (failpoint != 0)
+            if (failpoint != ok)
                 continue;
 
             RegressionGauss reg;
@@ -231,15 +200,15 @@ namespace qAlgorithms
                                             &reg);
             failCodes.push_back(failpoint);
 
-            validCount += failpoint == 0 ? 1 : 0;
-            if (reg.isValid)
+            validCount += failpoint == ok ? 1 : 0;
+            if (failpoint == ok)
             {
                 validRegressions->push_back(reg);
             }
         }
         assert(validCount == validRegressions->size());
 
-        failCodes.push_back(-1);
+        failCodes.push_back(invalid::none);
 
         return validCount;
     }
@@ -338,6 +307,7 @@ namespace qAlgorithms
         std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> *validRegressions,
+        const size_t length,
         const size_t maxScale)
     /* ### allocations ###
         regressions: size determined by function
@@ -346,90 +316,19 @@ namespace qAlgorithms
         mergeRegressionsOverScales
     */
     {
-        const size_t length = intensities->size();
-
-#ifdef _RM
-        volatile bool extrapolate = false;
-        if (extrapolate)
-        { // prepare the log intensity vector, including extrapolation
-            assert(intensities_log->empty());
-            size_t fillCount = maxScale - 2; // -2 since maxscale - minscale (== 2) is used in regression
-            intensities_log->reserve(length + 2 * fillCount);
-            for (size_t i = 0; i < fillCount; i++)
-            {
-                intensities_log->push_back(0);
-            }
-            for (size_t i = 0; i < length; i++)
-            {
-                intensities_log->push_back(log(intensities->at(i)));
-            }
-            for (size_t i = 0; i < fillCount; i++)
-            {
-                intensities_log->push_back(0);
-            }
-
-            extrapolateLogInt(intensities_log, fillCount);
-            volatile bool swapInOld = false;
-            if (swapInOld)
-                extrapolate_old(intensities_log, fillCount);
-        }
-        else
-#endif
-        {
-            intensities_log->reserve(length);
-            for (size_t i = 0; i < length; i++)
-            {
-                intensities_log->push_back(log(intensities->at(i)));
-            }
-        }
-
         assert(validRegressions->empty());
+
+        intensities_log->clear();
+        intensities_log->reserve(length);
+        for (size_t i = 0; i < length; i++)
+        {
+            intensities_log->push_back(log(intensities->at(i)));
+        }
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
         // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
         std::vector<RegCoeffs> coefficients;
         findCoefficients(intensities_log, maxScale, &coefficients);
-
-        std::vector<int> failures;
-        failures.reserve(coefficients.size());
-        std::vector<int> x0s;
-        x0s.reserve(coefficients.size());
-
-        volatile bool printDebug = false;
-        if (printDebug)
-        {
-            FILE *f = fopen("failedRegs.csv", "w");
-            if (f == NULL)
-            {
-                printf("Error opening file!\n");
-                exit(1);
-            }
-
-            fprintf(f, "ID, intensity\n");
-            for (float i : *intensities)
-            {
-                fprintf(f, "-1, %f\n", i);
-            }
-            size_t i = 0;
-            size_t numCenters = length - 4;
-            for (RegCoeffs reg : coefficients)
-            {
-                // index rotates as points are added by scale
-                int x0 = i % numCenters + 2;
-                int startIdx = -x0;
-                int endIdx = length - x0 - 1;
-                auto points = predictedInt(&reg, startIdx, endIdx);
-
-                for (size_t access = 0; access < length; access++)
-                {
-                    fprintf(f, "%zu, %f\n", i, points[access]);
-                }
-
-                i += 1;
-            }
-
-            fclose(f);
-        }
 
         std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
         validRegsTmp.reserve(coefficients.size() / 2);
@@ -799,8 +698,6 @@ namespace qAlgorithms
         }
     }
 
-    void updateRegRange(const RegCoeffs *coeffs, const double valleyPos, Range_i *regSpan);
-
     double correctB0(const std::vector<float> *intensities,
                      const Range_i *range,
                      std::vector<float> *predicted,
@@ -863,7 +760,7 @@ namespace qAlgorithms
         return factor;
     }
 
-    int validRegWidth(const RegCoeffs *coeffs, Range_i *range)
+    invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range)
     {
         // test regression validity without depending on b0 or the degrees of freedom
         const bool valley_left = coeffs->b2 >= 0;
@@ -931,6 +828,8 @@ namespace qAlgorithms
 
         return ok;
     }
+
+    void updateRegRange(const RegCoeffs *coeffs, const double valleyPos, Range_i *regSpan);
 
     invalid makeValidRegression( // returns the number of the failed test
         const std::vector<unsigned int> *degreesOfFreedom_cum,
@@ -2163,11 +2062,13 @@ namespace qAlgorithms
 
             size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2);
 
-            runningRegression(&currentEIC.ints_area,
-                              &logIntensity,
-                              &currentEIC.df,
-                              &validRegressions,
-                              maxScale);
+            runningRegression(
+                &currentEIC.ints_area,
+                &logIntensity,
+                &currentEIC.df,
+                &validRegressions,
+                currentEIC.ints_area.size(),
+                maxScale);
 
             if (!validRegressions.empty())
             {

@@ -100,6 +100,7 @@ namespace qAlgorithms
         std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> *validRegressions,
+        const size_t length,
         const size_t maxScale);
 
     // mutate b0 so that it is optimal for the exponential case if b1, b2 and b3 are identical
@@ -126,7 +127,8 @@ namespace qAlgorithms
         invalid_quadratic,
         invalid_area,
         invalid_height,
-        invalid_chisq
+        invalid_chisq,
+        none = -1
     };
 
     /// @brief perform various statistical tests to see if a regression describes a valid peak
@@ -142,7 +144,7 @@ namespace qAlgorithms
         const size_t df_sum,
         RegressionGauss *mutateReg);
 
-    int validRegWidth(const RegCoeffs *coeffs, Range_i *range);
+    invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
 
     void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
                                     const std::vector<float> *intensities);

@@ -2,7 +2,7 @@
 #include <cstdint> // uint64_t
 #include <cmath>   // std::abs()
 #include <cassert>
-#include "../external/CDFlib/cdflib.hpp"
+// #include "../external/CDFlib/cdflib.hpp"
 #include "cephes.h"
 
 #include <unordered_map>
@@ -25,19 +25,15 @@ namespace qAlgorithms
         a2 = a2 << __INT_WIDTH__;
         return a2 | b;
     }
-    // this global hashmap is used to avoid recalculating the f value every time - better solution possible? @todo
+    // this global hashmap is used to avoid recalculating the f value every time - better, thread-safe solution possible? @todo
     std::unordered_map<size_t, double> global_fhash_5perc;
 
-    // @todo separate out the library functions into something better readable with less flexible error checking
     double F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints)
     {
-        // wrapper around the cdflib library function cdff with the correct presets
-        // for calculating the area of F from 0 to 1 - alpha.
         assert(params_complex > params_simple);
         assert(alpha > 0);
         assert(alpha < 1);
 
-        // @todo this is not multithreading capable!
         int dfn_int = params_complex - params_simple;
         int dfd_int = numPoints - params_complex;
         size_t key = hashm(dfn_int, dfd_int);

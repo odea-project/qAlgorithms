@@ -39,7 +39,13 @@ int main()
         const size_t maxScale = 8; // @todo not bound to centroid maxscale
         std::vector<float> logIntensity(25, NAN);
         logIntensity.clear();
-        runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale);
+        runningRegression(
+            &block.intensity,
+            &logIntensity,
+            &block.cumdf,
+            &validRegressions,
+            block.intensity.size(),
+            maxScale);
     }
 
     // does the RT conversion struct work correctly?

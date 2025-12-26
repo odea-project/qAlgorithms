@@ -284,7 +284,13 @@ int main(int argc, char *argv[])
             std::vector<float> logIntensity;
             logIntensity.reserve(length);
             validRegressions.clear();
-            runningRegression(&block.intensity, &logIntensity, &block.cumdf, &validRegressions, maxScale);
+            runningRegression(
+                &block.intensity,
+                &logIntensity,
+                &block.cumdf,
+                &validRegressions,
+                block.intensity.size(),
+                maxScale);
             assert(failcount < 1000);
             assert(!validRegressions.empty());
 
