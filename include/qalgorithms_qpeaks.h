@@ -115,13 +115,27 @@ namespace qAlgorithms
                      std::vector<float> *predicted,
                      RegCoeffs *coeff);
 
+    enum invalid
+    {
+        ok,
+        no_apex,
+        invalid_apex,
+        no_df,
+        invalid_apexToEdge, // this will probably be removed
+        f_test_fail,
+        invalid_quadratic,
+        invalid_area,
+        invalid_height,
+        invalid_chisq
+    };
+
     /// @brief perform various statistical tests to see if a regression describes a valid peak
     /// @param degreesOfFreedom_cum cumulative degrees of freedom (only relevant for interpolated data)
     /// @param intensities measured intensities
     /// @param intensities_log log of measured intensities - must have same length as intensities
     /// @param mutateReg regression that should be mutated by this function
     /// @return 0 if the regression is valid, otherwise the filter step which kicked it out
-    int makeValidRegression(
+    invalid makeValidRegression(
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,

@@ -871,15 +871,15 @@ namespace qAlgorithms
         if (valley_left && valley_right)
         {
             // there is no peak since both halves have a minimum
-            return 1;
+            return no_apex;
         }
 
         const bool apexLeft = coeffs->b1 < 0;
         // the apex cannot be on the same side as the valley point
         if (valley_left && apexLeft)
-            return 2;
+            return no_apex;
         if (valley_right && (!apexLeft))
-            return 2;
+            return no_apex;
 
         // position maximum / minimum of b2 or b3. This is just the frst derivative of the peak half equation
         // (d of y = b0 + b1 x + b23 x^2 => y b1 + 2 * b23 x) solved for y = 0
@@ -890,7 +890,7 @@ namespace qAlgorithms
         // cast to int because we are interested in number of points, not absolute distance
         double apexd = apexLeft ? position_b2 : position_b3;
         if (abs(apexd) >= double(coeffs->scale - 1))
-            return 3; // apex outside of regression window
+            return invalid_apex; // apex outside of regression window
 
         size_t apex = size_t(x0d + apexd);
         size_t lim_l = coeffs->x0 - coeffs->scale;
@@ -898,17 +898,16 @@ namespace qAlgorithms
         *range = {lim_l, lim_r};
 
         if (!(valley_left || valley_right))
-            return 0; // all ok by definition
+            return ok; // all ok by definition
 
         double dscale = double(coeffs->scale);
         if (valley_left)
         {
-
             if (position_b2 >= -2)
-                return 3; // left regression half has less than two points
+                return invalid_apex; // left regression half has less than two points
 
             if (position_b2 <= -dscale)
-                return 0; // valley does not matter
+                return ok; // valley does not matter
 
             // new cast already rounds value down
             lim_l = max(lim_l, coeffs->x0 - size_t(-position_b2));
@@ -916,25 +915,24 @@ namespace qAlgorithms
         else // if (valley_right)
         {
             if (position_b3 <= 2)
-                return 3;
+                return invalid_apex;
 
             if (position_b3 >= dscale)
-                return 0;
+                return ok;
 
             lim_r = min(lim_r, coeffs->x0 + size_t(position_b3));
         }
         assert(lim_l <= apex);
         assert(lim_r >= apex);
+        assert(lim_l < coeffs->x0);
+        assert(lim_r > coeffs->x0);
 
         *range = {lim_l, lim_r};
 
-        assert(lim_l != coeffs->x0);
-        assert(lim_r != coeffs->x0);
-
-        return 0;
+        return ok;
     }
 
-    int makeValidRegression( // returns the number of the failed test
+    invalid makeValidRegression( // returns the number of the failed test
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<float> *intensities,
         const std::vector<float> *intensities_log,
@@ -954,7 +952,7 @@ namespace qAlgorithms
         // for a regression to be valid, at least one coefficient must be < 0
         if (mutateReg->coeffs.b2 >= 0 && mutateReg->coeffs.b3 >= 0)
         {
-            return 1; // b0 independent
+            return no_apex; // b0 independent
         }
 
         /*
@@ -967,7 +965,7 @@ namespace qAlgorithms
         int failure = calcApexAndValleyPos(mutateReg, &valley_position);
         if (failure != 0) // something went wrong
         {
-            return 2; // invalid apex and valley positions, b0 independent
+            return invalid_apex; // invalid apex and valley positions, b0 independent
         }
 
         Range_i comp = mutateReg->regSpan;
@@ -978,7 +976,7 @@ namespace qAlgorithms
         {
             // only one half of the regression applies to the data, since the
             // degrees of freedom for the "squished" half results in an invalid regression
-            return 3; // b0 independent
+            return no_df; // b0 independent
         }
         assert(comp.startIdx == mutateReg->regSpan.startIdx);
         assert(comp.endIdx == mutateReg->regSpan.endIdx);
@@ -1030,7 +1028,8 @@ namespace qAlgorithms
         float apexToEdge = apexToEdgeRatio(mutateReg, intensities);
         if (!(apexToEdge > 2))
         {
-            return 5; // invalid apex to edge ratio // b0 independent
+            printf("apexToEdge triggered!\n");
+            return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
         }
 
         // everything involving the RSS is dependent on b0!
@@ -1049,18 +1048,20 @@ namespace qAlgorithms
         // assert(f_ok == f_ok_exp);
         if (!f_ok)
         {
-            return 6; // H0 holds, the two distributions are not noticeably different
+            return f_test_fail; // H0 holds, the two distributions are not noticeably different
         }
 
         mutateReg->mse = RSS_log / double(df_sum);
 
         if (!isValidQuadraticTerm(mutateReg, df_sum)) // call includes mse
         {
-            return 7; // statistical insignificance of the quadratic term
+            // this should be caught by the f test (?) @todo
+            printf("invalid quadratic triggered\n");
+            return invalid_quadratic; // statistical insignificance of the quadratic term
         }
         if (!isValidPeakArea(mutateReg, df_sum)) // mse used in the "calcUncertainty" function call
         {
-            return 8; // statistical insignificance of the area
+            return invalid_area; // statistical insignificance of the area
         }
 
         /*
@@ -1073,7 +1074,7 @@ namespace qAlgorithms
         calcPeakHeightUncert(mutateReg);                           // mse use, again
         if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum]) // statistical significance of the peak height
         {
-            return 9;
+            return invalid_height;
         }
 
         /*
@@ -1088,7 +1089,7 @@ namespace qAlgorithms
         calcPeakAreaUncert(mutateReg);
         if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum])
         {
-            return 11; // statistical insignificance of the area
+            return invalid_area; // statistical insignificance of the area
         }
 
         /*
@@ -1096,12 +1097,12 @@ namespace qAlgorithms
           This block of code implements the chi-square filter. It calculates the chi-square
           value based on the weighted chi squared sum of expected and measured y values in
           the exponential domain. If the chi-square value is less than the corresponding
-          value in the CHI_SQUARES, the regression is invalid.
+          value in the CHI_SQUARES, the regression is invalid. @todo why?
         */
         double chiSquare = calcSSE_chisqared(mutateReg, intensities, &predict);
         if (chiSquare < CHI_SQUARES[df_sum])
         {
-            return 12; // statistical insignificance of the chi-square value
+            return invalid_chisq; // statistical insignificance of the chi-square value
         }
 
         calcUncertaintyPos(mutateReg);
@@ -1111,7 +1112,7 @@ namespace qAlgorithms
         assert(mutateReg->apex_position < length - 1);
 
         mutateReg->isValid = true;
-        return 0;
+        return ok;
     }
 
     void updateRegRange(const RegCoeffs *coeffs, const double valleyPos, Range_i *regSpan)
