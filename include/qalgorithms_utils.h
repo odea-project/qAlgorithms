@@ -10,6 +10,20 @@ namespace qAlgorithms
     // sqrt(pi) / 2
     static const double SQRTPI_2 = 0.886226925452758013649;
 
+    // inclusive range in an array @todo replace all start / end index cases with this
+    // always assert start and end correctness when writing to such a struct!
+    // addition: think about replacing this with a start pointer and length, sicne they
+    // are generally just used as ranged access pointers into a larger array
+    struct Range_i
+    {
+        size_t startIdx;
+        size_t endIdx;
+    };
+    inline size_t rangeLen(const Range_i *range)
+    {
+        return range->endIdx - range->startIdx + 1;
+    }
+
     /**
      * @brief performs the F-test for comparing two regressions
      *
@@ -67,6 +81,15 @@ namespace qAlgorithms
                          double *b0, double *b1, double *b2);
     double quadraticAt(const double b0, const double b1, const double b2,
                        const double x);
+
+    /// @brief Calculate residual sum of squares (RSS) for predicted and observed values
+    /// @param predict
+    /// @param observed
+    /// @param range
+    /// @return
+    double calcRSS(const float *predict,
+                   const float *observed,
+                   const Range_i *range);
 
     /**
      * @brief Fast exponential approximation base on Bit Manipulation.

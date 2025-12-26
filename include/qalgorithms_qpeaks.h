@@ -92,11 +92,11 @@ namespace qAlgorithms
 
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
                         std::vector<RegressionGauss> *validRegsTmp,
-                        const std::vector<float> *intensities,
+                        const float *intensities,
                         const std::vector<unsigned int> *degreesOfFreedom_cum);
 
     void runningRegression(
-        const std::vector<float> *intensities,
+        const float *intensities,
         std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> *validRegressions,
@@ -111,7 +111,7 @@ namespace qAlgorithms
     /// @param predicted empty vector that the predicted values for intensity (AFTER correction) are written to
     /// @param coeff coefficients that should be updated
     /// @return used correction factor
-    double correctB0(const std::vector<float> *intensities,
+    double correctB0(const float *const intensities,
                      const Range_i *r,
                      std::vector<float> *predicted,
                      RegCoeffs *coeff);
@@ -139,15 +139,17 @@ namespace qAlgorithms
     /// @return 0 if the regression is valid, otherwise the filter step which kicked it out
     invalid makeValidRegression(
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const std::vector<float> *intensities,
+        const float *intensities,
         const std::vector<float> *intensities_log,
         const size_t df_sum,
+        const size_t length,
         RegressionGauss *mutateReg);
 
     invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
 
-    void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
-                                    const std::vector<float> *intensities);
+    void mergeRegressionsOverScales(
+        std::vector<RegressionGauss> *validRegressions,
+        const float *intensities);
 
     // ### Centroiding-specific Code ### //
 
@@ -196,24 +198,20 @@ namespace qAlgorithms
     /// @return RSS value
     double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
 
-    double calcRSS_exp(const std::vector<float> *predict, // @todo this makes sense in utils
-                       const std::vector<float> *observed,
-                       const Range_i *range);
-
     /// @brief performs two F-tests against the log data. First H0 is the mean, second y = mx + b
     /// @param observed log data (or normal data, depends on the use case)
     /// @param RSS_reg previously calculated residual sum of squares of the complex model. Hard assumpion of four coefficients.
     /// @param range range of the regression.
     /// @return true: Regression is significant; false: Regression is not better than either alternative.
-    bool f_testRegression(const std::vector<float> *observed, double RSS_reg, const Range_i *range);
+    bool f_testRegression(const float *observed, double RSS_reg, const Range_i *range);
 
     double calcMSE_exp(const RegCoeffs *coeff,
-                       const std::vector<float> *y_start,
+                       const float *observed,
                        const Range_i *regSpan,
                        const double df);
 
     double calcSSE_chisqared(const RegressionGauss *mutateReg,
-                             const std::vector<float> *y_start,
+                             const float *observed,
                              const std::vector<float> *predict);
 
     struct RegPair
@@ -223,7 +221,7 @@ namespace qAlgorithms
     };
 
     RegPair findBestRegression(
-        const std::vector<float> *intensities,
+        const float *intensities,
         const std::vector<RegressionGauss> *regressions,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const Range_i regSpan);
@@ -245,8 +243,6 @@ namespace qAlgorithms
     // take a jacobian matrix as input and return the transpose at scale
     double calcUncertainty(const double J[4], const size_t scale, const double mse);
     double matProductReg(const double J[4], const size_t scale);
-
-    double apexToEdgeRatio(const RegressionGauss *mutateReg, const std::vector<float> *intensities);
 
     bool isValidQuadraticTerm(const RegressionGauss *mutateReg, const size_t df_sum);
 

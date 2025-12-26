@@ -40,7 +40,7 @@ int main()
         std::vector<float> logIntensity(25, NAN);
         logIntensity.clear();
         runningRegression(
-            &block.intensity,
+            block.intensity.data(),
             &logIntensity,
             &block.cumdf,
             &validRegressions,

@@ -285,7 +285,7 @@ int main(int argc, char *argv[])
             logIntensity.reserve(length);
             validRegressions.clear();
             runningRegression(
-                &block.intensity,
+                block.intensity.data(),
                 &logIntensity,
                 &block.cumdf,
                 &validRegressions,

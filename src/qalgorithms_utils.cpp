@@ -183,6 +183,19 @@ namespace qAlgorithms
         return b0 + (b1 + x * b2) * x;
     }
 
+    double calcRSS(const float *predict,
+                   const float *observed,
+                   const Range_i *range)
+    {
+        double RSS = 0;
+        for (size_t i = range->startIdx; i <= range->endIdx; i++)
+        {
+            double diff = predict[i] - observed[i];
+            RSS += diff * diff;
+        }
+        return RSS;
+    }
+
     double exp_approx_d(const double x)
     {
         // assert(x > 0); // @todo this is specified in the header but not respected throughout the code

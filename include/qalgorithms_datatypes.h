@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath> // INFINITY and other number macros
 #include <string>
+#include <qalgorithms_utils.h>
 
 /*  This file includes the structs used for data management in qAlgorithms.
     Anything required by multiple parts of the full program should be listed here.
@@ -35,20 +36,6 @@ namespace qAlgorithms
         std::string methodName = "";
         Polarities polarity = Polarities::unknown_polarity;
     };
-
-    // inclusive range in an array @todo replace all start / end index cases with this
-    // always assert start and end correctness when writing to such a struct!
-    // addition: think about replacing this with a start pointer and length, sicne they
-    // are generally just used as ranged access pointers into a larger array
-    struct Range_i
-    {
-        size_t startIdx;
-        size_t endIdx;
-    };
-    inline size_t rangeLen(const Range_i *range)
-    {
-        return range->endIdx - range->startIdx + 1;
-    }
 
     struct slice_d
     {

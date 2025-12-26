@@ -141,7 +141,7 @@ namespace qAlgorithms
             // replaced by a non-malloc calling scratch space eventually
             logIntensity.clear();
             runningRegression(
-                &block->intensity,
+                block->intensity.data(),
                 &logIntensity,
                 &block->cumdf,
                 &validRegressions,
@@ -169,10 +169,11 @@ namespace qAlgorithms
     std::vector<invalid> failCodes;
 
     size_t validateRegressions( // @todo this should be specific to centroids, features or components
-        const std::vector<float> *intensities,
+        const float *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const std::vector<RegCoeffs> *coefficients,
+        const size_t length,
         std::vector<RegressionGauss> *validRegressions)
     {
         size_t validCount = 0;
@@ -197,6 +198,7 @@ namespace qAlgorithms
                                             intensities,
                                             intensities_log,
                                             df_sum,
+                                            length,
                                             &reg);
             failCodes.push_back(failpoint);
 
@@ -303,7 +305,7 @@ namespace qAlgorithms
 #endif
 
     void runningRegression(
-        const std::vector<float> *intensities,
+        const float *intensities,
         std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> *validRegressions,
@@ -322,7 +324,7 @@ namespace qAlgorithms
         intensities_log->reserve(length);
         for (size_t i = 0; i < length; i++)
         {
-            intensities_log->push_back(log(intensities->at(i)));
+            intensities_log->push_back(log(intensities[i]));
         }
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
@@ -336,6 +338,7 @@ namespace qAlgorithms
                                                 intensities_log,
                                                 degreesOfFreedom_cum,
                                                 &coefficients,
+                                                length,
                                                 &validRegsTmp);
         assert(validCount <= coefficients.size());
 
@@ -509,7 +512,7 @@ namespace qAlgorithms
 #pragma region "validate Regression"
 
     size_t invalidateSuboptimal_inScale(
-        const std::vector<float> *intensities,
+        const float *intensities,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         std::vector<RegressionGauss> *validRegressions)
     {
@@ -517,8 +520,8 @@ namespace qAlgorithms
         // best MSE and then mark all other ones as invalid.
 
         assert(!validRegressions->empty());
-        assert(!intensities->empty());
-        assert(validRegressions->back().coeffs.scale < intensities->size() / 2);
+        // assert(!intensities->empty());
+        // assert(validRegressions->back().coeffs.scale < intensities->size() / 2);
 
         size_t totalValid = 0;
 
@@ -620,7 +623,7 @@ namespace qAlgorithms
 
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
                         std::vector<RegressionGauss> *validRegsTmp,
-                        const std::vector<float> *intensities,
+                        const float *intensities,
                         const std::vector<unsigned int> *degreesOfFreedom_cum)
     /* ### allocations ###
         startEndGroups: known at function call
@@ -698,7 +701,7 @@ namespace qAlgorithms
         }
     }
 
-    double correctB0(const std::vector<float> *intensities,
+    double correctB0(const float *const intensities,
                      const Range_i *range,
                      std::vector<float> *predicted,
                      RegCoeffs *coeff)
@@ -743,7 +746,7 @@ namespace qAlgorithms
         {
             double pred = predicted->at(i) * b0_exp;
             sum_predictSq += pred * pred;
-            sum_predictReal += pred * intensities->at(i);
+            sum_predictReal += pred * intensities[i];
         }
         double correction = sum_predictReal / sum_predictSq;
 
@@ -831,11 +834,14 @@ namespace qAlgorithms
 
     void updateRegRange(const RegCoeffs *coeffs, const double valleyPos, Range_i *regSpan);
 
+    double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
+
     invalid makeValidRegression( // returns the number of the failed test
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const std::vector<float> *intensities,
+        const float *intensities,
         const std::vector<float> *intensities_log,
         const size_t df_sum,
+        const size_t length,
         RegressionGauss *mutateReg)
     /* ### allocations ###
         selectLog: size calculated in function, max size known
@@ -845,7 +851,6 @@ namespace qAlgorithms
         assert(!mutateReg->isValid);
         const size_t scale = mutateReg->coeffs.scale;
         assert(scale > 1);
-        size_t length = intensities_log->size();
         assert(mutateReg->coeffs.x0 + scale < length);
 
         // for a regression to be valid, at least one coefficient must be < 0
@@ -921,20 +926,20 @@ namespace qAlgorithms
           This block of code implements the apex to edge filter. It calculates
           the ratio of the apex signal to the edge signal and ensures that the
           ratio is greater than 2. This is a pre-filter for later
-          signal-to-noise ratio checkups. apexToEdge is also required in isValidPeakHeight further down
+          signal-to-noise ratio checkups.
           @todo this is not a relevant test
         */
         float apexToEdge = apexToEdgeRatio(mutateReg, intensities);
         if (!(apexToEdge > 2))
         {
-            printf("apexToEdge triggered!\n");
+            // printf("apexToEdge triggered!\n");
             return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
         }
 
         // everything involving the RSS is dependent on b0!
         double RSS_log = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
         assert(RSS_log > 0);
-        double RSS_exp = calcRSS_exp(&predict, intensities, &mutateReg->regSpan);
+        double RSS_exp = calcRSS(predict.data(), intensities, &mutateReg->regSpan);
 
         /*
         competing regressions filter:
@@ -954,8 +959,8 @@ namespace qAlgorithms
 
         if (!isValidQuadraticTerm(mutateReg, df_sum)) // call includes mse
         {
-            // this should be caught by the f test (?) @todo
-            printf("invalid quadratic triggered\n");
+            // this should be caught by the f test (?) @todo it is not caught by the F test
+            // printf("invalid quadratic triggered\n");
             return invalid_quadratic; // statistical insignificance of the quadratic term
         }
         if (!isValidPeakArea(mutateReg, df_sum)) // mse used in the "calcUncertainty" function call
@@ -1077,8 +1082,9 @@ namespace qAlgorithms
     }
 #pragma endregion "validate Regression"
 
-    void mergeRegressionsOverScales(std::vector<RegressionGauss> *validRegressions,
-                                    const std::vector<float> *intensities)
+    void mergeRegressionsOverScales(
+        std::vector<RegressionGauss> *validRegressions,
+        const float *intensities)
     /* ### allocations ###
         exponentialMSE: known at function call
         validRegressionsInGroup: size unknown
@@ -1394,58 +1400,41 @@ namespace qAlgorithms
         return RSS;
     }
 
-    double calcRSS_exp(const std::vector<float> *predict,
-                       const std::vector<float> *observed,
-                       const Range_i *range)
-    {
-        double RSS = 0;
-        for (size_t i = range->startIdx; i <= range->endIdx; i++)
-        {
-            double diff = predict->at(i) - observed->at(i);
-            RSS += diff * diff;
-        }
-        return RSS;
-    }
-
-    double calcRSS_H0_cf1(const std::vector<float> *observed, const Range_i *range)
+    double calcRSS_H0_cf1(const float *observed, const Range_i *range)
     {
         // this function calculates the RSS for H0: y = b0 (a constant value)
-
-        assert(range->endIdx < observed->size());
 
         double mean = 0;
         for (size_t i = range->startIdx; i <= range->endIdx; i++)
         {
-            mean += (*observed)[i];
+            mean += observed[i];
         }
         mean /= rangeLen(range);
 
         double RSS = 0;
         for (size_t i = range->startIdx; i <= range->endIdx; i++)
         {
-            double difference = (*observed)[i] - mean;
+            double difference = observed[i] - mean;
             RSS += difference * difference;
         }
 
         return RSS;
     }
 
-    double calcRSS_H0_cf2(const std::vector<float> *observed, const Range_i *range)
+    double calcRSS_H0_cf2(const float *observed, const Range_i *range)
     {
         // this function calculates the RSS for H0: y = b0 + x * b1 (no weights)
 
-        assert(range->endIdx < observed->size());
-
         double slope, intercept;
         size_t length = rangeLen(range);
-        const float *start = observed->data() + range->startIdx;
+        const float *start = observed + range->startIdx;
         linReg_intx(start, length, &slope, &intercept);
 
         double RSS = 0;
         size_t x = 0;
         for (size_t i = range->startIdx; i <= range->endIdx; i++)
         {
-            double difference = (*observed)[i] - (intercept - slope * x);
+            double difference = observed[i] - (intercept - slope * x);
             RSS += difference * difference;
             x += 1;
         }
@@ -1454,13 +1443,13 @@ namespace qAlgorithms
         return RSS;
     }
 
-    bool f_testRegression(const std::vector<float> *observed, double RSS_reg, const Range_i *range)
+    bool f_testRegression(const float *observed, double RSS_reg, const Range_i *range)
     {
         // during the tests, the RSS for the regression has already been calculated in calcRSS_log
         assert(RSS_reg > 0);
         const size_t length = rangeLen(range);
-        double RSS_H0;
-        bool f_ok;
+        double RSS_H0 = INFINITY;
+        bool f_ok = false;
 
         RSS_H0 = calcRSS_H0_cf1(observed, range); // y = b
         f_ok = F_test_regs(RSS_reg, RSS_H0, 4, 1, length, 0.05);
@@ -1477,7 +1466,7 @@ namespace qAlgorithms
     }
 
     double calcMSE_exp(const RegCoeffs *coeff,
-                       const std::vector<float> *observed,
+                       const float *observed,
                        const Range_i *regSpan,
                        const double df)
     {
@@ -1487,7 +1476,7 @@ namespace qAlgorithms
         for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
         {
             double pred = regExpAt(coeff, x);
-            double obs = (*observed)[i];
+            double obs = observed[i];
             double newdiff = (obs - pred) * (obs - pred);
             result += newdiff;
             x += 1.0;
@@ -1496,14 +1485,14 @@ namespace qAlgorithms
     }
 
     double calcSSE_chisqared(const RegressionGauss *mutateReg,
-                             const std::vector<float> *observed,
+                             const float *observed,
                              const std::vector<float> *predict)
     {
         double result = 0.0;
         for (size_t i = mutateReg->regSpan.startIdx; i < mutateReg->regSpan.endIdx + 1; i++)
         {
             double pred = predict->at(i);
-            double obs = (*observed)[i];
+            double obs = observed[i];
             double newdiff = (obs - pred) * (obs - pred);
             result += newdiff / pred; // this part is different from the above function, do not try to merge them!
         }
@@ -1513,7 +1502,7 @@ namespace qAlgorithms
 #pragma endregion calcSSE
 
     RegPair findBestRegression(
-        const std::vector<float> *intensities,
+        const float *intensities,
         const std::vector<RegressionGauss> *regressions,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const Range_i regSpan)
@@ -1601,17 +1590,16 @@ namespace qAlgorithms
         return 0;
     }
 
-    double apexToEdgeRatio(const RegressionGauss *mutateReg, const std::vector<float> *intensities)
+    double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities)
     {
         // is the apex at least twice as large as the outermost point?
         // assumption: outermost point is already near base level
         const size_t idxApex = size_t(mutateReg->apex_position) + mutateReg->coeffs.x0;
-        assert(idxApex < intensities->size());
 
-        double left = intensities->at(mutateReg->regSpan.startIdx);
-        double right = intensities->at(mutateReg->regSpan.endIdx);
+        double left = intensities[mutateReg->regSpan.startIdx];
+        double right = intensities[mutateReg->regSpan.endIdx];
         double minIntensity = min(left, right);
-        double apex = intensities->at(idxApex);
+        double apex = intensities[idxApex]; // @todo since this is not the actual apex height, it might be a bad idea to use it
         return apex / minIntensity;
     }
 
@@ -2063,7 +2051,7 @@ namespace qAlgorithms
             size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2);
 
             runningRegression(
-                &currentEIC.ints_area,
+                currentEIC.ints_area.data(),
                 &logIntensity,
                 &currentEIC.df,
                 &validRegressions,
