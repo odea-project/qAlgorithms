@@ -45,12 +45,14 @@ namespace qAlgorithms
 
     struct ProfileBlock
     {
-        std::vector<float> intensity;
+        std::vector<float> intensity_vec;
+        const float *intensity;
         std::vector<float> mz;
         // the degrees of freedom are redundant because there are never interpolated points within a centroid
         // we still use them because this way there is no largely redundant second peak fitting function
         std::vector<unsigned int> cumdf; // cumulative df @todo find a better solution for the general case
         size_t startPos, endPos;
+        size_t length;
     };
 
     // instead of managing the data, provide start element of each array

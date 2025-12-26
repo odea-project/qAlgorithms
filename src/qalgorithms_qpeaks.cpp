@@ -134,18 +134,18 @@ namespace qAlgorithms
         {
             const ProfileBlock *const block = treatedData->data() + i;
 
-            assert(block->intensity.size() == block->mz.size());
+            assert(block->intensity_vec.size() == block->mz.size());
 
             // this is now filled inside the function, the vector only reserves space. We do not
             // perform this step in the function so that it is explicitly empty. This should be
             // replaced by a non-malloc calling scratch space eventually
             logIntensity.clear();
             runningRegression(
-                block->intensity.data(),
+                block->intensity_vec.data(),
                 &logIntensity,
                 &block->cumdf,
                 &validRegressions,
-                block->intensity.size(),
+                block->intensity_vec.size(),
                 GLOBAL_MAXSCALE_CENTROID);
 
             volatile bool purge = false;
@@ -2129,8 +2129,8 @@ namespace qAlgorithms
     {
         const size_t countSelected = selectedIndices->size();
 
-        std::vector<double> spectrum_mz(1000);
-        std::vector<double> spectrum_int(1000);
+        std::vector<float> spectrum_mz(1000);
+        std::vector<float> spectrum_int(1000);
 
         std::vector<ProfileBlock> groupedData(500);
         for (size_t i = 0; i < countSelected; ++i)
@@ -2202,8 +2202,8 @@ namespace qAlgorithms
 
     size_t pretreatDataCentroids(
         std::vector<ProfileBlock> *groupedData,
-        const std::vector<double> *spectrum_mz,
-        const std::vector<double> *spectrum_int)
+        const std::vector<float> *spectrum_mz,
+        const std::vector<float> *spectrum_int)
     {
         assert(groupedData->empty());
         assert(spectrum_int->size() == spectrum_mz->size());
@@ -2282,8 +2282,10 @@ namespace qAlgorithms
             }
 
             ProfileBlock b = {insert_int,
+                              nullptr,
                               insert_ms,
                               cumdf,
+                              0,
                               idxL, idxR};
             groupedData->push_back(b);
         }

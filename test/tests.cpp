@@ -31,8 +31,10 @@ int main()
     {
         ProfileBlock block = {
             {8, 16, 32, 475, 711, 472, 207, 57, 14, 9, 4, 2, 1},
+            nullptr,
             {205.110107, 205.115082, 205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877, 205.159851, 205.164825, 205.16980, 205.174774},
             {0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10},
+            14,
             329,
             338};
         std::vector<RegressionGauss> validRegressions;
@@ -40,11 +42,11 @@ int main()
         std::vector<float> logIntensity(25, NAN);
         logIntensity.clear();
         runningRegression(
-            block.intensity.data(),
+            block.intensity_vec.data(),
             &logIntensity,
             &block.cumdf,
             &validRegressions,
-            block.intensity.size(),
+            block.intensity_vec.size(),
             maxScale);
     }
 

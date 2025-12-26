@@ -95,8 +95,8 @@ namespace qAlgorithms
         XML_File(const std::filesystem::path &file);
 
         void get_spectrum(
-            std::vector<double> *const spectrum_mz,
-            std::vector<double> *const spectrum_int,
+            std::vector<float> *const spectrum_mz,
+            std::vector<float> *const spectrum_int,
             size_t index);
 
         std::vector<unsigned int> get_spectra_index(const std::vector<unsigned int> *indices,

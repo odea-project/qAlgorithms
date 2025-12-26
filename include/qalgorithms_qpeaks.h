@@ -159,8 +159,8 @@ namespace qAlgorithms
 
     size_t pretreatDataCentroids(
         std::vector<ProfileBlock> *groupedData,
-        const std::vector<double> *spectrum_mz,
-        const std::vector<double> *spectrum_int);
+        const std::vector<float> *spectrum_mz,
+        const std::vector<float> *spectrum_int);
 
     void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
                            const std::vector<ProfileBlock> *treatedData,

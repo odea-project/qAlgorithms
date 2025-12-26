@@ -16,20 +16,21 @@
 namespace qAlgorithms
 {
     // Decodes from a little endian binary string to a vector of doubles according to a precision integer.
-    std::vector<double> decode_little_endian(std::vector<char> bytes, bool isDouble)
+    int decode_little_endian(
+        std::vector<char> *bytes,
+        const bool isDouble,
+        std::vector<float> *result)
     {
-        // assert(precision == 4 || precision == 8);
-        // std::vector<unsigned char> bytes(str.begin(), str.end());
+        int bytes_size = bytes->size() / (isDouble ? 8 : 4);
 
-        int bytes_size = bytes.size() / (isDouble ? 8 : 4);
-
-        std::vector<double> result(bytes_size);
+        result->reserve(bytes_size);
 
         if (isDouble)
         {
             for (int i = 0; i < bytes_size; ++i)
             {
-                result[i] = reinterpret_cast<double &>(bytes[i * 8]);
+                double val = reinterpret_cast<double &>(bytes->at(i * 8));
+                result->push_back(val);
             }
         }
         else
@@ -39,11 +40,11 @@ namespace qAlgorithms
             for (int i = 0; i < bytes_size; ++i)
             {
                 float floatValue;
-                std::memcpy(&floatValue, &bytes[i * 4], sizeof(float)); // @todo float is not 32 bit everywhere
-                result[i] = static_cast<double>(floatValue);
+                std::memcpy(&floatValue, &bytes->at(i * 4), sizeof(float)); // @todo float is not 32 bit everywhere
+                result->push_back(floatValue);
             }
         }
-        return result;
+        return bytes_size;
     };
 
     // Decompresses a string using the zlib library (https://zlib.net/).
@@ -240,8 +241,8 @@ namespace qAlgorithms
     };
 
     void XML_File::get_spectrum( // this obviously only extracts data that is in profile mode.
-        std::vector<double> *const spectrum_mz,
-        std::vector<double> *const spectrum_int,
+        std::vector<float> *const spectrum_mz,
+        std::vector<float> *const spectrum_int,
         size_t index)
     {
         assert(spectrum_mz->empty() && spectrum_int->empty());
@@ -282,11 +283,11 @@ namespace qAlgorithms
             {
                 buffer.clear();
                 decompress_zlib(&decoded_string, &buffer);
-                *spectrum_mz = decode_little_endian(buffer, spectra_binary_metadata[0].isDouble);
+                decode_little_endian(&buffer, spectra_binary_metadata[0].isDouble, spectrum_mz);
             }
             else
             {
-                *spectrum_mz = decode_little_endian(decoded_string, spectra_binary_metadata[0].isDouble);
+                decode_little_endian(&decoded_string, spectra_binary_metadata[0].isDouble, spectrum_mz);
             }
 
             assert(spectrum_mz->size() == number_traces); // this happens if an index is tried which does not exist in the data
@@ -313,11 +314,11 @@ namespace qAlgorithms
             {
                 buffer.clear();
                 decompress_zlib(&decoded_string, &buffer);
-                *spectrum_int = decode_little_endian(buffer, spectra_binary_metadata[1].isDouble);
+                decode_little_endian(&buffer, spectra_binary_metadata[1].isDouble, spectrum_int);
             }
             else
             {
-                *spectrum_int = decode_little_endian(decoded_string, spectra_binary_metadata[1].isDouble);
+                decode_little_endian(&decoded_string, spectra_binary_metadata[1].isDouble, spectrum_int);
             }
 
             assert(spectrum_int->size() == number_traces); // this happens if an index is tried which does not exist in the data
