@@ -267,31 +267,32 @@ int main(int argc, char *argv[])
     volatile bool debug = true;
     if (debug)
     {
+        std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
+        std::vector<float> mz = {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877};
         ProfileBlock block = {
-            {32, 475, 711, 472, 207, 132, 57, 14},
-            nullptr,
-            {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877},
+            intensity.data(),
+            mz.data(),
             {1, 2, 3, 4, 5, 6, 7, 8},
-            8,
             329,
-            338};
+            338,
+            8};
         size_t failcount = 0;
         std::vector<RegressionGauss> validRegressions;
 
         volatile bool repeat = false;
         while (validRegressions.empty() || repeat)
         {
-            const size_t length = block.intensity_vec.size();
+            const size_t length = block.length;
             const size_t maxScale = 8; // @todo not bound to centroid maxscale
             std::vector<float> logIntensity;
             logIntensity.reserve(length);
             validRegressions.clear();
             runningRegression(
-                block.intensity_vec.data(),
+                block.intensity,
                 &logIntensity,
                 &block.cumdf,
                 &validRegressions,
-                block.intensity_vec.size(),
+                length,
                 maxScale);
             assert(failcount < 1000);
             assert(!validRegressions.empty());
@@ -308,7 +309,7 @@ int main(int argc, char *argv[])
             double totallErr = 0;
             for (int i = 0; i < 8; i++)
             {
-                diffs[i] = block.intensity_vec[i] - predict[i];
+                diffs[i] = block.intensity[i] - predict[i];
                 totallErr += abs(diffs[i]);
             }
         }
