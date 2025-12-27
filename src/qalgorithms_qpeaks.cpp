@@ -126,6 +126,10 @@ namespace qAlgorithms
 
         std::vector<float> logIntensity(maxWindowSize + 2 * GLOBAL_MAXSCALE_CENTROID, NAN);
 
+        std::vector<unsigned int> globalDF(maxWindowSize, 0);
+        for (size_t i = 0; i < maxWindowSize; i++)
+            globalDF[i] = i + 1;
+
         static_assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
 
         std::vector<RegressionGauss> validRegressions;
@@ -141,7 +145,7 @@ namespace qAlgorithms
             runningRegression(
                 block->intensity,
                 &logIntensity,
-                &block->cumdf,
+                &globalDF,
                 &validRegressions,
                 block->length,
                 GLOBAL_MAXSCALE_CENTROID);
@@ -2120,7 +2124,7 @@ namespace qAlgorithms
 
        ### called functions ###
         data.get_spectrum
-        pretreatDataCentroids
+        getProfileRegions
         findCentroidPeaks
 
     */
@@ -2165,7 +2169,7 @@ namespace qAlgorithms
                 centroids->clear();
 #endif
 
-            size_t maxWindowSize = pretreatDataCentroids(&groupedData, &spectrum_mz, &spectrum_int);
+            size_t maxWindowSize = getProfileRegions(&groupedData, &spectrum_mz, &spectrum_int);
             if (maxWindowSize == 0) // this is also relevant to filtering, add a warning if no filter?
                 continue;
 
@@ -2197,7 +2201,7 @@ namespace qAlgorithms
 
     size_t removedPoints = 0;
 
-    size_t pretreatDataCentroids(
+    size_t getProfileRegions(
         std::vector<ProfileBlock> *groupedData,
         const std::vector<float> *spectrum_mz,
         const std::vector<float> *spectrum_int)
@@ -2216,7 +2220,7 @@ namespace qAlgorithms
         std::vector<Range_i> ranges;
         ranges.reserve(64);
         size_t rangeStart = 0;
-        size_t maxRangeSpan = 0;
+        size_t maxLength = 0;
 
         // fill the vec of ranges by iterating over mz and rt. all ranges are >5 points
         for (size_t pos = 0; pos < spectrum_int->size(); pos++)
@@ -2230,7 +2234,7 @@ namespace qAlgorithms
                     // pos - 1 is used since pos is 0
                     ranges.push_back({rangeStart, pos - 1});
                     assert(rangeLen(&ranges.back()) > 4);
-                    maxRangeSpan = maxRangeSpan > span ? maxRangeSpan : span;
+                    maxLength = maxLength > span ? maxLength : span;
                 }
                 rangeStart = pos + 1;
             }
@@ -2245,14 +2249,15 @@ namespace qAlgorithms
             if (span >= 5)
             {
                 ranges.push_back({rangeStart, spectrum_int->size() - 1});
-                maxRangeSpan = maxRangeSpan > span ? maxRangeSpan : span;
+                maxLength = maxLength > span ? maxLength : span;
             }
         }
 
         // try simpler approach
+        size_t maxLength2 = 0;
         std::vector<Range_i> ranges2;
         std::vector<ProfileBlock> groupedData2;
-        size_t currLen = 0;
+        size_t currLen = 0; // current length
         size_t lastZero = 0;
         for (size_t pos = 0; pos < spectrum_int->size(); pos++)
         {
@@ -2268,11 +2273,13 @@ namespace qAlgorithms
                     ProfileBlock b = {
                         spectrum_int->data() + idxL,
                         spectrum_mz->data() + idxL,
-                        {},
                         idxL,
                         idxR,
                         idxR - idxL + 1};
                     groupedData2.push_back(b);
+
+                    maxLength2 = maxLength2 > currLen ? maxLength2 : currLen;
+                    assert(maxLength2 <= maxLength);
                 }
                 currLen = 0;
                 lastZero = pos;
@@ -2285,41 +2292,27 @@ namespace qAlgorithms
         if (currLen >= 5)
         {
             ranges2.push_back({lastZero, currLen});
+            maxLength2 = maxLength2 > currLen ? maxLength2 : currLen;
         }
 
         assert(!ranges.empty());
-        assert(maxRangeSpan > 4);
+        assert(maxLength > 4);
         groupedData->reserve(ranges.size());
-
-        const static size_t maxExtra = GLOBAL_MAXSCALE_CENTROID - 2; // at least two real points per half
-        maxRangeSpan += 2 * maxExtra;
-        std::vector<unsigned int> cumdf(maxRangeSpan, 0);
 
         for (size_t i = 0; i < ranges.size(); i++)
         {
-            cumdf.clear();
 
             const size_t idxL = ranges[i].startIdx;
             const size_t idxR = ranges[i].endIdx;
 
-            // copy real values
-            size_t newdf = 0;
-            for (size_t M = idxL; M <= idxR; M++)
-            {
-                newdf += 1;
-                cumdf.push_back(newdf);
-            }
-            assert(cumdf.size() == idxR - idxL + 1);
-
             ProfileBlock b = {
                 spectrum_int->data() + idxL,
                 spectrum_mz->data() + idxL,
-                cumdf,
                 idxL, idxR,
                 idxR - idxL + 1};
             groupedData->push_back(b);
         }
-        return maxRangeSpan;
+        return maxLength;
     }
 
     double regAt(const RegCoeffs *coeff, const double x)

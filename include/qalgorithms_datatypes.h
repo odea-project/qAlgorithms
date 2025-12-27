@@ -47,9 +47,6 @@ namespace qAlgorithms
     {
         const float *intensity;
         const float *mz;
-        // the degrees of freedom are redundant because there are never interpolated points within a centroid
-        // we still use them because this way there is no largely redundant second peak fitting function
-        std::vector<unsigned int> cumdf; // cumulative df @todo find a better solution for the general case
         size_t startPos, endPos;
         size_t length;
     };

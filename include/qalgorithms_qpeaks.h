@@ -157,7 +157,7 @@ namespace qAlgorithms
                       const std::vector<unsigned int> *selectedIndices,
                       std::vector<CentroidPeak> *centroids);
 
-    size_t pretreatDataCentroids(
+    size_t getProfileRegions(
         std::vector<ProfileBlock> *groupedData,
         const std::vector<float> *spectrum_mz,
         const std::vector<float> *spectrum_int);

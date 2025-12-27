@@ -31,10 +31,10 @@ int main()
     {
         std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
         std::vector<float> mz = {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877};
+        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8};
         ProfileBlock block = {
             intensity.data(),
             mz.data(),
-            {1, 2, 3, 4, 5, 6, 7, 8},
             329,
             338,
             8};
@@ -45,7 +45,7 @@ int main()
         runningRegression(
             block.intensity,
             &logIntensity,
-            &block.cumdf,
+            &df,
             &validRegressions,
             block.length,
             maxScale);
