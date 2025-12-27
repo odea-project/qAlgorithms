@@ -2217,46 +2217,7 @@ namespace qAlgorithms
 
         const float minIntensity = 10; // @todo bad solution?
 
-        std::vector<Range_i> ranges;
-        ranges.reserve(64);
-        size_t rangeStart = 0;
         size_t maxLength = 0;
-
-        // fill the vec of ranges by iterating over mz and rt. all ranges are >5 points
-        for (size_t pos = 0; pos < spectrum_int->size(); pos++)
-        {
-            if (spectrum_int->at(pos) < minIntensity) // this should generally be the same as == 0
-            {
-                size_t span = pos - rangeStart;
-                if (span >= 5)
-                {
-                    // at least five points, add block
-                    // pos - 1 is used since pos is 0
-                    ranges.push_back({rangeStart, pos - 1});
-                    assert(rangeLen(&ranges.back()) > 4);
-                    maxLength = maxLength > span ? maxLength : span;
-                }
-                rangeStart = pos + 1;
-            }
-            else
-            {
-                removedPoints += 1;
-            }
-        }
-
-        { // add last block if it is still open and correct
-            size_t span = spectrum_int->size() - rangeStart;
-            if (span >= 5)
-            {
-                ranges.push_back({rangeStart, spectrum_int->size() - 1});
-                maxLength = maxLength > span ? maxLength : span;
-            }
-        }
-
-        // try simpler approach
-        size_t maxLength2 = 0;
-        std::vector<Range_i> ranges2;
-        std::vector<ProfileBlock> groupedData2;
         size_t currLen = 0; // current length
         size_t lastZero = 0;
         for (size_t pos = 0; pos < spectrum_int->size(); pos++)
@@ -2267,8 +2228,6 @@ namespace qAlgorithms
                 {
                     size_t idxL = lastZero + 1;
                     size_t idxR = pos - 1;
-                    ranges2.push_back({idxL, idxR});
-                    assert(rangeLen(&ranges2.back()) == currLen);
 
                     ProfileBlock b = {
                         spectrum_int->data() + idxL,
@@ -2276,10 +2235,9 @@ namespace qAlgorithms
                         idxL,
                         idxR,
                         idxR - idxL + 1};
-                    groupedData2.push_back(b);
+                    groupedData->push_back(b);
 
-                    maxLength2 = maxLength2 > currLen ? maxLength2 : currLen;
-                    assert(maxLength2 <= maxLength);
+                    maxLength = maxLength > currLen ? maxLength : currLen;
                 }
                 currLen = 0;
                 lastZero = pos;
@@ -2291,27 +2249,20 @@ namespace qAlgorithms
         }
         if (currLen >= 5)
         {
-            ranges2.push_back({lastZero, currLen});
-            maxLength2 = maxLength2 > currLen ? maxLength2 : currLen;
-        }
-
-        assert(!ranges.empty());
-        assert(maxLength > 4);
-        groupedData->reserve(ranges.size());
-
-        for (size_t i = 0; i < ranges.size(); i++)
-        {
-
-            const size_t idxL = ranges[i].startIdx;
-            const size_t idxR = ranges[i].endIdx;
-
+            size_t idxL = lastZero + 1;
+            size_t idxR = spectrum_int->size() - 1;
             ProfileBlock b = {
                 spectrum_int->data() + idxL,
                 spectrum_mz->data() + idxL,
-                idxL, idxR,
+                idxL,
+                idxR,
                 idxR - idxL + 1};
             groupedData->push_back(b);
+
+            maxLength = maxLength > currLen ? maxLength : currLen;
         }
+
+        assert(maxLength > 4);
         return maxLength;
     }
 
