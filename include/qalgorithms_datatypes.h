@@ -47,7 +47,7 @@ namespace qAlgorithms
     {
         const float *intensity;
         const float *mz;
-        size_t startPos, endPos;
+        size_t startPos;
         size_t length;
     };
 

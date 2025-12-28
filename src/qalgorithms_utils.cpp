@@ -389,11 +389,12 @@ namespace qAlgorithms
         return totalSum / (endIdx - startIdx + 1);
     }
 
-    unsigned int sumOfCumulative(const unsigned int *const cumArray, const size_t startIdx, const size_t endIdx)
+    unsigned int sumOfCumulative(const unsigned int *const cumArray, const Range_i *r)
     {
-        assert(startIdx <= endIdx);
-        unsigned int subtractor = startIdx == 0 ? 0 : cumArray[startIdx - 1];
-        unsigned int totalSum = cumArray[endIdx] - subtractor;
+        // it is assumed that the range does not violate array bounds
+        assert(r->startIdx <= r->endIdx);
+        unsigned int subtractor = r->startIdx == 0 ? 0 : cumArray[r->startIdx - 1];
+        unsigned int totalSum = cumArray[r->endIdx] - subtractor;
         return totalSum;
     }
 

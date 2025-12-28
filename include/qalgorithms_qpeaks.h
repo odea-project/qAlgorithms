@@ -138,7 +138,6 @@ namespace qAlgorithms
     /// @param mutateReg regression that should be mutated by this function
     /// @return 0 if the regression is valid, otherwise the filter step which kicked it out
     invalid makeValidRegression(
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
         const float *intensities,
         const std::vector<float> *intensities_log,
         const size_t df_sum,
@@ -217,18 +216,13 @@ namespace qAlgorithms
     struct RegPair
     {
         unsigned int idx;
-        float mse;
+        double mse;
     };
 
     RegPair findBestRegression(
         const float *intensities,
         const std::vector<RegressionGauss> *regressions,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const Range_i regSpan);
-
-    // this just substracts the two relevant values from a cumsum vector
-    size_t calcDF_cum(
-        const std::vector<unsigned int> *degreesOfFreedom,
         const Range_i regSpan);
 
     /**

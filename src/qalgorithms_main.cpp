@@ -267,15 +267,16 @@ int main(int argc, char *argv[])
     volatile bool debug = true;
     if (debug)
     {
-        std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
-        std::vector<float> mz = {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877};
-        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8};
+        // std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
+        // std::vector<float> mz = {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877};
+        std::vector<float> intensity = {1308.43738, 8625.85156, 29830.793, 55325.1523, 79094, 68921.2969, 41931.5977, 17812.5977, 5546.17139, 1343.45618};
+        std::vector<float> mz = {};
+        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         ProfileBlock block = {
             intensity.data(),
             mz.data(),
-            329,
-            338,
-            8};
+            0,
+            intensity.size()};
         size_t failcount = 0;
         std::vector<RegressionGauss> validRegressions;
 

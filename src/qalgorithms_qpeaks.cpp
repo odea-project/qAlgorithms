@@ -191,13 +191,12 @@ namespace qAlgorithms
             reg.coeffs = coefficients->at(i);
             reg.regSpan = range;
 
-            size_t df_sum = calcDF_cum(degreesOfFreedom_cum, range);
+            size_t df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), &range);
             if (df_sum < 5)
                 continue;
             df_sum -= 4; // four coefficients, adjust for components
 
-            failpoint = makeValidRegression(degreesOfFreedom_cum,
-                                            intensities,
+            failpoint = makeValidRegression(intensities,
                                             intensities_log,
                                             df_sum,
                                             length,
@@ -217,94 +216,109 @@ namespace qAlgorithms
         return validCount;
     }
 
-#ifdef _RM
-    void extrapolate_old(std::vector<float> *intensities_log, const size_t fillCount)
+    int pruneConflictingRegs(
+        std::vector<RegressionGauss> *validRegressions,
+        const float *intensities,
+        const std::vector<unsigned int> *df_cum)
     {
-        { // extrapolate left using the first point and dividing by two fillcount times
-            double baseInt = intensities_log->at(fillCount);
-            for (size_t i = fillCount - 1; i < fillCount; i--)
+        // regressions start out valid and sorted by scale, and position within scales
+        // S1R1 S1R2 S1 R3 S1 Rn | S2R1 S2R2 S2Rn | SnRn
+
+        // case 0: SnRn is the only element with scale Sn
+        //    -->  it stays valid, continue
+
+        // case 1: SnR1 and SnR2 do not conflict
+        //    -->  SnR1 stays valid and testing continues with SnR2 and SnR3
+
+        // case 2: SnRn is the last regression in its scale
+        //    -->  it stays valid / invalid and we move on to Sn+1R1
+
+        // case 3: SnRn is invalid
+        //    -->  continue
+
+        // case 4: SnR1, SnR2 and SnR2, SnR3 conflict, but SnR1, SnR3 does not
+        //    -->  this is assumed to be extremely unlikely at one scale and also not covered for by the existing solution
+        // (this is only relevant if SnR1 and SnR3 are better than SnR2 when combined, which might not even be possible)
+        // the main relaistic problem case is all three being interesting but conflicting due to baseline overlap
+
+        size_t eliminations = 0;
+
+        if (validRegressions->size() < 2)
+            return eliminations;
+
+        RegressionGauss *compReg = validRegressions->data();
+        for (size_t i = 1; i < validRegressions->size(); i++)
+        {
+            RegressionGauss *reg = validRegressions->data() + i;
+            assert(reg->isValid);
+            size_t currentScale = reg->coeffs.scale;
+
+            if (currentScale != compReg->coeffs.scale)
             {
-                baseInt /= 2;
-                intensities_log->at(i) = baseInt;
+                compReg = reg;
+                continue;
             }
-            assert(intensities_log->front() != 0);
-        }
-        { // extrapolate right using the last point and dividing by two fillcount times
-            size_t endpos = intensities_log->size() - fillCount - 1;
-            double baseInt = intensities_log->at(endpos);
-            for (size_t i = endpos + 1; i < intensities_log->size(); i++)
+            if (compReg->regSpan.endIdx < reg->regSpan.startIdx)
             {
-                baseInt /= 2;
-                intensities_log->at(i) = baseInt;
+                // no conflict despite same scale
+                compReg = reg;
+                continue;
             }
-            assert(intensities_log->front() != 0);
+
+            // both regressions conflict, one is invalid. The better regression is determined
+            // by comparing MSEs for measured values over the region of both regressions
+            // @todo could it be better to decide based on something else, since the range
+            // is not adjusted afterward?
+            Range_i newRange = {compReg->regSpan.startIdx, reg->regSpan.endIdx};
+            size_t df = sumOfCumulative(df_cum->data(), &newRange);
+
+            double mse_reg = calcMSE_exp(&reg->coeffs,
+                                         intensities,
+                                         &newRange,
+                                         df);
+
+            double mse_prev = calcMSE_exp(&compReg->coeffs,
+                                          intensities,
+                                          &newRange,
+                                          df);
+
+            if (mse_reg < mse_prev)
+            {
+                // the current regression is better
+                compReg->isValid = false;
+                compReg = reg;
+            }
+            else
+            {
+                // the old regression is better
+                reg->isValid = false;
+            }
+            eliminations += 1;
         }
+
+        return eliminations;
     }
 
-    void extrapolateLogInt(std::vector<float> *intensities_log, const size_t fillCount)
+    int resolveScaleConflicts(
+        std::vector<RegressionGauss> *validRegressions,
+        const float *intensities,
+        const std::vector<unsigned int> *df_cum)
     {
-        assert(intensities_log->front() == 0);
-        assert(intensities_log->back() == 0);
-        const size_t len = intensities_log->size();
+        // this function takes in the output of the previous function and then checks which regressions
+        // should be preferred. It is important that comparisons are made in ascending scale order so that
+        // overfitting due to comparing two too broad regressions is minimised
 
-        { // extrapolate the left using the first point, the first local maximum and the point in the middle of both
-            double x_leftmost = fillCount;
-            double y_leftmost = intensities_log->at(x_leftmost);
-            double x_firstMax = x_leftmost + 2; // there must be at least one point here for this to work
-            double y_firstMax = 0;
-            for (; x_firstMax < len - fillCount; x_firstMax++)
-            {
-                double y_tmp = intensities_log->at(x_firstMax);
-                if (y_tmp < y_firstMax)
-                    break;
+        // case 0: only one valid regression
+        //    -->  do nothing
 
-                y_firstMax = y_tmp;
-            }
-            assert(y_firstMax > 0);
-            // for a non-even number of points, prefer the one closer to the first apex
-            double x_middle = trunc((x_leftmost + x_firstMax + 1) / 2);
-            double y_middle = intensities_log->at(x_middle);
+        // case 1: one valid regression at lower scale conflicts with a valid regression at a greater scale
+        //    -->  pick the better one for the full range of both
 
-            // extrapolation on the left
-            double b0, b1, b2;
-            coeffsQuadratic(x_leftmost, x_middle, x_firstMax,
-                            y_leftmost, y_middle, y_firstMax,
-                            &b0, &b1, &b2);
-            for (size_t x = 0; x < fillCount; x++)
-            {
-                intensities_log->at(x) = quadraticAt(b0, b1, b2, x);
-            }
-        }
-        { // extrapolate the right using the last point, the last local maximum and the point in the middle of both
-            double x_rightmost = len - fillCount - 1;
-            double y_rightmost = intensities_log->at(x_rightmost);
-            double x_lastMax = x_rightmost - 2; // there must be at least one point here for this to work
-            double y_lastMax = 0;
-            for (; x_lastMax > fillCount; x_lastMax--)
-            {
-                double y_tmp = intensities_log->at(x_lastMax);
-                if (y_tmp < y_lastMax)
-                    break;
+        // case 2: Multiple regressions at lower scale conflict with the same regression at a greater scale
+        //    -->  switch contribution to the mse at the mean of both limits
 
-                y_lastMax = y_tmp;
-            }
-            assert(y_lastMax > 0);
-            // for a non-even number of points, prefer the one closer to the last apex
-            double x_middle = trunc((x_rightmost + x_lastMax) / 2);
-            double y_middle = intensities_log->at(x_middle);
-
-            // extrapolation on the right
-            double b0, b1, b2;
-            coeffsQuadratic(x_lastMax, x_middle, x_rightmost,
-                            y_lastMax, y_middle, y_rightmost,
-                            &b0, &b1, &b2);
-            for (size_t x = len - fillCount; x < len; x++)
-            {
-                intensities_log->at(x) = quadraticAt(b0, b1, b2, x);
-            }
-        }
+        return 0;
     }
-#endif
 
     void runningRegression(
         const float *intensities,
@@ -348,9 +362,12 @@ namespace qAlgorithms
         // potentially refactor the elimination such that it is one fucntion to handle within
         // and between regs through invalidation only
 
+        // new algorithm for merging over scales needed @todo
+        pruneConflictingRegs(&validRegsTmp, intensities, degreesOfFreedom_cum);
+
         std::vector<RegressionGauss> validRegsAtScale;
         size_t currentScale = 2;
-        validRegsTmp.push_back({0});
+        validRegsTmp.push_back({0}); // doing this avoids a second check for the last scale group
         validRegsTmp.back().coeffs.scale = 0;
         RegressionGauss *currentReg = validRegsTmp.data();
 
@@ -591,7 +608,7 @@ namespace qAlgorithms
 
             // within this range, find the best mse. conflictReg is always the
             // better of the two.
-            double df_sum = calcDF_cum(degreesOfFreedom_cum, limits) - 4;
+            double df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), &limits) - 4;
             double bestMSE = calcMSE_exp(&conflictReg->coeffs,
                                          intensities,
                                          &limits,
@@ -689,6 +706,7 @@ namespace qAlgorithms
             { // already isolated peak => push to valid regressions
                 size_t regIdx = groups[groupIdx].startIdx;
                 auto onlyReg = validRegsTmp->at(regIdx);
+                assert(onlyReg.isValid);
                 validRegressions->push_back(onlyReg);
             }
             else
@@ -698,6 +716,7 @@ namespace qAlgorithms
 
                 RegressionGauss bestReg = validRegsTmp->at(bestRegIdx.idx);
                 bestReg.mse = bestRegIdx.mse;
+                assert(bestReg.isValid);
                 validRegressions->push_back(bestReg);
             }
         }
@@ -839,7 +858,6 @@ namespace qAlgorithms
     double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
 
     invalid makeValidRegression( // returns the number of the failed test
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
         const float *intensities,
         const std::vector<float> *intensities_log,
         const size_t df_sum,
@@ -886,15 +904,6 @@ namespace qAlgorithms
         }
         assert(comp.startIdx == mutateReg->regSpan.startIdx);
         assert(comp.endIdx == mutateReg->regSpan.endIdx);
-
-        assert(df_sum == calcDF_cum(degreesOfFreedom_cum, mutateReg->regSpan) - 4);
-        if (df_sum < 5)
-        {
-            // degree of freedom less than 5; i.e., less than 5 measured data points.
-            // Four points or less are not enough to fit a regression with four coefficients
-            // return 4; // b0 independent
-        }
-        // df_sum -= 4; // four coefficients
 
         /*
             Prediction for coefficients that are not b0. Since any "true" prediction
@@ -1293,7 +1302,7 @@ namespace qAlgorithms
             // traceability information
             peak.trace.access = accessor;
             peak.trace.start = block->startPos;
-            peak.trace.end = block->endPos;
+            peak.trace.end = block->startPos + block->length - 1;
 
             peaks->push_back(std::move(peak));
         }
@@ -1483,7 +1492,9 @@ namespace qAlgorithms
             result += newdiff;
             x += 1.0;
         }
-        return result / df;
+        double mse = result / df;
+        assert(mse > 0);
+        return mse;
     }
 
     double calcSSE_chisqared(const RegressionGauss *mutateReg,
@@ -1522,13 +1533,16 @@ namespace qAlgorithms
             right_limit = max(right_limit, reg->regSpan.endIdx);
         }
 
-        double df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), regSpan.startIdx, regSpan.endIdx);
+        Range_i newRange = {left_limit, right_limit};
+        double df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), &newRange);
         df_sum -= 4; // four coefficients
+        assert(df_sum > 0);
+
         for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
             const RegressionGauss *reg = &(*regressions)[i];
-            const Range_i range = {left_limit, right_limit};
+            const Range_i range = {left_limit, right_limit}; // @todo this should update with the regressions
             double mse = calcMSE_exp(&reg->coeffs,
                                      intensities,
                                      &range,
@@ -1539,17 +1553,8 @@ namespace qAlgorithms
                 bestRegIdx = i;
             }
         }
+        assert(regressions->at(bestRegIdx).isValid);
         return {bestRegIdx, float(best_mse)};
-    }
-
-    inline size_t calcDF_cum(
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const Range_i regSpan)
-    {
-        assert(regSpan.endIdx < degreesOfFreedom_cum->size());
-        unsigned int substract = regSpan.startIdx == 0 ? 0 : degreesOfFreedom_cum->at(regSpan.startIdx - 1);
-        size_t df = degreesOfFreedom_cum->at(regSpan.endIdx) - substract;
-        return df;
     }
 
     int calcApexAndValleyPos(
@@ -2233,7 +2238,6 @@ namespace qAlgorithms
                         spectrum_int->data() + idxL,
                         spectrum_mz->data() + idxL,
                         idxL,
-                        idxR,
                         idxR - idxL + 1};
                     groupedData->push_back(b);
 
@@ -2255,7 +2259,6 @@ namespace qAlgorithms
                 spectrum_int->data() + idxL,
                 spectrum_mz->data() + idxL,
                 idxL,
-                idxR,
                 idxR - idxL + 1};
             groupedData->push_back(b);
 

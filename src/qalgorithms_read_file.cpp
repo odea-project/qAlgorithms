@@ -16,12 +16,15 @@
 namespace qAlgorithms
 {
     // Decodes from a little endian binary string to a vector of doubles according to a precision integer.
-    int decode_little_endian(
+    int bytesToFloatVec(
         std::vector<char> *bytes,
         const bool isDouble,
         std::vector<float> *result)
     {
-        int bytes_size = bytes->size() / (isDouble ? 8 : 4);
+        static const size_t fsize = sizeof(float);
+        static const size_t dsize = sizeof(double);
+        assert(bytes->size() % (isDouble ? dsize : fsize) == 0);
+        int bytes_size = bytes->size() / (isDouble ? dsize : fsize);
 
         result->reserve(bytes_size);
 
@@ -29,7 +32,7 @@ namespace qAlgorithms
         {
             for (int i = 0; i < bytes_size; ++i)
             {
-                double val = reinterpret_cast<double &>(bytes->at(i * 8));
+                double val = reinterpret_cast<double &>(bytes->at(i * dsize));
                 result->push_back(val);
             }
         }
@@ -40,7 +43,9 @@ namespace qAlgorithms
             for (int i = 0; i < bytes_size; ++i)
             {
                 float floatValue;
-                std::memcpy(&floatValue, &bytes->at(i * 4), sizeof(float)); // @todo float is not 32 bit everywhere
+                float val = reinterpret_cast<float &>(bytes->at(i * fsize));
+                std::memcpy(&floatValue, &bytes->at(i * fsize), fsize);
+                assert(floatValue == val);
                 result->push_back(floatValue);
             }
         }
@@ -261,12 +266,12 @@ namespace qAlgorithms
 
         unsigned int number_traces = spectrum_node.attribute("defaultArrayLength").as_int();
 
-        auto bin = node_binary_list.children("binaryDataArray").begin();
-        assert(bin != node_binary_list.children("binaryDataArray").end());
+        auto dataArray = node_binary_list.children("binaryDataArray").begin();
+        assert(dataArray != node_binary_list.children("binaryDataArray").end());
 
         std::vector<char> buffer;
         { // extract mz values
-            pugi::xml_node node_binary = bin->child("binary");
+            pugi::xml_node node_binary = dataArray->child("binary");
             std::string encoded_string = node_binary.child_value();
             std::vector<char> decoded_string = decode_base64(encoded_string);
 
@@ -283,22 +288,20 @@ namespace qAlgorithms
             {
                 buffer.clear();
                 decompress_zlib(&decoded_string, &buffer);
-                decode_little_endian(&buffer, spectra_binary_metadata[0].isDouble, spectrum_mz);
+                bytesToFloatVec(&buffer, spectra_binary_metadata[0].isDouble, spectrum_mz);
             }
             else
             {
-                decode_little_endian(&decoded_string, spectra_binary_metadata[0].isDouble, spectrum_mz);
+                bytesToFloatVec(&decoded_string, spectra_binary_metadata[0].isDouble, spectrum_mz);
             }
 
             assert(spectrum_mz->size() == number_traces); // this happens if an index is tried which does not exist in the data
         }
 
-        // bin = node_binary_list.children("binaryDataArray").end();
-        // the above line will not work, even if bin only has two elements, because the ++ operator modifies more internal
-        // state than a simple index. @todo replace with an explicit access to the first and second element
-        bin++;
+        dataArray++; // array pointer is incremented since both spectra are stored at the same node
+
         { // extract intensity values
-            pugi::xml_node node_binary = bin->child("binary");
+            pugi::xml_node node_binary = dataArray->child("binary");
             std::string encoded_string = node_binary.child_value();
             std::vector<char> decoded_string = decode_base64(encoded_string);
 
@@ -314,11 +317,11 @@ namespace qAlgorithms
             {
                 buffer.clear();
                 decompress_zlib(&decoded_string, &buffer);
-                decode_little_endian(&buffer, spectra_binary_metadata[1].isDouble, spectrum_int);
+                bytesToFloatVec(&buffer, spectra_binary_metadata[1].isDouble, spectrum_int);
             }
             else
             {
-                decode_little_endian(&decoded_string, spectra_binary_metadata[1].isDouble, spectrum_int);
+                bytesToFloatVec(&decoded_string, spectra_binary_metadata[1].isDouble, spectrum_int);
             }
 
             assert(spectrum_int->size() == number_traces); // this happens if an index is tried which does not exist in the data

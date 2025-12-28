@@ -36,7 +36,6 @@ int main()
             intensity.data(),
             mz.data(),
             329,
-            338,
             8};
         std::vector<RegressionGauss> validRegressions;
         const size_t maxScale = 8; // @todo not bound to centroid maxscale
