@@ -49,6 +49,27 @@ int main()
             block.length,
             maxScale);
     }
+    {
+        std::vector<float> intensity = {1308.43738, 8625.85156, 29830.793, 55325.1523, 79094, 68921.2969, 41931.5977, 17812.5977, 5546.17139, 1343.45618};
+        std::vector<float> mz = {};
+        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        ProfileBlock block = {
+            intensity.data(),
+            mz.data(),
+            0,
+            intensity.size()};
+        std::vector<RegressionGauss> validRegressions;
+        const size_t maxScale = 8; // @todo not bound to centroid maxscale
+        std::vector<float> logIntensity(25, NAN);
+        logIntensity.clear();
+        runningRegression(
+            block.intensity,
+            &logIntensity,
+            &df,
+            &validRegressions,
+            block.length,
+            maxScale);
+    }
 
     // does the RT conversion struct work correctly?
 

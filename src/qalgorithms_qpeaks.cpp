@@ -516,6 +516,7 @@ namespace qAlgorithms
             {
                 RegressionGauss *lowerReg = validRegressions->data() + regRange.endIdx;
                 assert(lowerReg->isValid);
+                assert(upperReg->isValid);
                 Range_i commonRange = {
                     min(lowerReg->regSpan.startIdx, upperReg->regSpan.startIdx),
                     max(lowerReg->regSpan.endIdx, upperReg->regSpan.endIdx)};
@@ -526,6 +527,7 @@ namespace qAlgorithms
 
                 if (mseLower < mseUpper)
                 {
+                    getNextReg = true;
                     upperReg->isValid = false;
                     lowerReg->numCompetitors += upperReg->numCompetitors + 1;
                 }
