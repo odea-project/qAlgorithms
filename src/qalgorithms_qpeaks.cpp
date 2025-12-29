@@ -219,6 +219,146 @@ namespace qAlgorithms
     int pruneConflictingRegs(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
+        const std::vector<unsigned int> *df_cum);
+
+    int resolveScaleConflicts(
+        std::vector<RegressionGauss> *validRegressions,
+        const float *intensities,
+        const std::vector<unsigned int> *df_cum);
+
+    void runningRegression(
+        const float *intensities,
+        std::vector<float> *intensities_log,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        std::vector<RegressionGauss> *validRegressions,
+        const size_t length,
+        const size_t maxScale)
+    {
+        assert(validRegressions->empty());
+
+        intensities_log->clear();
+        intensities_log->reserve(length);
+        for (size_t i = 0; i < length; i++)
+        {
+            intensities_log->push_back(log(intensities[i]));
+        }
+
+        // coefficients for single-b0 peaks, spans all regressions over a peak window
+        // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
+        std::vector<RegCoeffs> coefficients;
+        findCoefficients(intensities_log, maxScale, &coefficients);
+
+        std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
+        validRegsTmp.reserve(coefficients.size() / 2);
+        size_t validCount = validateRegressions(intensities,
+                                                intensities_log,
+                                                degreesOfFreedom_cum,
+                                                &coefficients,
+                                                length,
+                                                &validRegsTmp);
+        assert(validCount <= coefficients.size());
+        if (validCount == 0)
+            return;
+
+        // @todo find out how impactful the adjusted region where a regression holds true is
+        // potentially refactor the elimination such that it is one fucntion to handle within
+        // and between regs through invalidation only
+
+        // new algorithm for merging over scales needed @todo
+        pruneConflictingRegs(&validRegsTmp, intensities, degreesOfFreedom_cum);
+
+        // sanity check: the number of competitors in valid regressions is the number of invalid regressions
+        size_t invalidCount = 0;
+        size_t competitors = 0;
+        for (size_t i = 0; i < validRegsTmp.size(); i++)
+        {
+            RegressionGauss *reg = validRegsTmp.data() + i;
+            if (reg->isValid)
+                competitors += reg->numCompetitors;
+            else
+                invalidCount += 1;
+        }
+        assert(invalidCount == competitors);
+        assert(invalidCount < validCount);
+        // if (validCount - invalidCount == 1) // terminate early if only one regression remains
+        //     return; // @todo this vastly changes results, check for correctness!
+
+        resolveScaleConflicts(&validRegsTmp, intensities, degreesOfFreedom_cum);
+
+        // temp storage vector, eventually delete everything below this comment @todo
+        std::vector<RegressionGauss> validRegsTmp2;
+        for (size_t i = 0; i < validRegsTmp.size(); i++)
+        {
+            RegressionGauss *reg = validRegsTmp.data() + i;
+            if (reg->isValid)
+                validRegsTmp2.push_back(*reg);
+            else
+                reg->isValid = true; // required to force compliance with the old system for now
+        }
+
+        std::vector<RegressionGauss> validRegsAtScale;
+        size_t currentScale = 2;
+        validRegsTmp.push_back({0}); // doing this avoids a second check for the last scale group
+        validRegsTmp.back().coeffs.scale = 0;
+        RegressionGauss *currentReg = validRegsTmp.data();
+
+        while (currentReg->coeffs.scale != 0)
+        {
+        repeat:
+            if (currentReg->coeffs.scale == currentScale)
+            {
+                validRegsAtScale.push_back(*currentReg);
+                currentReg += 1;
+                goto repeat;
+            }
+
+            // nothing happens if the per-scale vector is empty
+            if (validRegsAtScale.size() == 1)
+            {
+                // only one valid regression at scale
+                validRegressions->push_back(validRegsAtScale.front());
+            }
+            else if (validRegsAtScale.size() > 1)
+            {
+                // resolve conflicting regressions
+                findBestScales(validRegressions, &validRegsAtScale, intensities, degreesOfFreedom_cum);
+            }
+            // regression is not incremented because a toggle was triggered
+            currentScale += 1;
+            validRegsAtScale.clear();
+        }
+
+        // there can be 0, 1 or more than one regressions in validRegressions
+        mergeRegressionsOverScales(validRegressions, intensities);
+        return;
+    }
+
+#pragma region "eliminate conflicting regs"
+
+    double calcMSE_exp(const RegCoeffs *coeff,
+                       const float *observed,
+                       const Range_i *regSpan,
+                       const double df)
+    {
+        double idxCenter = double(coeff->x0);
+        double x = double(regSpan->startIdx) - idxCenter;
+        double result = 0.0;
+        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
+        {
+            double pred = regExpAt(coeff, x);
+            double obs = observed[i];
+            double newdiff = (obs - pred) * (obs - pred);
+            result += newdiff;
+            x += 1.0;
+        }
+        double mse = result / df;
+        assert(mse > 0);
+        return mse;
+    }
+
+    int pruneConflictingRegs(
+        std::vector<RegressionGauss> *validRegressions,
+        const float *intensities,
         const std::vector<unsigned int> *df_cum)
     {
         // regressions start out valid and sorted by scale, and position within scales
@@ -302,6 +442,8 @@ namespace qAlgorithms
 
         return eliminations; // if only one regression remains, the next function can be skipped!
     }
+
+    // these are helper functions for the big resolveScaleConflicts part of the program
 
     int findNextReg(
         const std::vector<RegressionGauss> *validRegressions,
@@ -599,115 +741,247 @@ namespace qAlgorithms
         return 0;
     }
 
-    void runningRegression(
-        const float *intensities,
-        std::vector<float> *intensities_log,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
-        std::vector<RegressionGauss> *validRegressions,
-        const size_t length,
-        const size_t maxScale)
+    void findBestScales(std::vector<RegressionGauss> *validRegressions,
+                        std::vector<RegressionGauss> *validRegsTmp,
+                        const float *intensities,
+                        const std::vector<unsigned int> *degreesOfFreedom_cum)
     /* ### allocations ###
-        regressions: size determined by function
+        startEndGroups: known at function call
 
        ### called functions ###
-        mergeRegressionsOverScales
+        std::abs
+        findBestRegression
     */
     {
-        assert(validRegressions->empty());
+        /*
+            Grouping:
+            This block of code implements the grouping. It groups the valid peaks based
+            on the apex positions. Peaks are defined as similar, i.e., members of the
+            same group, if they fullfill at least one of the following conditions:
+            - The difference between two peak apexes is less than 4. (Nyquist Shannon
+            Sampling Theorem, separation of two maxima)
+            - At least one apex of a pair of peaks is within the window of the other peak.
+            (Overlap of two maxima)
+        */
+        // @todo could this part be combined with merge over scales?
+        // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
+        std::vector<Range_i> groups;
+        groups.reserve(validRegsTmp->size());
 
-        intensities_log->clear();
-        intensities_log->reserve(length);
-        for (size_t i = 0; i < length; i++)
+        size_t prev_i = 0;
+
+        for (size_t i = 0; i < validRegsTmp->size() - 1; i++)
         {
-            intensities_log->push_back(log(intensities[i]));
+            // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
+            // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
+            // the window of the other peak (Overlap of two maxima)
+            RegressionGauss *reg1 = &(validRegsTmp->at(i));
+            RegressionGauss *reg2 = &(validRegsTmp->at(i + 1));
+
+            if (std::abs(reg1->apex_position - reg2->apex_position) < 4)
+                continue;
+
+            if (reg1->apex_position > reg2->regSpan.startIdx)
+                continue;
+
+            if (reg1->regSpan.endIdx > reg2->apex_position)
+                continue;
+
+            // the two regressions differ, i.e. create a new group
+            groups.push_back({prev_i, i});
+            prev_i = i + 1;
         }
+        groups.push_back({prev_i, validRegsTmp->size() - 1}); // last group ends with index of the last element
 
-        // coefficients for single-b0 peaks, spans all regressions over a peak window
-        // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
-        std::vector<RegCoeffs> coefficients;
-        findCoefficients(intensities_log, maxScale, &coefficients);
-
-        std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
-        validRegsTmp.reserve(coefficients.size() / 2);
-        size_t validCount = validateRegressions(intensities,
-                                                intensities_log,
-                                                degreesOfFreedom_cum,
-                                                &coefficients,
-                                                length,
-                                                &validRegsTmp);
-        assert(validCount <= coefficients.size());
-        if (validCount == 0)
-            return;
-
-        // @todo find out how impactful the adjusted region where a regression holds true is
-        // potentially refactor the elimination such that it is one fucntion to handle within
-        // and between regs through invalidation only
-
-        // new algorithm for merging over scales needed @todo
-        pruneConflictingRegs(&validRegsTmp, intensities, degreesOfFreedom_cum);
-
-        // sanity check: the number of competitors in valid regressions is the number of invalid regressions
-        size_t invalidCount = 0;
-        size_t competitors = 0;
-        for (size_t i = 0; i < validRegsTmp.size(); i++)
+        /*
+          Survival of the Fittest Filter:
+          This block of code implements the survival of the fittest filter. It selects the peak with
+          the lowest mean squared error (MSE) as the representative of the group. If the group contains
+          only one peak, the peak is directly pushed to the valid regressions. If the group contains
+          multiple peaks, the peak with the lowest MSE is selected as the representative of the group
+          and pushed to the valid regressions.
+        */
+        for (size_t groupIdx = 0; groupIdx < groups.size(); groupIdx += 2)
         {
-            RegressionGauss *reg = validRegsTmp.data() + i;
-            if (reg->isValid)
-                competitors += reg->numCompetitors;
+            if (groups[groupIdx].startIdx == groups[groupIdx].endIdx)
+            { // already isolated peak => push to valid regressions
+                size_t regIdx = groups[groupIdx].startIdx;
+                auto onlyReg = validRegsTmp->at(regIdx);
+                assert(onlyReg.isValid);
+                validRegressions->push_back(onlyReg);
+            }
             else
-                invalidCount += 1;
-        }
-        assert(invalidCount == competitors);
+            { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
+                RegPair bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom_cum,
+                                                        groups[groupIdx]);
 
-        resolveScaleConflicts(&validRegsTmp, intensities, degreesOfFreedom_cum);
-
-        // temp storage vector, eventually delete everything below this comment @todo
-        std::vector<RegressionGauss> validRegsTmp2;
-        for (size_t i = 0; i < validRegsTmp.size(); i++)
-        {
-            RegressionGauss *reg = validRegsTmp.data() + i;
-            if (reg->isValid)
-                validRegsTmp2.push_back(*reg);
-            else
-                reg->isValid = true;
-        }
-
-        std::vector<RegressionGauss> validRegsAtScale;
-        size_t currentScale = 2;
-        validRegsTmp.push_back({0}); // doing this avoids a second check for the last scale group
-        validRegsTmp.back().coeffs.scale = 0;
-        RegressionGauss *currentReg = validRegsTmp.data();
-
-        while (currentReg->coeffs.scale != 0)
-        {
-        repeat:
-            if (currentReg->coeffs.scale == currentScale)
-            {
-                validRegsAtScale.push_back(*currentReg);
-                currentReg += 1;
-                goto repeat;
+                RegressionGauss bestReg = validRegsTmp->at(bestRegIdx.idx);
+                bestReg.mse = bestRegIdx.mse;
+                assert(bestReg.isValid);
+                validRegressions->push_back(bestReg);
             }
-
-            // nothing happens if the per-scale vector is empty
-            if (validRegsAtScale.size() == 1)
-            {
-                // only one valid regression at scale
-                validRegressions->push_back(validRegsAtScale.front());
-            }
-            else if (validRegsAtScale.size() > 1)
-            {
-                // resolve conflicting regressions
-                findBestScales(validRegressions, &validRegsAtScale, intensities, degreesOfFreedom_cum);
-            }
-            // regression is not incremented because a toggle was triggered
-            currentScale += 1;
-            validRegsAtScale.clear();
         }
-
-        // there can be 0, 1 or more than one regressions in validRegressions
-        mergeRegressionsOverScales(validRegressions, intensities);
-        return;
     }
+
+    RegPair findBestRegression(
+        const float *intensities,
+        const std::vector<RegressionGauss> *regressions,
+        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        const Range_i regSpan)
+    {
+        double best_mse = INFINITY;
+        unsigned int bestRegIdx = 0;
+
+        // identify left (smallest) and right (largest) limit of the grouped regression windows
+        size_t left_limit = -1;
+        size_t right_limit = 0;
+        for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
+        {
+            const RegressionGauss *reg = &(*regressions)[i];
+            left_limit = min(left_limit, reg->regSpan.startIdx);
+            right_limit = max(right_limit, reg->regSpan.endIdx);
+        }
+
+        Range_i newRange = {left_limit, right_limit};
+        double df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), &newRange);
+        df_sum -= 4; // four coefficients
+        assert(df_sum > 0);
+
+        for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
+        {
+            // step 2: calculate the mean squared error (MSE) between the predicted and actual values
+            const RegressionGauss *reg = &(*regressions)[i];
+            const Range_i range = {left_limit, right_limit}; // @todo this should update with the regressions
+            double mse = calcMSE_exp(&reg->coeffs,
+                                     intensities,
+                                     &range,
+                                     df_sum);
+            if (mse < best_mse)
+            {
+                best_mse = mse;
+                bestRegIdx = i;
+            }
+        }
+        assert(regressions->at(bestRegIdx).isValid);
+        return {bestRegIdx, float(best_mse)};
+    }
+
+    void mergeRegressionsOverScales(
+        std::vector<RegressionGauss> *validRegressions,
+        const float *intensities)
+    /* ### allocations ###
+        exponentialMSE: known at function call
+        validRegressionsInGroup: size unknown
+    */
+    {
+        if (validRegressions->size() < 2)
+        {
+            return;
+        }
+
+        /*
+          Grouping Over Scales:
+          This block of code implements the grouping over scales. It groups the valid
+          peaks based on the apex positions. Peaks are defined as similar, i.e.,
+          members of the same group, if they fullfill at least one of the following conditions:
+          - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
+          - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
+        */
+
+        // iterate over the validRegressions vector
+        RegressionGauss *firstReg = validRegressions->data();
+        for (size_t i = 0; i < validRegressions->size(); i++)
+        {
+            RegressionGauss *activeReg = firstReg + i;
+            assert(activeReg->isValid);
+            double MSE_group = 0;
+            int DF_group = 0;
+            // only calculate required MSEs since this is one of the performance-critical steps
+            std::vector<float> exponentialMSE(validRegressions->size(), 0);
+            std::vector<unsigned int> validRegressionsInGroup; // vector of indices to validRegressions
+            validRegressionsInGroup.reserve(64);
+            size_t competitors = 0; // a competitor is a mutually exclusive alternative regression
+
+            for (size_t j = 0; j < i; j++)
+            {
+                RegressionGauss *secondReg = firstReg + j;
+                if (!secondReg->isValid) // check is needed because regressions are set to invalid in the outer loop
+                    continue;
+
+                if (activeReg->apex_position < secondReg->regSpan.startIdx)
+                    continue;
+
+                if (activeReg->apex_position > secondReg->regSpan.endIdx)
+                    continue;
+
+                if (secondReg->apex_position < activeReg->regSpan.startIdx)
+                    continue;
+
+                if (secondReg->apex_position > activeReg->regSpan.endIdx)
+                    continue;
+
+                if (exponentialMSE[j] == 0.0)
+                {
+                    exponentialMSE[j] = calcMSE_exp(
+                        &secondReg->coeffs,
+                        intensities,
+                        &secondReg->regSpan,
+                        secondReg->df);
+                }
+                DF_group += secondReg->df;                      // add the degree of freedom
+                MSE_group += exponentialMSE[j] * secondReg->df; // add the sum of squared errors
+                // add the iterator of the ref peak to a vector of iterators
+                validRegressionsInGroup.push_back(j);
+                competitors += secondReg->numCompetitors + 1; // a regression can have beaten a previous one
+
+            } // after this loop, validRegressionsInGroup contains all regressions that are still valid and contend with the regression at position i
+
+            if (validRegressionsInGroup.empty()) // no competing regressions exist
+            {
+                assert(DF_group < 1);
+                continue;
+            }
+
+            MSE_group /= DF_group;
+
+            if (exponentialMSE[i] == 0.0)
+            { // calculate the mse of the current peak
+                exponentialMSE[i] = calcMSE_exp(
+                    &activeReg->coeffs,
+                    intensities,
+                    &activeReg->regSpan,
+                    activeReg->df);
+            }
+            if (exponentialMSE[i] < MSE_group)
+            {
+                // Set isValid to false for the candidates from the group
+                for (size_t it_ref_peak : validRegressionsInGroup)
+                {
+                    firstReg[it_ref_peak].isValid = false;
+                }
+                // only advance competitor count if regression is actually better
+                activeReg->numCompetitors = competitors;
+            }
+            else
+            { // Set isValid to false for the current peak
+                activeReg->isValid = false;
+            }
+        }
+
+        // remove invalid regressions
+        size_t accessID = 0;
+        for (size_t i = 0; i < validRegressions->size(); i++)
+        {
+            if (validRegressions->at(i).isValid)
+            {
+                validRegressions->at(accessID) = validRegressions->at(i);
+                accessID += 1;
+            }
+        }
+        validRegressions->resize(accessID);
+    }
+
+#pragma endregion "eliminate conflicting regs"
 
     void findCoefficients(
         const std::vector<float> *intensity_log,
@@ -814,221 +1088,9 @@ namespace qAlgorithms
         return;
     }
 
-#ifdef _RM
-    RegCoeffs hardRegression(std::vector<float> *intensity_log, const size_t startIdx, const size_t endIdx)
-    {
-        // 1) find the position 0 - this should generally be the maximum of the region
-        float *intensityP = intensity_log->data() + startIdx;
-        size_t length = endIdx - startIdx + 1;
-        float *maxInt = maxVal(intensityP, length);
-        size_t x0 = maxInt - intensity_log->data();
-
-        // 2) design matrix covering the entire data region - assumes good cutoffs
-        /*todo: matrixtype*/ double *designMat = 0;
-        // length times 1
-        // from -x0 to length - x0: i++
-        // while i < x0: mat[i]^2
-        // start at i = x0, until i = length
-
-        return {0};
-    }
-#endif
-
 #pragma endregion "running regression"
 
 #pragma region "validate Regression"
-
-    size_t invalidateSuboptimal_inScale(
-        const float *intensities,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
-        std::vector<RegressionGauss> *validRegressions)
-    {
-        // goal: for every regression in the current scale, select the one with the
-        // best MSE and then mark all other ones as invalid.
-
-        assert(!validRegressions->empty());
-        // assert(!intensities->empty());
-        // assert(validRegressions->back().coeffs.scale < intensities->size() / 2);
-
-        size_t totalValid = 0;
-
-        RegressionGauss *conflictReg = nullptr;
-        size_t currentScale = 2;
-
-        for (size_t i = 0; i < validRegressions->size(); i++)
-        {
-            RegressionGauss *reg = validRegressions->data() + i;
-            if (!reg->isValid)
-                continue;
-
-            // the first round of comparisons is only concerned with peaks within one scale
-            if (reg->coeffs.scale != currentScale)
-            {
-                // reset the comparison
-                conflictReg = nullptr;
-                assert(currentScale + 1 == reg->coeffs.scale);
-                currentScale += 1;
-            }
-
-            // no conflict -> this one needs to be tested against
-            if (conflictReg == nullptr)
-            {
-                conflictReg = reg;
-                continue;
-            }
-
-            // check if the regression is in range. A regression is in range if
-            // the difference between apexes is smaller than 4 or the scale,
-            // whichever one is larger
-            double critDiff = max(double(currentScale), 4.0);
-            // current position should alwasys be greater than old
-            double apexDiff = reg->apex_position - conflictReg->apex_position;
-            assert(apexDiff > 0);
-
-            if (apexDiff > critDiff)
-            {
-                // no conflict, test other reg
-                conflictReg = reg;
-                totalValid += 1;
-                continue;
-            }
-
-            // expand the range until no overlap between regressions exists
-            // @todo should this be updated in the chosen regression? - I tend towards yes
-            Range_i limits = conflictReg->regSpan;
-
-            size_t lookAhead = i;
-            for (; lookAhead < validRegressions->size(); lookAhead++)
-            {
-                // check how far the region can expand before it no longer makes sense to comapare regressions
-                RegressionGauss *forward = validRegressions->data() + lookAhead;
-
-                if (forward->coeffs.scale != currentScale)
-                    break;
-                if (!forward->isValid)
-                    continue;
-                if (forward->apex_position > float(limits.endIdx))
-                    break;
-
-                assert(limits.endIdx <= forward->regSpan.endIdx);
-                limits.endIdx = forward->regSpan.endIdx;
-            }
-
-            // within this range, find the best mse. conflictReg is always the
-            // better of the two.
-            double df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), &limits) - 4;
-            double bestMSE = calcMSE_exp(&conflictReg->coeffs,
-                                         intensities,
-                                         &limits,
-                                         df_sum);
-
-            for (; i < lookAhead; i++) // at least one conflict needs to be resolved if the loop gets this far
-            {
-                reg = validRegressions->data() + i;
-
-                double mse = calcMSE_exp(&reg->coeffs,
-                                         intensities,
-                                         &limits,
-                                         df_sum);
-
-                bool replace = mse < bestMSE;
-                if (replace)
-                {
-                    conflictReg->isValid = false;
-                    conflictReg = reg;
-                    bestMSE = mse;
-                }
-            }
-
-            // at this point, only one regression in the conflict window remains
-            conflictReg = nullptr;
-            totalValid += 1;
-        }
-
-        return totalValid;
-    }
-
-    void findBestScales(std::vector<RegressionGauss> *validRegressions,
-                        std::vector<RegressionGauss> *validRegsTmp,
-                        const float *intensities,
-                        const std::vector<unsigned int> *degreesOfFreedom_cum)
-    /* ### allocations ###
-        startEndGroups: known at function call
-
-       ### called functions ###
-        std::abs
-        findBestRegression
-    */
-    {
-        /*
-            Grouping:
-            This block of code implements the grouping. It groups the valid peaks based
-            on the apex positions. Peaks are defined as similar, i.e., members of the
-            same group, if they fullfill at least one of the following conditions:
-            - The difference between two peak apexes is less than 4. (Nyquist Shannon
-            Sampling Theorem, separation of two maxima)
-            - At least one apex of a pair of peaks is within the window of the other peak.
-            (Overlap of two maxima)
-        */
-        // @todo could this part be combined with merge over scales?
-        // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
-        std::vector<Range_i> groups;
-        groups.reserve(validRegsTmp->size());
-
-        size_t prev_i = 0;
-
-        for (size_t i = 0; i < validRegsTmp->size() - 1; i++)
-        {
-            // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
-            // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
-            // the window of the other peak (Overlap of two maxima)
-            RegressionGauss *reg1 = &(validRegsTmp->at(i));
-            RegressionGauss *reg2 = &(validRegsTmp->at(i + 1));
-
-            if (std::abs(reg1->apex_position - reg2->apex_position) < 4)
-                continue;
-
-            if (reg1->apex_position > reg2->regSpan.startIdx)
-                continue;
-
-            if (reg1->regSpan.endIdx > reg2->apex_position)
-                continue;
-
-            // the two regressions differ, i.e. create a new group
-            groups.push_back({prev_i, i});
-            prev_i = i + 1;
-        }
-        groups.push_back({prev_i, validRegsTmp->size() - 1}); // last group ends with index of the last element
-
-        /*
-          Survival of the Fittest Filter:
-          This block of code implements the survival of the fittest filter. It selects the peak with
-          the lowest mean squared error (MSE) as the representative of the group. If the group contains
-          only one peak, the peak is directly pushed to the valid regressions. If the group contains
-          multiple peaks, the peak with the lowest MSE is selected as the representative of the group
-          and pushed to the valid regressions.
-        */
-        for (size_t groupIdx = 0; groupIdx < groups.size(); groupIdx += 2)
-        {
-            if (groups[groupIdx].startIdx == groups[groupIdx].endIdx)
-            { // already isolated peak => push to valid regressions
-                size_t regIdx = groups[groupIdx].startIdx;
-                auto onlyReg = validRegsTmp->at(regIdx);
-                assert(onlyReg.isValid);
-                validRegressions->push_back(onlyReg);
-            }
-            else
-            { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                RegPair bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom_cum,
-                                                        groups[groupIdx]);
-
-                RegressionGauss bestReg = validRegsTmp->at(bestRegIdx.idx);
-                bestReg.mse = bestRegIdx.mse;
-                assert(bestReg.isValid);
-                validRegressions->push_back(bestReg);
-            }
-        }
-    }
 
     double correctB0(const float *const intensities,
                      const Range_i *range,
@@ -1401,120 +1463,6 @@ namespace qAlgorithms
     }
 #pragma endregion "validate Regression"
 
-    void mergeRegressionsOverScales(
-        std::vector<RegressionGauss> *validRegressions,
-        const float *intensities)
-    /* ### allocations ###
-        exponentialMSE: known at function call
-        validRegressionsInGroup: size unknown
-    */
-    {
-        if (validRegressions->size() < 2)
-        {
-            return;
-        }
-
-        /*
-          Grouping Over Scales:
-          This block of code implements the grouping over scales. It groups the valid
-          peaks based on the apex positions. Peaks are defined as similar, i.e.,
-          members of the same group, if they fullfill at least one of the following conditions:
-          - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
-          - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
-        */
-
-        // iterate over the validRegressions vector
-        RegressionGauss *firstReg = validRegressions->data();
-        for (size_t i = 0; i < validRegressions->size(); i++)
-        {
-            RegressionGauss *activeReg = firstReg + i;
-            assert(activeReg->isValid);
-            double MSE_group = 0;
-            int DF_group = 0;
-            // only calculate required MSEs since this is one of the performance-critical steps
-            std::vector<float> exponentialMSE(validRegressions->size(), 0);
-            std::vector<unsigned int> validRegressionsInGroup; // vector of indices to validRegressions
-            validRegressionsInGroup.reserve(64);
-            size_t competitors = 0; // a competitor is a mutually exclusive alternative regression
-
-            for (size_t j = 0; j < i; j++)
-            {
-                RegressionGauss *secondReg = firstReg + j;
-                if (!secondReg->isValid) // check is needed because regressions are set to invalid in the outer loop
-                    continue;
-
-                if (activeReg->apex_position < secondReg->regSpan.startIdx)
-                    continue;
-
-                if (activeReg->apex_position > secondReg->regSpan.endIdx)
-                    continue;
-
-                if (secondReg->apex_position < activeReg->regSpan.startIdx)
-                    continue;
-
-                if (secondReg->apex_position > activeReg->regSpan.endIdx)
-                    continue;
-
-                if (exponentialMSE[j] == 0.0)
-                {
-                    exponentialMSE[j] = calcMSE_exp(
-                        &secondReg->coeffs,
-                        intensities,
-                        &secondReg->regSpan,
-                        secondReg->df);
-                }
-                DF_group += secondReg->df;                      // add the degree of freedom
-                MSE_group += exponentialMSE[j] * secondReg->df; // add the sum of squared errors
-                // add the iterator of the ref peak to a vector of iterators
-                validRegressionsInGroup.push_back(j);
-                competitors += secondReg->numCompetitors + 1; // a regression can have beaten a previous one
-
-            } // after this loop, validRegressionsInGroup contains all regressions that are still valid and contend with the regression at position i
-
-            if (validRegressionsInGroup.empty()) // no competing regressions exist
-            {
-                assert(DF_group < 1);
-                continue;
-            }
-
-            MSE_group /= DF_group;
-
-            if (exponentialMSE[i] == 0.0)
-            { // calculate the mse of the current peak
-                exponentialMSE[i] = calcMSE_exp(
-                    &activeReg->coeffs,
-                    intensities,
-                    &activeReg->regSpan,
-                    activeReg->df);
-            }
-            if (exponentialMSE[i] < MSE_group)
-            {
-                // Set isValid to false for the candidates from the group
-                for (size_t it_ref_peak : validRegressionsInGroup)
-                {
-                    firstReg[it_ref_peak].isValid = false;
-                }
-                // only advance competitor count if regression is actually better
-                activeReg->numCompetitors = competitors;
-            }
-            else
-            { // Set isValid to false for the current peak
-                activeReg->isValid = false;
-            }
-        }
-
-        // remove invalid regressions
-        size_t accessID = 0;
-        for (size_t i = 0; i < validRegressions->size(); i++)
-        {
-            if (validRegressions->at(i).isValid)
-            {
-                validRegressions->at(accessID) = validRegressions->at(i);
-                accessID += 1;
-            }
-        }
-        validRegressions->resize(accessID);
-    }
 #pragma endregion "validate regression"
 
 #pragma region "create peaks"
@@ -1784,27 +1732,6 @@ namespace qAlgorithms
         return true;
     }
 
-    double calcMSE_exp(const RegCoeffs *coeff,
-                       const float *observed,
-                       const Range_i *regSpan,
-                       const double df)
-    {
-        double idxCenter = double(coeff->x0);
-        double x = double(regSpan->startIdx) - idxCenter;
-        double result = 0.0;
-        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
-        {
-            double pred = regExpAt(coeff, x);
-            double obs = observed[i];
-            double newdiff = (obs - pred) * (obs - pred);
-            result += newdiff;
-            x += 1.0;
-        }
-        double mse = result / df;
-        assert(mse > 0);
-        return mse;
-    }
-
     double calcSSE_chisqared(const RegressionGauss *mutateReg,
                              const float *observed,
                              const std::vector<float> *predict)
@@ -1821,49 +1748,6 @@ namespace qAlgorithms
     }
 
 #pragma endregion calcSSE
-
-    RegPair findBestRegression(
-        const float *intensities,
-        const std::vector<RegressionGauss> *regressions,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const Range_i regSpan)
-    {
-        double best_mse = INFINITY;
-        unsigned int bestRegIdx = 0;
-
-        // identify left (smallest) and right (largest) limit of the grouped regression windows
-        size_t left_limit = -1;
-        size_t right_limit = 0;
-        for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
-        {
-            const RegressionGauss *reg = &(*regressions)[i];
-            left_limit = min(left_limit, reg->regSpan.startIdx);
-            right_limit = max(right_limit, reg->regSpan.endIdx);
-        }
-
-        Range_i newRange = {left_limit, right_limit};
-        double df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), &newRange);
-        df_sum -= 4; // four coefficients
-        assert(df_sum > 0);
-
-        for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
-        {
-            // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            const RegressionGauss *reg = &(*regressions)[i];
-            const Range_i range = {left_limit, right_limit}; // @todo this should update with the regressions
-            double mse = calcMSE_exp(&reg->coeffs,
-                                     intensities,
-                                     &range,
-                                     df_sum);
-            if (mse < best_mse)
-            {
-                best_mse = mse;
-                bestRegIdx = i;
-            }
-        }
-        assert(regressions->at(bestRegIdx).isValid);
-        return {bestRegIdx, float(best_mse)};
-    }
 
     int calcApexAndValleyPos(
         RegressionGauss *mutateReg,
