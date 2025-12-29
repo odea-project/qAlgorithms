@@ -247,6 +247,7 @@ namespace qAlgorithms
             return eliminations;
 
         RegressionGauss *compReg = validRegressions->data();
+        assert(compReg->numCompetitors == 0);
         for (size_t i = 1; i < validRegressions->size(); i++)
         {
             RegressionGauss *reg = validRegressions->data() + i;
@@ -270,7 +271,7 @@ namespace qAlgorithms
             // @todo could it be better to decide based on something else, since the range
             // is not adjusted afterward?
             Range_i newRange = {compReg->regSpan.startIdx, reg->regSpan.endIdx};
-            size_t df = sumOfCumulative(df_cum->data(), &newRange);
+            size_t df = sumOfCumulative(df_cum->data(), &newRange) - 4;
 
             double mse_reg = calcMSE_exp(&reg->coeffs,
                                          intensities,
@@ -286,17 +287,164 @@ namespace qAlgorithms
             {
                 // the current regression is better
                 compReg->isValid = false;
+                reg->numCompetitors += compReg->numCompetitors + 1;
                 compReg = reg;
             }
             else
             {
                 // the old regression is better
+                compReg->numCompetitors += reg->numCompetitors + 1;
                 reg->isValid = false;
             }
+            assert(compReg->numCompetitors < int(validRegressions->size())); // at most better than all other regressions
             eliminations += 1;
         }
 
-        return eliminations;
+        return eliminations; // if only one regression remains, the next function can be skipped!
+    }
+
+    int findNextReg(
+        const std::vector<RegressionGauss> *validRegressions,
+        const size_t scale,
+        const size_t startIdx)
+    {
+        // find the first valid regression that has the required scale at idx >= startidx or -1 if search fails
+        int pos = int(startIdx);
+        int len = validRegressions->size();
+        bool found = false;
+        for (int dpos = pos; dpos < len; dpos++)
+        {
+            const RegressionGauss *reg = validRegressions->data() + dpos;
+            if (reg->coeffs.scale < scale)
+                continue;
+            if (!reg->isValid)
+                continue;
+
+            found = true;
+            pos = dpos;
+            break;
+        }
+        if (!found)
+            return -1;
+
+        return pos;
+    }
+
+    Range_i findComparisonRegs(
+        const std::vector<RegressionGauss> *validRegressions,
+        const Range_i *range,
+        const size_t scale)
+    {
+        // since all regressions are in order, only the outermost two must be passed along
+        // if regs = 1, 0: no valid regs found at this scale / in this range
+        Range_i regs = {1, 0};
+        bool first = true;
+
+        for (size_t i = 0; i < validRegressions->size(); i++)
+        {
+            const RegressionGauss *reg = validRegressions->data() + i;
+            // only consider regressions in the current scale
+            if (reg->coeffs.scale < scale)
+                continue;
+            if (reg->coeffs.scale > scale)
+                break;
+
+            // only apex overlap is checked, good idea? @todo
+            size_t apex = size_t(reg->apex_position) + 1;
+            if (apex < range->startIdx)
+                continue;
+            if (apex > range->endIdx)
+                break;
+
+            // validity check here due to early termination from previous checks
+            if (!reg->isValid)
+                continue;
+
+            if (first)
+            {
+                first = false;
+                regs.startIdx = i;
+            }
+            regs.endIdx = i;
+        }
+
+        return regs;
+    }
+
+    size_t invalidateRange(const Range_i *r, std::vector<RegressionGauss> *validRegressions)
+    {
+        // returns the total competitors eliminated
+        size_t competitors = 0;
+        for (size_t i = r->startIdx; i < r->endIdx; i++)
+        {
+            RegressionGauss *reg = validRegressions->data() + i;
+            competitors += reg->isValid ? reg->numCompetitors + 1 : 0;
+            reg->isValid = false;
+        }
+        return competitors;
+    }
+
+    void addCompetitors(const Range_i *r, std::vector<RegressionGauss> *validRegressions, size_t comp)
+    {
+        // distribute the number in comp evenly. Bias towards lower end regressions is accepted
+        while (comp != 0)
+        {
+            for (size_t i = r->startIdx; i < r->endIdx; i++)
+            {
+                RegressionGauss *reg = validRegressions->data() + i;
+                if (reg->isValid)
+                {
+                    reg->numCompetitors += 1;
+                    comp -= 1;
+                }
+            }
+        }
+    }
+
+    double multiMSE(
+        std::vector<RegressionGauss> *validRegressions,
+        const float *intensities,
+        const Range_i *selectRegs,
+        const Range_i *commonRange,
+        size_t df)
+    {
+        // the df must be without coefficients! (10 = at least two scale 2 regressions)
+        assert(df >= 10);
+
+        double summedMSE = 0;
+        size_t regCount = 1; // first one is not included in the loop
+        size_t currentStart = commonRange->startIdx;
+        size_t currentEnd = 0;
+
+        RegressionGauss *regFront = validRegressions->data() + selectRegs->startIdx;
+
+        for (size_t i = selectRegs->startIdx + 1; i < selectRegs->endIdx + 1; i++)
+        {
+            RegressionGauss *regCurr = validRegressions->data() + i;
+            if (!regCurr->isValid)
+                continue;
+
+            // determine MSE for the left of both regressions
+            // the start is known from the previous regression, the end is the middle between both regs
+            currentEnd = (regFront->regSpan.endIdx + regCurr->regSpan.startIdx) / 2;
+            Range_i rangeNow = {currentStart, currentEnd};
+
+            // the mse is composed of individual regressions that do not share responsibility
+            // for the same point
+            summedMSE += calcMSE_exp(&regFront->coeffs, intensities, &rangeNow, df);
+
+            // set current regression as the active element of the mse
+            regFront = regCurr;
+            currentStart = currentEnd + 1;
+            regCount += 1;
+        }
+
+        // there is still one unprocessed regression
+        currentEnd = commonRange->endIdx;
+        Range_i rangeNow = {currentStart, currentEnd};
+        summedMSE += calcMSE_exp(&regFront->coeffs, intensities, &rangeNow, df);
+
+        return summedMSE / (df - regCount * 4); // important: two individual regs lose degrees of freedom
     }
 
     int resolveScaleConflicts(
@@ -316,6 +464,135 @@ namespace qAlgorithms
 
         // case 2: Multiple regressions at lower scale conflict with the same regression at a greater scale
         //    -->  switch contribution to the mse at the mean of both limits
+
+        // this function assumes that a conflict exists
+        // there is never conflict within a scale! (previous function execution)
+
+        // algorithm:
+        // 0: start at scale = 3
+        // is there a regression at this scale? -> function
+        // F: scale += 1, go to 0
+        // T: set this scale to the origin scale
+
+        // compare at scale = 2
+        // 1: Iterate from i = 0 over regressions
+        // did the scale change from
+
+        size_t minCompScale = validRegressions->front().coeffs.scale;
+        size_t compScale = minCompScale;
+        size_t scale = compScale + 1;
+        size_t startIdx = 0;
+
+        RegressionGauss *upperReg;
+        bool getNextReg = true;
+
+        while (true)
+        {
+            if (getNextReg)
+            {
+                int idx = findNextReg(validRegressions, scale, startIdx);
+                if (idx == -1)
+                    break; // no scale to compare with exists
+
+                startIdx = idx + 1; // necessary since otherwise the regression will be reset to itself
+                upperReg = validRegressions->data() + idx;
+                assert(upperReg->isValid);
+
+                // the new regression is not necessarily at the searched input scale
+                scale = upperReg->coeffs.scale;
+                getNextReg = false;
+            }
+            assert(scale > compScale);
+
+            Range_i regRange = findComparisonRegs(validRegressions, &upperReg->regSpan, compScale);
+
+            // check the special case of only one regression at the lower scale
+            // first since this should be the most common one
+            if (regRange.startIdx == 1 && regRange.endIdx == 0)
+            {
+                // invalid state, do nothing @todo adjust minimum checked scale
+            }
+            else if (regRange.startIdx == regRange.endIdx)
+            {
+                RegressionGauss *lowerReg = validRegressions->data() + regRange.endIdx;
+                assert(lowerReg->isValid);
+                Range_i commonRange = {
+                    min(lowerReg->regSpan.startIdx, upperReg->regSpan.startIdx),
+                    max(lowerReg->regSpan.endIdx, upperReg->regSpan.endIdx)};
+                size_t df = sumOfCumulative(df_cum->data(), &commonRange) - 4; // this also applies for features
+
+                double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df);
+                double mseLower = calcMSE_exp(&lowerReg->coeffs, intensities, &commonRange, df);
+
+                if (mseLower < mseUpper)
+                {
+                    upperReg->isValid = false;
+                    lowerReg->numCompetitors += upperReg->numCompetitors + 1;
+                }
+                else
+                {
+                    lowerReg->isValid = false;
+                    upperReg->numCompetitors += lowerReg->numCompetitors + 1;
+                }
+                assert(lowerReg->numCompetitors < int(validRegressions->size()));
+                assert(upperReg->numCompetitors < int(validRegressions->size()));
+            }
+            else // this branch was never taken for a test dataset!
+            {
+                // there are multiple regressions at the lower scale which need to be combined into one mse
+                // the leftmost relevant point is the first point of the first regression, the rightmost the
+                // last point of the last regression. This is because regressions are always sorted by x0 in a scale.
+                RegressionGauss *lowerRegS = validRegressions->data() + regRange.endIdx;
+                RegressionGauss *lowerRegE = validRegressions->data() + regRange.endIdx;
+                Range_i commonRange = {
+                    min(lowerRegS->regSpan.startIdx, upperReg->regSpan.startIdx),
+                    max(lowerRegE->regSpan.endIdx, upperReg->regSpan.endIdx)};
+                size_t df = sumOfCumulative(df_cum->data(), &commonRange);
+
+                double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df - 4);
+
+                // slightly convoluted method for merging MSEs.
+                double mseLower = multiMSE(validRegressions, intensities, &regRange, &commonRange, df);
+
+                if (mseLower < mseUpper)
+                {
+                    addCompetitors(&regRange, validRegressions, upperReg->numCompetitors + 1);
+                    upperReg->isValid = false;
+                    getNextReg = true;
+                }
+                else
+                {
+                    // the greater-span regression persists and is checked against other contenders
+                    size_t competitors = invalidateRange(&regRange, validRegressions);
+                    upperReg->numCompetitors += competitors;
+                }
+            }
+
+            // the lower scale is advanced until the higher scale is matched
+            compScale += 1;
+            if (compScale == scale)
+            {
+                // we have reached the highest possible scale to compare against
+                // this means that the checked regression is fully validated (or invalidated)
+                // the next comparison chain uses the next highest single regression and
+                // covers all regressions again (starting from scale = 2)
+                compScale = minCompScale;
+                getNextReg = true;
+            }
+
+            // sanity check: the number of competitors in valid regressions is the number of invalid regressions
+            size_t invalidCount = 0;
+            size_t competitors = 0;
+            for (size_t i = 0; i < validRegressions->size(); i++)
+            {
+                RegressionGauss *reg = validRegressions->data() + i;
+                if (reg->isValid)
+                    competitors += reg->numCompetitors;
+                else
+                    invalidCount += 1;
+            }
+            assert(invalidCount == competitors);
+        }
 
         return 0;
     }
@@ -357,6 +634,8 @@ namespace qAlgorithms
                                                 length,
                                                 &validRegsTmp);
         assert(validCount <= coefficients.size());
+        if (validCount == 0)
+            return;
 
         // @todo find out how impactful the adjusted region where a regression holds true is
         // potentially refactor the elimination such that it is one fucntion to handle within
@@ -364,6 +643,32 @@ namespace qAlgorithms
 
         // new algorithm for merging over scales needed @todo
         pruneConflictingRegs(&validRegsTmp, intensities, degreesOfFreedom_cum);
+
+        // sanity check: the number of competitors in valid regressions is the number of invalid regressions
+        size_t invalidCount = 0;
+        size_t competitors = 0;
+        for (size_t i = 0; i < validRegsTmp.size(); i++)
+        {
+            RegressionGauss *reg = validRegsTmp.data() + i;
+            if (reg->isValid)
+                competitors += reg->numCompetitors;
+            else
+                invalidCount += 1;
+        }
+        assert(invalidCount == competitors);
+
+        resolveScaleConflicts(&validRegsTmp, intensities, degreesOfFreedom_cum);
+
+        // temp storage vector, eventually delete everything below this comment @todo
+        std::vector<RegressionGauss> validRegsTmp2;
+        for (size_t i = 0; i < validRegsTmp.size(); i++)
+        {
+            RegressionGauss *reg = validRegsTmp.data() + i;
+            if (reg->isValid)
+                validRegsTmp2.push_back(*reg);
+            else
+                reg->isValid = true;
+        }
 
         std::vector<RegressionGauss> validRegsAtScale;
         size_t currentScale = 2;
@@ -399,6 +704,7 @@ namespace qAlgorithms
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
+        return;
     }
 
     void findCoefficients(
