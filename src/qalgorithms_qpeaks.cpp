@@ -399,7 +399,7 @@ namespace qAlgorithms
                 compReg = reg;
                 continue;
             }
-            if (compReg->regSpan.endIdx < reg->regSpan.startIdx)
+            if (compReg->regSpan.endIdx <= reg->regSpan.startIdx) // the regressions can switch at one point
             {
                 // no conflict despite same scale
                 compReg = reg;
@@ -492,10 +492,16 @@ namespace qAlgorithms
                 break;
 
             // only apex overlap is checked, good idea? @todo
-            size_t apex = size_t(reg->apex_position) + 1;
-            if (apex < range->startIdx)
+            // this gave bad results where an intermediate regression was left despite conflicts
+            // size_t apex = size_t(reg->apex_position) + 1;
+            // if (apex < range->startIdx)
+            //     continue;
+            // if (apex > range->endIdx)
+            //     break;
+            // at most one point overlap is tolerated since the regression "ends" at that point
+            if (reg->regSpan.endIdx <= range->startIdx)
                 continue;
-            if (apex > range->endIdx)
+            if (reg->regSpan.startIdx >= range->endIdx)
                 break;
 
             // validity check here due to early termination from previous checks
@@ -643,6 +649,11 @@ namespace qAlgorithms
                 // the new regression is not necessarily at the searched input scale
                 scale = upperReg->coeffs.scale;
                 getNextReg = false;
+
+                // part of the reset is considering all possible regressions again. It is
+                // important to always do a full reset in case more than one valid peak
+                // exists within a selected block.
+                compScale = minCompScale;
             }
             assert(scale > compScale);
 
@@ -716,11 +727,8 @@ namespace qAlgorithms
             compScale += 1;
             if (compScale == scale)
             {
-                // we have reached the highest possible scale to compare against
-                // this means that the checked regression is fully validated (or invalidated)
-                // the next comparison chain uses the next highest single regression and
-                // covers all regressions again (starting from scale = 2)
-                compScale = minCompScale;
+                // We have reached the highest possible scale to compare against. This
+                // means that the checked regression is fully validated (or invalidated).
                 getNextReg = true;
             }
 
