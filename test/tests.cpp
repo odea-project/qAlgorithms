@@ -48,6 +48,7 @@ int main()
             &validRegressions,
             block.length,
             maxScale);
+        assert(validRegressions.size() == 1, "Failed to find representative centroid peak 1");
     }
     {
         std::vector<float> intensity = {1308.43738, 8625.85156, 29830.793, 55325.1523, 79094, 68921.2969, 41931.5977, 17812.5977, 5546.17139, 1343.45618};
@@ -69,6 +70,29 @@ int main()
             &validRegressions,
             block.length,
             maxScale);
+        assert(validRegressions.size() == 1, "Failed to find representative centroid peak 2");
+    }
+    {
+        std::vector<float> intensity = {2841.0835, 6436.08984, 14330.1494, 26352.5996, 29525.8105, 20583.4023, 13286.2842, 23209.8262, 53549.1562, 85892.2109, 92988.0469, 61581.0977, 29610.7812, 4705.82324};
+        std::vector<float> mz = {};
+        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+        ProfileBlock block = {
+            intensity.data(),
+            mz.data(),
+            0,
+            intensity.size()};
+        std::vector<RegressionGauss> validRegressions;
+        const size_t maxScale = 8; // @todo not bound to centroid maxscale
+        std::vector<float> logIntensity(25, NAN);
+        logIntensity.clear();
+        runningRegression(
+            block.intensity,
+            &logIntensity,
+            &df,
+            &validRegressions,
+            block.length,
+            maxScale);
+        assert(validRegressions.size() == 2, "Failed to find representative centroid peaks in pair system");
     }
 
     // does the RT conversion struct work correctly?

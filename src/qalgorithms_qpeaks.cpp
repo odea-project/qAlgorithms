@@ -330,6 +330,7 @@ namespace qAlgorithms
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
+        assert(validRegsTmp2.size() == validRegressions->size());
         return;
     }
 
@@ -809,7 +810,7 @@ namespace qAlgorithms
           multiple peaks, the peak with the lowest MSE is selected as the representative of the group
           and pushed to the valid regressions.
         */
-        for (size_t groupIdx = 0; groupIdx < groups.size(); groupIdx += 2)
+        for (size_t groupIdx = 0; groupIdx < groups.size(); groupIdx++)
         {
             if (groups[groupIdx].startIdx == groups[groupIdx].endIdx)
             { // already isolated peak => push to valid regressions
