@@ -92,7 +92,29 @@ int main()
             &validRegressions,
             block.length,
             maxScale);
-        assert(validRegressions.size() == 2, "Failed to find representative centroid peaks in pair system");
+        assert(validRegressions.size() == 2, "Failed to find representative centroid peaks in pair system 1");
+    }
+    {
+        std::vector<float> intensity = {882.300964, 3681.37842, 10451.9082, 18054.3828, 24405.959, 20502.377, 12295.1006, 4777.3667, 985.008301, 258.505646, 1578.77429, 4576.50537, 7863.09326, 8823.82227, 6399.12842, 3314.36108, 837.389709};
+        std::vector<float> mz = {};
+        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+        ProfileBlock block = {
+            intensity.data(),
+            mz.data(),
+            0,
+            intensity.size()};
+        std::vector<RegressionGauss> validRegressions;
+        const size_t maxScale = 8; // @todo not bound to centroid maxscale
+        std::vector<float> logIntensity(25, NAN);
+        logIntensity.clear();
+        runningRegression(
+            block.intensity,
+            &logIntensity,
+            &df,
+            &validRegressions,
+            block.length,
+            maxScale);
+        assert(validRegressions.size() == 2, "Failed to find representative centroid peaks in pair system 2");
     }
 
     // does the RT conversion struct work correctly?

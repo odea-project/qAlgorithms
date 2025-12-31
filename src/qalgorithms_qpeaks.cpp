@@ -330,6 +330,17 @@ namespace qAlgorithms
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
+
+        if (validRegsTmp2.size() != validRegressions->size())
+        {
+            for (size_t i = 0; i < length; i++)
+            {
+                printf("%f, ", intensities[i]);
+            }
+
+            exit(1);
+        }
+
         assert(validRegsTmp2.size() == validRegressions->size());
         return;
     }
