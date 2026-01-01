@@ -152,6 +152,7 @@ namespace qAlgorithms
                 fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
 
             number_spectra_binary_arrays = counter;
+            assert(counter == 2);
         }
 
         std::vector<pugi::xml_node> *spectra = new std::vector<pugi::xml_node>; // intermediate necessary since linknodes is const
@@ -162,6 +163,10 @@ namespace qAlgorithms
         assert(spectra->size() > 0);
 
         linknodes = spectra;
+
+        isCentroided = isCentroided_fun();
+
+        polarityMode = get_polarity_mode();
     };
 
     BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin, int *warn)
@@ -238,7 +243,7 @@ namespace qAlgorithms
         return mtd;
     }
 
-    void XML_File::freeLinknodes()
+    void XML_File::free_linknodes()
     {
         if (linknodes != nullptr)
             delete linknodes;
@@ -389,11 +394,10 @@ namespace qAlgorithms
         return polarities;
     };
 
-    Polarities XML_File::get_polarity_mode(
-        size_t count)
+    Polarities XML_File::get_polarity_mode()
     {
         assert(linknodes->size() > 1);
-        count = count < linknodes->size() ? count : linknodes->size() - 1;
+        size_t count = linknodes->size();
 
         bool positive = false;
         bool negative = false;
@@ -596,7 +600,7 @@ namespace qAlgorithms
         return indices;
     }
 
-    bool XML_File::isCentroided()
+    bool XML_File::isCentroided_fun()
     {
         size_t centroided = 0;
         size_t profile = 0;

@@ -374,7 +374,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (inputFile.isCentroided()) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
+        if (inputFile.isCentroided) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
         {
             std::cerr << "Error: centroided data is not supported by qAlgorithms for the time being.\n";
             counter++;
@@ -388,10 +388,33 @@ int main(int argc, char *argv[])
         // @todo single access function into qAlgorithms
 
         // @todo find a more elegant solution for polarity switching, this one trips up clang-tidy
-        bool oneProcessed = true;
         static bool polarities[2] = {true, false};
-        for (bool polarity : polarities)
+        int check_true = 0;
+        int check_false = 2;
+
+        switch (inputFile.polarityMode)
         {
+        case positive:
+            check_false = 1; // loop will terminate after pol == 0
+            break;
+
+        case negative:
+            check_true = 1; // loop starts at pol == 1
+            break;
+
+        case mixed:
+            // does nothing since both is default
+            break;
+
+        default:
+            assert(false);
+            break;
+        }
+
+        for (int pol = check_true; pol < check_false; pol++)
+        {
+            bool polarity = polarities[pol];
+
             filename = pathSource.stem().string();
 #pragma region "centroiding"
 
@@ -402,55 +425,33 @@ int main(int argc, char *argv[])
 
             if (selectedIndices.empty())
             {
-                // std::cerr << "Error: No valid spectra exist in the source file " << filename << "\n";
+                std::cerr << "Error: No valid spectra exist in the source file " << filename << "\n";
                 // @todo better error reporting
                 continue;
             }
+
+            if (!userArgs.silent)
+            {
+                std::cout << "Processing " << (polarity ? "positive" : "negative") << " peaks\n";
+            }
+
             std::vector<float> retentionTimes = inputFile.get_spectra_RT(&selectedIndices);
             RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             int centroidCount = findCentroids(inputFile, &selectedIndices, centroids); // it is guaranteed that only profile mode data is used
 
+            if (centroidCount == 0)
+            {
+                fprintf(stderr, "Error: no centroids found despite valid indices");
+                continue;
+            }
+
             for (int cenID = 1; cenID < centroidCount; cenID++) // dummy value at idx 0 @todo
             {
                 size_t scanNumber = centroids->at(cenID).number_MS1;
                 size_t realRT_idx = rt_index.indexOfOriginalInInterpolated[scanNumber];
                 centroids->at(cenID).RT = rt_index.groups[realRT_idx].trueRT;
-            }
-
-            if (centroids->empty())
-            {
-                if (userArgs.verboseProgress)
-                {
-                    std::cout << "skipping mode: " << polarity << "\n";
-                }
-                continue;
-            }
-            else
-            {
-                oneProcessed = true;
-            }
-            // oneProcessed is true if this is the first loop iteration or if centroids were found in the previous iteration
-            if (!oneProcessed)
-            { // @todo this is really hard to follow, change it
-                if (userArgs.skipError)
-                {
-                    ++counter;
-                    ++errorCount;
-                    continue;
-                }
-                else
-                {
-                    std::cerr << "error: no centroids were found in the file" << std::endl;
-                    exit(101);
-                }
-            }
-            oneProcessed = false;
-
-            if (!userArgs.silent)
-            {
-                std::cout << "Processing " << (polarity ? "positive" : "negative") << " peaks\n";
             }
 
             filename = filename + (polarity ? "_positive" : "_negative");
@@ -667,7 +668,7 @@ int main(int argc, char *argv[])
             }
         }
         // @todo this function really needs to be shortened
-        inputFile.freeLinknodes();
+        inputFile.free_linknodes();
         counter++;
     }
 

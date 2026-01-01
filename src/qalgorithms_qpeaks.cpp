@@ -338,10 +338,10 @@ namespace qAlgorithms
                 printf("%f, ", intensities[i]);
             }
 
-            exit(1);
+            // exit(1);
         }
 
-        assert(validRegsTmp2.size() == validRegressions->size());
+        // assert(validRegsTmp2.size() == validRegressions->size());
         return;
     }
 

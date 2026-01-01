@@ -81,6 +81,10 @@ namespace qAlgorithms
 
         const std::vector<pugi::xml_node> *linknodes; // allocation during initialisation, has to be deallocated manually with the supplied function
 
+        bool isCentroided_fun();
+
+        Polarities get_polarity_mode();
+
     public:
         pugi::xml_node mzml_root_node;
 
@@ -88,9 +92,13 @@ namespace qAlgorithms
 
         unsigned int number_spectra;
 
-        unsigned int number_spectra_binary_arrays;
+        unsigned int number_spectra_binary_arrays; // @todo remove
+
+        Polarities polarityMode;
 
         bool defective = false;
+
+        bool isCentroided = false;
 
         XML_File(const std::filesystem::path &file);
 
@@ -112,12 +120,9 @@ namespace qAlgorithms
             std::vector<CompoundFilter> *suspects,
             bool ms1, bool polarity, bool centroided);
 
-        Polarities get_polarity_mode(size_t count);
         std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices);
 
-        void freeLinknodes();
-
-        bool isCentroided();
+        void free_linknodes();
     };
 };
 
