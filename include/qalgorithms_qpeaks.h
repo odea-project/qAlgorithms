@@ -146,10 +146,6 @@ namespace qAlgorithms
 
     invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
 
-    void mergeRegressionsOverScales(
-        std::vector<RegressionGauss> *validRegressions,
-        const float *intensities);
-
     // ### Centroiding-specific Code ### //
 
     int findCentroids(XML_File &data, // @todo get rid of the direct coupling to pugixml

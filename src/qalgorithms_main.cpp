@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
 
             if (!userArgs.silent)
             {
-                std::cout << "Processing " << (polarity ? "positive" : "negative") << " peaks\n";
+                printf("    Processing %s peaks\n", polarity ? "positive" : "negative");
             }
 
             std::vector<float> retentionTimes = inputFile.get_spectra_RT(&selectedIndices);

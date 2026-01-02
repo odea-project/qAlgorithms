@@ -170,7 +170,7 @@ namespace qAlgorithms
     volatile bool debug = false;
     std::vector<invalid> failCodes;
 
-    size_t validateRegressions( // @todo this should be specific to centroids, features or components
+    int validateRegressions( // @todo this should be specific to centroids, features or components
         const float *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
@@ -226,6 +226,20 @@ namespace qAlgorithms
         const float *intensities,
         const std::vector<unsigned int> *df_cum);
 
+    // ----------- old functions -------------//
+
+    void mergeRegsInScale(
+        const float *intensities,
+        const std::vector<unsigned int> *df_cum,
+        std::vector<RegressionGauss> *validRegsTmp,
+        std::vector<RegressionGauss> *validRegressions);
+
+    void mergeRegressionsOverScales(
+        std::vector<RegressionGauss> *validRegressions,
+        const float *intensities);
+
+    // -------------------------------------- //
+
     void runningRegression(
         const float *intensities,
         std::vector<float> *intensities_log,
@@ -250,35 +264,18 @@ namespace qAlgorithms
 
         std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
         validRegsTmp.reserve(coefficients.size() / 2);
-        size_t validCount = validateRegressions(intensities,
-                                                intensities_log,
-                                                degreesOfFreedom_cum,
-                                                &coefficients,
-                                                length,
-                                                &validRegsTmp);
+        int validCount = validateRegressions(intensities,
+                                             intensities_log,
+                                             degreesOfFreedom_cum,
+                                             &coefficients,
+                                             length,
+                                             &validRegsTmp);
         assert(validCount <= coefficients.size());
         if (validCount == 0)
             return;
 
-        // @todo find out how impactful the adjusted region where a regression holds true is
-        // potentially refactor the elimination such that it is one fucntion to handle within
-        // and between regs through invalidation only
+        int invalidCount = pruneConflictingRegs(&validRegsTmp, intensities, degreesOfFreedom_cum);
 
-        // new algorithm for merging over scales needed @todo
-        pruneConflictingRegs(&validRegsTmp, intensities, degreesOfFreedom_cum);
-
-        // sanity check: the number of competitors in valid regressions is the number of invalid regressions
-        size_t invalidCount = 0;
-        size_t competitors = 0;
-        for (size_t i = 0; i < validRegsTmp.size(); i++)
-        {
-            RegressionGauss *reg = validRegsTmp.data() + i;
-            if (reg->isValid)
-                competitors += reg->numCompetitors;
-            else
-                invalidCount += 1;
-        }
-        assert(invalidCount == competitors);
         assert(invalidCount < validCount);
         // if (validCount - invalidCount == 1) // terminate early if only one regression remains
         //     return; // @todo this vastly changes results, check for correctness!
@@ -296,37 +293,11 @@ namespace qAlgorithms
                 reg->isValid = true; // required to force compliance with the old system for now
         }
 
-        std::vector<RegressionGauss> validRegsAtScale;
-        size_t currentScale = 2;
-        validRegsTmp.push_back({0}); // doing this avoids a second check for the last scale group
-        validRegsTmp.back().coeffs.scale = 0;
-        RegressionGauss *currentReg = validRegsTmp.data();
-
-        while (currentReg->coeffs.scale != 0)
-        {
-        repeat:
-            if (currentReg->coeffs.scale == currentScale)
-            {
-                validRegsAtScale.push_back(*currentReg);
-                currentReg += 1;
-                goto repeat;
-            }
-
-            // nothing happens if the per-scale vector is empty
-            if (validRegsAtScale.size() == 1)
-            {
-                // only one valid regression at scale
-                validRegressions->push_back(validRegsAtScale.front());
-            }
-            else if (validRegsAtScale.size() > 1)
-            {
-                // resolve conflicting regressions
-                findBestScales(validRegressions, &validRegsAtScale, intensities, degreesOfFreedom_cum);
-            }
-            // regression is not incremented because a toggle was triggered
-            currentScale += 1;
-            validRegsAtScale.clear();
-        }
+        mergeRegsInScale(
+            intensities,
+            degreesOfFreedom_cum,
+            &validRegsTmp,
+            validRegressions);
 
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
@@ -337,8 +308,9 @@ namespace qAlgorithms
             {
                 printf("%f, ", intensities[i]);
             }
+            printf("\n");
 
-            // exit(1);
+            exit(1);
         }
 
         // assert(validRegsTmp2.size() == validRegressions->size());
@@ -451,6 +423,20 @@ namespace qAlgorithms
             assert(compReg->numCompetitors < int(validRegressions->size())); // at most better than all other regressions
             eliminations += 1;
         }
+
+        // sanity check: the number of competitors in valid regressions is the number of invalid regressions
+        size_t invalidCount = 0;
+        size_t competitors = 0;
+        for (size_t i = 0; i < validRegressions->size(); i++)
+        {
+            RegressionGauss *reg = validRegressions->data() + i;
+            if (reg->isValid)
+                competitors += reg->numCompetitors;
+            else
+                invalidCount += 1;
+        }
+        assert(invalidCount == eliminations);
+        assert(invalidCount == competitors);
 
         return eliminations; // if only one regression remains, the next function can be skipped!
     }
@@ -709,7 +695,7 @@ namespace qAlgorithms
                 // there are multiple regressions at the lower scale which need to be combined into one mse
                 // the leftmost relevant point is the first point of the first regression, the rightmost the
                 // last point of the last regression. This is because regressions are always sorted by x0 in a scale.
-                RegressionGauss *lowerRegS = validRegressions->data() + regRange.endIdx;
+                RegressionGauss *lowerRegS = validRegressions->data() + regRange.startIdx;
                 RegressionGauss *lowerRegE = validRegressions->data() + regRange.endIdx;
                 Range_i commonRange = {
                     min(lowerRegS->regSpan.startIdx, upperReg->regSpan.startIdx),
@@ -759,6 +745,47 @@ namespace qAlgorithms
         }
 
         return 0;
+    }
+
+    // --------------- old functions ---------------- //
+    void mergeRegsInScale(
+        const float *intensities,
+        const std::vector<unsigned int> *df_cum,
+        std::vector<RegressionGauss> *validRegsTmp,
+        std::vector<RegressionGauss> *validRegressions)
+    {
+        std::vector<RegressionGauss> validRegsAtScale;
+        size_t currentScale = 2;
+        validRegsTmp->push_back({0}); // doing this avoids a second check for the last scale group
+        validRegsTmp->back().coeffs.scale = 0;
+        RegressionGauss *currentReg = validRegsTmp->data();
+
+        while (currentReg->coeffs.scale != 0)
+        {
+        repeat:
+            if (currentReg->coeffs.scale == currentScale)
+            {
+                validRegsAtScale.push_back(*currentReg);
+                currentReg += 1;
+                goto repeat;
+            }
+
+            // nothing happens if the per-scale vector is empty
+            if (validRegsAtScale.size() == 1)
+            {
+                // only one valid regression at scale
+                validRegressions->push_back(validRegsAtScale.front());
+            }
+            else if (validRegsAtScale.size() > 1)
+            {
+                // resolve conflicting regressions
+                findBestScales(validRegressions, &validRegsAtScale, intensities, df_cum);
+            }
+            // regression is not incremented because a toggle was triggered
+            currentScale += 1;
+            validRegsAtScale.clear();
+        }
+        validRegsTmp->pop_back();
     }
 
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
