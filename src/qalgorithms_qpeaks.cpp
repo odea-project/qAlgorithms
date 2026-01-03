@@ -69,7 +69,7 @@ namespace qAlgorithms
         {
             return -2;
         }
-        if (maxScale_in < 2)
+        if (maxScale_in < GLOBAL_MINSCALE)
         {
             return -3;
         }
@@ -319,6 +319,34 @@ namespace qAlgorithms
 
 #pragma region "eliminate conflicting regs"
 
+    int pruneRegsByApex(const float *intensities,
+                        const std::vector<unsigned int> *df_cum,
+                        std::vector<RegressionGauss> *validRegressions)
+    {
+        // yet another attempt to solve this problem gracefully. This time, the
+        // strategy is to pick the first apex described by a regression and, regardless
+        // of scale, to select all regressions which describe the same peak. Then, the
+        // best among them is chosen iteratively by testing from the largest scale downward.
+
+        // step one: for the first regression, select all other regressions that describe the same apex
+        std::vector<size_t> conflictIdx;
+        conflictIdx.reserve(validRegressions->size());
+        conflictIdx.push_back(0);
+
+        RegressionGauss *startReg = validRegressions->data();
+        double startApex = startReg->apex_position;
+        for (size_t i = 0; i < validRegressions->size(); i++)
+        {
+            RegressionGauss *reg = validRegressions->data() + i;
+            double diff = reg->apex_position - startApex;
+            if (abs(diff) > 2 * GLOBAL_MINSCALE)
+                continue;
+
+            // the regressions are in conflict
+            conflictIdx.push_back(i);
+        }
+    }
+
     double calcMSE_exp(const RegCoeffs *coeff,
                        const float *observed,
                        const Range_i *regSpan,
@@ -367,7 +395,7 @@ namespace qAlgorithms
 
         size_t eliminations = 0;
 
-        if (validRegressions->size() < 2)
+        if (validRegressions->size() < 2) // only run function if there can be conflict
             return eliminations;
 
         RegressionGauss *compReg = validRegressions->data();
@@ -755,7 +783,7 @@ namespace qAlgorithms
         std::vector<RegressionGauss> *validRegressions)
     {
         std::vector<RegressionGauss> validRegsAtScale;
-        size_t currentScale = 2;
+        size_t currentScale = GLOBAL_MINSCALE;
         validRegsTmp->push_back({0}); // doing this avoids a second check for the last scale group
         validRegsTmp->back().coeffs.scale = 0;
         RegressionGauss *currentReg = validRegsTmp->data();
@@ -1046,7 +1074,7 @@ namespace qAlgorithms
         maxScale = min(maxScale, (length - 1) / 2);
 
         size_t totalRegs = 0;
-        for (size_t scale = 2; scale <= maxScale; scale++)
+        for (size_t scale = GLOBAL_MINSCALE; scale <= maxScale; scale++)
         {
             totalRegs += length - 2 * scale;
         }
@@ -1241,8 +1269,8 @@ namespace qAlgorithms
         double dscale = double(coeffs->scale);
         if (valley_left)
         {
-            if (position_b2 >= -2)
-                return invalid_apex; // left regression half has less than two points
+            if (position_b2 >= -GLOBAL_MINSCALE)
+                return invalid_apex;
 
             if (position_b2 <= -dscale)
                 return ok; // valley does not matter
@@ -1252,7 +1280,7 @@ namespace qAlgorithms
         }
         else // if (valley_right)
         {
-            if (position_b3 <= 2)
+            if (position_b3 <= GLOBAL_MINSCALE)
                 return invalid_apex;
 
             if (position_b3 >= dscale)
@@ -1312,8 +1340,8 @@ namespace qAlgorithms
         Range_i comp = mutateReg->regSpan;
         updateRegRange(&mutateReg->coeffs, valley_position, &mutateReg->regSpan);
         assert(mutateReg->regSpan.endIdx < length);
-        if (mutateReg->coeffs.x0 - mutateReg->regSpan.startIdx < 2 ||
-            (mutateReg->regSpan.endIdx - mutateReg->coeffs.x0 < 2))
+        if (mutateReg->coeffs.x0 - mutateReg->regSpan.startIdx < GLOBAL_MINSCALE ||
+            (mutateReg->regSpan.endIdx - mutateReg->coeffs.x0 < GLOBAL_MINSCALE))
         {
             // only one half of the regression applies to the data, since the
             // degrees of freedom for the "squished" half results in an invalid regression
