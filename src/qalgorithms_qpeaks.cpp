@@ -226,6 +226,10 @@ namespace qAlgorithms
         const float *intensities,
         const std::vector<unsigned int> *df_cum);
 
+    int pruneRegsByApex(const float *intensities,
+                        const std::vector<unsigned int> *df_cum,
+                        std::vector<RegressionGauss> *validRegressions);
+
     // ----------- old functions -------------//
 
     void mergeRegsInScale(
@@ -282,6 +286,8 @@ namespace qAlgorithms
 
         resolveScaleConflicts(&validRegsTmp, intensities, degreesOfFreedom_cum);
 
+        int apexCount = pruneRegsByApex(intensities, degreesOfFreedom_cum, &validRegsTmp);
+
         // temp storage vector, eventually delete everything below this comment @todo
         std::vector<RegressionGauss> validRegsTmp2;
         for (size_t i = 0; i < validRegsTmp.size(); i++)
@@ -310,9 +316,10 @@ namespace qAlgorithms
             }
             printf("\n");
 
-            exit(1);
+            // exit(1);
         }
 
+        assert(validRegressions->size() == apexCount);
         // assert(validRegsTmp2.size() == validRegressions->size());
         return;
     }
@@ -328,23 +335,52 @@ namespace qAlgorithms
         // of scale, to select all regressions which describe the same peak. Then, the
         // best among them is chosen iteratively by testing from the largest scale downward.
 
+        // 0: count the number of probable apexes
+        std::vector<float> apexes;
+        for (size_t i = 0; i < validRegressions->size(); i++)
+            apexes.push_back(validRegressions->at(i).apex_position);
+
+        std::sort(apexes.begin(), apexes.end());
+
+        int apexcount = 1;
+        for (size_t i = 1; i < apexes.size(); i++)
+        {
+            if (apexes[i] - apexes[i - 1] > 2)
+                apexcount += 1;
+        }
+
+        return apexcount;
+
         // step one: for the first regression, select all other regressions that describe the same apex
         std::vector<size_t> conflictIdx;
         conflictIdx.reserve(validRegressions->size());
-        conflictIdx.push_back(0);
 
         RegressionGauss *startReg = validRegressions->data();
-        double startApex = startReg->apex_position;
+        double startApex_L = startReg->apex_position;
+        double startApex_R = startReg->apex_position;
         for (size_t i = 0; i < validRegressions->size(); i++)
         {
             RegressionGauss *reg = validRegressions->data() + i;
-            double diff = reg->apex_position - startApex;
+            double apex = reg->apex_position;
+            double diff = apex - startApex_L;
+
             if (abs(diff) > 2 * GLOBAL_MINSCALE)
                 continue;
+            diff = apex - startApex_R;
+            if (abs(diff) > 2 * GLOBAL_MINSCALE)
+                continue;
+
+            // this should generally cover all cases due to the initial smaller scale being further left and right than later regressions
+            startApex_L = min(apex, startApex_L);
+            startApex_R = max(apex, startApex_R);
 
             // the regressions are in conflict
             conflictIdx.push_back(i);
         }
+
+        // the main issue with multiple regressions is estimating if the greater scale ones cover too many points.
+        // if not, should overlap between regressions be permitted?
+        return 0;
     }
 
     double calcMSE_exp(const RegCoeffs *coeff,

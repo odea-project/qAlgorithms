@@ -297,8 +297,11 @@ namespace qAlgorithms
 #include <math.h> // square root
 
     constexpr std::array<double, (MAXSCALE + 1) * 6> initialize()
-    { // array to store the 6 unique values of the inverse matrix for each scale
-        std::array<double, (MAXSCALE + 1) * 6> invArray = {0};
+    {
+        static_assert(GLOBAL_MINSCALE == 2); // everything will break if this value is changed!
+        static_assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
+
+        std::array<double, (MAXSCALE + 1) * 6> invArray = {0}; // array to store the 6 unique values of the inverse matrix for each scale
         // init invArray
         // XtX = transposed(Matrix X ) * Matrix X
         // XtX_xy: x = row number; y = column number
