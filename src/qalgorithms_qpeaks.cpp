@@ -252,6 +252,7 @@ namespace qAlgorithms
         const size_t length,
         const size_t maxScale)
     {
+        assert(degreesOfFreedom_cum->size() >= length);
         assert(validRegressions->empty());
 
         intensities_log->clear();
