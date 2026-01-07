@@ -1,6 +1,7 @@
-#include "common_test_utils.hpp"
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_datatypes.h"
+
+#include "common_test_utils.hpp"
 
 using namespace qAlgorithms;
 
@@ -8,9 +9,9 @@ int simulate_profile(
     const RegCoeffs *coeff,
     std::vector<float> *simulated)
 {
-    assert(coeff->x0 > 1);
+    assert(coeff->x0 > 1, "error");
 
-    double x = -coeff->x0;
+    double x = -double(coeff->x0);
     for (size_t i = 0; i < coeff->x0; i++)
     {
         simulated->at(i) = regExpAt(coeff, x);
@@ -27,10 +28,10 @@ int simulate_profile(
 int main()
 {
     RegCoeffs coeff;
-    coeff.b0 = 10;
-    coeff.b1 = -0.4;
-    coeff.b2 = -0.1;
-    coeff.b3 = -0.2;
+    coeff.b0 = 12;
+    coeff.b1 = 0.32;
+    coeff.b2 = -0.13;
+    coeff.b3 = -0.22;
     coeff.x0 = 5;
     std::vector<float> simulated;
     simulated.resize(11);
@@ -46,7 +47,12 @@ int main()
 
     std::vector<RegressionGauss> validRegs;
     runningRegression(simulated.data(), &simulated_log, &df, &validRegs, simulated.size(), 5);
-    assert(validRegs.size() == 1, "incorrect number of regressions found");
+    assert(validRegs.size() == 1, "incorrect number of regressions found\n");
+    double diff_b0 = abs(coeff.b0 - validRegs.front().coeffs.b0);
+    double diff_b1 = abs(coeff.b1 - validRegs.front().coeffs.b1);
+    double diff_b2 = abs(coeff.b2 - validRegs.front().coeffs.b2);
+    double diff_b3 = abs(coeff.b3 - validRegs.front().coeffs.b3);
+    printf("b0: %f, b1: %f, b2: %f, b3: %f\n", diff_b0, diff_b1, diff_b2, diff_b3);
 
     return 0;
 }
