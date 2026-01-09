@@ -234,7 +234,7 @@ namespace qAlgorithms
     double calcUncertainty(const double J[4], const size_t scale, const double mse);
     double matProductReg(const double J[4], const size_t scale);
 
-    bool isValidQuadraticTerm(const RegressionGauss *mutateReg, const size_t df_sum);
+    bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
 
     bool isValidPeakHeight(
         const RegressionGauss *mutateReg,
@@ -265,7 +265,7 @@ namespace qAlgorithms
 
     void calcPeakAreaUncert(RegressionGauss *mutateReg);
 
-    bool isValidPeakArea(const RegressionGauss *mutateReg, const size_t df_sum);
+    bool isValidPeakArea(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
 
     void calcUncertaintyPos(RegressionGauss *mutateReg);
 

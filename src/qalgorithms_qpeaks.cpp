@@ -1423,7 +1423,7 @@ namespace qAlgorithms
           @todo this is not a relevant test
         */
         float apexToEdge = apexToEdgeRatio(mutateReg, intensities);
-        if (!(apexToEdge > 2))
+        if (apexToEdge < 2)
         {
             // printf("apexToEdge triggered!\n");
             return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
@@ -1433,6 +1433,10 @@ namespace qAlgorithms
         double RSS_log = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
         assert(RSS_log > 0);
         double RSS_exp = calcRSS(predict.data(), intensities, &mutateReg->regSpan);
+        double mse_exp = RSS_exp / double(df_sum);
+        double mse_log = RSS_log / double(df_sum);
+
+        mutateReg->mse = mse_log;
 
         /*
         competing regressions filter:
@@ -1448,15 +1452,13 @@ namespace qAlgorithms
             return f_test_fail; // H0 holds, the two distributions are not noticeably different
         }
 
-        mutateReg->mse = RSS_log / double(df_sum);
-
-        if (!isValidQuadraticTerm(mutateReg, df_sum)) // call includes mse
+        if (!isValidQuadraticTerm(&mutateReg->coeffs, mse_log, df_sum))
         {
             // this should be caught by the f test (?) @todo it is not caught by the F test
             // printf("invalid quadratic triggered\n");
             return invalid_quadratic; // statistical insignificance of the quadratic term
         }
-        if (!isValidPeakArea(mutateReg, df_sum)) // mse used in the "calcUncertainty" function call
+        if (!isValidPeakArea(&mutateReg->coeffs, mse_log, df_sum)) // mse used in the "calcUncertainty" function call
         {
             return invalid_area; // statistical insignificance of the area
         }
@@ -1914,14 +1916,14 @@ namespace qAlgorithms
         return apex / minIntensity;
     }
 
-    bool isValidQuadraticTerm(const RegressionGauss *mutateReg, const size_t df_sum)
+    bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
     {
-        assert(mutateReg->mse > 0);
+        assert(mse > 0);
         // inverseMatrix_2_2 is at position 4 of initialize()
-        size_t access = mutateReg->coeffs.scale * 6 + 4;
-        double divisor = std::sqrt(INV_ARRAY[access] * mutateReg->mse);
-        double abs2 = std::abs(mutateReg->coeffs.b2);
-        double abs3 = std::abs(mutateReg->coeffs.b3);
+        size_t access = coeffs->scale * 6 + 4;
+        double divisor = std::sqrt(INV_ARRAY[access] * mse);
+        double abs2 = std::abs(coeffs->b2);
+        double abs3 = std::abs(coeffs->b3);
         double tValue = abs2 > abs3 ? abs2 : abs3;
         return tValue > T_VALUES[df_sum] * divisor; // statistical significance of the quadratic term
         // note that the tvalue would have to be divided by the divisor, but this is not always compiled to a multiplication
@@ -2024,13 +2026,13 @@ namespace qAlgorithms
         return;
     }
 
-    bool isValidPeakArea(const RegressionGauss *mutateReg, const size_t df_sum)
+    bool isValidPeakArea(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
     // @todo this function re-checks regression limits, we should always use the regression range for that
     {
-        double doubleScale = double(mutateReg->coeffs.scale);
-        double b1 = mutateReg->coeffs.b1;
-        double b2 = mutateReg->coeffs.b2;
-        double b3 = mutateReg->coeffs.b3;
+        double doubleScale = double(coeffs->scale);
+        double b1 = coeffs->b1;
+        double b2 = coeffs->b2;
+        double b3 = coeffs->b3;
 
         double _SQRTB2 = 1 / std::sqrt(std::abs(b2));
         double _SQRTB3 = 1 / std::sqrt(std::abs(b3));
@@ -2142,7 +2144,7 @@ namespace qAlgorithms
             return false;
 
         // float area_uncertainty_covered = calcUncertainty(J_covered, mutateReg->coeffs.scale, mutateReg->mse);
-        double area_uncertainty_covered = sqrt(matProductReg(J_covered, mutateReg->coeffs.scale) * mutateReg->mse);
+        double area_uncertainty_covered = sqrt(matProductReg(J_covered, coeffs->scale) * mse);
 
         // J[0] / uncertainty > Tval
         bool J_is_significant = J_covered[0] > T_VALUES[df_sum] * area_uncertainty_covered;
