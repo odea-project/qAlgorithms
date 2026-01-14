@@ -25,7 +25,7 @@ int simulate_profile(
     return 0;
 }
 
-int main()
+void test_singlePeak()
 {
     RegCoeffs coeff;
     coeff.b0 = 12;
@@ -54,10 +54,20 @@ int main()
     double diff_b3 = abs(coeff.b3 - validRegs.front().coeffs.b3);
     printf("b0: %f, b1: %f, b2: %f, b3: %f\n", diff_b0, diff_b1, diff_b2, diff_b3);
 
-    assert(diff_b0 < coeff.b0 * 0.05, "> 5%% Error in b0 estimate\n");
-    assert(diff_b1 < coeff.b1 * 0.05, "> 5%% Error in b0 estimate\n");
-    assert(diff_b2 < coeff.b2 * 0.05, "> 5%% Error in b0 estimate\n");
-    assert(diff_b3 < coeff.b3 * 0.05, "> 5%% Error in b0 estimate\n");
+    assert(diff_b0 < abs(coeff.b0) * 0.05, "> 5%% Error in b0 estimate\n");
+    assert(diff_b1 < abs(coeff.b1) * 0.05, "> 5%% Error in b0 estimate\n");
+    assert(diff_b2 < abs(coeff.b2) * 0.05, "> 5%% Error in b0 estimate\n");
+    assert(diff_b3 < abs(coeff.b3) * 0.05, "> 5%% Error in b0 estimate\n");
+}
+
+void test_doublePeak()
+{
+    // for two peaks, check how similar they have to be to fully separate in analysis
+}
+
+int main()
+{
+    test_singlePeak();
 
     return 0;
 }

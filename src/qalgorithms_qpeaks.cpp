@@ -1499,7 +1499,7 @@ namespace qAlgorithms
           value in the CHI_SQUARES, the regression is invalid. @todo why?
         */
         double chiSquare = calcSSE_chisqared(mutateReg, intensities, &predict);
-        if (chiSquare < CHI_SQUARES[df_sum])
+        if (chiSquare > CHI_SQUARES[df_sum])
         {
             return invalid_chisq; // statistical insignificance of the chi-square value
         }
