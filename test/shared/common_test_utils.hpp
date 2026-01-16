@@ -3,6 +3,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <vector>
+#include <qalgorithms_qpeaks.h>
+
+using namespace qAlgorithms;
 
 #ifndef MAXFLOAT
 #define MAXFLOAT 3.402823466e+38F
@@ -49,3 +52,9 @@ float ran0(long *idum);
 void printVec_f(const std::vector<float> *vec, const char *vecName);
 double roundTo_d(double x, size_t digits);
 double randRange_d(double lower, double upper, long seed = 0);
+
+int simulate_profile(
+    const RegCoeffs *coeff,
+    std::vector<float> *simulated);
+
+RegCoeffs getCoeffs(double height, double position, double sd_left, double sd_right);

@@ -5,26 +5,6 @@
 
 using namespace qAlgorithms;
 
-int simulate_profile(
-    const RegCoeffs *coeff,
-    std::vector<float> *simulated)
-{
-    assert(coeff->x0 > 1, "error");
-
-    double x = -double(coeff->x0);
-    for (size_t i = 0; i < coeff->x0; i++)
-    {
-        simulated->at(i) = regExpAt(coeff, x);
-        x += 1;
-    }
-    for (size_t i = coeff->x0; i < simulated->size(); i++)
-    {
-        simulated->at(i) = regExpAt(coeff, x);
-        x += 1;
-    }
-    return 0;
-}
-
 void test_singlePeak()
 {
     RegCoeffs coeff;
@@ -63,11 +43,51 @@ void test_singlePeak()
 void test_doublePeak()
 {
     // for two peaks, check how similar they have to be to fully separate in analysis
+    RegCoeffs coeff1;
+    coeff1.b0 = 10;
+    coeff1.b1 = -0.32;
+    coeff1.b2 = -0.13;
+    coeff1.b3 = -0.22;
+    coeff1.x0 = 4;
+
+    RegCoeffs coeff2;
+    coeff2.b0 = 10;
+    coeff2.b1 = 0.21;
+    coeff2.b2 = -0.18;
+    coeff2.b3 = -0.16;
+    coeff2.x0 = 9;
+
+    std::vector<float> simulated1;
+    simulated1.resize(13);
+    std::vector<float> simulated2;
+    simulated2.resize(13);
+    std::vector<float> simulated_log;
+
+    std::vector<unsigned int> df;
+
+    simulate_profile(&coeff1, &simulated1);
+    simulate_profile(&coeff2, &simulated2);
+
+    for (size_t i = 0; i < simulated1.size(); i++)
+    {
+        simulated1[i] += simulated2[i];
+        simulated_log.push_back(log(simulated1[i]));
+        df.push_back(i + 1);
+
+        printf("%f, ", simulated1[i]);
+    }
+    printf("\n");
+
+    std::vector<RegressionGauss> validRegs;
+    runningRegression(simulated1.data(), &simulated_log, &df, &validRegs, simulated1.size(), 6);
+    printf("size = %d\n", validRegs.size());
+    assert(validRegs.size() == 2, "incorrect number of regressions found\n");
 }
 
 int main()
 {
     test_singlePeak();
+    test_doublePeak();
 
     return 0;
 }

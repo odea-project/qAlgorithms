@@ -1,9 +1,12 @@
 #include "CDFlib/cdflib.hpp"
 #include "pugixml-1.14/src/pugixml.h"
 #include "common_test_utils.hpp"
+#include "qalgorithms_qpeaks.h"
 
 #include <cmath>
 #include <stdint.h> // printing
+
+using namespace qAlgorithms;
 
 float ran0(long *idum)
 {
@@ -76,4 +79,62 @@ void printVec_f(const std::vector<float> *vec, const char *vecName)
         printf(", %f", (*vec)[i]);
     }
     printf("  | length: %zu\n", vec->size());
+}
+
+int simulate_profile(
+    const RegCoeffs *coeff,
+    std::vector<float> *simulated)
+{
+    assert(coeff->x0 > 1, "error");
+
+    double x = -double(coeff->x0);
+    for (size_t i = 0; i < coeff->x0; i++)
+    {
+        simulated->at(i) = regExpAt(coeff, x);
+        x += 1;
+    }
+    for (size_t i = coeff->x0; i < simulated->size(); i++)
+    {
+        simulated->at(i) = regExpAt(coeff, x);
+        x += 1;
+    }
+    return 0;
+}
+
+RegCoeffs getCoeffs(double height, double position, double sd_left, double sd_right)
+{
+    // produce a set of coefficients that correspond to a model gaussian distribution with the specified parameters
+    RegCoeffs coeff;
+
+    // 1) find apex position
+    coeff.x0 = size_t(position + 0.5);
+    bool apexLeft = (double(coeff.x0) - position) > 0; // apex position is smaller than x0
+}
+
+double addGaussianPeak(const double mu,     // position of the apex
+                       const double sigma,  // standard deviation (width)
+                       const double lambda, //
+                       std::vector<float> *points)
+{
+    // this function uses the exponentially modified gaussian to simulate a peak profile:
+    // https://en.wikipedia.org/wiki/Exponentially_modified_Gaussian_distribution
+
+    if (mu <= 0)
+        return 0;
+
+    if (mu >= points->size() - 1)
+        return 0;
+
+    double lamb_2 = lambda / 2;
+    double lamb_sig2 = lambda * sigma * sigma;
+    double div = 1 / (sqrt(2) * sigma);
+
+    for (size_t i = 0; i < points->size(); i++)
+    {
+        double x = i;
+        float val = lamb_2 * exp(lamb_2 * (2 * mu + lamb_sig2 - 2 * x)) * erfc((mu + lamb_sig2 - x) * div);
+        points->at(i) += val;
+    }
+
+    return 0;
 }
