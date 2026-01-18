@@ -113,11 +113,13 @@ RegCoeffs getCoeffs(double height, double position, double sd_left, double sd_ri
 
 double addGaussianPeak(const double mu,     // position of the apex
                        const double sigma,  // standard deviation (width)
-                       const double lambda, //
+                       const double lambda, // rate (left or right shift)
+                       const double height, // the height is used because scaling to the area is unintuitive
                        std::vector<float> *points)
 {
     // this function uses the exponentially modified gaussian to simulate a peak profile:
     // https://en.wikipedia.org/wiki/Exponentially_modified_Gaussian_distribution
+    // @todo: use this model instead? DOI: 10.1002/cem.1343
 
     if (mu <= 0)
         return 0;
@@ -133,7 +135,7 @@ double addGaussianPeak(const double mu,     // position of the apex
     {
         double x = i;
         float val = lamb_2 * exp(lamb_2 * (2 * mu + lamb_sig2 - 2 * x)) * erfc((mu + lamb_sig2 - x) * div);
-        points->at(i) += val;
+        points->at(i) += val * height;
     }
 
     return 0;

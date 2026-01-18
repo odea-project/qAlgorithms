@@ -11,6 +11,15 @@
 
 namespace qAlgorithms
 {
+    struct loggingParams
+    {
+        bool features = false;
+        int data_cen = 0;
+        int data_feats = 0;
+        int totalPeakCount = 0;
+        int *failData = nullptr;
+        int failDataSize = 0;
+    };
 
     constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
 
@@ -168,7 +177,7 @@ namespace qAlgorithms
 #pragma region "running regression"
 
     volatile bool debug = false;
-    std::vector<invalid> failCodes;
+    std::vector<invalid> failCodes; // @todo: make a logging function / struct thing that can be used to check failure points later
 
     int validateRegressions( // @todo this should be specific to centroids, features or components
         const float *intensities,
