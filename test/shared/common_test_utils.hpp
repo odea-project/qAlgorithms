@@ -53,8 +53,4 @@ void printVec_f(const std::vector<float> *vec, const char *vecName);
 double roundTo_d(double x, size_t digits);
 double randRange_d(double lower, double upper, long seed = 0);
 
-int simulate_profile(
-    const RegCoeffs *coeff,
-    std::vector<float> *simulated);
-
 RegCoeffs getCoeffs(double height, double position, double sd_left, double sd_right);

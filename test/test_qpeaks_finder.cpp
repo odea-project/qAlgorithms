@@ -5,6 +5,26 @@
 
 using namespace qAlgorithms;
 
+int simulate_profile(
+    const RegCoeffs *coeff,
+    std::vector<float> *simulated)
+{
+    assert(coeff->x0 > 1, "error");
+
+    double x = -double(coeff->x0);
+    for (size_t i = 0; i < coeff->x0; i++)
+    {
+        simulated->at(i) = regExpAt(coeff, x);
+        x += 1;
+    }
+    for (size_t i = coeff->x0; i < simulated->size(); i++)
+    {
+        simulated->at(i) = regExpAt(coeff, x);
+        x += 1;
+    }
+    return 0;
+}
+
 void test_singlePeak()
 {
     RegCoeffs coeff;

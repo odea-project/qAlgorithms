@@ -340,6 +340,21 @@ int main(int argc, char *argv[])
         std::cerr << "Warning: removing the first " << userArgs.skipAhead << " elements from the tasklist.\n";
     }
 
+    FILE *queue = fopen("./processedFiles.csv", "a");
+    fprintf(queue, "ID, Name\n");
+    for (size_t pathIdx = skipAhead; pathIdx < tasklist.size(); pathIdx++)
+    {
+        int ID = pathIdx - skipAhead;
+        std::string name = tasklist[pathIdx].filename().string();
+        fprintf(queue, "%d, %s\n", ID, name.c_str());
+    }
+    fclose(queue);
+
+    // hacked in logging part, @todo make this better
+    FILE *log = fopen("./logdata.csv", "a");
+    fprintf(log, "type, regions, peaks, passed, no_apex, invalid_apex, no_df, invalid_apexToEdge, f_test_fail, invalid_quadratic, invalid_area, invalid_height, invalid_chisq\n");
+    fclose(log);
+
     auto absoluteStart = std::chrono::high_resolution_clock::now();
 
 #pragma region file processing
@@ -347,8 +362,6 @@ int main(int argc, char *argv[])
     size_t counter = 1;
     size_t errorCount = 0;
     for (size_t pathIdx = skipAhead; pathIdx < tasklist.size(); pathIdx++)
-
-    // for (std::filesystem::path pathSource : tasklist)
     {
         std::filesystem::path pathSource = tasklist[pathIdx];
         auto timeStart = std::chrono::high_resolution_clock::now();

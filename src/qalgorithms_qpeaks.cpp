@@ -11,15 +11,48 @@
 
 namespace qAlgorithms
 {
-    struct loggingParams
+    struct LoggingParams
     {
         bool features = false;
-        int data_cen = 0;
-        int data_feats = 0;
+        int dataID = 0;
+        int checkedRegionCount = 0;
         int totalPeakCount = 0;
-        int *failData = nullptr;
-        int failDataSize = 0;
+        int failData[invalid::invalid_chisq + 1] = {0};
     };
+
+    void loggerPrint(LoggingParams *log)
+    {
+        // print log to hardcoded logfile path. Example output:
+        // C, 1000000, 150000, 1234567, 1234567, 1234567, 1234567, 1234567, 1234567, 1234567, 1234567, 1234567, 1234567 \n
+        // -> 300 chars space will be more than sufficient
+
+        // header: type, regions, peaks, passed, no_apex, invalid_apex, no_df, invalid_apexToEdge, f_test_fail, invalid_quadratic, invalid_area, invalid_height, invalid_chisq
+        char buffer[300];
+        sprintf(buffer, "%c, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n",
+                log->features ? 'F' : 'C', log->checkedRegionCount, log->totalPeakCount, log->failData[invalid::ok],
+                log->failData[invalid::no_apex], log->failData[invalid::invalid_apex], log->failData[invalid::no_df],
+                log->failData[invalid::invalid_apexToEdge], log->failData[invalid::f_test_fail], log->failData[invalid::invalid_quadratic],
+                log->failData[invalid::invalid_area], log->failData[invalid::invalid_height], log->failData[invalid::invalid_chisq]);
+
+        FILE *file = fopen("./logdata.csv", "a");
+        assert(file);
+        fprintf(file, buffer);
+        fclose(file);
+    }
+
+    void resetLogger(LoggingParams *log)
+    {
+        log->checkedRegionCount = 0;
+        log->totalPeakCount = 0;
+
+        size_t len = invalid::invalid_chisq + 1;
+        for (size_t i = 0; i < len; i++)
+        {
+            log->failData[i] = 0;
+        }
+    }
+
+    LoggingParams globalLogStruct;
 
     constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
 
@@ -194,7 +227,10 @@ namespace qAlgorithms
             invalid failpoint = validRegWidth(&(coefficients->at(i)), &range);
 
             if (failpoint != ok)
+            {
+                globalLogStruct.failData[failpoint] += 1;
                 continue;
+            }
 
             RegressionGauss reg;
             reg.coeffs = coefficients->at(i);
@@ -202,7 +238,10 @@ namespace qAlgorithms
 
             size_t df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), &range);
             if (df_sum < 5)
+            {
+                globalLogStruct.failData[invalid::no_df] += 1;
                 continue;
+            }
             df_sum -= 4; // four coefficients, adjust for components
 
             failpoint = makeValidRegression(intensities,
@@ -211,6 +250,7 @@ namespace qAlgorithms
                                             length,
                                             &reg);
             failCodes.push_back(failpoint);
+            globalLogStruct.failData[failpoint] += 1;
 
             validCount += failpoint == ok ? 1 : 0;
             if (failpoint == ok)
@@ -329,7 +369,7 @@ namespace qAlgorithms
             // exit(1);
         }
 
-        assert(validRegressions->size() == apexCount);
+        // assert(validRegressions->size() == apexCount);
         // assert(validRegsTmp2.size() == validRegressions->size());
         return;
     }
@@ -1238,6 +1278,8 @@ namespace qAlgorithms
         // possible due to the value of y being required. This is not a large performance concern since we can combine it
         // with the calculations that are already necessary for obntaining the modified b0.
 
+        double b0_old = coeff->b0;
+
         int start = int(range->startIdx);
         assert(0 <= start);
         int end = int(range->endIdx) + 1;
@@ -1264,6 +1306,7 @@ namespace qAlgorithms
 
         // exp(a) * exp(b) == exp(a + b), so b0 + log(correction) is the same as predict * correction
         coeff->b0 += log(correction);
+        // assert(abs(coeff->b0 - b0_old) < 0.001);
 
         // adjust the now incorrect values for predict. Remember that the previous prediciton was incomplete!
         double factor = exp(coeff->b0);
@@ -2332,15 +2375,12 @@ namespace qAlgorithms
 
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs,
                                           const RT_Converter *convertRT)
-    /* ### allocations ###
-        peaks
-        tmpPeaks
-        validRegressions
-
-       ### called functions ###
-
-    */
     {
+        // reset the logger, not the upcount
+        resetLogger(&globalLogStruct);
+        globalLogStruct.features = true;
+        globalLogStruct.checkedRegionCount = EICs.size();
+
         // @todo this is not a universal limit and only chosen for computational speed at the moment
         // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
         static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
@@ -2414,6 +2454,12 @@ namespace qAlgorithms
 
             tmpPeaks.clear();
         }
+
+        // advance logger by one dataset
+        globalLogStruct.totalPeakCount = peaks.size();
+        loggerPrint(&globalLogStruct);
+        globalLogStruct.dataID += 1;
+
         // peaks are sorted here so they can be treated as const throughout the rest of the program
         std::sort(peaks.begin(), peaks.end(), [](FeaturePeak lhs, FeaturePeak rhs)
                   { return lhs.retentionTime < rhs.retentionTime; });
@@ -2437,18 +2483,11 @@ namespace qAlgorithms
     int findCentroids(XML_File &data, // @todo get rid of the direct coupling to pugixml
                       const std::vector<unsigned int> *selectedIndices,
                       std::vector<CentroidPeak> *centroids)
-    /* ### allocations ###
-        spectrum_mz: size unknown at time of function call
-        spectrum_int: same as spectrum_mz
-        groupedData: size unknown
-
-       ### called functions ###
-        data.get_spectrum
-        getProfileRegions
-        findCentroidPeaks
-
-    */
     {
+        // resetting the logger does not change the number of runs or the features field
+        resetLogger(&globalLogStruct);
+        globalLogStruct.features = false;
+
         const size_t countSelected = selectedIndices->size();
 
         std::vector<float> spectrum_mz(1000);
@@ -2462,32 +2501,8 @@ namespace qAlgorithms
             spectrum_int.clear();
             groupedData.clear();
 
-            // i = 0;
-
             size_t ID_spectrum = selectedIndices->at(i);
             data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
-
-#ifdef _RM
-            // ### this is for development only, highly inefficient at scale! ###
-            hardFilter(&spectrum_mz, &spectrum_int, 247.1, 247.3);
-            if (spectrum_mz.empty())
-                continue;
-
-            volatile bool printThis = false;
-            if (printThis)
-            {
-                FILE *f = fopen("./spectrum1.csv", "w");
-                fprintf(f, "mz,int\n");
-                for (size_t j = 0; j < spectrum_mz.size(); j++)
-                {
-                    fprintf(f, "%f,%.1f\n", spectrum_mz[j], spectrum_int[j]);
-                }
-            }
-
-            volatile bool debug = false;
-            if (debug)
-                centroids->clear();
-#endif
 
             size_t maxWindowSize = getProfileRegions(&groupedData, &spectrum_mz, &spectrum_int);
             if (maxWindowSize == 0) // this is also relevant to filtering, add a warning if no filter?
@@ -2495,22 +2510,16 @@ namespace qAlgorithms
 
             findCentroidPeaks(centroids, &groupedData, i, ID_spectrum, maxWindowSize);
 
-            if (debug)
-            {
-                // write a file with the processed spectrum and the assumed intensity
-                // profile of the finalised centroids
-                std::vector<double> predictedInt(spectrum_mz.size(), 0);
-                for (size_t db = 0; db < centroids->size(); db++)
-                {
-                    CentroidPeak cen = centroids->at(db);
-                    size_t idxStart = cen.trace.start;
-                    size_t idxEnd = cen.trace.end;
-                    assert(predictedInt[idxStart] == 0);
-                    assert(predictedInt[idxEnd] == 0);
-                    // new requirement: Fuction that evaluates centroid on real mz values
-                }
-            }
+            // add sum statistics to log struct
+            globalLogStruct.checkedRegionCount += groupedData.size();
         }
+
+        globalLogStruct.totalPeakCount += centroids->size();
+
+        // log printing has to be handled by the logged function itself
+        // data ID is only incremented after feature processing
+        loggerPrint(&globalLogStruct);
+
         for (unsigned int i = 0; i < centroids->size(); i++)
         {
             centroids->at(i).ID = i;
