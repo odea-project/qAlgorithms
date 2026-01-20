@@ -1,0 +1,42 @@
+---
+title: "Untitled"
+author: "Daniel Höhn"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+processLog = function(path, filename){
+    
+procStats = read_csv("~/Promotion/qAlgorithms/build/logdata.csv")
+names =  read_csv("~/Promotion/qAlgorithms/build/processedFiles.csv")
+
+procStats$file = as.factor(rep(names$ID, each = 2))
+procStats = sort_by(procStats, procStats$regions)
+procStats$tests_total = rowSums(procStats[,4:13])
+
+# normalise to percentages and summarise data by feature / centroid
+procStats_perc = procStats
+procStats_perc[,4:13] = procStats[,4:13] / procStats$tests_total * 100
+procSum = procStats_perc |> group_by(type) |> summarise(
+    passed = median(passed), no_apex = median(no_apex), invalid_apex = median(invalid_apex), 
+    no_df = median(no_df), invalid_apexToEdge = median(invalid_apexToEdge), 
+    f_test_fail = median(f_test_fail), invalid_quadratic = median(invalid_quadratic), 
+    invalid_area = median(invalid_area), invalid_height = median(invalid_height), 
+    invalid_chisq = median(invalid_chisq), elimPerc = 1 - mean(passed / peaks))
+    
+procSum$name = filename 
+
+}
+```
+
+```{r}
+ggplot(procStats[which(procStats$type == "C"),])+
+    geom_point(aes(x = regions, y = tests_total, colour = file))
+```
+
