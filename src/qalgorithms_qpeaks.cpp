@@ -1726,6 +1726,8 @@ namespace qAlgorithms
             peak.trace.start = block->startPos;
             peak.trace.end = block->startPos + block->length - 1;
 
+            peak.ID = peaks->size();
+
             peaks->push_back(std::move(peak));
         }
     }
