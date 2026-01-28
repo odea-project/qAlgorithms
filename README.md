@@ -111,6 +111,8 @@ Some things to keep in mind:
 
 ## Design Philosophy
 
+`qAlgorithms` is free (as in freedom) software licensed under GPL-3 (see LICENSE).
+
 The algorithms within `qAlgorithms` are rooted in well-established statistical 
 tests and employ standard linear regression as the main problem solving strategy.
 This allows us to be fully deterministic without requiring the user to supply 
@@ -122,24 +124,17 @@ provide additional data which communicates which points a feature actually cover
 and data quality scores, which summarise the confidence in a step as a number between
 zero and one.
 
-If you want to go one step further and read out code, it is organised such that almost
-all mathematical operations related to a procedure are localised within that procedure.
-Since code readability is only tested by a very limited number of individuals, we also
-appreciate questions and comments in that regard.
-
-We are licensed under GPL-3, which means that there is no risk of you being unable to use `qAlgorithms`
-even for commercial purposes. The current and all future versions are distributed with source code,
-and you are free to include our libraries in other projects (provided the terms of the license are fulfilled).
-
-Additionally, `qAlgorithms` is develped with computational performance as a core concern. With `qAlgorithms`,
+`qAlgorithms` is develped with computational performance as a core concern. With `qAlgorithms`,
 we aim for the fastest time-to-insight possible. If a long time is spent waiting for results, 
 the entire process is more prone to insufficient validation and more sensitive to potential
 hardware failures. 
 
-The choice of language being C++ is so for two reasons: Firstly the mentioned desire for fast
-processing, secondly the need to write software for NTS in a manner that does not need 
-maintainance besides occasional recompilation.
-The use of "exotic" language features is kept to a minimum and largely limited to precomputation.
+We use C++, but heavily limit the used language features to be closer to pure C. This mainly
+results in widespread use of std::vector for the time being, as well as the pugixml library
+for reading mzML data and some application of compile-time execution. This is a choice made
+to reduce the difficulty for chemists, which are generally inexperienced programmers, in reading
+and understanding the source code. By limiting the use of heavily templated data structures we
+also improve runtime performance of the code.
 
 We hope that by demonstrating the effectiveness of our approach, more software written by researchers 
 for non-target questions will adopt or improve on these ideals. 
@@ -187,11 +182,12 @@ linear regressions to estimate shape similarity of features and group related fe
 into components. 
 
 ## Development Roadmap
-We are consistently optimising and expanding `qAlgorithms` to meet the evolving needs of data analysis
-in non-target screening applications. 
 Our goal is to provide a specialised, high-precision tool for analytical data processing
-of HRMS data. All current and future additions to `qAlgorithms` are developed with the goal of reducing
-the potential for human error and increasing result reliability.
+of HRMS data. All current and future additions to `qAlgorithms` are developed with the 
+goal of reducing the potential for human error and increasing result reliability.
+
+The current main priority is establishing a comprehensive validation strategy for our 
+peak fitting and overall feature detection workflow.
 
 ---
 
