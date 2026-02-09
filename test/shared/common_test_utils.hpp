@@ -47,7 +47,7 @@ inline int nanoseconds(void)
 }
 
 // NON INLINE DECLARATIONS
-// @TODO with how small most of these functions are we could just make them all inline functions
+// @@todo with how small most of these functions are we could just make them all inline functions
 float ran0(long *idum);
 void printVec_f(const std::vector<float> *vec, const char *vecName);
 double roundTo_d(double x, size_t digits);

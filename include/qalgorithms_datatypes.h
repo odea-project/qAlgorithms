@@ -74,7 +74,7 @@ namespace qAlgorithms
 
     struct ProfilePos // gives the range of points covered by a centroid and the access index for streamfind
     {
-        unsigned int access = 0;
+        unsigned int ID_spectrum = 0;
         unsigned int start = 0, end = 0; // start and end into the original MS1 spectrum
         int start_rel = 0, end_rel = 0;  // start and end in the abstract dimension where a peak is centered on 0
     };

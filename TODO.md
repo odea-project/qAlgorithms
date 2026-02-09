@@ -23,6 +23,10 @@ could be moved into a more generic library for mass spectra processing.
 * find a way to multithread parts of the application
 * extract the long matrix multiplication chains where present and show the concrete calculation in the code as a comment
 * improve file reading performance, check if https://doi.org/10.1371/journal.pone.0125108 can be used partially or fully
+* general performance improvements
+* rework code so that the warnings -Wdouble-promotion, -Wconversion and -Weffc++ can be turned on without causing too much noise
+* add build targets for x86 / arm linux and windows with / without AVX512 support. AVX2 can probably be assumed to exist.
+* ensure uniform terminology throughout the codebase (keep a record of correct terms somewhere?)
 
 ## Expansion
 Additional functionality of the core library that should be added at some point.
@@ -41,6 +45,7 @@ Additional functionality of the core library that should be added at some point.
 * add functionality to read vendor formats
 * work with already centrodied data as input (mass error estimation)
 * RT distance harmoniser should work within a specific window if the distance changes at one point in the measurement (make it local to every bin? Check potential performance impact)
+* consider adding the artifact removal presented here: https://chemrxiv.org/doi/pdf/10.26434/chemrxiv.10001734/v1
 
 ## Testing
 Any code that is not run when processing data and concerned with logical correctness of the program.

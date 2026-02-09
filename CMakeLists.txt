@@ -25,17 +25,16 @@ add_compile_options(
     -std=c++2c                 # Use C++20 standard or later, required for sqrt in constexpr function
     -fno-math-errno            # Disables math functions setting errno, might result in speedup
     -fno-signed-zeros          # no difference between +0 and -0, might increase performance
-    -mavx2                     # Enables AVX2, @todo is AVX512 detected also?
-    -march=native              # Optimize the code for the architecture of the current build machine
+    -march=native              # Optimize the code for the architecture of the current build machine, implies highest supported AVX
     -fstrict-flex-arrays=3     # Size of arrays at the end of a struct must be known at compile time
-    -D_GLIBCXX_ASSERTIONS      # Activates assertions for the Standard C++ Library, useful for debugging
+    -D_GLIBCXX_ASSERTIONS      # Activates assertions for the Standard C++ Library for debugging @todo remove in release
 )
 
 # Enabled warnings
 add_compile_options(
     -Wall                      # Enables all recommended warnings
     -Wextra                    # Enables additional warnings
-    -Wpedantic                 # Enforces standard compliance
+    -Wpedantic                 # Warns if not standard compliant
     -Wuninitialized            # Warns about uninitialized variables
     -Wformat=2                 # Check calls to printf and scanf, etc., to make sure that the arguments have types appropriate to the format string
     -Wformat-truncation=1      # Warns about potential truncation of output in snprintf etc. @todo refactor so that =2 does not produce so many warnings
@@ -75,7 +74,7 @@ set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")   # Directory containing 
 include_directories(include "external/simdutf/" "external/cephes")  # @todo this is terrible practice. Lets not do it
 
 # Source files
-# TODO we currently list external files manually. Thats not great. 
+# @todo we currently list external files manually. Thats not great. 
 file(GLOB_RECURSE SOURCES 
     "${SOURCE_DIR}/*.cpp" 
     "${EXTERNAL_DIR}/CDFlib/cdflib.cpp"
@@ -116,7 +115,7 @@ list(FILTER TESTFILES EXCLUDE REGEX ".*/test/shared/.*") # lets just assume that
 # Make the shared test code into a small library
 file(GLOB_RECURSE TEST_SHARED_SOURCES "${TESTS_DIR}/shared/*.cpp")
 add_library(test_shared_lib STATIC ${TEST_SHARED_SOURCES})
-# TODO not sure which dirs we need to include here. 
+# @todo not sure which dirs we need to include here. 
 target_include_directories(test_shared_lib PUBLIC ${TESTS_DIR}/shared ${INCLUDE_DIR} ${EXTERNAL_DIR})
 
 # Now lets make the tests

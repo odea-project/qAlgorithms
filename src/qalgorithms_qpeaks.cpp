@@ -151,34 +151,27 @@ namespace qAlgorithms
 #pragma region "find peaks"
 
     void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
-                           const std::vector<ProfileBlock> *treatedData,
+                           const std::vector<ProfileBlock> *subprofiles,
                            const size_t scanNumber,
-                           const size_t accessor,
+                           const size_t ID_spectrum,
                            const size_t maxWindowSize)
-    /* ### allocations ###
-        logIntensity: maxWindowSize * f32
-        validRegressions: UNKNOWN * RegressionGauss (large!)
 
-       ### called functions ###
-        runningRegression
-        createCentroidPeaks
-    */
     {
-        assert(!treatedData->empty());
+        assert(!subprofiles->empty());
 
         std::vector<float> logIntensity(maxWindowSize + 2 * GLOBAL_MAXSCALE_CENTROID, NAN);
 
-        std::vector<unsigned int> globalDF(maxWindowSize, 0);
+        std::vector<unsigned int> globalDF(maxWindowSize, 0); // @todo this could be move up one function call
         for (size_t i = 0; i < maxWindowSize; i++)
             globalDF[i] = i + 1;
 
         static_assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
 
         std::vector<RegressionGauss> validRegressions;
-        validRegressions.reserve(treatedData->size() / 2); // probably too large, shouldn't matter
-        for (size_t i = 0; i < treatedData->size(); i++)
+        validRegressions.reserve(subprofiles->size() / 2); // probably too large, shouldn't matter
+        for (size_t i = 0; i < subprofiles->size(); i++)
         {
-            const ProfileBlock *const block = treatedData->data() + i;
+            const ProfileBlock *const block = subprofiles->data() + i;
 
             // this is now filled inside the function, the vector only reserves space. We do not
             // perform this step in the function so that it is explicitly empty. This should be
@@ -200,7 +193,7 @@ namespace qAlgorithms
             {
                 continue; // no valid peaks
             }
-            createCentroidPeaks(retPeaks, &validRegressions, block, scanNumber, accessor);
+            createCentroidPeaks(retPeaks, &validRegressions, block, scanNumber, ID_spectrum);
             validRegressions.clear();
         }
     }
@@ -906,13 +899,6 @@ namespace qAlgorithms
                         std::vector<RegressionGauss> *validRegsTmp,
                         const float *intensities,
                         const std::vector<unsigned int> *degreesOfFreedom_cum)
-    /* ### allocations ###
-        startEndGroups: known at function call
-
-       ### called functions ###
-        std::abs
-        findBestRegression
-    */
     {
         /*
             Grouping:
@@ -1030,10 +1016,6 @@ namespace qAlgorithms
     void mergeRegressionsOverScales(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities)
-    /* ### allocations ###
-        exponentialMSE: known at function call
-        validRegressionsInGroup: size unknown
-    */
     {
         if (validRegressions->size() < 2)
         {
@@ -1148,9 +1130,6 @@ namespace qAlgorithms
         const std::vector<float> *intensity_log,
         size_t maxScale,
         std::vector<RegCoeffs> *coeffs)
-    /* ### allocations ###
-       coeffs: allocation size known at function call
-    */
     {
         assert(maxScale >= GLOBAL_MINSCALE);
         assert(maxScale <= MAXSCALE);
@@ -1397,10 +1376,7 @@ namespace qAlgorithms
         const size_t df_sum,
         const size_t length,
         RegressionGauss *mutateReg)
-    /* ### allocations ###
-        selectLog: size calculated in function, max size known
-        predictLog: s.o.
-    */
+
     {
         assert(!mutateReg->isValid);
         const size_t scale = mutateReg->coeffs.scale;
@@ -1636,12 +1612,6 @@ namespace qAlgorithms
     MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
                                         const std::vector<float> *values,
                                         const Range_i regSpan)
-    /* ### allocations ###
-        none!
-
-       ### called functions ###
-        std::sqrt
-    */
     {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
         size_t realPoints = 0;
@@ -1677,15 +1647,7 @@ namespace qAlgorithms
         const std::vector<RegressionGauss> *validRegressionsVec,
         const ProfileBlock *block, // @todo replace with mz and trace range
         const size_t scanNumber,
-        const size_t accessor)
-    /* ### allocations ###
-        none, if peaks has the correct number of elements reserved
-
-       ### called functions ###
-        exp_approx_d
-        erf_approx_f
-        std::floor
-    */
+        const size_t ID_spectrum)
     {
         assert(!validRegressionsVec->empty());
         // iterate over the validRegressions vector
@@ -1722,7 +1684,7 @@ namespace qAlgorithms
             peak.scale = regression->coeffs.scale;
 
             // traceability information
-            peak.trace.access = accessor;
+            peak.trace.ID_spectrum = ID_spectrum;
             peak.trace.start = block->startPos;
             peak.trace.end = block->startPos + block->length - 1;
 
@@ -1737,14 +1699,6 @@ namespace qAlgorithms
         const std::vector<RegressionGauss> *validRegressionsVec,
         const RT_Converter *convertRT,
         const std::vector<float> *RTs) // @todo this should be handled correctly through the converter
-    /* ### allocations ###
-        none!
-
-       ### called functions ###
-        floor
-        erf_approx_d
-        erf_approx_f
-    */
     {
         assert(!validRegressionsVec->empty());
         assert(peaks->empty());
@@ -2285,11 +2239,6 @@ namespace qAlgorithms
     }
 
     RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes)
-    /* ### allocations ###
-        diffs: known at time of function call
-        forwardConv: s.o.
-        backwardConv: size calculated in function
-    */
     {
         // This function interpolates the existing RTs of MS1 spectra and produces a vector that contains,
         // for the index of every real MS1 spectrum, the scan number with interpolations for that spectrum.
@@ -2495,25 +2444,25 @@ namespace qAlgorithms
         std::vector<float> spectrum_mz(1000);
         std::vector<float> spectrum_int(1000);
 
-        std::vector<ProfileBlock> groupedData(500);
-        for (size_t i = 0; i < countSelected; ++i)
+        std::vector<ProfileBlock> subprofiles(500);
+        for (size_t scanNum = 0; scanNum < countSelected; ++scanNum)
         {
             // avoid needless allocation / deallocation of otherwise scope-local vectors
             spectrum_mz.clear();
             spectrum_int.clear();
-            groupedData.clear();
+            subprofiles.clear();
 
-            size_t ID_spectrum = selectedIndices->at(i);
+            size_t ID_spectrum = selectedIndices->at(scanNum);
             data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
 
-            size_t maxWindowSize = getProfileRegions(&groupedData, &spectrum_mz, &spectrum_int);
+            size_t maxWindowSize = getProfileRegions(&subprofiles, &spectrum_mz, &spectrum_int);
             if (maxWindowSize == 0) // this is also relevant to filtering, add a warning if no filter?
                 continue;
 
-            findCentroidPeaks(centroids, &groupedData, i, ID_spectrum, maxWindowSize);
+            findCentroidPeaks(centroids, &subprofiles, scanNum, ID_spectrum, maxWindowSize);
 
             // add sum statistics to log struct
-            globalLogStruct.checkedRegionCount += groupedData.size();
+            globalLogStruct.checkedRegionCount += subprofiles.size();
         }
 
         globalLogStruct.totalPeakCount += centroids->size();

@@ -41,7 +41,7 @@ void test_standard_deviation()
     sd = sdev(numbers_L, 10);
     assert(roundTo_d(sd, 14) == roundTo_d(0.009603979272, 14), "Standard deviation inaccurate at larger numbers");
 }
-void test_linear_solve() // TODO not sure about the name here
+void test_linear_solve() // @todo not sure about the name here
 {                        // exact solutuion to linear equation
     double true_b0 = 2;
     double true_b1 = 3;

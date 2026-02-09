@@ -158,9 +158,9 @@ namespace qAlgorithms
         const std::vector<float> *spectrum_int);
 
     void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
-                           const std::vector<ProfileBlock> *treatedData,
+                           const std::vector<ProfileBlock> *subprofiles,
                            const size_t scanNumber,
-                           const size_t accessor,
+                           const size_t ID_spectrum,
                            const size_t maxWindowSize);
 
     void createCentroidPeaks(
@@ -168,7 +168,7 @@ namespace qAlgorithms
         const std::vector<RegressionGauss> *validRegressionsVec,
         const ProfileBlock *block,
         const size_t scanNumber,
-        const size_t accessor);
+        const size_t ID_spectrum);
 
     // ### Feature-specific Code ### //
 
