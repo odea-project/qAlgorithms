@@ -78,20 +78,52 @@ namespace qAlgorithms
         return pos;
     }
 
-    std::vector<double> predictedInt(const RegCoeffs *reg, const int startIdx, const int endIdx)
+    void retransformPeaks(
+        const std::vector<RegressionGauss> *peaks,
+        const std::vector<float> *x_values,
+        std::vector<PeakFit> *result)
     {
-        assert(startIdx < 0);
-        assert(endIdx > 0);
-
-        std::vector<double> res;
-        res.reserve(endIdx - startIdx + 1);
-
-        for (int idx = startIdx; idx <= endIdx; idx++)
+        // retransforming is probably best if the range of x values is as small as necessary
+        for (size_t i = 0; i < peaks->size(); i++)
         {
-            res.push_back(regExpAt(reg, idx));
-        }
+            const RegressionGauss *regression = peaks->data() + i;
+            assert(regression->isValid);
+            const RegCoeffs coeff = regression->coeffs;
 
-        return res;
+            double apex = regression->apex_position;
+            size_t start = regression->regSpan.startIdx;
+            size_t end = regression->regSpan.endIdx;
+
+            PeakFit peak;
+
+            // @todo ensure that this is a good way to estimate delta_x for real data
+            // we could also use a strategy such as taking the distance closest to the apex.
+            double delta_x = (x_values->at(end) - x_values->at(start)) / (end - start + 1);
+
+            // position is determined relative to the point left of the apex
+            size_t leftOfApex = size_t(apex);
+            double apexFraction = delta_x * (apex - trunc(apex));
+            peak.position = x_values->at(leftOfApex) + apexFraction;
+            peak.position_uncert = regression->position_uncert * delta_x;
+
+            // check if the chosen delta_x is acceptable
+            double delta_x_2 = x_values->at(leftOfApex + 1) - x_values->at(leftOfApex);
+            assert(abs(delta_x - delta_x_2) < delta_x * 0.05);
+
+            // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+            peak.height = exp(coeff.b0 + (apex - coeff.x0) * coeff.b1 * 0.5);
+            peak.height_uncert = regression->height_uncert * peak.height;
+
+            double factorArea = exp(coeff.b0) * delta_x;
+            peak.area = regression->area * factorArea;
+            peak.area_uncert = regression->area_uncert * factorArea;
+
+            peak.width = -1; // @todo, also check for negative width where appropriate
+
+            peak.DQS = 1 - erf_approx_f(regression->area_uncert / regression->area);
+
+            result->push_back(peak);
+        }
     }
 
     int qpeaks_find(
@@ -100,10 +132,11 @@ namespace qAlgorithms
         const std::vector<float> *x_values,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t maxScale_in,
-        std::vector<RegressionGauss> *detectedPeaks)
+        std::vector<PeakFit> *result)
     {
         // control input for nullpointers, mismatching x and y, and fitting maxScale
-        if (y_values == nullptr || x_values == nullptr || detectedPeaks == nullptr)
+        // @todo use one enum for errors uniformly throughout the code
+        if (y_values == nullptr || x_values == nullptr || result == nullptr)
         {
             return -1;
         }
@@ -116,9 +149,26 @@ namespace qAlgorithms
             return -3;
         }
 
+        /*
+        The first, implicit operation is norming x so that every value of x is at a distance
+        of exactly 1 to both of its neighbouring elements. This allows us to use a pre-calculated
+        design matrix for every operation, which in turn massively reduces computation time.
+
+        Assuming that the points are equidistant in x with delta(x), the axis used for regression
+        is x' = x / delta(x). Additionally, x0 is different for every individual regression. Both
+        of these transformations must be reversed after finding the best fit, even if at no point
+        in the program there is a function that actually performs either transform explicitly.
+
+        At least for HRMS data, the majority of data regions does not contain any peaks (both
+        for centroids and features). To avoid unnecessary computations of delta_x, it is only
+        determined for cases where at least one regression was found.
+        */
+
+        // @todo the assumtion that all values of x are equidistant is conrolled. If gaps are
+        // found, the missing values are interpolated assuming an exponential rate of change.
+        // this should happen before calling this function (?)
+
         const size_t length = y_values->size();
-        const size_t halfLength = (length - 1) / 2;
-        const size_t maxScale = maxScale_in > halfLength ? halfLength : maxScale_in;
 
         std::vector<float> y_log;
         y_log.reserve(length);
@@ -127,24 +177,27 @@ namespace qAlgorithms
             y_log.push_back(std::log(y));
         }
 
-        // basic structure: find cofficients, reduce them to valid regressions, resolve contradictions,
+        // core operation: identify best-fit regressions for the input data
 
-        // coefficients for single-b0 peaks, spans all regressions over a peak window
-        std::vector<RegCoeffs> regressions;
-        findCoefficients(&y_log, maxScale, &regressions);
-        assert(!regressions.empty());
+        size_t maxScale = (length - 1) / 2; // apex is not included in scale -> -1
+        maxScale = maxScale_in > maxScale ? maxScale : maxScale_in;
 
-        // filter the produced coefficients so that only correct ones remain (separate function?)
-        for (size_t reg = 0; reg < regressions.size(); reg++)
-        {
-            RegCoeffs *current = &(regressions[reg]);
-            // we can only process regressions with at least one
-            bool regOK = ((current->b2 < 0) || (current->b3 < 0)) && (current->b1 != 0);
+        std::vector<RegressionGauss> validRegressions;
+        runningRegression(
+            y_values->data(),
+            &y_log,
+            degreesOfFreedom_cum,
+            &validRegressions,
+            y_values->size(),
+            maxScale);
 
-            current->b0 = regOK ? current->b0 : 0;
-        }
+        // validregressions contains all relevant peak candidates
 
-        //
+        // retransform using delta x
+        double delta_x = x_values->at(1) - x_values->at(0);
+
+        retransformPeaks(&validRegressions, x_values, result);
+
         return -42;
     }
 
@@ -1498,8 +1551,8 @@ namespace qAlgorithms
           uncertainty of the height based on the Jacobian matrix and the variance-covariance
           matrix of the coefficients. @todo this is not what the function actually does!
         */
-        calcPeakHeightUncert(mutateReg);                           // mse use, again
-        if (1 / mutateReg->uncertainty_height <= T_VALUES[df_sum]) // statistical significance of the peak height
+        calcPeakHeightUncert(mutateReg);                      // mse use, again
+        if (1 / mutateReg->height_uncert <= T_VALUES[df_sum]) // statistical significance of the peak height
         {
             return invalid_height;
         }
@@ -1514,7 +1567,7 @@ namespace qAlgorithms
         */
         // it might be preferential to combine both functions again or store the common matrix somewhere
         calcPeakAreaUncert(mutateReg);
-        if (mutateReg->area / mutateReg->uncertainty_area <= T_VALUES[df_sum])
+        if (mutateReg->area / mutateReg->area_uncert <= T_VALUES[df_sum])
         {
             return invalid_area; // statistical insignificance of the area
         }
@@ -1661,23 +1714,23 @@ namespace qAlgorithms
             RegCoeffs coeff = regression->coeffs;
             peak.height = exp_approx_d(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
             // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
-            peak.heightUncertainty = regression->uncertainty_height * peak.height;
+            peak.heightUncertainty = regression->height_uncert * peak.height;
 
             size_t offset = (size_t)std::floor(regression->apex_position);
             double mz0 = block->mz[offset];
             double delta_mz = block->mz[offset + 1] - mz0;
 
             // add scaled area
-            double exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
-            peak.area = regression->area * exp_b0 * delta_mz;
-            peak.areaUncertainty = regression->uncertainty_area * exp_b0 * delta_mz;
+            double scalar = exp(coeff.b0) * delta_mz;
+            peak.area = regression->area * scalar;
+            peak.areaUncertainty = regression->area_uncert * scalar;
 
             // add scaled apex position (mz)
             peak.mz = mz0 + delta_mz * (regression->apex_position - std::floor(regression->apex_position));
-            peak.mzUncertainty = regression->uncertainty_pos * delta_mz * T_VALUES[regression->df] * sqrt(1 + 1 / (regression->df + 4));
+            peak.mzUncertainty = regression->position_uncert * delta_mz * T_VALUES[regression->df] * sqrt(1 + 1 / (regression->df + 4));
 
             // quality params
-            peak.DQSC = 1 - erf_approx_f(regression->uncertainty_area / regression->area);
+            peak.DQSC = 1 - erf_approx_f(regression->area_uncert / regression->area);
             peak.df = regression->df;
 
             peak.numCompetitors = regression->numCompetitors;
@@ -1715,7 +1768,7 @@ namespace qAlgorithms
             RegCoeffs coeff = regression->coeffs;
             // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
             peak.height = exp_approx_d(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
-            peak.heightUncertainty = regression->uncertainty_height * peak.height;
+            peak.heightUncertainty = regression->height_uncert * peak.height;
 
             // calculate the apex position in RT
             size_t idx_leftOfApex = (size_t)regression->apex_position;
@@ -1741,15 +1794,15 @@ namespace qAlgorithms
             assert(rt_fraction < 1);
             float rt_apex = rt_leftOfApex_true + delta_rt * rt_fraction;
             peak.retentionTime = rt_apex;
-            peak.RT_Uncertainty = regression->uncertainty_pos * delta_rt;
+            peak.RT_Uncertainty = regression->position_uncert * delta_rt;
 
             // add area
             float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
             peak.area = regression->area * exp_b0 * delta_rt;
-            peak.areaUncertainty = regression->uncertainty_area * exp_b0 * delta_rt;
+            peak.areaUncertainty = regression->area_uncert * exp_b0 * delta_rt;
 
             // mz, mzUncertainty, mean DQSC and meanDQSF are all calculated in after this function is called in measurement_data
-            peak.DQSF = 1 - erf_approx_f(regression->uncertainty_area / regression->area);
+            peak.DQSF = 1 - erf_approx_f(regression->area_uncert / regression->area);
 
             assert(regression->regSpan.endIdx - coeff.x0 > 1);
             peak.idxPeakStart = regression->regSpan.startIdx;
@@ -1953,9 +2006,9 @@ namespace qAlgorithms
         }
         // at this point without height, i.e., to get the real uncertainty
         // multiply with height later. This is done to avoid exp function at this point
-        // mutateReg->uncertainty_height = calcUncertainty(Jacobian_height, mutateReg->coeffs.scale, mutateReg->mse);
+        // mutateReg->height_uncert = calcUncertainty(Jacobian_height, mutateReg->coeffs.scale, mutateReg->mse);
         double uncertainty = sqrt(matProductReg(Jacobian_height, mutateReg->coeffs.scale) * mutateReg->mse);
-        mutateReg->uncertainty_height = uncertainty;
+        mutateReg->height_uncert = uncertainty;
         return;
     }
 
@@ -2027,9 +2080,9 @@ namespace qAlgorithms
 
         // at this point the area is without exp(b0), i.e., to get the real area multiply with exp(b0) later. This is done to avoid exp function at this point
         mutateReg->area = J[0];
-        // mutateReg->uncertainty_area = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
+        // mutateReg->area_uncert = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
         double uncertainty = sqrt(matProductReg(J, mutateReg->coeffs.scale) * mutateReg->mse);
-        mutateReg->uncertainty_area = uncertainty;
+        mutateReg->area_uncert = uncertainty;
 
         return;
     }
@@ -2181,9 +2234,9 @@ namespace qAlgorithms
             J[3] = -apex / b3;
         }
 
-        // mutateReg->uncertainty_pos = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
+        // mutateReg->position_uncert = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
         double uncertainty = matProductReg(J, mutateReg->coeffs.scale);
-        mutateReg->uncertainty_pos = sqrt(uncertainty * mutateReg->mse);
+        mutateReg->position_uncert = sqrt(uncertainty * mutateReg->mse);
         return;
     }
 

@@ -258,7 +258,7 @@ namespace qAlgorithms
      * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
      * @param df_sum : sum of the degree of freedom of the regression model
      * @param area : area of the peak
-     * @param uncertainty_area : uncertainty of the area
+     * @param area_uncert : uncertainty of the area
      * @return true : if the peak area is valid
      * @return false : if the peak area is not valid
      */

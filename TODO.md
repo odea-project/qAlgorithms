@@ -27,6 +27,7 @@ could be moved into a more generic library for mass spectra processing.
 * rework code so that the warnings -Wdouble-promotion, -Wconversion and -Weffc++ can be turned on without causing too much noise
 * add build targets for x86 / arm linux and windows with / without AVX512 support. AVX2 can probably be assumed to exist.
 * ensure uniform terminology throughout the codebase (keep a record of correct terms somewhere?)
+* remove the RT transform mess currently implemented in favour of the regression-local delta_x estimation introduced in the retransformPeaks function
 
 ## Expansion
 Additional functionality of the core library that should be added at some point.

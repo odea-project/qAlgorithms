@@ -59,17 +59,28 @@ namespace qAlgorithms
 
     struct RegressionGauss
     {
-        RegCoeffs coeffs = {0}; // regression coefficients
-        // size_t idxCenter = 0;   // index of window center (x==0) in the Y matrix
-        // int scale = 0;            // scale of the regression window, i.e., 2*scale+1 = window size
+        RegCoeffs coeffs = {0};   // regression coefficients
         int df = 0;               // degrees of freedom, interpolated data points will not be considered
         float apex_position = 0;  // position of the apex of the peak
         float mse = 0;            // mean squared error
         Range_i regSpan = {0, 0}; // limits of the peak regression window
-        float area = 0;           // area of the peak
-        float uncertainty_area = 0, uncertainty_pos = 0, uncertainty_height = 0;
+        float area = 0;           // area of the peak (in evenly spaced x dimension, scaled later)
+        float area_uncert = 0, position_uncert = 0, height_uncert = 0;
         int numCompetitors = 0; // number of points that were discarded in favour of this regression
         bool isValid = false;   // flag to indicate if the regression is valid
+    };
+
+    // The distinction between centroid and feature is not really sensible as a core part of the project
+    struct PeakFit
+    {
+        float position = 0;
+        float position_uncert = 0;
+        float height = 0;
+        float height_uncert = 0;
+        float width = 0;
+        float area = 0;
+        float area_uncert = 0;
+        float DQS = 0;
     };
 
     struct ProfilePos // gives the range of points covered by a centroid and the access index for streamfind
