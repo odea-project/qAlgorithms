@@ -31,6 +31,18 @@ void simulate_gauss(
     }
 }
 
+void simulate_EMG(
+    const std::vector<float> *xvals,
+    double apex, double height, double sdev, double theta,
+    std::vector<float> *simulated)
+{
+    // implements the exponentially modified gaussian fit as a generative model
+    // equation used: https://doi.org/10.1021/ac970481d, Eq. B1
+
+    // y(x) = A/t * exp(s^2 / 2t^2 + (x_0 - x) / s) * (1+ erf( (x - x_0) / (sqrt(2) * s) - s / (sqrt(2) * t) ) )
+    // A = area, t = theta (tailing), s = sigma, x_0 = apex
+}
+
 void control_sim()
 {
     // generate data using a standard gaussian on an equidistant x axis
@@ -57,6 +69,16 @@ void control_sim()
 
     assert(ret.size() != 0, "Peak not found\n");
     assert(ret.size() == 1, "Too many peaks found\n");
+
+    PeakFit reg = ret.front();
+
+    float apex_p = reg.position;
+    float height_p = reg.height;
+    // float area_p = reg.area;
+
+    assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
+    assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
+    // assert(abs(area - area_p) < reg.area_uncert, "inaccurate area\n");
 }
 
 int simulate_profile(
