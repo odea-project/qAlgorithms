@@ -38,7 +38,7 @@ namespace qAlgorithms
         const std::vector<float> *x_values,
         const std::vector<unsigned int> *degreesOfFreedom_cum,
         const size_t maxScale,
-        std::vector<RegressionGauss> *detectedPeaks);
+        std::vector<PeakFit> *detectedPeaks);
 
     /// @brief calculate all coefficients for all valid, symmetrical scales
     /// @details This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.

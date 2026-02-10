@@ -98,7 +98,9 @@ namespace qAlgorithms
 
             // @todo ensure that this is a good way to estimate delta_x for real data
             // we could also use a strategy such as taking the distance closest to the apex.
-            double delta_x = (x_values->at(end) - x_values->at(start)) / (end - start + 1);
+
+            // no +1 for the length is used here because there are n-1 distances for n points
+            double delta_x = (x_values->at(end) - x_values->at(start)) / (end - start);
 
             // position is determined relative to the point left of the apex
             size_t leftOfApex = size_t(apex);

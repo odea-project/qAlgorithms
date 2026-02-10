@@ -16,23 +16,47 @@ double peakVal_gauss(double x, double apex, double height, double sdev)
 // To make cases where two peaks are in one system or where noise is added easier, all
 // peak functions are additive. It is the responsibility of the user to zero them before first use.
 void simulate_gauss(
-    double start_x, double step,
+    const std::vector<float> *xvals,
     double apex, double height, double sdev,
     std::vector<float> *simulated)
 {
     assert(!simulated->empty(), "wrong usage of test function\n");
-    assert(apex + sdev < start_x + step * simulated->size(), "wrong usage of test function\n");
+    assert(xvals->size() == simulated->size(), "wrong usage of test function\n");
 
     for (size_t i = 0; i < simulated->size(); i++)
     {
-        double x = start_x + i * step;
+        double x = xvals->at(i);
+        // @todo add the option to randomise here
         simulated->at(i) += peakVal_gauss(x, apex, height, sdev);
     }
 }
 
 void control_sim()
 {
-    // the challenge here is that we do a fit only in y, so the x axis needs to be fitted in backwards.
+    // generate data using a standard gaussian on an equidistant x axis
+    float x_start = 100;
+    float x_step = 1;
+    float apex = 110;
+    size_t length = 20;
+    double sdev = 2.5;
+    double height = 1000;
+
+    std::vector<float> xvals(length, 0);
+    std::vector<float> yvals(length, 0);
+    std::vector<unsigned int> df(length, 0);
+    for (size_t i = 0; i < length; i++)
+    {
+        xvals[i] = x_start + x_step * i;
+        df[i] = i + 1;
+    }
+
+    simulate_gauss(&xvals, apex, height, sdev, &yvals);
+
+    std::vector<PeakFit> ret;
+    qpeaks_find(&yvals, &xvals, &df, 8, &ret);
+
+    assert(ret.size() != 0, "Peak not found\n");
+    assert(ret.size() == 1, "Too many peaks found\n");
 }
 
 int simulate_profile(
@@ -98,6 +122,7 @@ void test_singlePeak()
 int main()
 {
     test_singlePeak();
+    control_sim();
 
     return 0;
 }
