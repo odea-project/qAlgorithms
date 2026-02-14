@@ -36,7 +36,7 @@ namespace qAlgorithms
 
         FILE *file = fopen("./logdata.csv", "a");
         assert(file);
-        fprintf(file, buffer);
+        fprintf(file, "%s", buffer);
         fclose(file);
     }
 
@@ -120,7 +120,10 @@ namespace qAlgorithms
             peak.area = regression->area * factorArea;
             peak.area_uncert = regression->area_uncert * factorArea;
 
-            peak.width = -1; // @todo, also check for negative width where appropriate
+            // @todo, also check for negative width where appropriate
+            // the empirical peak width is generally estimated at half maximum. Our peak
+            // model only has a standard deviation for the apex peak
+            peak.width = -1;
 
             peak.DQS = 1 - erf_approx_f(regression->area_uncert / regression->area);
 
@@ -172,18 +175,12 @@ namespace qAlgorithms
 
         const size_t length = y_values->size();
 
-        std::vector<float> y_log;
-        y_log.reserve(length);
-        for (float y : *y_values)
-        {
-            y_log.push_back(std::log(y));
-        }
-
         // core operation: identify best-fit regressions for the input data
 
         size_t maxScale = (length - 1) / 2; // apex is not included in scale -> -1
         maxScale = maxScale_in > maxScale ? maxScale : maxScale_in;
 
+        std::vector<float> y_log;
         std::vector<RegressionGauss> validRegressions;
         runningRegression(
             y_values->data(),
@@ -195,9 +192,7 @@ namespace qAlgorithms
 
         // validregressions contains all relevant peak candidates
 
-        // retransform using delta x
-        double delta_x = x_values->at(1) - x_values->at(0);
-
+        // reverse the not-calculated transform of the x axis only for region where peaks exist
         retransformPeaks(&validRegressions, x_values, result);
 
         return -42;
@@ -356,6 +351,7 @@ namespace qAlgorithms
         intensities_log->reserve(length);
         for (size_t i = 0; i < length; i++)
         {
+            // assert(intensities[i] > 1); // @todo this could be relevant, currently ensured by the region pre-filter
             intensities_log->push_back(log(intensities[i]));
         }
 
@@ -372,7 +368,7 @@ namespace qAlgorithms
                                              &coefficients,
                                              length,
                                              &validRegsTmp);
-        assert(validCount <= coefficients.size());
+        assert(validCount <= int(coefficients.size()));
         if (validCount == 0)
             return;
 
@@ -1200,9 +1196,6 @@ namespace qAlgorithms
         }
         coeffs->resize(totalRegs);
 
-        // #include <cfenv>
-        //         fesetround(FE_UPWARD);
-
         // the first and last MINSCALE elements of the data do not need to be checked for x0, since they are invalid by definition
         const size_t limit = length - GLOBAL_MINSCALE;
         for (size_t x0 = GLOBAL_MINSCALE; x0 < limit; x0++)
@@ -1519,7 +1512,7 @@ namespace qAlgorithms
         double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
 
-        mutateReg->mse = mse_log;
+        mutateReg->mse = mse_log; // @todo the mse should be calculated in the function that uses it
 
         /*
         competing regressions filter:

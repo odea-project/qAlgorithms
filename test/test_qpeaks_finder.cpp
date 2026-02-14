@@ -31,19 +31,44 @@ void simulate_gauss(
     }
 }
 
-void simulate_EMG(
-    const std::vector<float> *xvals,
-    double apex, double height, double sdev, double theta,
-    std::vector<float> *simulated)
+double peakVal_EMG(double x, double apex, double height, double sdev, double tau)
 {
     // implements the exponentially modified gaussian fit as a generative model
-    // equation used: https://doi.org/10.1021/ac970481d, Eq. B1
 
-    // y(x) = A/t * exp(s^2 / 2t^2 + (x_0 - x) / s) * (1+ erf( (x - x_0) / (sqrt(2) * s) - s / (sqrt(2) * t) ) )
-    // A = area, t = theta (tailing), s = sigma, x_0 = apex
+    // naive model: https://doi.org/10.1021/ac970481d, Eq. B1
+    // y(x) = A/t * exp(s^2 / 2t^2 + (x_0 - x) / s)    *    (1 - erf( (x - x_0) / (sqrt(2) * s) - s / (sqrt(2) * t) ) )
+    // A = area, t = tau (tailing), s = sdev, x_0 = apex
+    // problem: the first term gets very large while the second term gets very small
+
+    // alternative equation: https://doi.org/10.1002/cem.1343 Eq. 6
+    // z = 1/sqrt(2) * ( (x_0 - x) / s + s / t )
+    // y(x) = h * exp( -(x_0 - x)^2 / (2 * s^2) ) * (s/t) * sqrt(pi/2) * exp(z^2) * erfc(z)
+
+    double z = (1 / sqrt(2)) * ((apex - x) / sdev + sdev / tau);
+    double a = height * exp(-(apex - x) * (apex - x) / (2 * sdev * sdev)) * (sdev / tau) * sqrt(M_PI / 2);
+    double y = a * exp(z * z) * erfc(z);
+    return y;
 }
 
-void control_sim()
+void simulate_EMG(
+    const std::vector<float> *xvals,
+    double apex, double area, double sdev, double tau,
+    std::vector<float> *simulated)
+{
+    assert(!simulated->empty(), "wrong usage of test function\n");
+    assert(xvals->size() == simulated->size(), "wrong usage of test function\n");
+
+    for (size_t i = 0; i < simulated->size(); i++)
+    {
+        double x = xvals->at(i);
+        // @todo add the option to randomise here
+        double y = peakVal_EMG(x, apex, area, sdev, tau);
+        y = max(y, 1.0);
+        simulated->at(i) += y;
+    }
+}
+
+void control_sim_gauss()
 {
     // generate data using a standard gaussian on an equidistant x axis
     float x_start = 100;
@@ -52,6 +77,8 @@ void control_sim()
     size_t length = 20;
     double sdev = 2.5;
     double height = 1000;
+
+    double area = 0; // @todo
 
     std::vector<float> xvals(length, 0);
     std::vector<float> yvals(length, 0);
@@ -63,6 +90,48 @@ void control_sim()
     }
 
     simulate_gauss(&xvals, apex, height, sdev, &yvals);
+
+    std::vector<PeakFit> ret;
+    qpeaks_find(&yvals, &xvals, &df, 8, &ret);
+
+    assert(ret.size() != 0, "Peak not found\n");
+    assert(ret.size() == 1, "Too many peaks found\n");
+
+    PeakFit reg = ret.front();
+
+    float apex_p = reg.position;
+    float height_p = reg.height;
+    // float area_p = reg.area;
+
+    assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
+    assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
+    // assert(abs(area - area_p) < reg.area_uncert, "inaccurate area\n");
+}
+
+void control_sim_EMG()
+{
+    // initialise seed for noise generating funtions
+    srand(1234);
+
+    // generate data using an exponentially modified gaussian on an equidistant x axis
+    float x_start = 100;
+    float x_step = 1;
+    float apex = 109;
+    size_t length = 20;
+    double sdev = 2.5;
+    double height = 1000;
+    double tau = 0.1;
+
+    std::vector<float> xvals(length, 0);
+    std::vector<float> yvals(length, 0);
+    std::vector<unsigned int> df(length, 0);
+    for (size_t i = 0; i < length; i++)
+    {
+        xvals[i] = x_start + x_step * i;
+        df[i] = i + 1;
+    }
+
+    simulate_EMG(&xvals, apex, height, sdev, tau, &yvals);
 
     std::vector<PeakFit> ret;
     qpeaks_find(&yvals, &xvals, &df, 8, &ret);
@@ -144,7 +213,8 @@ void test_singlePeak()
 int main()
 {
     test_singlePeak();
-    control_sim();
+    control_sim_gauss();
+    control_sim_EMG();
 
     return 0;
 }

@@ -5,6 +5,7 @@ detailed todos, or removing outdated ones, is also a todo item.
 
 Abbreviations (sorted alphabetically):
 * LoC - Lines of Code
+* MS - mass spectrometry
 * NTS - Non-Target Screening
 * RT - Retention Time 
 * SoA - Structure of Arrays
@@ -28,6 +29,12 @@ could be moved into a more generic library for mass spectra processing.
 * add build targets for x86 / arm linux and windows with / without AVX512 support. AVX2 can probably be assumed to exist.
 * ensure uniform terminology throughout the codebase (keep a record of correct terms somewhere?)
 * remove the RT transform mess currently implemented in favour of the regression-local delta_x estimation introduced in the retransformPeaks function
+* Optimisation: a lot of time is spent computing exponentials. Identify where these are performacne-
+critical and check if they can be replaced with a less accurate estimation, ex. https://github.com/nadavrot/fast_log
+* Cleanup: Large parts of the code just pass array pointers downwards, make that part of the code nicer using
+scratch spaces or similar techniques of avoiding a lot of malloc/free
+* Refactoring: check if special functions as implemented here (http://ab-initio.mit.edu/faddeeva/) are faster 
+without being less accurate and replace the currently used slow functions if possible
 
 ## Expansion
 Additional functionality of the core library that should be added at some point.
@@ -47,6 +54,9 @@ Additional functionality of the core library that should be added at some point.
 * work with already centrodied data as input (mass error estimation)
 * RT distance harmoniser should work within a specific window if the distance changes at one point in the measurement (make it local to every bin? Check potential performance impact)
 * consider adding the artifact removal presented here: https://chemrxiv.org/doi/pdf/10.26434/chemrxiv.10001734/v1
+* add a function to calculate an exact fit using the model and the complete x axis via the pseudoinverse (fast matrix: https://gist.github.com/nadavrot/5b35d44e8ba3dd718e595e40184d03f0)
+* write output data of centroiding to mzML and other MS formats
+* add support for multithreading
 
 ## Testing
 Any code that is not run when processing data and concerned with logical correctness of the program.

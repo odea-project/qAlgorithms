@@ -127,8 +127,17 @@ void test_exp_approx()
            timePassed_exp, timePassed_app1, meanDiff_1, timePassed_app2, meanDiff_2, timePassed_app3, meanDiff_3);
 }
 
+void test_normalDist()
+{
+    for (size_t i = 0; i < 200; i++)
+    {
+        printf("%f,", gauss_rand(0, 1));
+    }
+}
+
 int main()
 {
+    srand(1234);
     // This could be automated using compile time execution
     test_rounding();
     test_min_max();
@@ -136,4 +145,5 @@ int main()
     test_standard_deviation();
     test_linear_solve();
     // test_exp_approx();
+    test_normalDist();
 }

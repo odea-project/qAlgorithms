@@ -124,7 +124,7 @@ foreach(src IN LISTS TESTFILES)
     file(RELATIVE_PATH rel "${TESTS_DIR}" "${src}")
     string(REPLACE "/" "_" rel_safe "${rel}") # replace / with _
     string(REGEX REPLACE "\\.cpp$" "" rel_safe "${rel_safe}") # remove .cpp extension from filename
-    set(target_name "test_${rel_safe}")
+    set(target_name "${rel_safe}")
     message(NEW_TEST: "${target_name}")
 
     add_executable(${target_name} "${src}")

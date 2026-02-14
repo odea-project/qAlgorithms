@@ -81,42 +81,31 @@ void printVec_f(const std::vector<float> *vec, const char *vecName)
     printf("  | length: %zu\n", vec->size());
 }
 
-RegCoeffs getCoeffs(double height, double position, double sd_left, double sd_right)
+#if 0
+/* Generate random numbers with mean mean, standard deviation std_dev, */
+/* with a Normal (Gaussian) distribution.                              */
+/* mean is any real number, std_dev > 0 (or machine epsilon).          */
+/* The formula used is the inverse of the density function of the      */
+/* Normal distribution:                                                */
+/* x = mean +/- std_dev * sqrt((-2.0) * log(y)), 0 < y <= 1            */
+/* The client should call srand(int) to initialize the seed,           */
+/* before any calls to gauss_rand().                                   */
+/* L.T., May 3, 1998, University of Toronto                            */
+/* Source: https://c-faq.com/lib/gaussrand.luben.html (modified)       */
+/* does not work (tested: 200 values generated with seed 1234)         */
+
+double gauss_rand(const double mean, const double sdev)
 {
-    // produce a set of coefficients that correspond to a model gaussian distribution with the specified parameters
-    RegCoeffs coeff;
+    /* std_dev must be greater than 0.0 (or machine epsilon) */
+    if (!(sdev > DBL_EPSILON))
+        return INFINITY; // chosen since this will hopefully crash the test
 
-    // 1) find apex position
-    coeff.x0 = size_t(position + 0.5);
-    bool apexLeft = (double(coeff.x0) - position) > 0; // apex position is smaller than x0
+    double y = (double)rand() / (RAND_MAX + 1.0); /* 0.0 <= y < 1.0 */
+    bool bin = (y < 0.5) ? false : true;
+    y = fabs(y - 1.0); /* 0.0 < y <= 1.0 */
+    y = sdev * sqrt((-2.0) * log(y));
+    y = bin ? (mean + y) : (mean - y);
+
+    return y;
 }
-
-double addGaussianPeak(const double mu,     // position of the apex
-                       const double sigma,  // standard deviation (width)
-                       const double lambda, // rate (left or right shift)
-                       const double height, // the height is used because scaling to the area is unintuitive
-                       std::vector<float> *points)
-{
-    // this function uses the exponentially modified gaussian to simulate a peak profile:
-    // https://en.wikipedia.org/wiki/Exponentially_modified_Gaussian_distribution
-    // @todo: use this model instead? DOI: 10.1002/cem.1343
-
-    if (mu <= 0)
-        return 0;
-
-    if (mu >= points->size() - 1)
-        return 0;
-
-    double lamb_2 = lambda / 2;
-    double lamb_sig2 = lambda * sigma * sigma;
-    double div = 1 / (sqrt(2) * sigma);
-
-    for (size_t i = 0; i < points->size(); i++)
-    {
-        double x = i;
-        float val = lamb_2 * exp(lamb_2 * (2 * mu + lamb_sig2 - 2 * x)) * erfc((mu + lamb_sig2 - x) * div);
-        points->at(i) += val * height;
-    }
-
-    return 0;
-}
+#endif
