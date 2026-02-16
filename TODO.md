@@ -72,9 +72,11 @@ Any code that is not run when processing data and concerned with logical correct
 ## Algorithm Characterisation
 The goal of this is to describe correctness based on input data for a generic peak detection algorithm.
 
+* general writing of documentation
 * Implement many of the functions used to describe peaks (https://doi.org/10.1021/ac970481d, https://doi.org/10.1016/S0021-9673(01)01136-0)
 * Research if such a system already exists
 * write documentation for unpublished parts and more exotic bits, like separate handling of RT
+* expand documentation for qPeaks
 
 ## PINTS
 Todos related to the Pipelines In NTS initiative.

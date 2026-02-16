@@ -40,47 +40,6 @@ namespace qAlgorithms
         const size_t maxScale,
         std::vector<PeakFit> *detectedPeaks);
 
-    /// @brief calculate all coefficients for all valid, symmetrical scales
-    /// @details This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
-    ///     (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
-    ///     Only six values of the final matrix are required for the simple case, see below:
-
-    ///     xT is the transpose of the design matrix X.
-    ///     for scale = 2:
-    ///     xT = | 1  1  1  1  1 |    : all ones
-    ///          |-2 -1  0  1  2 |    : from -scale to scale
-    ///          | 4  1  0  0  0 |    : x^2 values for x < 0
-    ///          | 0  0  0  1  4 |    : x^2 values for x > 0
-
-    ///     It contains one additional row of all ones for every additional peak that is added into the model
-
-    ///     When adding multiple peaks to the regression model, we need to adjust the inverse values.
-    ///     This will change the number of unique values in the inv_values array from 6 to 7.
-    ///     Here we use the inv_array[1] position and shift all values from that point onwards to the right.
-    ///     example for num_peaks = 2:
-    ///     original matrix with the unique values [a, b, c, d, e, f] (six unique values)
-    ///     | a  0  b  b |
-    ///     | 0  c  d -d |
-    ///     | b  d  e  f |
-    ///     | b -d  f  e |
-
-    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
-    ///     | A1  A2  0  B  B |
-    ///     | A2  A1  0  B  B |
-    ///     | 0   0   C  D -D |
-    ///     | B   B   D  E  F |
-    ///     | B   B  -D  F  E |
-
-    ///     for num_peaks = 3:
-    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
-    ///     | A1  A2  A2  0  B  B |
-    ///     | A2  A1  A2  0  B  B |
-    ///     | A2  A2  A1  0  B  B |
-    ///     | 0   0   0   C  D -D |
-    ///     | B   B   B   D  E  F |
-    ///     | B   B   B  -D  F  E |
-
-    ///     Note that no more than seven different values are needed per scale, even for a multidimensional approach.
     /// @param intensity_log logarithmy of the intensity values. This is the y axis of the fit. The x axis is required to be equidistant.
     /// @param maxscale maximum scale of a peak that should be attempted to fit.
     /// @param coeffs Sets of coefficients for all possible regressions. They are written out in the order scale = 2, scale = 3, ... , scale = maxscale
@@ -283,6 +242,8 @@ namespace qAlgorithms
     double regAt(const RegCoeffs *coeff, const double x);
     double regExpAt(const RegCoeffs *coeff, const double x);
 
+    double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x);
+
     // this one does not include b0
     double regExp_fac(const RegCoeffs *coeff, const double x);
 
@@ -295,6 +256,48 @@ namespace qAlgorithms
 
 #include <array>
 #include <math.h> // square root
+
+    ///     This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
+
+    ///     (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
+    ///     Only six values of the final matrix are required for the simple case, see below:
+
+    ///     xT is the transpose of the design matrix X.
+    ///     for scale = 2:
+    ///     xT = | 1  1  1  1  1 |    : all ones
+    ///          |-2 -1  0  1  2 |    : from -scale to scale
+    ///          | 4  1  0  0  0 |    : x^2 values for x < 0
+    ///          | 0  0  0  1  4 |    : x^2 values for x > 0
+
+    ///     It contains one additional row of all ones for every additional peak that is added into the model
+
+    ///     When adding multiple peaks to the regression model, we need to adjust the inverse values.
+    ///     This will change the number of unique values in the inv_values array from 6 to 7.
+    ///     Here we use the inv_array[1] position and shift all values from that point onwards to the right.
+    ///     example for num_peaks = 2:
+    ///     original matrix with the unique values [a, b, c, d, e, f] (six unique values)
+    ///     | a  0  b  b |
+    ///     | 0  c  d -d |
+    ///     | b  d  e  f |
+    ///     | b -d  f  e |
+
+    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+    ///     | A1  A2  0  B  B |
+    ///     | A2  A1  0  B  B |
+    ///     | 0   0   C  D -D |
+    ///     | B   B   D  E  F |
+    ///     | B   B  -D  F  E |
+
+    ///     for num_peaks = 3:
+    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
+    ///     | A1  A2  A2  0  B  B |
+    ///     | A2  A1  A2  0  B  B |
+    ///     | A2  A2  A1  0  B  B |
+    ///     | 0   0   0   C  D -D |
+    ///     | B   B   B   D  E  F |
+    ///     | B   B   B  -D  F  E |
+
+    ///     Note that no more than seven different values are needed per scale, even for a multidimensional approach.
 
     typedef struct
     {

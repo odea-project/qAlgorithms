@@ -276,10 +276,6 @@ namespace qAlgorithms
                 continue;
             }
 
-            RegressionGauss reg;
-            reg.coeffs = coefficients->at(i);
-            reg.regSpan = range;
-
             size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, &range);
             if (df_sum < 5)
             {
@@ -287,6 +283,10 @@ namespace qAlgorithms
                 continue;
             }
             df_sum -= 4; // four coefficients, adjust for components
+
+            RegressionGauss reg;
+            reg.coeffs = coefficients->at(i);
+            reg.regSpan = range;
 
             failpoint = makeValidRegression(intensities,
                                             intensities_log,
@@ -1435,7 +1435,7 @@ namespace qAlgorithms
           Apex and Valley Position Filter:
           This block of code implements the apex and valley position filter.
           It calculates the apex and valley positions based on the coefficients
-          matrix B.
+          matrix B. If the test fails, one of the peak halves has less than two points.
         */
         double valley_position = 0;
         int failure = calcApexAndValleyPos(mutateReg, &valley_position);
@@ -2625,5 +2625,24 @@ namespace qAlgorithms
             x += 1;
         }
         return sumNum / sumDenom;
+    }
+
+    double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x)
+    {
+        // solve height / 2 = exp(b0 + x b1 + x^2 b2)
+        double y = log(height / 2);
+        // use quadratic formula for a x^2 + b x + c = 0
+        double a_l = coeff->b2;
+        double a_r = coeff->b3;
+        double b = coeff->b1;
+        double c = coeff->b0 - y;
+
+        double x_l, x_r, dummy;
+        solveQuadratic(a_l, b, c, &x_l, &dummy);
+        solveQuadratic(a_r, b, c, &dummy, &x_r);
+
+        assert(x_l < x_r);
+
+        return (x_r - x_l) * delta_x;
     }
 }

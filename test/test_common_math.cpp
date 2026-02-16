@@ -127,6 +127,23 @@ void test_exp_approx()
            timePassed_exp, timePassed_app1, meanDiff_1, timePassed_app2, meanDiff_2, timePassed_app3, meanDiff_3);
 }
 
+void test_quadraticSolve()
+{
+    // solve a x^2 + b x + c = 0 for x
+    double a = -3, b = 2, c = 1;
+    double x_L_true = -1.0 / 3.0;
+    double x_R_true = 1;
+
+    double x_l, x_r;
+    solveQuadratic(a, b, c, &x_l, &x_r);
+
+    double diff_l = abs(x_l - x_L_true);
+    assert(diff_l < DBL_EPSILON, "x_l differs too strongly (%f)", diff_l);
+
+    double diff_r = abs(x_r - x_R_true);
+    assert(diff_r < DBL_EPSILON, "x_l differs too strongly (%f)", diff_r);
+}
+
 void test_normalDist()
 {
     for (size_t i = 0; i < 200; i++)
@@ -145,5 +162,6 @@ int main()
     test_standard_deviation();
     test_linear_solve();
     // test_exp_approx();
-    test_normalDist();
+    test_quadraticSolve();
+    // test_normalDist();
 }

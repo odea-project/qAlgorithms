@@ -82,6 +82,12 @@ namespace qAlgorithms
     double quadraticAt(const double b0, const double b1, const double b2,
                        const double x);
 
+    // well-behaved function to calculate the quadratic formula for a x^2 + b x + c = 0
+    // the standard equation x_(1,2) = (-b +- sqrt(b^2 - 4ac)) / (2a) is unstable at small differences
+    // between intermediates, see https://www.av8n.com/physics/quadratic-formula.htm
+    int solveQuadratic(const double a, const double b, const double c,
+                       double *x1, double *x2);
+
     /// @brief Calculate residual sum of squares (RSS) for predicted and observed values
     /// @param predict
     /// @param observed

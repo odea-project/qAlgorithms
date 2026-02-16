@@ -183,6 +183,30 @@ namespace qAlgorithms
         return b0 + (b1 + x * b2) * x;
     }
 
+    int solveQuadratic(const double a, const double b, const double c,
+                       double *x1, double *x2)
+    {
+        // reference: https://www.av8n.com/physics/quadratic-formula.htm
+        assert(a != 0), assert(b != 0), assert(c != 0);
+
+        double sign = b <= 0 ? -1 : 1;
+        double root = b * b - 4 * a * c;
+        bool invalid = root <= 0;
+        if (invalid)
+        {
+            *x1 = INFINITY;
+            *x2 = INFINITY;
+            return 1;
+        }
+        double x_big = (-b - sign * sqrt(root)) / (2 * a);
+        double x_sml = c / (a * x_big);
+
+        *x1 = min(x_sml, x_big);
+        *x2 = max(x_sml, x_big);
+
+        return 0;
+    }
+
     double calcRSS(const float *predict,
                    const float *observed,
                    const Range_i *range)
