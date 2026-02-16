@@ -195,7 +195,7 @@ void test_singlePeak()
     simulate_profile(&coeff, &simulated, &simulated_log, &df);
 
     std::vector<RegressionGauss> validRegs;
-    runningRegression(simulated.data(), &simulated_log, &df, &validRegs, simulated.size(), 5);
+    runningRegression(simulated.data(), &simulated_log, nullptr, simulated.size(), 5, &validRegs);
 
     assert(validRegs.size() == 1, "incorrect number of regressions found\n");
     double diff_b0 = abs(coeff.b0 - validRegs.front().coeffs.b0);

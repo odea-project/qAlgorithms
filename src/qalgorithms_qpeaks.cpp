@@ -54,7 +54,7 @@ namespace qAlgorithms
 
     LoggingParams globalLogStruct;
 
-    constexpr auto INV_ARRAY = initialize(); // this only works with constexpr square roots, which are part of C++26
+    constexpr auto INV_ARRAY = initialize_new(); // this only works with constexpr square roots, which are part of C++26
 
     size_t hardFilter(std::vector<double> *mz, std::vector<double> *intensity, double minMZ, double maxMZ)
     {
@@ -180,15 +180,20 @@ namespace qAlgorithms
         size_t maxScale = (length - 1) / 2; // apex is not included in scale -> -1
         maxScale = maxScale_in > maxScale ? maxScale : maxScale_in;
 
+        /*
+        The fitting routine assumes that all present peaks have a modified gaussian base function.
+        This means that no baseline exists. Baseline substraction, if appropriate, has to be performed
+        before calling the qpeaks_find.
+        */
         std::vector<float> y_log;
         std::vector<RegressionGauss> validRegressions;
         runningRegression(
             y_values->data(),
             &y_log,
-            degreesOfFreedom_cum,
-            &validRegressions,
+            degreesOfFreedom_cum->data(),
             y_values->size(),
-            maxScale);
+            maxScale,
+            &validRegressions);
 
         // validregressions contains all relevant peak candidates
 
@@ -211,10 +216,6 @@ namespace qAlgorithms
 
         std::vector<float> logIntensity(maxWindowSize + 2 * GLOBAL_MAXSCALE_CENTROID, NAN);
 
-        std::vector<unsigned int> globalDF(maxWindowSize, 0); // @todo this could be move up one function call
-        for (size_t i = 0; i < maxWindowSize; i++)
-            globalDF[i] = i + 1;
-
         static_assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
 
         std::vector<RegressionGauss> validRegressions;
@@ -230,10 +231,10 @@ namespace qAlgorithms
             runningRegression(
                 block->intensity,
                 &logIntensity,
-                &globalDF,
-                &validRegressions,
+                nullptr,
                 block->length,
-                GLOBAL_MAXSCALE_CENTROID);
+                GLOBAL_MAXSCALE_CENTROID,
+                &validRegressions);
 
             volatile bool purge = false;
             if (purge)
@@ -258,7 +259,7 @@ namespace qAlgorithms
     int validateRegressions( // @todo this should be specific to centroids, features or components
         const float *intensities,
         const std::vector<float> *intensities_log,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        const unsigned int *const degreesOfFreedom_cum,
         const std::vector<RegCoeffs> *coefficients,
         const size_t length,
         std::vector<RegressionGauss> *validRegressions)
@@ -279,7 +280,7 @@ namespace qAlgorithms
             reg.coeffs = coefficients->at(i);
             reg.regSpan = range;
 
-            size_t df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), &range);
+            size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, &range);
             if (df_sum < 5)
             {
                 globalLogStruct.failData[invalid::no_df] += 1;
@@ -311,22 +312,22 @@ namespace qAlgorithms
     int pruneConflictingRegs(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
-        const std::vector<unsigned int> *df_cum);
+        const unsigned int *const df_cum);
 
     int resolveScaleConflicts(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
-        const std::vector<unsigned int> *df_cum);
+        const unsigned int *const df_cum);
 
     int pruneRegsByApex(const float *intensities,
-                        const std::vector<unsigned int> *df_cum,
+                        const unsigned int *const df_cum,
                         std::vector<RegressionGauss> *validRegressions);
 
     // ----------- old functions -------------//
 
     void mergeRegsInScale(
         const float *intensities,
-        const std::vector<unsigned int> *df_cum,
+        const unsigned int *const df_cum,
         std::vector<RegressionGauss> *validRegsTmp,
         std::vector<RegressionGauss> *validRegressions);
 
@@ -339,12 +340,11 @@ namespace qAlgorithms
     void runningRegression(
         const float *intensities,
         std::vector<float> *intensities_log,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
-        std::vector<RegressionGauss> *validRegressions,
+        const unsigned int *const degreesOfFreedom_cum,
         const size_t length,
-        const size_t maxScale)
+        const size_t maxScale,
+        std::vector<RegressionGauss> *validRegressions)
     {
-        assert(degreesOfFreedom_cum->size() >= length);
         assert(validRegressions->empty());
 
         intensities_log->clear();
@@ -421,7 +421,7 @@ namespace qAlgorithms
 #pragma region "eliminate conflicting regs"
 
     int pruneRegsByApex(const float *intensities,
-                        const std::vector<unsigned int> *df_cum,
+                        const unsigned int *const df_cum,
                         std::vector<RegressionGauss> *validRegressions)
     {
         // yet another attempt to solve this problem gracefully. This time, the
@@ -501,7 +501,7 @@ namespace qAlgorithms
     int pruneConflictingRegs(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
-        const std::vector<unsigned int> *df_cum)
+        const unsigned int *const df_cum)
     {
         // regressions start out valid and sorted by scale, and position within scales
         // S1R1 S1R2 S1 R3 S1 Rn | S2R1 S2R2 S2Rn | SnRn
@@ -553,7 +553,7 @@ namespace qAlgorithms
             // @todo could it be better to decide based on something else, since the range
             // is not adjusted afterward?
             Range_i newRange = {compReg->regSpan.startIdx, reg->regSpan.endIdx};
-            size_t df = sumOfCumulative(df_cum->data(), &newRange) - 4;
+            size_t df = sumOfCumulative(df_cum, &newRange) - 4;
 
             double mse_reg = calcMSE_exp(&reg->coeffs,
                                          intensities,
@@ -754,7 +754,7 @@ namespace qAlgorithms
     int resolveScaleConflicts(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
-        const std::vector<unsigned int> *df_cum)
+        const unsigned int *const df_cum)
     {
         // this function takes in the output of the previous function and then checks which regressions
         // should be preferred. It is important that comparisons are made in ascending scale order so that
@@ -829,7 +829,7 @@ namespace qAlgorithms
                 Range_i commonRange = {
                     min(lowerReg->regSpan.startIdx, upperReg->regSpan.startIdx),
                     max(lowerReg->regSpan.endIdx, upperReg->regSpan.endIdx)};
-                size_t df = sumOfCumulative(df_cum->data(), &commonRange) - 4; // this also applies for features
+                size_t df = sumOfCumulative(df_cum, &commonRange) - 4; // this also applies for features
 
                 double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df);
                 double mseLower = calcMSE_exp(&lowerReg->coeffs, intensities, &commonRange, df);
@@ -858,7 +858,7 @@ namespace qAlgorithms
                 Range_i commonRange = {
                     min(lowerRegS->regSpan.startIdx, upperReg->regSpan.startIdx),
                     max(lowerRegE->regSpan.endIdx, upperReg->regSpan.endIdx)};
-                size_t df = sumOfCumulative(df_cum->data(), &commonRange);
+                size_t df = sumOfCumulative(df_cum, &commonRange);
 
                 double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df - 4);
 
@@ -908,7 +908,7 @@ namespace qAlgorithms
     // --------------- old functions ---------------- //
     void mergeRegsInScale(
         const float *intensities,
-        const std::vector<unsigned int> *df_cum,
+        const unsigned int *const df_cum,
         std::vector<RegressionGauss> *validRegsTmp,
         std::vector<RegressionGauss> *validRegressions)
     {
@@ -949,7 +949,7 @@ namespace qAlgorithms
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
                         std::vector<RegressionGauss> *validRegsTmp,
                         const float *intensities,
-                        const std::vector<unsigned int> *degreesOfFreedom_cum)
+                        const unsigned int *const degreesOfFreedom_cum)
     {
         /*
             Grouping:
@@ -1024,7 +1024,7 @@ namespace qAlgorithms
     RegPair findBestRegression(
         const float *intensities,
         const std::vector<RegressionGauss> *regressions,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        const unsigned int *const degreesOfFreedom_cum,
         const Range_i regSpan)
     {
         double best_mse = INFINITY;
@@ -1041,7 +1041,7 @@ namespace qAlgorithms
         }
 
         Range_i newRange = {left_limit, right_limit};
-        double df_sum = sumOfCumulative(degreesOfFreedom_cum->data(), &newRange);
+        double df_sum = sumOfCumulative(degreesOfFreedom_cum, &newRange);
         df_sum -= 4; // four coefficients
         assert(df_sum > 0);
 
@@ -1241,16 +1241,10 @@ namespace qAlgorithms
                 product_sum_b2 += scale_sqr * leftVal;
                 product_sum_b3 += scale_sqr * rightVal;
 
-                const double *inv = INV_ARRAY.data() + scale * 6;
-                const double inv_A = inv[0];
-                const double inv_B = inv[1];
-                const double inv_C = inv[2];
-                const double inv_D = inv[3];
-                const double inv_E = inv[4];
-                const double inv_F = inv[5];
+                const MatInverse inv = INV_ARRAY[scale];
 
-                const double inv_B_b0 = inv_B * product_sum_b0;
-                const double inv_D_b1 = inv_D * product_sum_b1;
+                const double inv_B_b0 = inv.B * product_sum_b0;
+                const double inv_D_b1 = inv.D * product_sum_b1;
 
                 // access is determined by scale and x0.
                 // scale 2: idx is x0 - scale
@@ -1261,10 +1255,10 @@ namespace qAlgorithms
                 const size_t access = offset_front + offset_prev;
                 assert(access < totalRegs);
 #define current (*coeffs)[access]
-                current.b0 = inv_A * product_sum_b0 + inv_B * (product_sum_b2 + product_sum_b3);
-                current.b1 = inv_C * product_sum_b1 + inv_D * (product_sum_b2 - product_sum_b3);
-                current.b2 = inv_B_b0 + inv_D_b1 + inv_E * product_sum_b2 + inv_F * product_sum_b3;
-                current.b3 = inv_B_b0 - inv_D_b1 + inv_F * product_sum_b2 + inv_E * product_sum_b3;
+                current.b0 = inv.A * product_sum_b0 + inv.B * (product_sum_b2 + product_sum_b3);
+                current.b1 = inv.C * product_sum_b1 + inv.D * (product_sum_b2 - product_sum_b3);
+                current.b2 = inv_B_b0 + inv_D_b1 + inv.E * product_sum_b2 + inv.F * product_sum_b3;
+                current.b3 = inv_B_b0 - inv_D_b1 + inv.F * product_sum_b2 + inv.E * product_sum_b3;
                 current.scale = scale;
                 current.x0 = x0;
 #undef current
@@ -1976,8 +1970,8 @@ namespace qAlgorithms
     {
         assert(mse > 0);
         // inverseMatrix_2_2 is at position 4 of initialize()
-        size_t access = coeffs->scale * 6 + 4;
-        double divisor = std::sqrt(INV_ARRAY[access] * mse);
+        const double inv_E = INV_ARRAY[coeffs->scale].E;
+        double divisor = std::sqrt(inv_E * mse);
         double abs2 = std::abs(coeffs->b2);
         double abs3 = std::abs(coeffs->b3);
         double tValue = abs2 > abs3 ? abs2 : abs3;
@@ -2241,13 +2235,13 @@ namespace qAlgorithms
     {
         assert(mse > 0);
         // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation
-        const double *inv = INV_ARRAY.data() + scale * 6;
-        double vecMatrxTranspose = J[0] * J[0] * inv[0] +
-                                   J[1] * J[1] * inv[2] +
-                                   (J[2] * J[2] + J[3] * J[3]) * inv[4] +
-                                   2 * (J[2] * J[3] * inv[5] +
-                                        J[0] * (J[1] + J[3]) * inv[1] +
-                                        J[1] * (J[2] - J[3]) * inv[3]);
+        const MatInverse inv = INV_ARRAY[scale];
+        double vecMatrxTranspose = J[0] * J[0] * inv.A +
+                                   J[1] * J[1] * inv.C +
+                                   (J[2] * J[2] + J[3] * J[3]) * inv.E +
+                                   2 * (J[2] * J[3] * inv.F +
+                                        J[0] * (J[1] + J[3]) * inv.B +
+                                        J[1] * (J[2] - J[3]) * inv.D);
         double uncertainty = std::sqrt(mse * vecMatrxTranspose);
         return uncertainty;
     }
@@ -2255,13 +2249,13 @@ namespace qAlgorithms
     double matProductReg(const double J[4], const size_t scale)
     {
         // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation
-        const double *inv = INV_ARRAY.data() + scale * 6;
-        double vecMatrxTranspose = J[0] * J[0] * inv[0] +
-                                   J[1] * J[1] * inv[2] +
-                                   (J[2] * J[2] + J[3] * J[3]) * inv[4] +
-                                   2 * (J[2] * J[3] * inv[5] +
-                                        J[0] * (J[1] + J[3]) * inv[1] +
-                                        J[1] * (J[2] - J[3]) * inv[3]);
+        const MatInverse inv = INV_ARRAY[scale];
+        double vecMatrxTranspose = J[0] * J[0] * inv.A +
+                                   J[1] * J[1] * inv.C +
+                                   (J[2] * J[2] + J[3] * J[3]) * inv.E +
+                                   2 * (J[2] * J[3] * inv.F +
+                                        J[0] * (J[1] + J[3]) * inv.B +
+                                        J[1] * (J[2] - J[3]) * inv.D);
         return vecMatrxTranspose;
     }
 
@@ -2414,10 +2408,10 @@ namespace qAlgorithms
             runningRegression(
                 currentEIC.ints_area.data(),
                 &logIntensity,
-                &currentEIC.df,
-                &validRegressions,
+                currentEIC.df.data(),
                 currentEIC.ints_area.size(),
-                maxScale);
+                maxScale,
+                &validRegressions);
 
             if (!validRegressions.empty())
             {

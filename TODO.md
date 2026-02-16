@@ -29,12 +29,13 @@ could be moved into a more generic library for mass spectra processing.
 * add build targets for x86 / arm linux and windows with / without AVX512 support. AVX2 can probably be assumed to exist.
 * ensure uniform terminology throughout the codebase (keep a record of correct terms somewhere?)
 * remove the RT transform mess currently implemented in favour of the regression-local delta_x estimation introduced in the retransformPeaks function
-* Optimisation: a lot of time is spent computing exponentials. Identify where these are performacne-
+* Optimisation: a lot of time is spent computing exponentials. Identify where these are performance-
 critical and check if they can be replaced with a less accurate estimation, ex. https://github.com/nadavrot/fast_log
 * Cleanup: Large parts of the code just pass array pointers downwards, make that part of the code nicer using
 scratch spaces or similar techniques of avoiding a lot of malloc/free
 * Refactoring: check if special functions as implemented here (http://ab-initio.mit.edu/faddeeva/) are faster 
 without being less accurate and replace the currently used slow functions if possible
+* use the PeakFit struct and generic additional data instead of having two separate peak output models for centroids and features 
 
 ## Expansion
 Additional functionality of the core library that should be added at some point.
@@ -78,7 +79,9 @@ The goal of this is to describe correctness based on input data for a generic pe
 ## PINTS
 Todos related to the Pipelines In NTS initiative.
 
-* Authorship tool - input names / classifiers of the programs used and get a bibtex file of the complete relevant references
+* Authorship tool - input names / classifiers of the programs used and get a bibtex file of the complete 
+relevant references. This sould be similar to the 'citation()' function in R, but have it open a pop-up
+window with a "click to copy to clipboard" button. CLI only suffices for a proof-of-concept.
 * (related) central catalog of existing software tools for NTS
 * Output feature list into a standardised database
 

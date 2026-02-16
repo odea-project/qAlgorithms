@@ -31,7 +31,6 @@ int main()
     {
         std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
         std::vector<float> mz = {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877};
-        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8};
         ProfileBlock block = {
             intensity.data(),
             mz.data(),
@@ -44,16 +43,15 @@ int main()
         runningRegression(
             block.intensity,
             &logIntensity,
-            &df,
-            &validRegressions,
+            nullptr,
             block.length,
-            maxScale);
+            maxScale,
+            &validRegressions);
         assert(validRegressions.size() == 1, "Failed to find representative centroid peak 1");
     }
     {
         std::vector<float> intensity = {1308.43738, 8625.85156, 29830.793, 55325.1523, 79094, 68921.2969, 41931.5977, 17812.5977, 5546.17139, 1343.45618};
         std::vector<float> mz = {};
-        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         ProfileBlock block = {
             intensity.data(),
             mz.data(),
@@ -66,16 +64,15 @@ int main()
         runningRegression(
             block.intensity,
             &logIntensity,
-            &df,
-            &validRegressions,
+            nullptr,
             block.length,
-            maxScale);
+            maxScale,
+            &validRegressions);
         assert(validRegressions.size() == 1, "Failed to find representative centroid peak 2");
     }
     {
         std::vector<float> intensity = {2841.0835, 6436.08984, 14330.1494, 26352.5996, 29525.8105, 20583.4023, 13286.2842, 23209.8262, 53549.1562, 85892.2109, 92988.0469, 61581.0977, 29610.7812, 4705.82324};
         std::vector<float> mz = {};
-        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
         ProfileBlock block = {
             intensity.data(),
             mz.data(),
@@ -88,16 +85,15 @@ int main()
         runningRegression(
             block.intensity,
             &logIntensity,
-            &df,
-            &validRegressions,
+            nullptr,
             block.length,
-            maxScale);
+            maxScale,
+            &validRegressions);
         assert(validRegressions.size() == 2, "Failed to find representative centroid peaks in pair system 1");
     }
     {
         std::vector<float> intensity = {882.300964, 3681.37842, 10451.9082, 18054.3828, 24405.959, 20502.377, 12295.1006, 4777.3667, 985.008301, 258.505646, 1578.77429, 4576.50537, 7863.09326, 8823.82227, 6399.12842, 3314.36108, 837.389709};
         std::vector<float> mz = {};
-        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
         ProfileBlock block = {
             intensity.data(),
             mz.data(),
@@ -110,10 +106,10 @@ int main()
         runningRegression(
             block.intensity,
             &logIntensity,
-            &df,
-            &validRegressions,
+            nullptr,
             block.length,
-            maxScale);
+            maxScale,
+            &validRegressions);
         assert(validRegressions.size() == 2, "Failed to find representative centroid peaks in pair system 2");
     }
 

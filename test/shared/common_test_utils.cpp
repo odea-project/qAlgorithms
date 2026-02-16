@@ -81,6 +81,11 @@ void printVec_f(const std::vector<float> *vec, const char *vecName)
     printf("  | length: %zu\n", vec->size());
 }
 
+double gauss_rand(const double mean, const double sdev)
+{
+    assert(sdev > DBL_EPSILON, "sdev < 0 (%f)", sdev);
+}
+
 #if 0
 /* Generate random numbers with mean mean, standard deviation std_dev, */
 /* with a Normal (Gaussian) distribution.                              */

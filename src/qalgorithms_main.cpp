@@ -292,11 +292,11 @@ int main(int argc, char *argv[])
             runningRegression(
                 block.intensity,
                 &logIntensity,
-                &df,
-                &validRegressions,
+                nullptr,
                 length,
-                maxScale);
-            assert(failcount < 1000);
+                maxScale,
+                &validRegressions);
+            assert(failcount != 10); // manually turn this into an endless loop by setting failcount > 10
             if (validRegressions.empty())
                 continue;
 
