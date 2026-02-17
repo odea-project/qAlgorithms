@@ -144,12 +144,14 @@ void test_quadraticSolve()
     assert(diff_r < DBL_EPSILON, "x_l differs too strongly (%f)", diff_r);
 }
 
-void test_normalDist()
+void test_normalDist(int x)
 {
-    for (size_t i = 0; i < 200; i++)
+    printf("r = c(");
+    for (int i = 0; i < x - 1; i++)
     {
         printf("%f,", gauss_rand(0, 1));
     }
+    printf("%f)", gauss_rand(0, 1));
 }
 
 int main()
@@ -163,5 +165,5 @@ int main()
     test_linear_solve();
     // test_exp_approx();
     test_quadraticSolve();
-    // test_normalDist();
+    // test_normalDist(50000);
 }

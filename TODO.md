@@ -58,6 +58,7 @@ Additional functionality of the core library that should be added at some point.
 * add a function to calculate an exact fit using the model and the complete x axis via the pseudoinverse (fast matrix: https://gist.github.com/nadavrot/5b35d44e8ba3dd718e595e40184d03f0)
 * write output data of centroiding to mzML and other MS formats
 * add support for multithreading
+* peak parameters: theoretical plate height, FWHM
 
 ## Testing
 Any code that is not run when processing data and concerned with logical correctness of the program.

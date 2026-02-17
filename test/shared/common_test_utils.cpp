@@ -70,20 +70,41 @@ double roundTo_d(double x, size_t digits)
     return (double(rounded) / pow);
 }
 
-void printVec_f(const std::vector<float> *vec, const char *vecName)
-{
-    verify(!vec->empty());
-    printf("Vector %s:  %f", vecName, (*vec)[0]);
-    for (size_t i = 1; i < vec->size(); i++)
-    {
-        printf(", %f", (*vec)[i]);
-    }
-    printf("  | length: %zu\n", vec->size());
-}
-
+/*
+Random numbers following a gaussian distribution
+Code taken from: https://c-faq.com/lib/gaussian.html (3.)
+Method sourced from: https://www.jstor.org/stable/2027592
+*/
 double gauss_rand(const double mean, const double sdev)
 {
     assert(sdev > DBL_EPSILON, "sdev < 0 (%f)", sdev);
+
+    static double V1, V2, S;
+    static int phase = 0;
+    double X;
+
+    if (phase == 0)
+    {
+        do
+        {
+            double U1 = (double)rand() / RAND_MAX;
+            double U2 = (double)rand() / RAND_MAX;
+
+            V1 = 2 * U1 - 1;
+            V2 = 2 * U2 - 1;
+            S = V1 * V1 + V2 * V2;
+        } while (S >= 1 || S == 0);
+
+        X = V1 * sqrt(-2 * log(S) / S);
+    }
+    else
+    {
+        X = V2 * sqrt(-2 * log(S) / S);
+    }
+
+    phase = 1 - phase;
+
+    return X * sdev + mean;
 }
 
 #if 0
