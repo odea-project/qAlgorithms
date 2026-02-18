@@ -10,6 +10,19 @@ double peakVal_gauss(double x, double apex, double height, double sdev)
     return height * exp(-(x - apex) * (x - apex) / (2 * sdev * sdev));
 }
 
+double fwhm_gauss(double sdev)
+{
+    // 0.5 * height = height * exp(-(x-apex)^2 / (2 * sdev^2))
+    // 0.5 = exp(-(x-apex)^2 / (2 * sdev^2))
+    // ln(0.5) * (2 * sdev^2) = -(x-apex)^2
+    // sqrt(-ln(0.5) * 2 * sdev^2) = x - apex
+    // x = apex + sqrt(-ln(0.5) * 2 * sdev^2)
+
+    // since the gaussian peak is symmetrical, we only need the distance from the apex * 2
+    // this means that the apex is not required for knowing the FWHM
+    return 2 * sqrt(-log(0.5) * 2 * sdev * sdev);
+}
+
 // note on simulating points: it is not possible to just generate arbitrary points
 // since the core assumption of qPeaks is that all points are evenly spaced. Furthermore,
 // it only makes sense to characterise the algorithm with data where the full peak is captured.
@@ -78,6 +91,7 @@ void control_sim_gauss()
     double sdev = 2.5;
     double height = 1000;
 
+    double fwhm = fwhm_gauss(sdev);
     double area = 0; // @todo
 
     std::vector<float> xvals(length, 0);
@@ -101,10 +115,12 @@ void control_sim_gauss()
 
     float apex_p = reg.position;
     float height_p = reg.height;
+    float fwhm_p = reg.fwhm;
     // float area_p = reg.area;
 
     assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
     assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
+    assert(abs(fwhm - fwhm_p) < reg.position_uncert, "inaccurate width\n");
     // assert(abs(area - area_p) < reg.area_uncert, "inaccurate area\n");
 }
 

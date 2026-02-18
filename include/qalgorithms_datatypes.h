@@ -77,7 +77,7 @@ namespace qAlgorithms
         float position_uncert = 0;
         float height = 0;
         float height_uncert = 0;
-        float width = 0;
+        float fwhm = 0;
         float area = 0;
         float area_uncert = 0;
         float DQS = 0;

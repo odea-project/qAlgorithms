@@ -123,7 +123,7 @@ namespace qAlgorithms
             // @todo, also check for negative width where appropriate
             // the empirical peak width is generally estimated at half maximum. Our peak
             // model only has a standard deviation for the apex peak
-            peak.width = -1;
+            peak.fwhm = fullWidthHalfMax(&coeff, peak.height, delta_x);
 
             peak.DQS = 1 - erf_approx_f(regression->area_uncert / regression->area);
 
@@ -2644,5 +2644,23 @@ namespace qAlgorithms
         assert(x_l < x_r);
 
         return (x_r - x_l) * delta_x;
+    }
+
+    double FWHM_to_sdev(const double fwhm)
+    {
+        // equivalent standard deviation for a symmetrical gaussian peak
+        // for the gaussian peak, fwhm only depends on the standard deviation.
+        // this function returns the standard deviation based on that model.
+
+        // FWHM = 2 * sqrt(-log(0.5) * 2 * sdev^2)
+        // (FWHM / 2)^2 = -log(0.5) * 2 * sdev^2
+        // sdev^2 = (FWHM / 2)^2 / (-log(0.5) * 2)
+        // sdev = sqrt((FWHM / 2)^2 / (-log(0.5) * 2))
+        // sdev = (FWHM / 2) / sqrt(-log(0.5) * 2))
+        // sdev = FWHM / (sqrt(-log(0.5) * 2)) * 2)
+
+        // constexpr double divisor = sqrt(-log(0.5) * 2.0) * 2.0;
+        const double divisor = 2.354820045030949;
+        return fwhm / divisor;
     }
 }

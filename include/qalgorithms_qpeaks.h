@@ -243,6 +243,7 @@ namespace qAlgorithms
     double regExpAt(const RegCoeffs *coeff, const double x);
 
     double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x);
+    double FWHM_to_sdev(const double fwhm);
 
     // this one does not include b0
     double regExp_fac(const RegCoeffs *coeff, const double x);
