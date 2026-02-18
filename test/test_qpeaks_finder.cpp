@@ -63,6 +63,49 @@ double peakVal_EMG(double x, double apex, double height, double sdev, double tau
     return y;
 }
 
+double fwhm_EMG(double sdev, double tau)
+{
+    // z = 1/sqrt(2) * ( (x_0 - x) / s + s / t )
+    // since FWHM is position-independent, we can set x_0 = 0
+    // z = 1/sqrt(2) * (-x / s + s / t)
+    // z = x * -(1/(sqrt(2) * s)) + (1/sqrt(2) * s / t)
+    // z_1 = -(1/(sqrt(2) * s)), z_2 = (1/sqrt(2) * s / t)
+    // z == x * z_1 + z_2
+
+    // c_1 = (s/t) * sqrt(pi/2), c_2 = -1 / (2 * s^2)
+    // 0.5 * h = h * exp( x^2 * c_2 ) * c_1 * exp(z^2) * erfc(z)
+    // 0 = x^2 * c_2 + log(c_1) + z^2 + log(erfc(z)) - log(0.5)
+    // log(erfc(z)) = log(1 - erf(z)) = log(1) / log(erf(z)) == 0
+
+    // z^2 = x^2 * z_1^2 + 2 * x * z_1 * z_2 + z_2^2
+    // c_3 = log(c_1) - log(0.5) + z_2^2
+    // 0 = x^2 * c_2 + x^2 * z_1^2 + 2 * x * z_1 * z_2 + c_3
+    // z_3 = 2 * z_1 * z_2 ; c_4 = c_2 + z_1^2
+
+    // 0 = c_4 * x^2 + z_3 * x + c_3
+
+    // however, c_4 == 0 (error in calculation?)
+    // -> only one intersect with height?
+
+    // The final form is just a quadratic equation!
+    // since the function is asymmetric, we require both values for x
+
+    double c_2 = -1 / (2 * sdev * sdev);
+    double z_1 = -(1 / (sqrt(2) * sdev));
+    double c_4 = c_2 + z_1 * z_1;
+
+    double z_2 = (1 / sqrt(2) * sdev / tau);
+    double z_3 = 2 * z_1 * z_2;
+
+    double c_1 = (sdev / tau) * sqrt(M_PI_2);
+    double c_3 = log(c_1) - log(0.5) + z_2 * z_2;
+
+    double x1, x2;
+    solveQuadratic(c_4, z_3, c_3, &x1, &x2); // @todo this will fail
+
+    return x2 - x1;
+}
+
 void simulate_EMG(
     const std::vector<float> *xvals,
     double apex, double area, double sdev, double tau,
@@ -126,9 +169,6 @@ void control_sim_gauss()
 
 void control_sim_EMG()
 {
-    // initialise seed for noise generating funtions
-    srand(1234);
-
     // generate data using an exponentially modified gaussian on an equidistant x axis
     float x_start = 100;
     float x_step = 1;
@@ -137,6 +177,8 @@ void control_sim_EMG()
     double sdev = 2.5;
     double height = 1000;
     double tau = 0.1;
+
+    double fwhm = fwhm_EMG(sdev, tau);
 
     std::vector<float> xvals(length, 0);
     std::vector<float> yvals(length, 0);
@@ -159,10 +201,12 @@ void control_sim_EMG()
 
     float apex_p = reg.position;
     float height_p = reg.height;
+    float fwhm_p = reg.fwhm;
     // float area_p = reg.area;
 
     assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
     assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
+    assert(abs(fwhm - fwhm_p) < reg.position_uncert, "inaccurate width\n");
     // assert(abs(area - area_p) < reg.area_uncert, "inaccurate area\n");
 }
 
@@ -228,6 +272,9 @@ void test_singlePeak()
 
 int main()
 {
+    // initialise seed for noise generating funtions
+    srand(1234);
+
     test_singlePeak();
     control_sim_gauss();
     control_sim_EMG();
