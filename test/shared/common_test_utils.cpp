@@ -135,3 +135,51 @@ double gauss_rand(const double mean, const double sdev)
     return y;
 }
 #endif
+
+// full width at half maximum based on a sample.
+// Assumes only two points fulfill the criteria, assumes values are in order
+double fwhm_empiric(const std::vector<float> *x, const std::vector<float> *y)
+{
+    const float *y2 = y->data();
+    float max = *maxVal(y2, y->size());
+    max /= 2;
+
+    float x_l, x_r;
+    size_t i = 0;
+
+    while (i < x->size())
+    {
+        if (y->at(i) > max)
+        {
+            float x_1_1 = x->at(i - 1);
+            float x_1_2 = x->at(i);
+            float y_1_1 = y->at(i - 1);
+            float y_1_2 = y->at(i);
+
+            float frac_height = (max - y_1_1) / (y_1_2 - y_1_1); // percentage to half maximum
+            x_l = frac_height * (x_1_2 - x_1_1) + x_1_1;
+            break;
+        }
+        i += 1;
+    }
+    i += 1;
+    while (i < x->size())
+    {
+        if (y->at(i) < max)
+        {
+            float x_2_1 = x->at(i - 1);
+            float x_2_2 = x->at(i);
+            float y_2_1 = y->at(i - 1);
+            float y_2_2 = y->at(i);
+
+            float frac_height = (max - y_2_1) / (y_2_2 - y_2_1);
+            x_r = frac_height * (x_2_2 - x_2_1) + x_2_1;
+            break;
+        }
+        i += 1;
+    }
+
+    assert(x_r > x_l, "width can't be negative");
+
+    return x_r - x_l;
+}

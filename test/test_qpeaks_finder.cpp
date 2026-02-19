@@ -109,7 +109,7 @@ double fwhm_EMG(double sdev, double tau)
 
 void simulate_EMG(
     const std::vector<float> *xvals,
-    double apex, double area, double sdev, double tau,
+    double apex, double height, double sdev, double tau,
     std::vector<float> *simulated)
 {
     assert(!simulated->empty(), "wrong usage of test function\n");
@@ -119,7 +119,7 @@ void simulate_EMG(
     {
         double x = xvals->at(i);
         // @todo add the option to randomise here
-        double y = peakVal_EMG(x, apex, area, sdev, tau);
+        double y = peakVal_EMG(x, apex, height, sdev, tau);
         y = max(y, 1.0);
         simulated->at(i) += y;
     }
@@ -140,11 +140,10 @@ void control_sim_gauss()
 
     std::vector<float> xvals(length, 0);
     std::vector<float> yvals(length, 0);
-    std::vector<unsigned int> df(length, 0);
+    std::vector<unsigned int> df(0);
     for (size_t i = 0; i < length; i++)
     {
         xvals[i] = x_start + x_step * i;
-        df[i] = i + 1;
     }
 
     simulate_gauss(&xvals, apex, height, sdev, &yvals);
@@ -179,7 +178,7 @@ void control_sim_EMG()
     double height = 1000;
     double tau = 0.1;
 
-    double fwhm = fwhm_EMG(sdev, tau);
+    // double fwhm = fwhm_EMG(sdev, tau);
 
     std::vector<float> xvals(length, 0);
     std::vector<float> yvals(length, 0);
@@ -204,6 +203,19 @@ void control_sim_EMG()
     float height_p = reg.height;
     float fwhm_p = reg.fwhm;
     // float area_p = reg.area;
+
+    // empiric estimation of peak parameters
+    x_step /= 100;
+    size_t len_new = length / x_step;
+    xvals.resize(len_new);
+    yvals.resize(len_new);
+    for (size_t i = 0; i < len_new; i++)
+    {
+        xvals[i] = x_start + x_step * i;
+        yvals[i] = 0;
+    }
+    simulate_EMG(&xvals, apex, height, sdev, tau, &yvals);
+    double fwhm = fwhm_empiric(&xvals, &yvals);
 
     assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
     assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");

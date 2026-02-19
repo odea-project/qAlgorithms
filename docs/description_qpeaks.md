@@ -18,12 +18,18 @@ The final peaks are described by position, height, width and area.
 ## Processing Stages
 
 ### Stage 0: Prerequisites
-Any data that should be used with qPeaks should fulfill the following criteria:
+Any data that is used with qPeaks must fulfill the following criteria for the algorithm to function correctly:
 * The data must be present as a set of two-dimensional points
 * Expected peaks must be roughly gaussian-shaped, asymmetry can be modeled
 * The x-axis must consist of equidistant points for the width of a peak
 * All values of y must be greater than zero
 * If a relevant baseline exists, it has to be substracted before applying qPeaks
+
+The axis used for later transforms is calculated for all integer values between the
+maximum scales (-scale to +scale). For the used peak model, this results in a design
+matrix `X` with four columns. The first represents the intercept and is one (`x^0`)
+for all values. The second is the x-axis. The quadratic coefficent is only defined
+for `x < 0` for b2 and `x > 0` for b3 (`x = 0`)
 
 ### Stage 1: Data Transform
 Initially, the y-axis is log-transformed using the natural logarithm. This is so
@@ -46,7 +52,7 @@ as a constant of the algorithm. This is purely for reasons of computational prac
 theory the upper limit is `(length(x) - 1) / 2`. A convolution with the precalculated matrix
 is performed to obtain four regression coefficients describing the peak. The last two coefficents,
 b2 and b3, both describe the quadratic term. At x = 0, the peak switches from being defined as
-`exp(b2 x^2 + b1^x + b0)` to `exp(b3 x^2 + b1^x + b0)`. Regressions are stored with coefficients,
+`exp(b2 x^2 + b1 x + b0)` to `exp(b3 x^2 + b1 x + b0)`. Regressions are stored with coefficients,
 scale and position of x = 0 relative to the first element of the x-axis.
 
 Since the regression is performed on log-transformed data, the height is adjusted using the

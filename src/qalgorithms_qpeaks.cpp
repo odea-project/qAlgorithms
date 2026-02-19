@@ -145,7 +145,7 @@ namespace qAlgorithms
         {
             return -1;
         }
-        if (y_values->size() != x_values->size() || y_values->size() != degreesOfFreedom_cum->size())
+        if (y_values->size() != x_values->size())
         {
             return -2;
         }
@@ -186,11 +186,15 @@ namespace qAlgorithms
         before calling the qpeaks_find.
         */
         std::vector<float> y_log;
+
+        size_t dfSize = degreesOfFreedom_cum->size();
+        const unsigned int *df = dfSize > 0 ? degreesOfFreedom_cum->data() : nullptr;
+
         std::vector<RegressionGauss> validRegressions;
         runningRegression(
             y_values->data(),
             &y_log,
-            degreesOfFreedom_cum->data(),
+            df,
             y_values->size(),
             maxScale,
             &validRegressions);

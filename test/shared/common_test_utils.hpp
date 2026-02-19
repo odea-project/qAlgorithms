@@ -36,6 +36,10 @@ inline void default_assertion_handler(const char *assertion_as_cstring, const ch
     vfprintf(stdout, format_string, argument_list);
     va_end(argument_list);
     putchar('\n'); // the format string will not contain a newline
+    /* set breakpoint here! */
+    int a = 3;
+    __asm__("int $3");
+    a++;
     exit(1);
 }
 #define verify(condition) assert(condition, "Verify Failed")
@@ -60,3 +64,5 @@ double randRange_d(double lower, double upper, long seed = 0);
 RegCoeffs getCoeffs(double height, double position, double sd_left, double sd_right);
 
 double gauss_rand(const double mean, const double sdev);
+
+double fwhm_empiric(const std::vector<float> *x, const std::vector<float> *y);
