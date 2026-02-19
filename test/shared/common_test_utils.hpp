@@ -11,6 +11,10 @@ using namespace qAlgorithms;
 #define MAXFLOAT 3.402823466e+38F
 #endif
 
+#ifndef M_PI_2
+#define M_PI_2 1.57079632679489661923
+#endif
+
 inline void qassert(bool condition, size_t line, const char *message)
 {
     if (condition)

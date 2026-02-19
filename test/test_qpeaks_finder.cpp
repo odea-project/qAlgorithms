@@ -1,5 +1,6 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_datatypes.h"
+#include "math.h"
 
 #include "common_test_utils.hpp"
 
@@ -58,7 +59,7 @@ double peakVal_EMG(double x, double apex, double height, double sdev, double tau
     // y(x) = h * exp( -(x_0 - x)^2 / (2 * s^2) ) * (s/t) * sqrt(pi/2) * exp(z^2) * erfc(z)
 
     double z = (1 / sqrt(2)) * ((apex - x) / sdev + sdev / tau);
-    double a = height * exp(-(apex - x) * (apex - x) / (2 * sdev * sdev)) * (sdev / tau) * sqrt(M_PI / 2);
+    double a = height * exp(-(apex - x) * (apex - x) / (2 * sdev * sdev)) * (sdev / tau) * sqrt(M_PI_2);
     double y = a * exp(z * z) * erfc(z);
     return y;
 }
