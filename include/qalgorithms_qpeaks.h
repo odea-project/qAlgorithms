@@ -190,7 +190,6 @@ namespace qAlgorithms
         double *valley_position);
 
     // take a jacobian matrix as input and return the transpose at scale
-    double calcUncertainty(const double J[4], const size_t scale, const double mse);
     double matProductReg(const double J[4], const size_t scale);
 
     bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
@@ -258,6 +257,8 @@ namespace qAlgorithms
 #include <array>
 #include <math.h> // square root
 
+#include "../external/qalgorithms_matinverse.h"
+
     ///     This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
 
     ///     (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
@@ -299,72 +300,7 @@ namespace qAlgorithms
     ///     | B   B   B  -D  F  E |
 
     ///     Note that no more than seven different values are needed per scale, even for a multidimensional approach.
-
-    typedef struct
-    {
-        double A, B, C, D, E, F;
-    } MatInverse;
-
-    constexpr std::array<MatInverse, MAXSCALE + 1> initialize_new()
-    {
-        static_assert(GLOBAL_MINSCALE == 2); // everything will break if this value is changed!
-        static_assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
-
-        std::array<MatInverse, MAXSCALE + 1> invArray = {0, 0, 0, 0, 0, 0};
-
-        // XtX = transposed(Matrix X ) * Matrix X
-        // XtX_xy: x = row number; y = column number
-        double XtX_00 = 1;
-        double XtX_02 = 0;
-        double XtX_11 = 0;
-        double XtX_12 = 0;
-        double XtX_13 = 0;
-        double XtX_22 = 0;
-
-        for (size_t i = 1; i < MAXSCALE; ++i)
-        {
-            XtX_00 += 2;
-            XtX_02 += double(i * i);
-            XtX_11 = XtX_02 * 2;
-            XtX_13 += double(i * i * i);
-            XtX_12 = -XtX_13;
-            XtX_22 += double(i * i * i * i);
-
-            // decomposition matrix L, see https://en.wikipedia.org/wiki/Cholesky_decomposition
-            double L_00 = std::sqrt(XtX_00);
-            double L_11 = std::sqrt(XtX_11);
-            double L_20 = XtX_02 / L_00;
-            double L_21 = XtX_12 / L_11;
-            double L_20sq = L_20 * L_20;
-            double L_21sq = L_21 * L_21;
-            double L_22 = std::sqrt(XtX_22 - L_20sq - L_21sq);
-            double L_32 = 1 / L_22 * (-L_20sq + L_21sq);
-            double L_33 = std::sqrt(XtX_22 - L_20sq - L_21sq - L_32 * L_32);
-
-            // inverse of L
-            double inv_00 = 1 / L_00;
-            double inv_11 = 1 / L_11;
-            double inv_22 = 1 / L_22;
-            double inv_33 = 1 / L_33;
-            double inv_20 = -L_20 * inv_00 / L_22;
-            double inv_30 = -(L_20 * inv_00 + L_32 * inv_20) / L_33;
-            double inv_21 = -L_21 * inv_11 / L_22;
-            double inv_31 = -(-L_21 * inv_11 + L_32 * inv_21) / L_33;
-            double inv_32 = -L_32 * inv_22 / L_33;
-
-            MatInverse inv = {0, 0, 0, 0, 0, 0};
-            inv.A = inv_00 * inv_00 + inv_20 * inv_20 + inv_30 * inv_30; // cell: 0,0
-            inv.B = inv_22 * inv_20 + inv_32 * inv_30;                   // cell: 0,2
-            inv.C = inv_11 * inv_11 + inv_21 * inv_21 + inv_31 * inv_31; // cell: 1,1
-            inv.D = -inv_31 * inv_33;                                    // cell: 1,2
-            inv.E = inv_33 * inv_33;                                     // cell: 2,2
-            inv.F = inv_32 * inv_33;                                     // cell: 2,3
-
-            invArray[i] = inv;
-        }
-        return invArray;
-    }
-
+    // #if 0
     constexpr std::array<double, (MAXSCALE + 1) * 6> initialize()
     {
         static_assert(GLOBAL_MINSCALE == 2); // everything will break if this value is changed!
@@ -421,5 +357,6 @@ namespace qAlgorithms
         return invArray;
     }
 }
+// #endif
 
 #endif

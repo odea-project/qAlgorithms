@@ -31,6 +31,7 @@ could be moved into a more generic library for mass spectra processing.
 * remove the RT transform mess currently implemented in favour of the regression-local delta_x estimation introduced in the retransformPeaks function
 * Optimisation: a lot of time is spent computing exponentials. Identify where these are performance-
 critical and check if they can be replaced with a less accurate estimation, ex. https://github.com/nadavrot/fast_log
+* Optimisation: Ensure that all large computation chains of exponentials / logarithms are vectorised
 * Cleanup: Large parts of the code just pass array pointers downwards, make that part of the code nicer using
 scratch spaces or similar techniques of avoiding a lot of malloc/free
 * Refactoring: check if special functions as implemented here (http://ab-initio.mit.edu/faddeeva/) are faster 

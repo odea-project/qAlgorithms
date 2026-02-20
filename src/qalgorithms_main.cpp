@@ -2,7 +2,6 @@
 #include "qalgorithms_utils.h"
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_qbin.h"
-#include "qalgorithms_qpattern.h"
 #include "qalgorithms_input_output.h"
 #include "qalgorithms_read_file.h"
 // #include "qalgorithms_measurement_data.h"
@@ -296,6 +295,8 @@ int main(int argc, char *argv[])
                 length,
                 maxScale,
                 &validRegressions);
+
+            failcount += 1;
             assert(failcount != 10); // manually turn this into an endless loop by setting failcount > 10
             if (validRegressions.empty())
                 continue;
@@ -645,37 +646,6 @@ int main(int argc, char *argv[])
             }
 
             continue; // @todo ensure feature constrction works correctly before redoing componentisation
-
-#pragma region "Componentisation"
-            timeStart = std::chrono::high_resolution_clock::now();
-
-            size_t featuresInComponents = 0; // only used as a count statistic
-            const auto components = findComponents(&features, &binnedData, &retentionTimes, minCenArea, &featuresInComponents);
-
-            timeEnd = std::chrono::high_resolution_clock::now();
-            if (!userArgs.silent)
-            {
-                timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
-                std::cout << "    grouped " << featuresInComponents << " features into " << components.size() << " components in " << timePassed.count() << " s\n";
-            }
-
-            if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
-            {
-                printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
-                                 userArgs.silent, userArgs.noOverwrite);
-            }
-
-            if (userArgs.printComponentRegs)
-            {
-                printComponentRegressions(&components, userArgs.outputPath, filename,
-                                          userArgs.silent, userArgs.noOverwrite);
-            }
-
-            if (userArgs.printComponentBins)
-            {
-                printComponentCentroids(&components, &binnedData, userArgs.outputPath, filename,
-                                        userArgs.silent, userArgs.noOverwrite);
-            }
 
             if (userArgs.term == TerminateAfter::components)
             {

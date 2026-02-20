@@ -54,8 +54,6 @@ namespace qAlgorithms
 
     LoggingParams globalLogStruct;
 
-    constexpr auto INV_ARRAY = initialize_new(); // this only works with constexpr square roots, which are part of C++26
-
     size_t hardFilter(std::vector<double> *mz, std::vector<double> *intensity, double minMZ, double maxMZ)
     {
         std::vector<double> mz_new;
@@ -1245,7 +1243,7 @@ namespace qAlgorithms
                 product_sum_b2 += scale_sqr * leftVal;
                 product_sum_b3 += scale_sqr * rightVal;
 
-                const MatInverse inv = INV_ARRAY[scale];
+                const MatInverse inv = qalgo_matInverse[scale];
 
                 const double inv_B_b0 = inv.B * product_sum_b0;
                 const double inv_D_b1 = inv.D * product_sum_b1;
@@ -1974,7 +1972,7 @@ namespace qAlgorithms
     {
         assert(mse > 0);
         // inverseMatrix_2_2 is at position 4 of initialize()
-        const double inv_E = INV_ARRAY[coeffs->scale].E;
+        const double inv_E = qalgo_matInverse[coeffs->scale].E;
         double divisor = std::sqrt(inv_E * mse);
         double abs2 = std::abs(coeffs->b2);
         double abs3 = std::abs(coeffs->b3);
@@ -2235,25 +2233,10 @@ namespace qAlgorithms
 
 #pragma region "convolve regression"
 
-    double calcUncertainty(const double J[4], const size_t scale, const double mse)
-    {
-        assert(mse > 0);
-        // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation
-        const MatInverse inv = INV_ARRAY[scale];
-        double vecMatrxTranspose = J[0] * J[0] * inv.A +
-                                   J[1] * J[1] * inv.C +
-                                   (J[2] * J[2] + J[3] * J[3]) * inv.E +
-                                   2 * (J[2] * J[3] * inv.F +
-                                        J[0] * (J[1] + J[3]) * inv.B +
-                                        J[1] * (J[2] - J[3]) * inv.D);
-        double uncertainty = std::sqrt(mse * vecMatrxTranspose);
-        return uncertainty;
-    }
-
     double matProductReg(const double J[4], const size_t scale)
     {
         // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation
-        const MatInverse inv = INV_ARRAY[scale];
+        const MatInverse inv = qalgo_matInverse[scale];
         double vecMatrxTranspose = J[0] * J[0] * inv.A +
                                    J[1] * J[1] * inv.C +
                                    (J[2] * J[2] + J[3] * J[3]) * inv.E +

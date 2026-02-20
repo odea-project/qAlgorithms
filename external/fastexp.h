@@ -53,4 +53,22 @@ float fast_exp_2(float x)
     return approximate_exp_pol_around_zero(x) * EXP_TABLE[Int1 + 710] * EXP_TABLE_r256[Int2 + 256];
 }
 
+// approximation taken from here: https://stackoverflow.com/a/60121104
+float fast_exp_3(float x)
+{
+    const float c1 = 0.007972914726F;
+    const float c2 = 0.1385283768F;
+    const float c3 = 2.885390043F;
+    const float c4 = 1.442695022F;
+    x *= c4; // convert to 2^(x)
+    int intPart = (int)x;
+    x -= intPart;
+    float xx = x * x;
+    float a = x + c1 * xx * x;
+    float b = c3 + c2 * xx;
+    float res = (b + a) / (b - a);
+    reinterpret_cast<int &>(res) += intPart << 23; // res *= 2^(intPart)
+    return res;
+}
+
 #endif
