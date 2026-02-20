@@ -6,7 +6,8 @@
 #include <cassert>
 #include <cmath>
 #include <vector>
-// #include <algorithm> // sorting
+
+#include <algorithm> // sorting @todo get rid of this
 // #include <stdint.h> // max numeric vals
 
 namespace qAlgorithms

@@ -254,53 +254,53 @@ namespace qAlgorithms
 #define GLOBAL_MAXSCALE_CENTROID 8 // @todo this is a critical part of the algorithm and should not be hard-coded
 #define GLOBAL_MINSCALE 2
 
-#include <array>
-#include <math.h> // square root
+    // #include <array>
+    // #include <math.h> // square root
 
 #include "../external/qalgorithms_matinverse.h"
 
-    ///     This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
+///     This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
 
-    ///     (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
-    ///     Only six values of the final matrix are required for the simple case, see below:
+///     (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
+///     Only six values of the final matrix are required for the simple case, see below:
 
-    ///     xT is the transpose of the design matrix X.
-    ///     for scale = 2:
-    ///     xT = | 1  1  1  1  1 |    : all ones
-    ///          |-2 -1  0  1  2 |    : from -scale to scale
-    ///          | 4  1  0  0  0 |    : x^2 values for x < 0
-    ///          | 0  0  0  1  4 |    : x^2 values for x > 0
+///     xT is the transpose of the design matrix X.
+///     for scale = 2:
+///     xT = | 1  1  1  1  1 |    : all ones
+///          |-2 -1  0  1  2 |    : from -scale to scale
+///          | 4  1  0  0  0 |    : x^2 values for x < 0
+///          | 0  0  0  1  4 |    : x^2 values for x > 0
 
-    ///     It contains one additional row of all ones for every additional peak that is added into the model
+///     It contains one additional row of all ones for every additional peak that is added into the model
 
-    ///     When adding multiple peaks to the regression model, we need to adjust the inverse values.
-    ///     This will change the number of unique values in the inv_values array from 6 to 7.
-    ///     Here we use the inv_array[1] position and shift all values from that point onwards to the right.
-    ///     example for num_peaks = 2:
-    ///     original matrix with the unique values [a, b, c, d, e, f] (six unique values)
-    ///     | a  0  b  b |
-    ///     | 0  c  d -d |
-    ///     | b  d  e  f |
-    ///     | b -d  f  e |
+///     When adding multiple peaks to the regression model, we need to adjust the inverse values.
+///     This will change the number of unique values in the inv_values array from 6 to 7.
+///     Here we use the inv_array[1] position and shift all values from that point onwards to the right.
+///     example for num_peaks = 2:
+///     original matrix with the unique values [a, b, c, d, e, f] (six unique values)
+///     | a  0  b  b |
+///     | 0  c  d -d |
+///     | b  d  e  f |
+///     | b -d  f  e |
 
-    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
-    ///     | A1  A2  0  B  B |
-    ///     | A2  A1  0  B  B |
-    ///     | 0   0   C  D -D |
-    ///     | B   B   D  E  F |
-    ///     | B   B  -D  F  E |
+///     new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+///     | A1  A2  0  B  B |
+///     | A2  A1  0  B  B |
+///     | 0   0   C  D -D |
+///     | B   B   D  E  F |
+///     | B   B  -D  F  E |
 
-    ///     for num_peaks = 3:
-    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
-    ///     | A1  A2  A2  0  B  B |
-    ///     | A2  A1  A2  0  B  B |
-    ///     | A2  A2  A1  0  B  B |
-    ///     | 0   0   0   C  D -D |
-    ///     | B   B   B   D  E  F |
-    ///     | B   B   B  -D  F  E |
+///     for num_peaks = 3:
+///     new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
+///     | A1  A2  A2  0  B  B |
+///     | A2  A1  A2  0  B  B |
+///     | A2  A2  A1  0  B  B |
+///     | 0   0   0   C  D -D |
+///     | B   B   B   D  E  F |
+///     | B   B   B  -D  F  E |
 
-    ///     Note that no more than seven different values are needed per scale, even for a multidimensional approach.
-    // #if 0
+///     Note that no more than seven different values are needed per scale, even for a multidimensional approach.
+#if 0
     constexpr std::array<double, (MAXSCALE + 1) * 6> initialize()
     {
         static_assert(GLOBAL_MINSCALE == 2); // everything will break if this value is changed!
@@ -356,7 +356,7 @@ namespace qAlgorithms
         }
         return invArray;
     }
+#endif
 }
-// #endif
 
 #endif

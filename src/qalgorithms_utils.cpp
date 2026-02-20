@@ -37,11 +37,11 @@ namespace qAlgorithms
         int dfn_int = params_complex - params_simple;
         int dfd_int = numPoints - params_complex;
         size_t key = hashm(dfn_int, dfd_int);
-        if (global_fhash_5perc.contains(key) && (alpha == 0.05)) // @todo generalise for all alpha
+        if (/*global_fhash_5perc.contains(key) && */ (alpha == 0.05)) // @todo generalise for all alpha
         {
             double Fhash = global_fhash_5perc[key];
-            // assert(float(Fhash) == float(F));
-            return Fhash;
+            if (Fhash != 0)
+                return Fhash;
         }
 
         double F = cephes::F_density(dfn_int, dfd_int, alpha);

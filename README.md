@@ -49,7 +49,7 @@ Currently, no Linux releases are provided. We recommend you to clone the reposit
 and compile from source using CMake and GCC. Since we do not depend on anything besides
 zlib, GCC and cmake being installed, we consider this a reasonable policy.
 
-We require CMake 3.25 or later and GCC 15 or later.
+We require CMake 3.25 or later and only test for GCC 15 or later. The program requires features from the C++17 standard.
 
 Build `qAlgorithms` by executing these commands:
 ```sh

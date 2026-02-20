@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.12)
 project(qAlgorithms VERSION 0.2 LANGUAGES CXX)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 17)
 # set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_COMPILER "g++") # requires std::sqrt to be constexpr, either g++ or c++26 and later
 
@@ -22,7 +22,6 @@ add_compile_options(-ggdb3)
 
 # general stuff
 add_compile_options(
-    -std=c++2c                 # Use C++20 standard or later, required for sqrt in constexpr function
     -fno-math-errno            # Disables math functions setting errno, might result in speedup
     -fno-signed-zeros          # no difference between +0 and -0, might increase performance
     -march=native              # Optimize the code for the architecture of the current build machine, implies highest supported AVX
