@@ -238,8 +238,7 @@ namespace qAlgorithms
                                         const Range_i regSpan);
 
     // utility functions for calculating regression values
-    double regAt(const RegCoeffs *coeff, const double x);
-    double regExpAt(const RegCoeffs *coeff, const double x);
+    inline double regAt(const RegCoeffs *coeff, const double x);
 
     double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x);
     double FWHM_to_sdev(const double fwhm);

@@ -307,7 +307,7 @@ int main(int argc, char *argv[])
             for (int i = 0; i < 8; i++)
             {
                 int x = i - test.x0;
-                predict[i] = regExpAt(&test, x);
+                predict[i] = exp(regAt(&test, x));
             }
             double diffs[8] = {0};
             double totallErr = 0;

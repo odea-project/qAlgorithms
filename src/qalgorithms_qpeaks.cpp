@@ -491,8 +491,8 @@ namespace qAlgorithms
         double x = double(regSpan->startIdx) - idxCenter;
         double result = 0.0;
         for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
-        {
-            double pred = regExpAt(coeff, x);
+        { // this loop is vectorised at level O3
+            double pred = exp(regAt(coeff, x));
             double obs = observed[i];
             double newdiff = (obs - pred) * (obs - pred);
             result += newdiff;
@@ -2576,16 +2576,10 @@ namespace qAlgorithms
         return maxLength;
     }
 
-    double regAt(const RegCoeffs *coeff, const double x)
+    inline double regAt(const RegCoeffs *coeff, const double x)
     {
-        double b23 = x < 0 ? coeff->b2 : coeff->b3;
+        const double b23 = x < 0 ? coeff->b2 : coeff->b3;
         return coeff->b0 + (coeff->b1 + x * b23) * x;
-    }
-
-    double regExpAt(const RegCoeffs *coeff, const double x)
-    {
-        double b23 = x < 0 ? coeff->b2 : coeff->b3;
-        return exp(coeff->b0 + (coeff->b1 + x * b23) * x);
     }
 
     double regExp_fac(const RegCoeffs *coeff, const double x)

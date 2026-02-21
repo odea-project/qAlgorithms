@@ -251,12 +251,12 @@ int simulate_profile(
     double x = -double(coeff->x0);
     for (size_t i = 0; i < coeff->x0; i++)
     {
-        simulated->at(i) = regExpAt(coeff, x);
+        simulated->at(i) = exp(regAt(coeff, x));
         x += 1;
     }
     for (size_t i = coeff->x0; i < simulated->size(); i++)
     {
-        simulated->at(i) = regExpAt(coeff, x);
+        simulated->at(i) = exp(regAt(coeff, x));
         x += 1;
     }
     simulated_log->clear();
