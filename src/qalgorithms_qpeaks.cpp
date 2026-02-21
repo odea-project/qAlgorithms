@@ -126,6 +126,8 @@ namespace qAlgorithms
 
             peak.DQS = 1 - erf_approx_f(regression->area_uncert / regression->area);
 
+            peak.coeffs = regression->coeffs;
+
             result->push_back(peak);
         }
     }

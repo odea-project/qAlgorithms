@@ -66,3 +66,7 @@ RegCoeffs getCoeffs(double height, double position, double sd_left, double sd_ri
 double gauss_rand(const double mean, const double sdev);
 
 double fwhm_empiric(const std::vector<float> *x, const std::vector<float> *y);
+double area_empiric(const std::vector<float> *x, const std::vector<float> *y);
+double position_empiric(const std::vector<float> *x, const std::vector<float> *y);
+
+void print_regFit(const RegCoeffs *coeff, const std::vector<float> *x, const float delta_x);

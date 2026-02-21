@@ -73,6 +73,7 @@ namespace qAlgorithms
     // The distinction between centroid and feature is not really sensible as a core part of the project
     struct PeakFit
     {
+        RegCoeffs coeffs = {0};
         float position = 0;
         float position_uncert = 0;
         float height = 0;

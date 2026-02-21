@@ -183,3 +183,47 @@ double fwhm_empiric(const std::vector<float> *x, const std::vector<float> *y)
 
     return x_r - x_l;
 }
+
+double area_empiric(const std::vector<float> *x, const std::vector<float> *y)
+{
+    // area by triangles
+    double area = 0;
+    size_t len = x->size();
+
+    for (size_t i = 1; i < len; i++)
+    {
+        double dx = x->at(i) - x->at(i - 1);
+        double h = (y->at(i) + y->at(i - 1)) / 2;
+        area += h * dx;
+    }
+    return area;
+}
+
+double position_empiric(const std::vector<float> *x, const std::vector<float> *y)
+{
+    // assumes single maximum
+    size_t len = x->size();
+    const float *maxElem = maxVal(y->data(), len);
+    size_t idx = maxElem - y->data();
+    return x->at(idx);
+}
+
+// not sure why this doesn't work with the utils function
+double regExpAt__(const RegCoeffs *coeff, const double x)
+{
+    double b23 = x < 0 ? coeff->b2 : coeff->b3;
+    return exp(coeff->b0 + (coeff->b1 + x * b23) * x);
+}
+
+void print_regFit(const RegCoeffs *coeff, const std::vector<float> *x, const float delta_x)
+{
+    // only prints data for now
+    float x0 = x->at(coeff->x0);
+    for (size_t i = 0; i < x->size(); i++)
+    {
+        float xval = (x->at(i) - x0) / delta_x;
+        float y = regExpAt__(coeff, xval);
+        printf("%f,", y);
+    }
+    printf("\n");
+}

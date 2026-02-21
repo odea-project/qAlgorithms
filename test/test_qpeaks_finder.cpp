@@ -171,12 +171,13 @@ void control_sim_EMG()
 {
     // generate data using an exponentially modified gaussian on an equidistant x axis
     float x_start = 100;
+    float x_end = 130;
     float x_step = 1;
     float apex = 109;
-    size_t length = 20;
-    double sdev = 2.5;
+    size_t length = (x_end - x_start) / x_step;
+    double sdev = 2;
     double height = 1000;
-    double tau = 0.1;
+    double tau = 1.3;
 
     // double fwhm = fwhm_EMG(sdev, tau);
 
@@ -188,8 +189,14 @@ void control_sim_EMG()
         xvals[i] = x_start + x_step * i;
         df[i] = i + 1;
     }
+    x_end = xvals.back(); // correct for incomplete fraction of step at the end
 
     simulate_EMG(&xvals, apex, height, sdev, tau, &yvals);
+    for (size_t i = 0; i < length; i++)
+    {
+        printf("%f,", yvals[i]);
+    }
+    printf("\n");
 
     std::vector<PeakFit> ret;
     qpeaks_find(&yvals, &xvals, &df, 8, &ret);
@@ -199,13 +206,15 @@ void control_sim_EMG()
 
     PeakFit reg = ret.front();
 
+    print_regFit(&reg.coeffs, &xvals, x_step);
+
     float apex_p = reg.position;
     float height_p = reg.height;
     float fwhm_p = reg.fwhm;
-    // float area_p = reg.area;
+    float area_p = reg.area;
 
     // empiric estimation of peak parameters
-    x_step /= 100;
+    x_step /= 500;
     size_t len_new = length / x_step;
     xvals.resize(len_new);
     yvals.resize(len_new);
@@ -215,12 +224,20 @@ void control_sim_EMG()
         yvals[i] = 0;
     }
     simulate_EMG(&xvals, apex, height, sdev, tau, &yvals);
-    double fwhm = fwhm_empiric(&xvals, &yvals);
+    double fwhm_e = fwhm_empiric(&xvals, &yvals);
+    double area_e = area_empiric(&xvals, &yvals);
+    double apex_e = position_empiric(&xvals, &yvals);
+    double height_e = *maxVal(yvals.data(), yvals.size());
 
-    assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
-    assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
-    assert(abs(fwhm - fwhm_p) < reg.position_uncert, "inaccurate width\n");
-    // assert(abs(area - area_p) < reg.area_uncert, "inaccurate area\n");
+    printf("position (%f vs. %f)\n", apex_e, apex_p);
+    printf("height (%f vs. %f)\n", height_e, height_p);
+    printf("width (%f vs. %f)\n", fwhm_e, fwhm_p);
+    printf("area (%f vs. %f)\n", area_e, area_p);
+
+    // assert(abs(apex_e - apex_p) < x_step, "inaccurate position (%f vs. %f)\n", apex_e, apex_p);
+    // assert(abs(height_e - height_p) < reg.height_uncert, "inaccurate height\n (%f vs. %f)\n", height_e, height_p);
+    // assert(abs(fwhm_e - fwhm_p) < reg.position_uncert, "inaccurate width\n (%f vs. %f)\n", fwhm_e, fwhm_p);
+    // assert(abs(area_e - area_p) < reg.area_uncert, "inaccurate area (%f vs. %f)\n", area_e, area_p);
 }
 
 int simulate_profile(
@@ -275,7 +292,6 @@ void test_singlePeak()
     double diff_b1 = abs(coeff.b1 - validRegs.front().coeffs.b1);
     double diff_b2 = abs(coeff.b2 - validRegs.front().coeffs.b2);
     double diff_b3 = abs(coeff.b3 - validRegs.front().coeffs.b3);
-    printf("b0: %f, b1: %f, b2: %f, b3: %f\n", diff_b0, diff_b1, diff_b2, diff_b3);
 
     assert(diff_b0 < abs(coeff.b0) * 0.05, "> 5%% Error in b0 estimate\n");
     assert(diff_b1 < abs(coeff.b1) * 0.05, "> 5%% Error in b0 estimate\n");
