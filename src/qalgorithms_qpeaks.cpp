@@ -119,6 +119,8 @@ namespace qAlgorithms
             peak.area = regression->area * factorArea;
             peak.area_uncert = regression->area_uncert * factorArea;
 
+            volatile double area_2 = peakAreaFull(&coeff, delta_x); // <- this is even worse than the other one
+
             // @todo, also check for negative width where appropriate
             // the empirical peak width is generally estimated at half maximum. Our peak
             // model only has a standard deviation for the apex peak
@@ -2035,7 +2037,7 @@ namespace qAlgorithms
         return peakHeightSignificant;
     }
 
-    void calcPeakAreaUncert(RegressionGauss *mutateReg)
+    void calcPeakAreaUncert(RegressionGauss *mutateReg) // @todo only take coeffs as input, do not add shadow dependency on multiplication with e^b0
     {
         double b1 = mutateReg->coeffs.b1;
         double b2 = mutateReg->coeffs.b2;
@@ -2089,8 +2091,8 @@ namespace qAlgorithms
         double b2 = coeffs->b2;
         double b3 = coeffs->b3;
 
-        double _SQRTB2 = 1 / std::sqrt(std::abs(b2));
-        double _SQRTB3 = 1 / std::sqrt(std::abs(b3));
+        double _SQRTB2 = 1 / sqrt(abs(b2));
+        double _SQRTB3 = 1 / sqrt(abs(b3));
         double B1_2_B2 = b1 / 2 / b2;
         double B1_2_B3 = b1 / 2 / b3;
 
@@ -2098,7 +2100,7 @@ namespace qAlgorithms
         double x_left = -doubleScale;
         {
             double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
-            double EXP_B12 = exp_approx_d(-b1 * B1_2_B2 / 2);
+            double EXP_B12 = exp(-b1 * B1_2_B2 / 2);
 
             bool valley = b2 > 0;
             if (valley)
@@ -2134,7 +2136,7 @@ namespace qAlgorithms
         double x_right = doubleScale; // right limit due to the window
         {
             double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
-            double EXP_B13 = exp_approx_d(-b1 * B1_2_B3 / 2);
+            double EXP_B13 = exp(-b1 * B1_2_B3 / 2);
 
             bool valley = b3 > 0;
             if (valley)
@@ -2646,5 +2648,83 @@ namespace qAlgorithms
         // constexpr double divisor = sqrt(-log(0.5) * 2.0) * 2.0;
         const double divisor = 2.354820045030949;
         return fwhm / divisor;
+    }
+
+    // base function: integral e^(b0 + b1 x + b2 x^2) dx =
+    // [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ] / (2 sqrt(b2))   // source: wolfram alpha
+    // erfi(x) = i * erf(i * x)
+    // under the condition b2 < 0: sqrt(b2) = i * sqrt(-b2), where sqrt(-b2) is a real number
+    // [(real part) * i * erf( i * (real) / (i * 2 * sqrt(-b2)) ) ] / (i * 2 * sqrt(-b2))
+    // i within and outside of the error function cancel each other out: i / i = 1
+    // erf(0) = 0 ; erf(-inf) = -1 ; erf(inf) = 1
+    // assuming b2 < 0:
+    // F(-inf) = [ (...) * erf( (b1 + 2 b2 * -inf) / (> 0) ) ] / (...)
+    // b2 * -inf = +inf ; b2 * +inf = -inf
+    // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2))
+    // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 ] / (2 sqrt(-b2))
+    // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
+    // @todo implement new peak area functions
+
+    double peakHalfIntegral_L(const double b0, const double b1, const double b2)
+    {
+        if (b2 < 0)
+        {
+            const double t1 = exp(b0 - (b1 * b1) / (4 * b2));
+            const double t2 = sqrt(M_PI / -b2) / 2;
+            const double t3 = 1 - erf(b1 / (2 * sqrt(-b2))); // important: + or - depending on peak half
+            return t1 * t2 * t3;
+        }
+        else
+        {
+            assert(false);
+        }
+    }
+
+    double peakHalfIntegral_R(const double b0, const double b1, const double b3)
+    {
+        if (b3 < 0)
+        {
+            const double t1 = exp(b0 - (b1 * b1) / (4 * b3));
+            const double t2 = sqrt(M_PI / -b3) / 2;
+            const double t3 = 1 - erf(b1 / (2 * sqrt(-b3))); // important: + or - depending on peak half
+            return t1 * t2 * t3;
+        }
+        else
+        {
+            assert(false);
+        }
+    }
+
+    double peakAreaFull(const RegCoeffs *coeff, const double delta_x)
+    {
+        // for derivation of the integral, see docs directory
+        // before using the form y = exp(b0 + x * b1 + x^2 * b2),
+        // we have to account for the transformation in x the area undergoes.
+        // To revert it, x' has to be adjusted by the delta and x0.
+        // x' = (x - x0) / delta_x -> x = x' * delta_x + x0
+
+        // the full equation reads: y = exp(b0 + b1 * (x' * delta_x + x0) + b2 * (x * delta_x + x0)^2)
+        // this can be retransformed into the first used form by isolating x
+        // b2 * (x * delta_x + x0)^2 = b2 * (x^2 * delta_x^2 + 2 * x * delta_x * x0 + x0^2)
+        // == b2 * x^2 * delta_x^2 + (2 * b2 * delta_x * x0) * x + (b2 * x0^2)
+        // b1 * (x * delta_x + x0) = (b1 * delta_x) * x + (b1 * x0)
+        // x^2:  b2 * x^2 * delta_x^2
+        // x:   (2 * b2 * delta_x * x0) * x + (b1 * delta_x) * x
+        // 1:   (b2 * x0^2) + (b1 * x0) + b0
+        // these terms can be assembled into new coefficients for the retransformed equation
+        // note that this process is dependent on b2 / b3, so b1 and b0 are no longer shared
+        // for x0 = 0, the original equation is restored. The area is independent of the
+        // position of the peak -> we can assume x0 = 0
+
+        const double b0 = coeff->b0;
+        const double b1 = coeff->b1; // * delta_x;
+        const double b2 = coeff->b2; // * delta_x * delta_x;
+        const double b3 = coeff->b3; // * delta_x * delta_x;
+
+        // since there are two coefficients, the peak area must be calculated
+        // for every peak half before summing up
+        double area_L = peakHalfIntegral_L(b0, b1, b2);
+        double area_R = peakHalfIntegral_R(b0, b1, b3);
+        return area_L + area_R;
     }
 }

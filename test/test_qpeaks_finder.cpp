@@ -243,8 +243,7 @@ void control_sim_EMG()
 int simulate_profile(
     const RegCoeffs *coeff,
     std::vector<float> *simulated,
-    std::vector<float> *simulated_log,
-    std::vector<unsigned int> *df)
+    std::vector<float> *simulated_log)
 {
     assert(coeff->x0 > 1, "error");
 
@@ -260,11 +259,9 @@ int simulate_profile(
         x += 1;
     }
     simulated_log->clear();
-    df->clear();
     for (size_t i = 0; i < simulated->size(); i++)
     {
         simulated_log->push_back(log(simulated->at(i)));
-        df->push_back(i + 1);
     };
     return 0;
 }
@@ -280,9 +277,8 @@ void test_singlePeak()
     std::vector<float> simulated;
     simulated.resize(11);
     std::vector<float> simulated_log;
-    std::vector<unsigned int> df;
 
-    simulate_profile(&coeff, &simulated, &simulated_log, &df);
+    simulate_profile(&coeff, &simulated, &simulated_log);
 
     std::vector<RegressionGauss> validRegs;
     runningRegression(simulated.data(), &simulated_log, nullptr, simulated.size(), 5, &validRegs);
@@ -299,12 +295,63 @@ void test_singlePeak()
     assert(diff_b3 < abs(coeff.b3) * 0.05, "> 5%% Error in b0 estimate\n");
 }
 
+int simulate_stepwise(
+    const RegCoeffs *coeff,
+    std::vector<float> *xvec,
+    std::vector<float> *simulated,
+    double delta_x)
+{
+    assert(coeff->x0 > 1, "error");
+
+    double x = -delta_x * coeff->x0;
+    for (size_t i = 0; i < coeff->x0; i++)
+    {
+        xvec->push_back(x);
+        simulated->at(i) = exp(regAt(coeff, x));
+        x += delta_x;
+    }
+    for (size_t i = coeff->x0; i < simulated->size(); i++)
+    {
+        xvec->push_back(x);
+        simulated->at(i) = exp(regAt(coeff, x));
+        x += delta_x;
+    }
+    return 0;
+}
+
+void test_areaPrediction()
+{
+    RegCoeffs coeff;
+    coeff.b0 = 8;
+    coeff.b1 = 0.32;
+    coeff.b2 = -0.13;
+    coeff.b3 = -0.22;
+    coeff.x0 = 500;
+
+    std::vector<float> x;
+    std::vector<float> y;
+    y.resize(1000);
+
+    simulate_stepwise(&coeff, &x, &y, 0.01);
+    double area_e = area_empiric(&x, &y);
+    double area_t = peakAreaFull(&coeff, 0);
+
+    RegressionGauss testreg;
+    testreg.coeffs = coeff;
+    calcPeakAreaUncert(&testreg);
+    double area_c = testreg.area * exp(coeff.b0);
+
+    assert(abs(area_e - area_c) < 0.01, "Incorrect area calculation\n");
+    assert(abs(area_e - area_t) < 0.01, "Incorrect area calculation\n");
+}
+
 int main()
 {
     // initialise seed for noise generating funtions
     srand(1234);
 
     test_singlePeak();
+    test_areaPrediction();
     control_sim_gauss();
     control_sim_EMG();
 

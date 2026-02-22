@@ -248,6 +248,8 @@ namespace qAlgorithms
 
     double medianVec(const std::vector<float> *vec);
 
+    double peakAreaFull(const RegCoeffs *coeff, const double delta_x);
+
     // ### pre-calculate the regression matrix ### //
 #define MAXSCALE 63
 #define GLOBAL_MAXSCALE_CENTROID 8 // @todo this is a critical part of the algorithm and should not be hard-coded
