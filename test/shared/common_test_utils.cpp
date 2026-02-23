@@ -219,6 +219,7 @@ double regExpAt__(const RegCoeffs *coeff, const double x)
 void print_regFit(const RegCoeffs *coeff, const std::vector<float> *x, const float delta_x)
 {
     // only prints data for now
+    printf("    Predicted values:\n");
     float x0 = x->at(coeff->x0);
     for (size_t i = 0; i < x->size(); i++)
     {

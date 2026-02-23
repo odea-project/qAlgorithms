@@ -1,6 +1,7 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_datatypes.h"
 #include "math.h"
+#include "string"
 
 #include "common_test_utils.hpp"
 
@@ -125,7 +126,6 @@ void simulate_EMG(
         double x = xvals->at(i);
         // @todo add the option to randomise here
         double y = peakVal_EMG(x, apex, height, sdev, tau);
-        y = max(y, 1.0);
         simulated->at(i) += y;
     }
 }
@@ -164,7 +164,7 @@ void control_sim_gauss()
     float apex_p = reg.position;
     float height_p = reg.height;
     float fwhm_p = reg.fwhm;
-    float area_p = reg.area;
+    // float area_p = reg.area; // wrong result
 
     float area_e = area_empiric(&xvals, &yvals);
     RegCoeffs c = reg.coeffs;
@@ -173,22 +173,29 @@ void control_sim_gauss()
     assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
     assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
     assert(abs(fwhm - fwhm_p) < reg.position_uncert, "inaccurate width\n");
-    assert(abs(area - area_p) < reg.area_uncert, "inaccurate area (%f vs. %f), empiric %f, new %f\n", area, area_p, area_e, area_c);
+    assert(abs(area - area_c) < 0.01, "inaccurate area (%f vs. %f), empiric %f\n", area, area_c, area_e);
 }
 
-void control_sim_EMG()
+struct ErrorEMG
+{
+    float r_tau;
+    float d_area_rel, d_area_abs;
+    float r_sdev, d_fwhm_rel, d_fwhm_abs;
+    float r_apex, d_apex_rel, d_apex_abs;
+    float r_height, d_height_rel, d_height_abs;
+};
+
+void control_sim_EMG(const float x_start, float x_end, ErrorEMG *in_out)
 {
     // generate data using an exponentially modified gaussian on an equidistant x axis
-    float x_start = 100;
-    float x_end = 130;
-    float x_step = 1;
-    float apex = 109;
+    // float x_start = 100;
+    // float x_end = 130;
+    float x_step = 1; // @todo this needs to be adjusted further
+    float apex = in_out->r_apex;
     size_t length = (x_end - x_start) / x_step;
-    double sdev = 2;
-    double height = 1000;
-    double tau = 1.3;
-
-    // double fwhm = fwhm_EMG(sdev, tau);
+    double sdev = in_out->r_sdev;
+    double height = in_out->r_height;
+    double tau = in_out->r_tau;
 
     std::vector<float> xvals(length, 0);
     std::vector<float> yvals(length, 0);
@@ -198,9 +205,10 @@ void control_sim_EMG()
         xvals[i] = x_start + x_step * i;
         df[i] = i + 1;
     }
-    x_end = xvals.back(); // correct for incomplete fraction of step at the end
+    x_end = xvals.back(); // correct for incomplete fraction of step at the end @todo necessary?
 
     simulate_EMG(&xvals, apex, height, sdev, tau, &yvals);
+    printf("    Observed values;\n");
     for (size_t i = 0; i < length; i++)
     {
         printf("%f,", yvals[i]);
@@ -220,7 +228,7 @@ void control_sim_EMG()
     float apex_p = reg.position;
     float height_p = reg.height;
     float fwhm_p = reg.fwhm;
-    float area_p = reg.area;
+    // float area_p = reg.area;
 
     RegCoeffs c = reg.coeffs;
     float area_c = peakArea(c.b0, c.b1, c.b2, c.b3);
@@ -241,15 +249,55 @@ void control_sim_EMG()
     double apex_e = position_empiric(&xvals, &yvals);
     double height_e = *maxVal(yvals.data(), yvals.size());
 
-    printf("position (%f vs. %f)\n", apex_e, apex_p);
-    printf("height (%f vs. %f)\n", height_e, height_p);
-    printf("width (%f vs. %f)\n", fwhm_e, fwhm_p);
-    printf("area (%f vs. %f), predict %f\n", area_e, area_p, area_c);
-
-    // assert(abs(apex_e - apex_p) < x_step, "inaccurate position (%f vs. %f)\n", apex_e, apex_p);
-    // assert(abs(height_e - height_p) < reg.height_uncert, "inaccurate height\n (%f vs. %f)\n", height_e, height_p);
-    // assert(abs(fwhm_e - fwhm_p) < reg.position_uncert, "inaccurate width\n (%f vs. %f)\n", fwhm_e, fwhm_p);
+    // assert(abs(apex_e - apex_p) < 0.01, "inaccurate position (%f vs. %f)\n", apex_e, apex_p);
+    // assert(abs(height_e - height_p) < height_e * 0.01, "inaccurate height (%f vs. %f)\n", height_e, height_p);
+    // assert(abs(fwhm_e - fwhm_p) < fwhm_e * 0.05, "inaccurate width (%f vs. %f)\n", fwhm_e, fwhm_p);
     // assert(abs(area_e - area_p) < reg.area_uncert, "inaccurate area (%f vs. %f)\n", area_e, area_p);
+
+    in_out->d_area_rel = abs(area_e - area_c) / area_c;
+    in_out->d_area_abs = abs(area_e - area_c);
+    in_out->d_fwhm_rel = abs(fwhm_e - fwhm_p) / fwhm_p;
+    in_out->d_fwhm_abs = abs(fwhm_e - fwhm_p);
+    in_out->r_apex = apex_e;
+    in_out->d_apex_rel = abs(apex_e - apex_p) / apex_p;
+    in_out->d_apex_abs = abs(apex_e - apex_p);
+    in_out->r_height = height_e;
+    in_out->d_height_rel = abs(height_e - height_p) / height;
+    in_out->d_height_abs = abs(height_e - height_p);
+}
+
+void survey_EMG()
+{
+    // print results of fitting various EMG simulations to a file
+    std::vector<ErrorEMG> testCases;
+    float x_start = 10;
+    float x_end = 50;
+    ErrorEMG test;
+    test.r_apex = 20;
+
+    std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_rel,d_apex_abs,d_height_rel,d_height_abs\n";
+
+    float heights[5] = {100, 1000, 2500, 5000, 10000};
+
+    for (size_t i = 0; i < 5; i++)
+    {
+        test.r_height = heights[i];
+        for (float sd = 0.3; sd < 3.1; sd += 0.1)
+        {
+            test.r_sdev = sd;
+            for (float tau = -2; tau < 2.1; tau += 0.1)
+            {
+                test.r_tau = tau;
+                control_sim_EMG(x_start, x_end, &test);
+                testCases.push_back(test);
+                char buffer[500];
+                sprintf(buffer, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", test.r_height, test.r_sdev, test.r_tau, test.r_apex, test.d_area_rel, test.d_area_abs,
+                        test.d_fwhm_rel, test.d_fwhm_abs, test.d_apex_rel, test.d_apex_abs, test.d_height_rel, test.d_height_abs);
+                container += buffer;
+            }
+        }
+    }
+    // @todo print container to file
 }
 
 int simulate_profile(

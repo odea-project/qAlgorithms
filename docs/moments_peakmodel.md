@@ -2,19 +2,25 @@
 
 This document provides a step-by-step analytical derivation of the expectation value (mean) for a piecewise-defined Gaussian-like distribution. The distribution is defined with different quadratic exponents on either side of the apex (mode), allowing for asymmetry. We will derive expressions for both the normalization integral and the expectation value.
 
+@todo there are some calculation errors (area calculation is wrong, other to be checked)
+
 ## Table of Contents
 
-1. [Definition of the Distribution](#definition-of-the-distribution)
-2. [Normalization Integral Z](#normalization-integral-z)
-   - [Integral for x < 0](#integral-for-x--0)
-   - [Integral for  x >= 0](#integral-for-x--0)
-   - [Combined Normalization Integral](#combined-normalization-integral)
-3. [Expectation Value mu](#expectation-value-mu)
-   - [Relationship Between mu and Z](#relationship-between-mu-and-z)
-   - [Derivative of Z with Respect to b_1](#derivative-of-z-with-respect-to-b1)
-   - [Final Expression for mu](#final-expression-for-mu)
-4. [Summary](#summary)
-5. [References](#references)
+- [Analytical Derivation of the Expectation Value for a Piecewise Gaussian-Like Distribution](#analytical-derivation-of-the-expectation-value-for-a-piecewise-gaussian-like-distribution)
+  - [Table of Contents](#table-of-contents)
+  - [Definition of the Distribution](#definition-of-the-distribution)
+  - [Normalization Integral $`Z`$](#normalization-integral-z)
+    - [Integral for $`x < 0`$](#integral-for-x--0)
+    - [Integral for $`x \geq 0`$](#integral-for-x-geq-0)
+    - [Combined Normalization Integral](#combined-normalization-integral)
+  - [Expectation Value $`\mu`$](#expectation-value-mu)
+    - [Relationship Between $`\mu`$ and $`Z`$](#relationship-between-mu-and-z)
+    - [Derivative of $`Z`$ with Respect to $`b_1`$](#derivative-of-z-with-respect-to-b_1)
+      - [Derivative of $`Z_1`$](#derivative-of-z_1)
+      - [Derivative of $`Z_2`$](#derivative-of-z_2)
+    - [Final Expression for $`\mu`$](#final-expression-for-mu)
+  - [Summary](#summary)
+  - [References](#references)
 
 ---
 
