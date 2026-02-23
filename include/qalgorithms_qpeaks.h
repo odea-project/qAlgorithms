@@ -250,6 +250,8 @@ namespace qAlgorithms
 
     double peakAreaFull(const RegCoeffs *coeff, const double delta_x);
 
+    double peakArea(const double b0, const double b1, const double b2, const double b3);
+
     // ### pre-calculate the regression matrix ### //
 #define MAXSCALE 63
 #define GLOBAL_MAXSCALE_CENTROID 8 // @todo this is a critical part of the algorithm and should not be hard-coded

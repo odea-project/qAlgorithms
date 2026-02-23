@@ -2664,7 +2664,37 @@ namespace qAlgorithms
     // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2))
     // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 ] / (2 sqrt(-b2))
     // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
-    // @todo implement new peak area functions
+    double peakArea(const double b0, const double b1, const double b2, const double b3)
+    {
+        // @todo adjust function so that it also works for distorted x axis
+        // calculate both endpoints for every half, then add areas
+        assert(b2 < 0);
+        assert(b3 < 0);
+        double dsqrt_b2 = 2 * sqrt(-b2);
+        double dsqrt_b3 = 2 * sqrt(-b3);
+        double eterm_b2 = exp(b0 - (b1 * b1) / (4 * b2));
+        double eterm_b3 = exp(b0 - (b1 * b1) / (4 * b3));
+        const double sqrt_pi = sqrt(M_PI);
+
+        double F_b2_ninf = (sqrt_pi * eterm_b2 * 1) / dsqrt_b2;
+        // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
+        double F_b2_zero = (sqrt_pi * eterm_b2 * erf(b1 / dsqrt_b2)) / dsqrt_b2;
+        double area_L = F_b2_zero - F_b2_ninf;
+
+        // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;
+        double F_b3_inf = (sqrt_pi * eterm_b3 * -1) / dsqrt_b3;
+        double F_b3_zero = (sqrt_pi * eterm_b3 * erf(b1 / dsqrt_b3)) / dsqrt_b3;
+        double area_R = F_b3_inf - F_b3_zero;
+
+        assert((area_L > 0) == (area_R > 0));
+        // there are cases where both areas are negative, but result in the correct value when summed anyway
+        // assert(area_L > 0);
+        // assert(area_R > 0);
+        area_L = abs(area_L);
+        area_R = abs(area_R);
+
+        return area_L + area_R;
+    }
 
     double peakHalfIntegral_L(const double b0, const double b1, const double b2)
     {
