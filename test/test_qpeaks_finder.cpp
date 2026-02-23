@@ -185,7 +185,7 @@ struct ErrorEMG
     float r_height, d_height_rel, d_height_abs;
 };
 
-void control_sim_EMG(const float x_start, float x_end, ErrorEMG *in_out)
+void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
 {
     // generate data using an exponentially modified gaussian on an equidistant x axis
     // float x_start = 100;
@@ -199,29 +199,59 @@ void control_sim_EMG(const float x_start, float x_end, ErrorEMG *in_out)
 
     std::vector<float> xvals(length, 0);
     std::vector<float> yvals(length, 0);
-    std::vector<unsigned int> df(length, 0);
     for (size_t i = 0; i < length; i++)
     {
         xvals[i] = x_start + x_step * i;
-        df[i] = i + 1;
     }
     x_end = xvals.back(); // correct for incomplete fraction of step at the end @todo necessary?
 
     simulate_EMG(&xvals, apex, height, sdev, tau, &yvals);
+
+    // prune values < 0.01 to prevent errors in program @todo add such a check into the algorithm
+    size_t first_nonzero = 0;
+    size_t last_nonzero = length - 1;
+    for (size_t i = 0; i < length; i++)
+    {
+        if (yvals[i] > 0.01)
+        {
+            first_nonzero = i;
+            break;
+        }
+    }
+    for (size_t i = first_nonzero; i < length; i++)
+    {
+        if (yvals[i] < 0.01)
+        {
+            last_nonzero = i;
+            break;
+        }
+    }
+    length = last_nonzero - first_nonzero;
+    for (size_t i = 0; i < length; i++)
+    {
+        size_t j = i + first_nonzero;
+        xvals[i] = xvals[j];
+        yvals[i] = yvals[j];
+    }
+    xvals.resize(length);
+    yvals.resize(length);
+    x_start = xvals.front();
+    x_end = xvals.back();
+
+    std::vector<PeakFit> ret;
+    qpeaks_find(&yvals, &xvals, nullptr, 20, &ret);
+
+    assert(ret.size() != 0, "Peak not found\n");
+    assert(ret.size() == 1, "Too many peaks found\n");
+
+    PeakFit reg = ret.front();
+
     printf("    Observed values;\n");
     for (size_t i = 0; i < length; i++)
     {
         printf("%f,", yvals[i]);
     }
     printf("\n");
-
-    std::vector<PeakFit> ret;
-    qpeaks_find(&yvals, &xvals, &df, 8, &ret);
-
-    assert(ret.size() != 0, "Peak not found\n");
-    assert(ret.size() == 1, "Too many peaks found\n");
-
-    PeakFit reg = ret.front();
 
     print_regFit(&reg.coeffs, &xvals, x_step);
 
@@ -282,10 +312,10 @@ void survey_EMG()
     for (size_t i = 0; i < 5; i++)
     {
         test.r_height = heights[i];
-        for (float sd = 0.3; sd < 3.1; sd += 0.1)
+        for (float sd = 0.7; sd < 3.1; sd += 0.1)
         {
             test.r_sdev = sd;
-            for (float tau = -2; tau < 2.1; tau += 0.1)
+            for (float tau = 0.1; tau < 2.1; tau += 0.1)
             {
                 test.r_tau = tau;
                 control_sim_EMG(x_start, x_end, &test);
@@ -297,7 +327,9 @@ void survey_EMG()
             }
         }
     }
-    // @todo print container to file
+    FILE *f = fopen("./peaktest.csv", "w");
+    fprintf(f, "%s", container.c_str());
+    fclose(f);
 }
 
 int simulate_profile(
@@ -414,7 +446,7 @@ int main()
     test_singlePeak();
     test_areaPrediction();
     control_sim_gauss();
-    control_sim_EMG();
+    survey_EMG();
 
     return 0;
 }

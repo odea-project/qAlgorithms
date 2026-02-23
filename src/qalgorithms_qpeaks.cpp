@@ -184,15 +184,23 @@ namespace qAlgorithms
         size_t maxScale = (length - 1) / 2; // apex is not included in scale -> -1
         maxScale = maxScale_in > maxScale ? maxScale : maxScale_in;
 
+        const unsigned int *df;
+        if (degreesOfFreedom_cum != nullptr)
+        {
+            size_t dfSize = degreesOfFreedom_cum->size();
+            df = dfSize > 0 ? degreesOfFreedom_cum->data() : nullptr;
+        }
+        else
+        {
+            df = nullptr;
+        }
+
         /*
         The fitting routine assumes that all present peaks have a modified gaussian base function.
         This means that no baseline exists. Baseline substraction, if appropriate, has to be performed
         before calling the qpeaks_find.
         */
         std::vector<float> y_log;
-
-        size_t dfSize = degreesOfFreedom_cum->size();
-        const unsigned int *df = dfSize > 0 ? degreesOfFreedom_cum->data() : nullptr;
 
         std::vector<RegressionGauss> validRegressions;
         runningRegression(
@@ -1328,6 +1336,7 @@ namespace qAlgorithms
         for (int i = start; i < end; i++)
         {
             double pred = predicted->at(i) * b0_exp;
+            assert(pred > 0);
             sum_predictSq += pred * pred;
             sum_predictReal += pred * intensities[i];
         }
