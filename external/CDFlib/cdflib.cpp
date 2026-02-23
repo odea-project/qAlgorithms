@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <iomanip>
-#include <cmath>
+#include <math.h>
 #include <ctime>
 #include <cstring>
 

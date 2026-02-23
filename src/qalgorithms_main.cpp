@@ -8,7 +8,8 @@
 
 // external
 #include <cassert>
-#include <cmath>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <iostream>
 #include <chrono>
 #include <fstream> // write peaks to file

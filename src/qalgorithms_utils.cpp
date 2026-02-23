@@ -1,6 +1,7 @@
 #include "qalgorithms_utils.h"
 #include <cstdint> // uint64_t
-#include <cmath>   // std::abs()
+#define _USE_MATH_DEFINES
+#include <math.h> // std::abs()
 #include <cassert>
 // #include "../external/CDFlib/cdflib.hpp"
 #include "cephes.h"

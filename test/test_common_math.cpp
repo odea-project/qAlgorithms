@@ -1,6 +1,7 @@
 #include "qalgorithms_utils.h"
 #include "common_test_utils.hpp"
-#include <cmath>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <cstdint>
 #include "../../external/fastexp.h"
 #include <chrono>
@@ -19,17 +20,17 @@ void test_min_max()
     verify(max(size_t(0), INT64_MAX) == INT64_MAX);
     verify(min(-40, -10) == -40);
     verify(max(-1, 0) == 0);
-    verify(min(MAXFLOAT, -MAXFLOAT) == -MAXFLOAT);
-    verify(max(MAXFLOAT, -MAXFLOAT) == MAXFLOAT);
+    verify(min(FLT_MAX, -FLT_MAX) == -FLT_MAX);
+    verify(max(FLT_MAX, -FLT_MAX) == FLT_MAX);
 }
 void test_array_min_max()
 { // min and max - array
     const size_t len = 5;
-    double test_d[len] = {0, 100, 200, 300, MAXFLOAT};
+    double test_d[len] = {0, 100, 200, 300, FLT_MAX};
     double *min_d = minVal(test_d, len);
     double *max_d = maxVal(test_d, len);
     verify(*min_d == 0);
-    verify(*max_d == MAXFLOAT);
+    verify(*max_d == FLT_MAX);
 }
 void test_standard_deviation()
 { // standard deviation - true values generated with wolfram alpha

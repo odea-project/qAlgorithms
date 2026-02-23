@@ -3,7 +3,8 @@
 #include "common_test_utils.hpp"
 #include "qalgorithms_qpeaks.h"
 
-#include <cmath>
+#include <math.h>
+#define _USE_MATH_DEFINES
 #include <stdint.h> // printing
 
 using namespace qAlgorithms;

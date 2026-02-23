@@ -1,7 +1,7 @@
 #ifndef EXP_TABLE_H
 #define EXP_TABLE_H
 
-#include <cmath>
+#include <math.h>
 #include "exptables.h" // @todo these could be a constexpr function
 
 // @todo also consider this method: http://spfrnd.de/posts/2018-03-10-fast-exponential.html

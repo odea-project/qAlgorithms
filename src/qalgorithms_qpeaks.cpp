@@ -4,7 +4,8 @@
 #include "qalgorithms_read_file.h" // @todo remove coupling
 
 #include <cassert>
-#include <cmath>
+#define _USE_MATH_DEFINES // relevant for windows to have math constants
+#include <math.h>
 #include <vector>
 
 #include <algorithm> // sorting @todo get rid of this

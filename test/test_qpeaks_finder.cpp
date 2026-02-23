@@ -11,6 +11,11 @@ double peakVal_gauss(double x, double apex, double height, double sdev)
     return height * exp(-(x - apex) * (x - apex) / (2 * sdev * sdev));
 }
 
+double area_gauss(double height, double sdev)
+{
+    return height * sdev * sqrt(2 * M_PI);
+}
+
 double fwhm_gauss(double sdev)
 {
     // 0.5 * height = height * exp(-(x-apex)^2 / (2 * sdev^2))
@@ -136,7 +141,7 @@ void control_sim_gauss()
     double height = 1000;
 
     double fwhm = fwhm_gauss(sdev);
-    double area = 0; // @todo
+    double area = area_gauss(height, sdev);
 
     std::vector<float> xvals(length, 0);
     std::vector<float> yvals(length, 0);
@@ -159,12 +164,12 @@ void control_sim_gauss()
     float apex_p = reg.position;
     float height_p = reg.height;
     float fwhm_p = reg.fwhm;
-    // float area_p = reg.area;
+    float area_p = reg.area;
 
     assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
     assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
     assert(abs(fwhm - fwhm_p) < reg.position_uncert, "inaccurate width\n");
-    // assert(abs(area - area_p) < reg.area_uncert, "inaccurate area\n");
+    assert(abs(area - area_p) < reg.area_uncert, "inaccurate area\n");
 }
 
 void control_sim_EMG()

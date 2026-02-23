@@ -3,7 +3,8 @@
 #define QALGORITHMS_DATATYPE_PEAK_H
 
 #include <vector>
-#include <cmath> // INFINITY and other number macros
+#define _USE_MATH_DEFINES
+#include <math.h> // INFINITY and other number macros
 #include <string>
 #include <qalgorithms_utils.h>
 

@@ -5,7 +5,8 @@
 #include <string>
 #include <algorithm> // remove duplicates from task list
 #include <assert.h>
-#include <cmath> // isnan()
+#define _USE_MATH_DEFINES
+#include <math.h> // isnan()
 
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_input_output.h"

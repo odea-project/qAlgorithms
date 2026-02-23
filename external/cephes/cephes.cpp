@@ -1,6 +1,6 @@
 #include "cephes.h"
 #include <cassert>
-#include <cmath>
+#include <math.h>
 
 namespace cephes
 {
