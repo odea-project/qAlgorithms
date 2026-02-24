@@ -42,7 +42,7 @@ add_compile_options(
     -Wnon-virtual-dtor         # Warns if a class has a non-virtual destructor
     -Wcast-align               # Warns about pointer casts that may misalign data
     -Wunused                   # Warns about unused variables or functions
-    -Wduplicated-cond          # Warns if both arguments of conditional statement are the same
+    -Wduplicated-cond          # Warns if both arguments of conditional statement are the same (int a = (bool) ? 1 : 1)
     -Wduplicated-branches      # Warn when an if-else has identical branches. This warning also warns for conditional operators
     -Wlogical-op               # Warns about suspicious logical operations like (a < 0 && a < 0)
     -Wnull-dereference         # Warns about dereferencing null pointers
@@ -70,15 +70,17 @@ set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")        # Directory containing 
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")   # Directory containing the Include Files
 
 # Set include directories
-include_directories(include "external/simdutf/" "external/cephes")  # @todo this is terrible practice. Lets not do it
+include_directories(include "external/simdutf/" "external/cephes" "external/liberfc")  # @todo this is terrible practice. Lets not do it
 
 # Source files
 # @todo we currently list external files manually. Thats not great. 
 file(GLOB_RECURSE SOURCES 
     "${SOURCE_DIR}/*.cpp" 
-    "${EXTERNAL_DIR}/CDFlib/cdflib.cpp"
+    # "${EXTERNAL_DIR}/CDFlib/cdflib.cpp"
     "${EXTERNAL_DIR}/simdutf/simdutf.cpp" 
     "${EXTERNAL_DIR}/cephes/cephes.cpp"
+    "${EXTERNAL_DIR}/liberfc/lib/*.c"
+    "${EXTERNAL_DIR}/liberfc/lib/*.cpp"
     "${EXTERNAL_DIR}/fastexp.h" "${EXTERNAL_DIR}/exptables.h")
 
 list(FILTER SOURCES EXCLUDE REGEX "qalgorithms_main\\.cpp") # Remove test/main file(s) from the library list

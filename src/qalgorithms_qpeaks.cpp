@@ -120,7 +120,7 @@ namespace qAlgorithms
             peak.area = regression->area * factorArea;
             peak.area_uncert = regression->area_uncert * factorArea;
 
-            volatile double area_2 = peakAreaFull(&coeff, delta_x); // <- this is even worse than the other one
+            volatile double area_2 = 0; // peakAreaFull(&coeff, delta_x); // <- this is even worse than the other one
 
             // @todo, also check for negative width where appropriate
             // the empirical peak width is generally estimated at half maximum. Our peak
@@ -2683,7 +2683,7 @@ namespace qAlgorithms
         double dsqrt_b3 = 2 * sqrt(-b3);
         double eterm_b2 = exp(b0 - (b1 * b1) / (4 * b2));
         double eterm_b3 = exp(b0 - (b1 * b1) / (4 * b3));
-        const double sqrt_pi = sqrt(M_PI);
+        const double sqrt_pi = 1.7724538509055158819; // sqrt(M_PI);
 
         double F_b2_ninf = (sqrt_pi * eterm_b2 * 1) / dsqrt_b2;
         // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
@@ -2705,6 +2705,7 @@ namespace qAlgorithms
         return area_L + area_R;
     }
 
+#if false
     double peakHalfIntegral_L(const double b0, const double b1, const double b2)
     {
         if (b2 < 0)
@@ -2767,4 +2768,5 @@ namespace qAlgorithms
         double area_R = peakHalfIntegral_R(b0, b1, b3);
         return area_L + area_R;
     }
+#endif
 }

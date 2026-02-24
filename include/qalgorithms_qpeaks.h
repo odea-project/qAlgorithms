@@ -248,7 +248,7 @@ namespace qAlgorithms
 
     double medianVec(const std::vector<float> *vec);
 
-    double peakAreaFull(const RegCoeffs *coeff, const double delta_x);
+    // double peakAreaFull(const RegCoeffs *coeff, const double delta_x);
 
     double peakArea(const double b0, const double b1, const double b2, const double b3);
 
@@ -256,9 +256,6 @@ namespace qAlgorithms
 #define MAXSCALE 63
 #define GLOBAL_MAXSCALE_CENTROID 8 // @todo this is a critical part of the algorithm and should not be hard-coded
 #define GLOBAL_MINSCALE 2
-
-    // #include <array>
-    // #include <math.h> // square root
 
 #include "../external/qalgorithms_matinverse.h"
 

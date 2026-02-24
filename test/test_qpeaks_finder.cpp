@@ -246,7 +246,7 @@ void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
 
     PeakFit reg = ret.front();
 
-    printf("    Observed values;\n");
+    printf("    Observed values:\n");
     for (size_t i = 0; i < length; i++)
     {
         printf("%f,", yvals[i]);
