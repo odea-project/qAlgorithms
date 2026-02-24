@@ -140,7 +140,7 @@ namespace qAlgorithms
      */
     double experfc(double x, double sign = -1.0);
 
-    double erfi(const double x);
+    double erfi_qalgo(const double x);
 
     /**
      * @brief returns the critical value for binning using the order spaces

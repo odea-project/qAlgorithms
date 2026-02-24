@@ -70,7 +70,7 @@ set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")        # Directory containing 
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")   # Directory containing the Include Files
 
 # Set include directories
-include_directories(include "external/simdutf/" "external/cephes" "external/liberfc")  # @todo this is terrible practice. Lets not do it
+include_directories(include "external/simdutf/" "external/cephes" "external/liberfc/lib")  # @todo this is terrible practice. Lets not do it
 
 # Source files
 # @todo we currently list external files manually. Thats not great. 

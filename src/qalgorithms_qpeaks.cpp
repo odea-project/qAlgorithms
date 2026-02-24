@@ -3,6 +3,8 @@
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_read_file.h" // @todo remove coupling
 
+#include "liberfc_reduced.h"
+
 #include <cassert>
 #define _USE_MATH_DEFINES // relevant for windows to have math constants
 #include <math.h>
@@ -2122,7 +2124,7 @@ namespace qAlgorithms
                 if (-B1_2_B2 < -doubleScale)
                 {
                     // valley point is outside the window, use scale as limit
-                    err_L_covered = err_L - erfi((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12;
+                    err_L_covered = err_L - erfi_qalgo((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12;
                 }
                 else
                 {
@@ -2157,7 +2159,7 @@ namespace qAlgorithms
                 if (-B1_2_B3 > doubleScale)
                 {
                     // valley point is outside the window, use scale as limit
-                    err_R_covered = erfi((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * EXP_B13 + err_R;
+                    err_R_covered = erfi_qalgo((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * EXP_B13 + err_R;
                 }
                 else
                 {
@@ -2679,6 +2681,11 @@ namespace qAlgorithms
         // calculate both endpoints for every half, then add areas
         assert(b2 < 0);
         assert(b3 < 0);
+
+        bool b2_pos = b2 > 0;
+        bool b3_pos = b3 > 0;
+        assert(!(b2_pos && b3_pos));
+
         double dsqrt_b2 = 2 * sqrt(-b2);
         double dsqrt_b3 = 2 * sqrt(-b3);
         double eterm_b2 = exp(b0 - (b1 * b1) / (4 * b2));
@@ -2687,7 +2694,8 @@ namespace qAlgorithms
 
         double F_b2_ninf = (sqrt_pi * eterm_b2 * 1) / dsqrt_b2;
         // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
-        double F_b2_zero = (sqrt_pi * eterm_b2 * erf(b1 / dsqrt_b2)) / dsqrt_b2;
+        double error = b2_pos ? erfi(b1 / dsqrt_b2) : erf(b1 / dsqrt_b2);
+        double F_b2_zero = (sqrt_pi * eterm_b2 * error) / dsqrt_b2;
         double area_L = F_b2_zero - F_b2_ninf;
 
         // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;

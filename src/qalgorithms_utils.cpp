@@ -266,7 +266,7 @@ namespace qAlgorithms
         return SQRTPI_2 * exp_approx_d(t) + sign * a * x * exp_approx_d(t * b); // @todo t is always negative, which goes against the definition given in exp_approx_d
     }
 
-    double erfi(const double x)
+    double erfi_qalgo(const double x)
     {
         /* This function uses the Dawson Integral, i.e.
         erfi(x) = 2 * Dawson * exp(x^2) / sqrt(pi)
