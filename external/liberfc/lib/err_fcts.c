@@ -50,13 +50,14 @@
  */
 
 #include <math.h>
+#define Inf INFINITY
 // #include "cerf.h"
 #include "defs.h" // defines _cerf_cmplx, NaN, C, cexp, ...
 #include "liberfc_reduced.h"
 
 const double spi2 = 0.88622692545275801364908374167057; // sqrt(pi)/2
 const double s2pi = 2.5066282746310005024157652848110;  // sqrt(2*pi)
-const double pi   = 3.14159265358979323846264338327950;
+const double pi = 3.14159265358979323846264338327950;
 
 /******************************************************************************/
 /*  Simple wrappers: cerfcx, cerfi, erfi, dawson                              */
@@ -90,7 +91,7 @@ double erfi(double x)
     // Compute erfi(x) = -i erf(ix),
     // the imaginary error function.
 
-    return x*x > 720 ? (x > 0 ? Inf : -Inf) : exp(x*x) * im_w_of_x(x);
+    return x * x > 720 ? (x > 0 ? Inf : -Inf) : exp(x * x) * im_w_of_x(x);
 }
 
 double dawson(double x)
@@ -102,14 +103,14 @@ double dawson(double x)
     return spi2 * im_w_of_x(x);
 }
 
-double re_w_of_z( double x, double y )
+double re_w_of_z(double x, double y)
 {
-    return creal( w_of_z( C(x,y) ) );
+    return creal(w_of_z(C(x, y)));
 }
 
-double im_w_of_z( double x, double y )
+double im_w_of_z(double x, double y)
 {
-    return cimag( w_of_z( C(x,y) ) );
+    return cimag(w_of_z(C(x, y)));
 }
 
 /******************************************************************************/

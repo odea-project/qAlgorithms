@@ -70,7 +70,7 @@ set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")        # Directory containing 
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")   # Directory containing the Include Files
 
 # Set include directories
-include_directories(include "external/simdutf/" "external/cephes" "external/liberfc/lib")  # @todo this is terrible practice. Lets not do it
+include_directories(include "${EXTERNAL_DIR}/simdutf/" "${EXTERNAL_DIR}/cephes" "${EXTERNAL_DIR}/liberfc/lib")  # @todo this is terrible practice. Lets not do it
 
 # Source files
 # @todo we currently list external files manually. Thats not great. 
@@ -79,9 +79,10 @@ file(GLOB_RECURSE SOURCES
     # "${EXTERNAL_DIR}/CDFlib/cdflib.cpp"
     "${EXTERNAL_DIR}/simdutf/simdutf.cpp" 
     "${EXTERNAL_DIR}/cephes/cephes.cpp"
-    "${EXTERNAL_DIR}/liberfc/lib/*.c"
-    "${EXTERNAL_DIR}/liberfc/lib/*.cpp"
-    "${EXTERNAL_DIR}/fastexp.h" "${EXTERNAL_DIR}/exptables.h")
+    "${EXTERNAL_DIR}/liberfc/*.c"
+    "${EXTERNAL_DIR}/liberfc/*h"
+    "${EXTERNAL_DIR}/fastexp.h" 
+    "${EXTERNAL_DIR}/exptables.h")
 
 list(FILTER SOURCES EXCLUDE REGEX "qalgorithms_main\\.cpp") # Remove test/main file(s) from the library list
 

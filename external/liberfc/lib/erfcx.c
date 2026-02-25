@@ -53,13 +53,12 @@
  *   man 3 erfcx
  */
 
-#include "cerf.h"
-#include "defs.h" // defines frexp2
 #include <math.h>
 #include <stdalign.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <defs.h>
 #include "auto_cheb_erfcx.c"
 
 //! Returns polynomial approximation to f(x), using auto-tabulated expansion coefficients.
@@ -75,29 +74,21 @@ static double chebApproximant(double x)
     const double xm = frexp2(x, &je); // sets xm and je
 
     // Integer arithmetics to obtain reduced coordinate t:
-    const int ip = (int)((1 << (ppapp_M+1)) * xm);   // index in octave + 2^M
+    const int ip = (int)((1 << (ppapp_M + 1)) * xm); // index in octave + 2^M
     const int lij = je * (1 << ppapp_M) + ip - loff; // index in lookup table
-    const double t = (1 << (ppapp_M+2)) * xm - (1 + 2*ip);
+    const double t = (1 << (ppapp_M + 2)) * xm - (1 + 2 * ip);
 
-    const double *const P = ppapp_Coeffs0 + lij*8;
-    const double *const Q = ppapp_Coeffs1 + lij*2;
-    return ((((((((P[0] * t
-                + P[1]) * t
-               + P[2]) * t
-              + P[3]) * t
-             + P[4]) * t
-            + P[5]) * t
-           + P[6]) * t
-          + P[7]) * t
-         + Q[0]) * t
-        + Q[1];
+    const double *const P = ppapp_Coeffs0 + lij * 8;
+    const double *const Q = ppapp_Coeffs1 + lij * 2;
+    return ((((((((P[0] * t + P[1]) * t + P[2]) * t + P[3]) * t + P[4]) * t + P[5]) * t + P[6]) * t + P[7]) * t + Q[0]) * t + Q[1];
 }
 
 /******************************************************************************/
 /*  Library function erfcx                                                    */
 /******************************************************************************/
 
-double erfcx(double x) {
+double erfcx(double x)
+{
     // Uses the following methods:
     // - asymptotic expansion for large positive x,
     // - Chebyshev polynomials for medium positive x,
@@ -107,26 +98,41 @@ double erfcx(double x) {
 
     double ax = fabs(x);
 
-    if (ax < .125) {
+    if (ax < .125)
+    {
         // Use Taylor expansion
         return ((((((((((((((+1.9841269841269841e-04) * x -
-                            5.3440090793734269e-04) * x +
-                           1.3888888888888889e-03) * x -
-                          3.4736059015927274e-03) * x +
-                         8.3333333333333332e-03) * x -
-                        1.9104832458760001e-02) * x +
-                       4.1666666666666664e-02) * x -
-                      8.5971746064419999e-02) * x +
-                     1.6666666666666666e-01) * x -
-                    3.0090111122547003e-01) * x +
-                   5.0000000000000000e-01) * x -
-                  7.5225277806367508e-01) * x +
-                 1.0000000000000000e+00) * x -
-                1.1283791670955126e+00) * x +
-            1.0000000000000000e+00;
+                            5.3440090793734269e-04) *
+                               x +
+                           1.3888888888888889e-03) *
+                              x -
+                          3.4736059015927274e-03) *
+                             x +
+                         8.3333333333333332e-03) *
+                            x -
+                        1.9104832458760001e-02) *
+                           x +
+                       4.1666666666666664e-02) *
+                          x -
+                      8.5971746064419999e-02) *
+                         x +
+                     1.6666666666666666e-01) *
+                        x -
+                    3.0090111122547003e-01) *
+                       x +
+                   5.0000000000000000e-01) *
+                      x -
+                  7.5225277806367508e-01) *
+                     x +
+                 1.0000000000000000e+00) *
+                    x -
+                1.1283791670955126e+00) *
+                   x +
+               1.0000000000000000e+00;
     }
 
-    if (x < 0) {
+    if (x < 0)
+    {
         if (x < -26.7)
             return HUGE_VAL;
         if (x < -6.1)
@@ -144,32 +150,52 @@ double erfcx(double x) {
 
         const double r = 1 / x;
 
-        if (x < 150) {
+        if (x < 150)
+        {
             if (x < 23.2)
                 return (((((((((((+3.6073371500083758e+05) * (r * r) -
-                                 3.7971970000088164e+04) * (r * r) +
-                                4.4672905882456671e+03) * (r * r) -
-                               5.9563874509942218e+02) * (r * r) +
-                              9.1636730015295726e+01) * (r * r) -
-                             1.6661223639144676e+01) * (r * r) +
-                            3.7024941420321507e+00) * (r * r) -
-                           1.0578554691520430e+00) * (r * r) +
-                          4.2314218766081724e-01) * (r * r) -
-                         2.8209479177387814e-01) * (r * r) +
-                        5.6418958354775628e-01) * r;
+                                 3.7971970000088164e+04) *
+                                    (r * r) +
+                                4.4672905882456671e+03) *
+                                   (r * r) -
+                               5.9563874509942218e+02) *
+                                  (r * r) +
+                              9.1636730015295726e+01) *
+                                 (r * r) -
+                             1.6661223639144676e+01) *
+                                (r * r) +
+                            3.7024941420321507e+00) *
+                               (r * r) -
+                           1.0578554691520430e+00) *
+                              (r * r) +
+                          4.2314218766081724e-01) *
+                             (r * r) -
+                         2.8209479177387814e-01) *
+                            (r * r) +
+                        5.6418958354775628e-01) *
+                       r;
             return (((((((+9.1636730015295726e+01) * (r * r) -
-                         1.6661223639144676e+01) * (r * r) +
-                        3.7024941420321507e+00) * (r * r) -
-                       1.0578554691520430e+00) * (r * r) +
-                      4.2314218766081724e-01) * (r * r) -
-                     2.8209479177387814e-01) * (r * r) +
-                    5.6418958354775628e-01) * r;
+                         1.6661223639144676e+01) *
+                            (r * r) +
+                        3.7024941420321507e+00) *
+                           (r * r) -
+                       1.0578554691520430e+00) *
+                          (r * r) +
+                      4.2314218766081724e-01) *
+                         (r * r) -
+                     2.8209479177387814e-01) *
+                        (r * r) +
+                    5.6418958354775628e-01) *
+                   r;
         }
         if (x < 6.9e7)
             return ((((-1.0578554691520430e+00) * (r * r) +
-                      4.2314218766081724e-01) * (r * r) -
-                     2.8209479177387814e-01) * (r * r) +
-                    5.6418958354775628e-01) * r;
+                      4.2314218766081724e-01) *
+                         (r * r) -
+                     2.8209479177387814e-01) *
+                        (r * r) +
+                    5.6418958354775628e-01) *
+                   r;
         // 1-term expansion, important to avoid overflow
         return 0.56418958354775629 * r;
     }
