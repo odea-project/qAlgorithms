@@ -155,9 +155,13 @@ namespace qAlgorithms
         {
             return -2;
         }
-        if (maxScale_in < GLOBAL_MINSCALE)
+        if (y_values->size() < 5)
         {
             return -3;
+        }
+        if (maxScale_in < GLOBAL_MINSCALE)
+        {
+            return -4;
         }
 
         /*
@@ -2679,8 +2683,8 @@ namespace qAlgorithms
     {
         // @todo adjust function so that it also works for distorted x axis
         // calculate both endpoints for every half, then add areas
-        assert(b2 < 0);
-        assert(b3 < 0);
+        // assert(b2 < 0);
+        // assert(b3 < 0);
 
         bool b2_pos = b2 > 0;
         bool b3_pos = b3 > 0;

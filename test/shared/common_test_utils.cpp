@@ -145,8 +145,8 @@ double fwhm_empiric(const std::vector<float> *x, const std::vector<float> *y)
     float max = *maxVal(y2, y->size());
     max /= 2;
 
-    float x_l, x_r;
-    size_t i = 0;
+    float x_l = x->front(), x_r = x->back();
+    size_t i = 1;
 
     while (i < x->size())
     {

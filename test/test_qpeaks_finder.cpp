@@ -67,6 +67,8 @@ double peakVal_EMG(double x, double apex, double height, double sdev, double tau
     double z = (1 / sqrt(2)) * ((apex - x) / sdev + sdev / tau);
     double a = height * exp(-(apex - x) * (apex - x) / (2 * sdev * sdev)) * (sdev / tau) * sqrt(M_PI_2);
     double y = a * exp(z * z) * erfc(z);
+    if (!(y < INFINITY))
+        return -1;
     return y;
 }
 
@@ -114,19 +116,23 @@ double fwhm_EMG(double sdev, double tau)
 }
 
 void simulate_EMG(
-    const std::vector<float> *xvals,
+    double x_start, double x_step,
     double apex, double height, double sdev, double tau,
-    std::vector<float> *simulated)
+    std::vector<float> *xvals, std::vector<float> *yvals)
 {
-    assert(!simulated->empty(), "wrong usage of test function\n");
-    assert(xvals->size() == simulated->size(), "wrong usage of test function\n");
+    assert(yvals->empty(), "wrong usage of test function\n");
+    assert(xvals->size() == yvals->size(), "wrong usage of test function\n");
 
-    for (size_t i = 0; i < simulated->size(); i++)
+    double x = x_start;
+    for (size_t i = 0; i < 100; i++)
     {
-        double x = xvals->at(i);
-        // @todo add the option to randomise here
         double y = peakVal_EMG(x, apex, height, sdev, tau);
-        simulated->at(i) += y;
+        if (y > 0.01)
+        {
+            yvals->push_back(y);
+            xvals->push_back(x);
+        }
+        x += x_step;
     }
 }
 
@@ -183,6 +189,7 @@ struct ErrorEMG
     float r_sdev, d_fwhm_rel, d_fwhm_abs;
     float r_apex, d_apex_rel, d_apex_abs;
     float r_height, d_height_rel, d_height_abs;
+    float dqs;
 };
 
 void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
@@ -227,6 +234,12 @@ void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
         }
     }
     length = last_nonzero - first_nonzero;
+    if (length < 5)
+    {
+        in_out->dqs = -2;
+        return;
+    }
+
     for (size_t i = 0; i < length; i++)
     {
         size_t j = i + first_nonzero;
@@ -241,11 +254,6 @@ void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
     std::vector<PeakFit> ret;
     qpeaks_find(&yvals, &xvals, nullptr, 20, &ret);
 
-    assert(ret.size() != 0, "Peak not found\n");
-    assert(ret.size() == 1, "Too many peaks found\n");
-
-    PeakFit reg = ret.front();
-
     printf("    Observed values:\n");
     for (size_t i = 0; i < length; i++)
     {
@@ -253,7 +261,45 @@ void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
     }
     printf("\n");
 
-    print_regFit(&reg.coeffs, &xvals, x_step);
+    if (ret.size() == 1)
+    {
+        print_regFit(&ret.front().coeffs, &xvals, x_step);
+    }
+    else
+    {
+        assert(ret.empty(), "error in test design!\n");
+        printf("    No prediction possible, regression unfit\n####\n");
+    }
+
+    float x_step2 = x_step / 500;
+    size_t len_new = length / x_step2;
+    xvals.resize(len_new);
+    yvals.resize(len_new);
+    for (size_t i = 0; i < len_new; i++)
+    {
+        xvals[i] = x_start + x_step2 * i;
+        yvals[i] = 0;
+    }
+    simulate_EMG(&xvals, apex, height, sdev, tau, &yvals);
+    double fwhm_e = fwhm_empiric(&xvals, &yvals);
+    double area_e = area_empiric(&xvals, &yvals);
+    double apex_e = position_empiric(&xvals, &yvals);
+    double height_e = *maxVal(yvals.data(), yvals.size());
+
+    in_out->r_height = height_e;
+    in_out->r_apex = apex_e;
+
+    // assert(ret.size() != 0, "Peak not found\n");
+    // this check is removed since some configurations of parameters result in no peaks
+    if (ret.empty())
+    {
+        in_out->dqs = -1;
+        return;
+    }
+
+    assert(ret.size() == 1, "Too many peaks found\n");
+
+    PeakFit reg = ret.front();
 
     float apex_p = reg.position;
     float height_p = reg.height;
@@ -264,20 +310,6 @@ void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
     float area_c = peakArea(c.b0, c.b1, c.b2, c.b3);
 
     // empiric estimation of peak parameters
-    x_step /= 500;
-    size_t len_new = length / x_step;
-    xvals.resize(len_new);
-    yvals.resize(len_new);
-    for (size_t i = 0; i < len_new; i++)
-    {
-        xvals[i] = x_start + x_step * i;
-        yvals[i] = 0;
-    }
-    simulate_EMG(&xvals, apex, height, sdev, tau, &yvals);
-    double fwhm_e = fwhm_empiric(&xvals, &yvals);
-    double area_e = area_empiric(&xvals, &yvals);
-    double apex_e = position_empiric(&xvals, &yvals);
-    double height_e = *maxVal(yvals.data(), yvals.size());
 
     // assert(abs(apex_e - apex_p) < 0.01, "inaccurate position (%f vs. %f)\n", apex_e, apex_p);
     // assert(abs(height_e - height_p) < height_e * 0.01, "inaccurate height (%f vs. %f)\n", height_e, height_p);
@@ -288,12 +320,11 @@ void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
     in_out->d_area_abs = abs(area_e - area_c);
     in_out->d_fwhm_rel = abs(fwhm_e - fwhm_p) / fwhm_p;
     in_out->d_fwhm_abs = abs(fwhm_e - fwhm_p);
-    in_out->r_apex = apex_e;
     in_out->d_apex_rel = abs(apex_e - apex_p) / apex_p;
     in_out->d_apex_abs = abs(apex_e - apex_p);
-    in_out->r_height = height_e;
     in_out->d_height_rel = abs(height_e - height_p) / height;
     in_out->d_height_abs = abs(height_e - height_p);
+    in_out->dqs = reg.DQS;
 }
 
 void survey_EMG()
@@ -302,28 +333,37 @@ void survey_EMG()
     std::vector<ErrorEMG> testCases;
     float x_start = 10;
     float x_end = 50;
-    ErrorEMG test;
+    ErrorEMG test = {-1};
     test.r_apex = 20;
 
-    std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_rel,d_apex_abs,d_height_rel,d_height_abs\n";
+    std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_rel,d_apex_abs,d_height_rel,d_height_abs,dqs\n";
 
     float heights[5] = {100, 1000, 2500, 5000, 10000};
 
     for (size_t i = 0; i < 5; i++)
     {
-        test.r_height = heights[i];
         for (float sd = 0.7; sd < 3.1; sd += 0.1)
         {
-            test.r_sdev = sd;
             for (float tau = 0.1; tau < 2.1; tau += 0.1)
             {
+                test.r_height = heights[i];
+                test.r_sdev = sd;
                 test.r_tau = tau;
                 control_sim_EMG(x_start, x_end, &test);
                 testCases.push_back(test);
                 char buffer[500];
-                sprintf(buffer, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", test.r_height, test.r_sdev, test.r_tau, test.r_apex, test.d_area_rel, test.d_area_abs,
-                        test.d_fwhm_rel, test.d_fwhm_abs, test.d_apex_rel, test.d_apex_abs, test.d_height_rel, test.d_height_abs);
+                sprintf(buffer, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", test.r_height, test.r_sdev, test.r_tau, test.r_apex, test.d_area_rel, test.d_area_abs,
+                        test.d_fwhm_rel, test.d_fwhm_abs, test.d_apex_rel, test.d_apex_abs, test.d_height_rel, test.d_height_abs, test.dqs);
                 container += buffer;
+                test.d_height_rel = -1;
+                test.d_height_abs = -1;
+                test.d_apex_rel = -1;
+                test.d_apex_abs = -1;
+                test.d_area_rel = -1;
+                test.d_area_abs = -1;
+                test.d_fwhm_rel = -1;
+                test.d_fwhm_abs = -1;
+                test.dqs = -1;
             }
         }
     }
