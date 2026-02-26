@@ -70,17 +70,18 @@ set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")        # Directory containing 
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")   # Directory containing the Include Files
 
 # Set include directories
-include_directories(include "${EXTERNAL_DIR}/simdutf/" "${EXTERNAL_DIR}/cephes" "${EXTERNAL_DIR}/liberfc/lib")  # @todo this is terrible practice. Lets not do it
+include_directories(include "${EXTERNAL_DIR}/simdutf/" "${EXTERNAL_DIR}/cephes" "${EXTERNAL_DIR}/liberfc")  # @todo this is terrible practice. Lets not do it
 
 # Source files
 # @todo we currently list external files manually. Thats not great. 
+### IMPORTANT: While using g++ to compile, all source files need to end in ".cpp". If a file ends in ###
+### ".c", it will not be compiled and cause linker errors. This does not generate an error message!  ###
 file(GLOB_RECURSE SOURCES 
     "${SOURCE_DIR}/*.cpp" 
     # "${EXTERNAL_DIR}/CDFlib/cdflib.cpp"
     "${EXTERNAL_DIR}/simdutf/simdutf.cpp" 
     "${EXTERNAL_DIR}/cephes/cephes.cpp"
-    "${EXTERNAL_DIR}/liberfc/*.c"
-    "${EXTERNAL_DIR}/liberfc/*h"
+    "${EXTERNAL_DIR}/liberfc/liberfc_reduced.cpp"
     "${EXTERNAL_DIR}/fastexp.h" 
     "${EXTERNAL_DIR}/exptables.h")
 

@@ -71,6 +71,7 @@ Any code that is not run when processing data and concerned with logical correct
 * find data input that only fails in one of the statistical plausibility tests for all these tests
 * refine assertions used in the code
 * check that apex is close to local maximum in data
+* also test against Voigt-function as it approaches the lorentzian function for peak shape
 
 ## Algorithm Characterisation
 The goal of this is to describe correctness based on input data for a generic peak detection algorithm.

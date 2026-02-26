@@ -2694,13 +2694,14 @@ namespace qAlgorithms
 
         double F_b2_ninf = (sqrt_pi * eterm_b2 * 1) / dsqrt_b2;
         // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
-        double error = b2_pos ? erfi(b1 / dsqrt_b2) : erf(b1 / dsqrt_b2);
-        double F_b2_zero = (sqrt_pi * eterm_b2 * error) / dsqrt_b2;
+        double error_b2 = b2_pos ? liberfc::erfi(b1 / dsqrt_b2) : erf(b1 / dsqrt_b2);
+        double F_b2_zero = (sqrt_pi * eterm_b2 * error_b2) / dsqrt_b2;
         double area_L = F_b2_zero - F_b2_ninf;
 
         // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;
         double F_b3_inf = (sqrt_pi * eterm_b3 * -1) / dsqrt_b3;
-        double F_b3_zero = (sqrt_pi * eterm_b3 * erf(b1 / dsqrt_b3)) / dsqrt_b3;
+        double error_b3 = b3_pos ? liberfc::erfi(b1 / dsqrt_b3) : erf(b1 / dsqrt_b3);
+        double F_b3_zero = (sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3;
         double area_R = F_b3_inf - F_b3_zero;
 
         assert((area_L > 0) == (area_R > 0));
