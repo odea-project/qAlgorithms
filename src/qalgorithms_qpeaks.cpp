@@ -2679,17 +2679,28 @@ namespace qAlgorithms
     // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2))
     // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 ] / (2 sqrt(-b2))
     // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
-    double peakArea(const double b0, const double b1, const double b2, const double b3)
+    double peakArea(const double b0, const double b1_in, const double b2_in, const double b3_in, const double delta_x)
     {
-        // @todo adjust function so that it also works for distorted x axis
-        // calculate both endpoints for every half, then add areas
-        // assert(b2 < 0);
-        // assert(b3 < 0);
+        // reasoning: the regression operates on the transformed x-axis x' = (x - x0) / delta_x.
+        // In order for the area to be correct, the position of the regression is irrelevant, so
+        // we can assume x0 = 0. This means that for the retransformation, we must use:
+        // y = exp(b0 + b1 * (x / dx) + b2 * (x / dx)^2)
+        // This can be factored out to modified coefficients (b0 is not modified).
+        double b1 = b1_in * delta_x;
+        double b2 = b2_in * delta_x * delta_x;
+        double b3 = b3_in * delta_x * delta_x;
 
-        bool b2_pos = b2 > 0;
-        bool b3_pos = b3 > 0;
+        bool b2_pos = b2_in > 0;
+        bool b3_pos = b3_in > 0;
         assert(!(b2_pos && b3_pos));
 
+        // only relevant if one of the coefficients is > 0: Calculate the valley position for a given
+        // peak. This is required during the calculation of the erfi term. Always choosing the valley
+        // will lead to distortion, but it should overall be lower than if the peak is always cut off
+        // at the end of the peak window.
+        double x = -b1 / (2 * (b2_pos ? b2 : b3));
+
+        // note: this is not factored out into a separate function since + and - inf use different terms
         double dsqrt_b2 = 2 * sqrt(-b2);
         double dsqrt_b3 = 2 * sqrt(-b3);
         double eterm_b2 = exp(b0 - (b1 * b1) / (4 * b2));
@@ -2698,13 +2709,13 @@ namespace qAlgorithms
 
         double F_b2_ninf = (sqrt_pi * eterm_b2 * 1) / dsqrt_b2;
         // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
-        double error_b2 = b2_pos ? liberfc::erfi(b1 / dsqrt_b2) : erf(b1 / dsqrt_b2);
+        double error_b2 = b2_pos ? liberfc::erfi((b1 + 2 * b2 * x) / dsqrt_b2) : erf(b1 / dsqrt_b2);
         double F_b2_zero = (sqrt_pi * eterm_b2 * error_b2) / dsqrt_b2;
         double area_L = F_b2_zero - F_b2_ninf;
 
         // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;
         double F_b3_inf = (sqrt_pi * eterm_b3 * -1) / dsqrt_b3;
-        double error_b3 = b3_pos ? liberfc::erfi(b1 / dsqrt_b3) : erf(b1 / dsqrt_b3);
+        double error_b3 = b3_pos ? liberfc::erfi((b1 + 2 * b3 * x) / dsqrt_b3) : erf(b1 / dsqrt_b3);
         double F_b3_zero = (sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3;
         double area_R = F_b3_inf - F_b3_zero;
 
