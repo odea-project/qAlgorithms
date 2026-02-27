@@ -1,0 +1,80 @@
+---
+title: "Untitled"
+author: "Daniel Höhn"
+date: '`r Sys.Date()`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(viridis)
+```
+
+```{r}
+test = read_csv("../build/peaktest.csv")
+test_fail = test[which(test$dqs == -1),]
+test =  test[which(test$dqs > 0),] |> drop_na()
+
+sum(test$closedPeak == F) # no positive coefficients when working with single peaks!
+
+
+hist(test$d_area_rel, breaks = 20)
+hist(test$d_fwhm_rel, breaks = 20)
+hist(test$d_height_rel, breaks = 20)
+hist(test$d_apex_abs, breaks = 20) # relative apex position does not make sense!
+
+# height should probably not be used for quality estimation since it is influenced
+# both by tau and sdev. 
+ggplot(data = test)+
+    aes(x = height)+
+    geom_point(aes(y = d_area_rel), colour = "red2")+
+    geom_point(aes(y = d_height_rel), colour = "orange")+
+    geom_point(aes(y = d_fwhm_rel), colour = "green2")+
+    geom_point(aes(y = d_apex_abs), colour = "blue3")
+
+ggplot(data = test)+
+    aes(x = sdev)+
+    geom_point(aes(y = d_area_rel), colour = "red2")+
+    geom_point(aes(y = d_height_rel), colour = "orange")+
+    geom_point(aes(y = d_fwhm_rel), colour = "green2")+
+    geom_point(aes(y = d_apex_abs), colour = "blue3")
+
+ggplot(data = test)+
+    aes(x = tau)+
+    geom_point(aes(y = d_area_rel), colour = "red2")+
+    geom_point(aes(y = d_height_rel), colour = "orange")+
+    geom_point(aes(y = d_fwhm_rel), colour = "green2")+
+    geom_point(aes(y = d_apex_abs), colour = "blue3")
+
+# DQS is not a useful predictor of peak quality
+ggplot(data = test)+
+    aes(x = dqs)+
+    geom_point(aes(y = d_area_rel), colour = "red2")+
+    geom_point(aes(y = d_height_rel), colour = "orange")+
+    geom_point(aes(y = d_fwhm_rel), colour = "green2")+
+    geom_point(aes(y = d_apex_abs), colour = "blue3")
+
+################################################################################
+
+ggplot(data = test) +
+    aes(sdev, tau)+
+    geom_tile(aes(fill = d_area_rel))+
+    scale_fill_viridis(discrete=FALSE, option = "turbo")
+
+ggplot(data = test) +
+    aes(sdev, tau)+
+    geom_tile(aes(fill = d_height_rel))+
+    scale_fill_viridis(discrete=FALSE, option = "turbo")
+
+ggplot(data = test) +
+    aes(sdev, tau)+
+    geom_tile(aes(fill = d_fwhm_rel))+
+    scale_fill_viridis(discrete=FALSE, option = "turbo")
+
+ggplot(data = test) +
+    aes(sdev, tau)+
+    geom_tile(aes(fill = d_apex_abs))+
+    scale_fill_viridis(discrete=FALSE, option = "turbo")
+```
+

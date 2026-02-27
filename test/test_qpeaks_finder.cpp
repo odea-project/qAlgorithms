@@ -121,17 +121,21 @@ void simulate_EMG(
     std::vector<float> *xvals, std::vector<float> *yvals)
 {
     assert(yvals->empty(), "wrong usage of test function\n");
-    assert(xvals->size() == yvals->size(), "wrong usage of test function\n");
+    assert(xvals->empty(), "wrong usage of test function\n");
 
     double x = x_start;
-    for (size_t i = 0; i < 100; i++)
+    bool peakDone = false;
+    for (size_t i = 0; i < 1000000; i++)
     {
         double y = peakVal_EMG(x, apex, height, sdev, tau);
         if (y > 0.01)
         {
             yvals->push_back(y);
             xvals->push_back(x);
+            peakDone = true;
         }
+        else if (peakDone)
+            break;
         x += x_step;
     }
 }
@@ -174,7 +178,7 @@ void control_sim_gauss()
 
     float area_e = area_empiric(&xvals, &yvals);
     RegCoeffs c = reg.coeffs;
-    float area_c = peakArea(c.b0, c.b1, c.b2, c.b3);
+    float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step);
 
     assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
     assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
@@ -187,100 +191,58 @@ struct ErrorEMG
     float r_tau;
     float d_area_rel, d_area_abs;
     float r_sdev, d_fwhm_rel, d_fwhm_abs;
-    float r_apex, d_apex_rel, d_apex_abs;
+    float r_apex, d_apex_abs;
     float r_height, d_height_rel, d_height_abs;
     float dqs;
+    bool negativeB23 = true;
 };
 
-void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
+void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
 {
     // generate data using an exponentially modified gaussian on an equidistant x axis
-    // float x_start = 100;
-    // float x_end = 130;
-    float x_step = 1; // @todo this needs to be adjusted further
+
     float apex = in_out->r_apex;
-    size_t length = (x_end - x_start) / x_step;
     double sdev = in_out->r_sdev;
     double height = in_out->r_height;
     double tau = in_out->r_tau;
 
-    std::vector<float> xvals(length, 0);
-    std::vector<float> yvals(length, 0);
-    for (size_t i = 0; i < length; i++)
-    {
-        xvals[i] = x_start + x_step * i;
-    }
-    x_end = xvals.back(); // correct for incomplete fraction of step at the end @todo necessary?
+    std::vector<float> xvals;
+    std::vector<float> yvals;
 
-    simulate_EMG(&xvals, apex, height, sdev, tau, &yvals);
+    simulate_EMG(x_start, x_step, apex, height, sdev, tau, &xvals, &yvals);
+    x_start = xvals.front();
+    float x_end = xvals.back();
+    size_t length = xvals.size();
 
-    // prune values < 0.01 to prevent errors in program @todo add such a check into the algorithm
-    size_t first_nonzero = 0;
-    size_t last_nonzero = length - 1;
-    for (size_t i = 0; i < length; i++)
-    {
-        if (yvals[i] > 0.01)
-        {
-            first_nonzero = i;
-            break;
-        }
-    }
-    for (size_t i = first_nonzero; i < length; i++)
-    {
-        if (yvals[i] < 0.01)
-        {
-            last_nonzero = i;
-            break;
-        }
-    }
-    length = last_nonzero - first_nonzero;
     if (length < 5)
     {
         in_out->dqs = -2;
         return;
     }
 
-    for (size_t i = 0; i < length; i++)
-    {
-        size_t j = i + first_nonzero;
-        xvals[i] = xvals[j];
-        yvals[i] = yvals[j];
-    }
-    xvals.resize(length);
-    yvals.resize(length);
-    x_start = xvals.front();
-    x_end = xvals.back();
-
     std::vector<PeakFit> ret;
     qpeaks_find(&yvals, &xvals, nullptr, 20, &ret);
 
-    printf("    Observed values:\n");
-    for (size_t i = 0; i < length; i++)
-    {
-        printf("%f,", yvals[i]);
-    }
-    printf("\n");
+    // printf("    Observed values:\n");
+    // for (size_t i = 0; i < length; i++)
+    // {
+    //     printf("%f,", yvals[i]);
+    // }
+    // printf("\n");
 
-    if (ret.size() == 1)
-    {
-        print_regFit(&ret.front().coeffs, &xvals, x_step);
-    }
-    else
-    {
-        assert(ret.empty(), "error in test design!\n");
-        printf("    No prediction possible, regression unfit\n####\n");
-    }
+    // if (ret.size() == 1)
+    // {
+    //     print_regFit(&ret.front().coeffs, &xvals, x_step);
+    // }
+    // else
+    // {
+    //     assert(ret.empty(), "error in test design!\n");
+    //     printf("    No prediction possible, regression unfit\n####\n");
+    // }
 
-    float x_step2 = x_step / 500;
-    size_t len_new = length / x_step2;
-    xvals.resize(len_new);
-    yvals.resize(len_new);
-    for (size_t i = 0; i < len_new; i++)
-    {
-        xvals[i] = x_start + x_step2 * i;
-        yvals[i] = 0;
-    }
-    simulate_EMG(&xvals, apex, height, sdev, tau, &yvals);
+    xvals.clear();
+    yvals.clear();
+    simulate_EMG(x_start, x_step / 500, apex, height, sdev, tau, &xvals, &yvals);
     double fwhm_e = fwhm_empiric(&xvals, &yvals);
     double area_e = area_empiric(&xvals, &yvals);
     double apex_e = position_empiric(&xvals, &yvals);
@@ -307,7 +269,10 @@ void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
     // float area_p = reg.area;
 
     RegCoeffs c = reg.coeffs;
-    float area_c = peakArea(c.b0, c.b1, c.b2, c.b3);
+
+    in_out->negativeB23 = (c.b2 < 0) && (c.b3 < 0);
+
+    float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step);
 
     // empiric estimation of peak parameters
 
@@ -320,7 +285,6 @@ void control_sim_EMG(float x_start, float x_end, ErrorEMG *in_out)
     in_out->d_area_abs = abs(area_e - area_c);
     in_out->d_fwhm_rel = abs(fwhm_e - fwhm_p) / fwhm_p;
     in_out->d_fwhm_abs = abs(fwhm_e - fwhm_p);
-    in_out->d_apex_rel = abs(apex_e - apex_p) / apex_p;
     in_out->d_apex_abs = abs(apex_e - apex_p);
     in_out->d_height_rel = abs(height_e - height_p) / height;
     in_out->d_height_abs = abs(height_e - height_p);
@@ -332,11 +296,11 @@ void survey_EMG()
     // print results of fitting various EMG simulations to a file
     std::vector<ErrorEMG> testCases;
     float x_start = 10;
-    float x_end = 50;
-    ErrorEMG test = {-1};
+    float x_step = 1;
+    ErrorEMG test = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0};
     test.r_apex = 20;
 
-    std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_rel,d_apex_abs,d_height_rel,d_height_abs,dqs\n";
+    std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_abs,d_height_rel,d_height_abs,dqs,closedPeak\n";
 
     float heights[5] = {100, 1000, 2500, 5000, 10000};
 
@@ -349,15 +313,14 @@ void survey_EMG()
                 test.r_height = heights[i];
                 test.r_sdev = sd;
                 test.r_tau = tau;
-                control_sim_EMG(x_start, x_end, &test);
+                control_sim_EMG(x_start, x_step, &test);
                 testCases.push_back(test);
                 char buffer[500];
-                sprintf(buffer, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", test.r_height, test.r_sdev, test.r_tau, test.r_apex, test.d_area_rel, test.d_area_abs,
-                        test.d_fwhm_rel, test.d_fwhm_abs, test.d_apex_rel, test.d_apex_abs, test.d_height_rel, test.d_height_abs, test.dqs);
+                sprintf(buffer, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%c\n", test.r_height, test.r_sdev, test.r_tau, test.r_apex, test.d_area_rel, test.d_area_abs,
+                        test.d_fwhm_rel, test.d_fwhm_abs, test.d_apex_abs, test.d_height_rel, test.d_height_abs, test.dqs, test.negativeB23 ? 'T' : 'F');
                 container += buffer;
                 test.d_height_rel = -1;
                 test.d_height_abs = -1;
-                test.d_apex_rel = -1;
                 test.d_apex_abs = -1;
                 test.d_area_rel = -1;
                 test.d_area_abs = -1;
@@ -464,9 +427,10 @@ void test_areaPrediction()
     std::vector<float> y;
     y.resize(1000);
 
-    simulate_stepwise(&coeff, &x, &y, 0.05);
+    float x_step = 1;
+    simulate_stepwise(&coeff, &x, &y, x_step * 0.05); // note: the sampling rate is not equal to the stride of x
     double area_e = area_empiric(&x, &y);
-    double area_t = peakArea(coeff.b0, coeff.b1, coeff.b2, coeff.b3);
+    double area_t = peakArea(coeff.b0, coeff.b1, coeff.b2, coeff.b3, x_step);
 
     // the area calculation is wrong!
     // RegressionGauss testreg;

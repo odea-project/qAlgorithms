@@ -238,7 +238,7 @@ namespace qAlgorithms
                                         const Range_i regSpan);
 
     // utility functions for calculating regression values
-    inline double regAt(const RegCoeffs *coeff, const double x);
+    double regAt(const RegCoeffs *coeff, const double x);
 
     double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x);
     double FWHM_to_sdev(const double fwhm);
@@ -250,7 +250,7 @@ namespace qAlgorithms
 
     // double peakAreaFull(const RegCoeffs *coeff, const double delta_x);
 
-    double peakArea(const double b0, const double b1, const double b2, const double b3);
+    double peakArea(const double b0, const double b1, const double b2, const double b3, const double delta_x);
 
     // ### pre-calculate the regression matrix ### //
 #define MAXSCALE 63
