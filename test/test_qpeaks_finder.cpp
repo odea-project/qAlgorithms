@@ -144,9 +144,9 @@ void control_sim_gauss()
 {
     // generate data using a standard gaussian on an equidistant x axis
     float x_start = 100;
-    float x_step = 1;
-    float apex = 110;
-    size_t length = 20;
+    float x_step = 1.1;
+    float apex = 115;
+    size_t length = 30;
     double sdev = 2.5;
     double height = 1000;
 
@@ -182,7 +182,7 @@ void control_sim_gauss()
 
     assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
     assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
-    assert(abs(fwhm - fwhm_p) < reg.position_uncert, "inaccurate width\n");
+    assert(abs(fwhm - fwhm_p) < 10e-4, "inaccurate width\n");
     assert(abs(area - area_c) < 0.01, "inaccurate area (%f vs. %f), empiric %f\n", area, area_c, area_e);
 }
 

@@ -461,4 +461,28 @@ namespace qAlgorithms
         }
         return sqrt(sdev / (n - 1));
     }
+
+    double calcJaccardIdx(float *const array1, float *const array2, const size_t length)
+    {
+        // the jaccard index is defined as the intersection of two shapes divided by the union
+        // The shapes are the two peak profiles here
+        // We assume that both share the same x-axis, in which case every point can
+        // be assumed to be at a distance of 1 to every other point.
+        double intersect = 0;
+        double union_val = 0;
+
+        // calculate area as mean(array1[1], array[2]) * x etc. -> sum(array1) - array1[0] - array1[length - 1]
+        for (size_t i = 0; i < length; i++)
+        {
+            double a1 = array1[i];
+            double a2 = array2[i];
+            intersect += min(a1, a2);
+            union_val += max(a1, a2);
+        }
+        size_t end = length - 1;
+        intersect -= (min(array1[0], array2[0]) + min(array1[end], array2[end])) / 2;
+        union_val -= (max(array1[0], array2[0]) + max(array1[end], array2[end])) / 2;
+
+        return intersect / union_val;
+    }
 }

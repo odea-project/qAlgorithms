@@ -2679,19 +2679,22 @@ namespace qAlgorithms
     // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2))
     // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 ] / (2 sqrt(-b2))
     // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
-    double peakArea(const double b0, const double b1_in, const double b2_in, const double b3_in, const double delta_x)
+    double peakArea(const double b0, const double b1, const double b2, const double b3, const double delta_x)
     {
         // reasoning: the regression operates on the transformed x-axis x' = (x - x0) / delta_x.
         // In order for the area to be correct, the position of the regression is irrelevant, so
         // we can assume x0 = 0. This means that for the retransformation, we must use:
         // y = exp(b0 + b1 * (x / dx) + b2 * (x / dx)^2)
         // This can be factored out to modified coefficients (b0 is not modified).
-        double b1 = b1_in * delta_x;
-        double b2 = b2_in * delta_x * delta_x;
-        double b3 = b3_in * delta_x * delta_x;
+        // double b1 = b1_in * delta_x;
+        // double b2 = b2_in * delta_x * delta_x;
+        // double b3 = b3_in * delta_x * delta_x;
+        // @todo this is not working in practice. Observation shows that the transformation from
+        // the predicted area at delta_x = 1 (A1) to the area in the untransformed x axis is A = A1 * delta_x
+        // Since that is a sensible result, we will stick to the single multiplication and unmodified coeffs
 
-        bool b2_pos = b2_in > 0;
-        bool b3_pos = b3_in > 0;
+        bool b2_pos = b2 > 0;
+        bool b3_pos = b3 > 0;
         assert(!(b2_pos && b3_pos));
 
         // only relevant if one of the coefficients is > 0: Calculate the valley position for a given
@@ -2725,8 +2728,8 @@ namespace qAlgorithms
         // assert(area_R > 0);
         area_L = abs(area_L);
         area_R = abs(area_R);
-
-        return area_L + area_R;
+        double area_F = (area_L + area_R) * delta_x;
+        return area_F;
     }
 
 #if false
