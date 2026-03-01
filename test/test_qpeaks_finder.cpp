@@ -155,7 +155,6 @@ void control_sim_gauss()
 
     std::vector<float> xvals(length, 0);
     std::vector<float> yvals(length, 0);
-    std::vector<unsigned int> df(0);
     for (size_t i = 0; i < length; i++)
     {
         xvals[i] = x_start + x_step * i;
@@ -164,7 +163,7 @@ void control_sim_gauss()
     simulate_gauss(&xvals, apex, height, sdev, &yvals);
 
     std::vector<PeakFit> ret;
-    qpeaks_find(&yvals, &xvals, &df, 8, &ret);
+    qpeaks_find(yvals.data(), xvals.data(), nullptr, length, 8, &ret);
 
     assert(ret.size() != 0, "Peak not found\n");
     assert(ret.size() == 1, "Too many peaks found\n");
@@ -221,7 +220,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     }
 
     std::vector<PeakFit> ret;
-    qpeaks_find(&yvals, &xvals, nullptr, 20, &ret);
+    qpeaks_find(yvals.data(), xvals.data(), nullptr, length, 20, &ret);
 
     // printf("    Observed values:\n");
     // for (size_t i = 0; i < length; i++)

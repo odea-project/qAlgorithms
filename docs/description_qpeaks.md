@@ -25,6 +25,14 @@ Any data that is used with qPeaks must fulfill the following criteria for the al
 * All values of y must be greater than zero
 * If a relevant baseline exists, it has to be substracted before applying qPeaks
 
+Note that the "y > 0" condition is mostly based on the fact that instruments will
+generally use zeroes to separate blocks internally. Since the sensitivity is never
+high enough to fully detect all ions of a peak, including these zeroes during 
+processing will lead to the peak being distorted. Something to keep in mind is that
+this results in the measured points, especially during centroiding, not including
+the full signal. This also means that the ground-truth peak area will be higher
+than that obtained from naively taking the area under the measured points.
+
 The axis used for later transforms is calculated for all integer values between the
 maximum scales (-scale to +scale). For the used peak model, this results in a design
 matrix `X` with four columns. The first represents the intercept and is one (`x^0`)

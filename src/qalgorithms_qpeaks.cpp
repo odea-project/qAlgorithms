@@ -82,7 +82,8 @@ namespace qAlgorithms
 
     void retransformPeaks(
         const std::vector<RegressionGauss> *peaks,
-        const std::vector<float> *x_values,
+        const float *x_values,
+        const size_t length,
         std::vector<PeakFit> *result)
     {
         // retransforming is probably best if the range of x values is as small as necessary
@@ -102,16 +103,16 @@ namespace qAlgorithms
             // we could also use a strategy such as taking the distance closest to the apex.
 
             // no +1 for the length is used here because there are n-1 distances for n points
-            double delta_x = (x_values->at(end) - x_values->at(start)) / (end - start);
+            double delta_x = (x_values[end] - x_values[start]) / (end - start);
 
             // position is determined relative to the point left of the apex
             size_t leftOfApex = size_t(apex);
             double apexFraction = delta_x * (apex - trunc(apex));
-            peak.position = x_values->at(leftOfApex) + apexFraction;
+            peak.position = x_values[leftOfApex] + apexFraction;
             peak.position_uncert = regression->position_uncert * delta_x;
 
             // check if the chosen delta_x is acceptable
-            double delta_x_2 = x_values->at(leftOfApex + 1) - x_values->at(leftOfApex);
+            double delta_x_2 = x_values[leftOfApex + 1] - x_values[leftOfApex];
             assert(abs(delta_x - delta_x_2) < delta_x * 0.05);
 
             // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
@@ -139,9 +140,10 @@ namespace qAlgorithms
 
     int qpeaks_find(
         // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
-        const std::vector<float> *y_values,
-        const std::vector<float> *x_values,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
+        const float *y_values,
+        const float *x_values,
+        const unsigned int *degreesOfFreedom_cum,
+        const size_t length,
         const size_t maxScale_in,
         std::vector<PeakFit> *result)
     {
@@ -151,11 +153,11 @@ namespace qAlgorithms
         {
             return -1;
         }
-        if (y_values->size() != x_values->size())
-        {
-            return -2;
-        }
-        if (y_values->size() < 5)
+        // if (y_values->size() != x_values->size())
+        // {
+        //     return -2;
+        // }
+        if (length < 5)
         {
             return -3;
         }
@@ -183,23 +185,10 @@ namespace qAlgorithms
         // found, the missing values are interpolated assuming an exponential rate of change.
         // this should happen before calling this function (?)
 
-        const size_t length = y_values->size();
-
         // core operation: identify best-fit regressions for the input data
 
         size_t maxScale = (length - 1) / 2; // apex is not included in scale -> -1
         maxScale = maxScale_in > maxScale ? maxScale : maxScale_in;
-
-        const unsigned int *df;
-        if (degreesOfFreedom_cum != nullptr)
-        {
-            size_t dfSize = degreesOfFreedom_cum->size();
-            df = dfSize > 0 ? degreesOfFreedom_cum->data() : nullptr;
-        }
-        else
-        {
-            df = nullptr;
-        }
 
         /*
         The fitting routine assumes that all present peaks have a modified gaussian base function.
@@ -210,17 +199,17 @@ namespace qAlgorithms
 
         std::vector<RegressionGauss> validRegressions;
         runningRegression(
-            y_values->data(),
+            y_values,
             &y_log,
-            df,
-            y_values->size(),
+            degreesOfFreedom_cum,
+            length,
             maxScale,
             &validRegressions);
 
         // validregressions contains all relevant peak candidates
 
         // reverse the not-calculated transform of the x axis only for region where peaks exist
-        retransformPeaks(&validRegressions, x_values, result);
+        retransformPeaks(&validRegressions, x_values, length, result);
 
         return -42;
     }
@@ -2529,6 +2518,52 @@ namespace qAlgorithms
         return centroids->size();
     }
 
+    int getNextProfileRegion(
+        const std::vector<float> *spectrum_mz,
+        const std::vector<float> *spectrum_int,
+        ProfileBlock *block);
+
+    int findCentroids_new(XML_File &data, // @todo move this into the xml file specific part of qAlgorithms
+                          const std::vector<unsigned int> *selectedIndices,
+                          std::vector<CentroidPeak> *centroids)
+    {
+        const size_t countSelected = selectedIndices->size();
+
+        std::vector<float> spectrum_mz;
+        spectrum_mz.reserve(1000);
+        std::vector<float> spectrum_int;
+        spectrum_int.reserve(1000);
+
+        size_t scanNum = 0;
+        std::vector<PeakFit> ret; // @todo add tracking stuff for retaining spectrum / startpoint information
+        ProfileBlock block;
+        size_t ID_spectrum = selectedIndices->front();
+        while (scanNum < countSelected)
+        {
+            if (getNextProfileRegion(&spectrum_mz, &spectrum_int, &block))
+            {
+                // avoid needless allocation / deallocation of otherwise scope-local vectors
+                spectrum_mz.clear();
+                spectrum_int.clear();
+
+                ID_spectrum = selectedIndices->at(scanNum);
+                data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
+
+                scanNum += 1;
+            }
+            // at this point, the block contains one continuus region of points in the source spectrum
+
+            qpeaks_find(block.intensity, block.mz, nullptr, block.length, GLOBAL_MAXSCALE_CENTROID, &ret);
+        }
+
+        for (unsigned int i = 0; i < centroids->size(); i++)
+        {
+            centroids->at(i).ID = i;
+        }
+
+        return centroids->size(); // @todo rework centroids to be multiple separate arrays
+    }
+
     size_t removedPoints = 0;
 
     size_t getProfileRegions(
@@ -2592,6 +2627,48 @@ namespace qAlgorithms
 
         assert(maxLength > 4);
         return maxLength;
+    }
+
+    int getNextProfileRegion(
+        const std::vector<float> *spectrum_mz,
+        const std::vector<float> *spectrum_int,
+        ProfileBlock *block)
+    {
+        size_t idx = block->startPos + block->length; // first element past the previous block
+        size_t len = spectrum_int->size();
+
+        if (idx >= len || len - idx < 5)
+        {
+            block->intensity = nullptr;
+            block->mz = nullptr;
+            block->length = 0;
+            block->startPos = 0;
+            return 1;
+        }
+
+        const float minIntensity = 10; // @todo bad solution?
+
+        for (; idx < len; idx++)
+        {
+            if (spectrum_int->at(idx) > minIntensity)
+                break;
+        }
+        const float *intensity = spectrum_int->data() + idx;
+        const float *mz = spectrum_mz->data() + idx;
+
+        size_t length = 0;
+        for (size_t i = idx; i < len; i++)
+        {
+            length += 1;
+            if (spectrum_int->at(i) < minIntensity)
+                break;
+        }
+
+        block->intensity = intensity;
+        block->mz = mz;
+        block->startPos = idx;
+        block->length = length;
+        return 0;
     }
 
     inline double regAt(const RegCoeffs *coeff, const double x)

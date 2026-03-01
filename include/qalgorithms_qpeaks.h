@@ -20,9 +20,11 @@ namespace qAlgorithms
     ///                 spaced when applying this function, since it depends on that assumption for its precalculated matric transform.
     /// @param degreesOfFreedom_cum cumulative degrees of freedom to account for interpolations and mean values. This is the cumulative
     ///                             sum of the number of measured points for all y. It has the same length as x and y.
-    /// @param maxScale up to which scale regressions should be attempted. The maximum peak width (in points) is maxScale * 2 + 1. maxScale must be > 1.
+    ///                             This can be set to nullptr if all df are one.
+    /// @param maxScale_in up to which scale regressions should be attempted. The maximum peak width (in points) is maxScale * 2 + 1. maxScale must be > 1.
     ///                 If maxScale would exceed the length of x or y, it is set to (the length of either -1) / 2.
-    /// @param detectedPeaks All found peaks are appended to this vector.
+    /// @param length length of y, x and df if supplied
+    /// @param result All found peaks are appended to this vector.
     /// @return the total number of appended peaks. If this is < 0, the function did not execute correctly.
     /// @details Errorcodes:
     ///  0 = no valid peaks were found (this is not an error per se, when supplying ex. a constant y this is the expected result)
@@ -34,11 +36,12 @@ namespace qAlgorithms
     /// y has equal variance at every point
     /// there is enough space to write the results
     int qpeaks_find(
-        const std::vector<float> *y_values,
-        const std::vector<float> *x_values,
-        const std::vector<unsigned int> *degreesOfFreedom_cum,
-        const size_t maxScale,
-        std::vector<PeakFit> *detectedPeaks);
+        const float *y_values,
+        const float *x_values,
+        const unsigned int *degreesOfFreedom_cum,
+        const size_t length,
+        const size_t maxScale_in,
+        std::vector<PeakFit> *result);
 
     /// @param intensity_log logarithmy of the intensity values. This is the y axis of the fit. The x axis is required to be equidistant.
     /// @param maxscale maximum scale of a peak that should be attempted to fit.
