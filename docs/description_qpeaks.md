@@ -94,5 +94,38 @@ intersect at a high intensity.
 All peak properties are adjusted for the original x-axis using the step length for the
 region in which a peak was defined. 
 
+The regression properties, including uncertainties, we calculate are as follows:
+* Position
+* Height
+* Full Width at Half Maximum (FWHM)
+* Area
+
+Further, goodness-of-fit parameters are calculated per regression.
+
+**Calculation of Position and Height**
+
+The position is the derivative at y = 0 for the apex-containing part of the peak. This depends on 
+the coefficient b1 -- if b1 < 0, the left half describes the apex (and vice versa). The height
+is obtained by evaluating the peak at x = apex.
+
+
+**Calculation of FWHM**
+
+The width is calculated from the regression and not empirically. For this, we solve every peak half for
+x and calculate the difference when setting y to h / 2.
+
+**Calculation of the Area**
+
+The area of the peak is calculated from -infinity to infinity for the common case of both quadratic
+coefficients being negative. Here, the area is first calculated for the transformed x-axis and then
+multiplied with the (uniform) distance in x between points to scale it to the original axis. 
+The used antiderivative contains the imaginary error function erfi(x), but the normal error function
+applies if the quadratic coefficient is negative since we take its square root. If the coefficient is
+positive, erfi() is used. The initial area is first calculated for every peak half and then summed up.
+
+
+
+
+
 ## Expansion for Multiple x-axes
 @todo

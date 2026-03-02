@@ -462,7 +462,7 @@ namespace qAlgorithms
         return sqrt(sdev / (n - 1));
     }
 
-    double calcJaccardIdx(float *const array1, float *const array2, const size_t length)
+    double calcJaccardIdx(const float *const array1, const float *const array2, const size_t length)
     {
         // the jaccard index is defined as the intersection of two shapes divided by the union
         // The shapes are the two peak profiles here

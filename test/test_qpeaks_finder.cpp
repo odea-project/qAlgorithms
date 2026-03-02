@@ -192,7 +192,7 @@ struct ErrorEMG
     float r_sdev, d_fwhm_rel, d_fwhm_abs;
     float r_apex, d_apex_abs;
     float r_height, d_height_rel, d_height_abs;
-    float dqs;
+    float dqs, jaccard;
     bool negativeB23 = true;
 };
 
@@ -212,6 +212,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     x_start = xvals.front();
     float x_end = xvals.back();
     size_t length = xvals.size();
+    in_out->jaccard = 0;
 
     if (length < 5)
     {
@@ -287,7 +288,8 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     in_out->d_apex_abs = abs(apex_e - apex_p);
     in_out->d_height_rel = abs(height_e - height_p) / height;
     in_out->d_height_abs = abs(height_e - height_p);
-    in_out->dqs = reg.DQS;
+    in_out->dqs = reg.dqs;
+    in_out->jaccard = reg.jaccard;
 }
 
 void survey_EMG()
@@ -299,7 +301,7 @@ void survey_EMG()
     ErrorEMG test = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0};
     test.r_apex = 20;
 
-    std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_abs,d_height_rel,d_height_abs,dqs,closedPeak\n";
+    std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_abs,d_height_rel,d_height_abs,dqs,jaccard,closedPeak\n";
 
     float heights[5] = {100, 1000, 2500, 5000, 10000};
 
@@ -315,8 +317,8 @@ void survey_EMG()
                 control_sim_EMG(x_start, x_step, &test);
                 testCases.push_back(test);
                 char buffer[500];
-                sprintf(buffer, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%c\n", test.r_height, test.r_sdev, test.r_tau, test.r_apex, test.d_area_rel, test.d_area_abs,
-                        test.d_fwhm_rel, test.d_fwhm_abs, test.d_apex_abs, test.d_height_rel, test.d_height_abs, test.dqs, test.negativeB23 ? 'T' : 'F');
+                sprintf(buffer, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%c\n", test.r_height, test.r_sdev, test.r_tau, test.r_apex, test.d_area_rel, test.d_area_abs,
+                        test.d_fwhm_rel, test.d_fwhm_abs, test.d_apex_abs, test.d_height_rel, test.d_height_abs, test.dqs, test.jaccard, test.negativeB23 ? 'T' : 'F');
                 container += buffer;
                 test.d_height_rel = -1;
                 test.d_height_abs = -1;

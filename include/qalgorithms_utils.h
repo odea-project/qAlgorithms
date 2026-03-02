@@ -177,7 +177,7 @@ namespace qAlgorithms
     double sdev(double *const array, const size_t n);
     double sdev(const double *const array, const size_t n);
 
-    double calcJaccardIdx(float *const array1, float *const array2, const size_t length);
+    double calcJaccardIdx(const float *const array1, const float *const array2, const size_t length);
 
     // @todo get rid of these by putting them into a function
     // first element is -1 so the correct access is T_VALS[df]

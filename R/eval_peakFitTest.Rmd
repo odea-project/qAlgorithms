@@ -55,6 +55,13 @@ ggplot(data = test)+
     geom_point(aes(y = d_fwhm_rel), colour = "green2")+
     geom_point(aes(y = d_apex_abs), colour = "blue3")
 
+ggplot(data = test)+
+    aes(x = jaccard)+
+    geom_point(aes(y = d_area_rel), colour = "red2")+
+    geom_point(aes(y = d_height_rel), colour = "orange")+
+    geom_point(aes(y = d_fwhm_rel), colour = "green2")+
+    geom_point(aes(y = d_apex_abs), colour = "blue3")
+
 ################################################################################
 
 ggplot(data = test) +
@@ -76,5 +83,56 @@ ggplot(data = test) +
     aes(sdev, tau)+
     geom_tile(aes(fill = d_apex_abs))+
     scale_fill_viridis(discrete=FALSE, option = "turbo")
+```
+
+```{r}
+ggplot(data = test)+
+    aes(x = jaccard)+
+    geom_point(aes(y = d_area_rel), colour = "red2")+
+    geom_point(aes(y = d_height_rel), colour = "orange")+
+    geom_point(aes(y = d_fwhm_rel), colour = "green2")+
+    geom_point(aes(y = d_apex_abs), colour = "blue3")
+
+ggplot(data = test)+
+    aes(x = jaccard)+
+    geom_point(aes(y = d_area_rel), colour = "red2")
+
+ggplot(data = test)+
+    aes(x = jaccard)+
+    geom_point(aes(y = d_height_rel), colour = "orange")
+
+ggplot(data = test)+
+    aes(x = jaccard)+
+    geom_point(aes(y = d_fwhm_rel), colour = "green2")
+
+ggplot(data = test)+
+    aes(x = jaccard)+
+    geom_point(aes(y = d_apex_abs), colour = "blue3")
+
+ggplot(data = test)+
+    aes(x = d_area_rel)+
+    geom_point(aes(y = d_height_rel), colour = "orange")+
+    geom_point(aes(y = d_fwhm_rel), colour = "green2")+
+    geom_point(aes(y = d_apex_abs), colour = "blue3")
+
+ggplot(data = test)+
+    aes(x = d_height_rel)+
+    geom_point(aes(y = d_area_rel), colour = "red2")+
+    geom_point(aes(y = d_fwhm_rel), colour = "green2")+
+    geom_point(aes(y = d_apex_abs), colour = "blue3")
+
+ggplot(data = test)+
+    aes(x = d_fwhm_rel)+
+    geom_point(aes(y = d_area_rel), colour = "red2")+
+    geom_point(aes(y = d_height_rel), colour = "orange")+
+    geom_point(aes(y = d_apex_abs), colour = "blue3")
+
+ggplot(data = test)+
+    aes(x = d_apex_abs)+
+    geom_point(aes(y = d_area_rel), colour = "red2")+
+    geom_point(aes(y = d_height_rel), colour = "orange")+
+    geom_point(aes(y = d_fwhm_rel), colour = "green2")
+
+
 ```
 

@@ -130,7 +130,8 @@ namespace qAlgorithms
             // model only has a standard deviation for the apex peak
             peak.fwhm = fullWidthHalfMax(&coeff, peak.height, delta_x);
 
-            peak.DQS = 1 - erf_approx_f(regression->area_uncert / regression->area);
+            peak.dqs = 1 - erf_approx_f(regression->area_uncert / regression->area);
+            peak.jaccard = regression->jaccard;
 
             peak.coeffs = regression->coeffs;
 
@@ -1591,6 +1592,7 @@ namespace qAlgorithms
         mutateReg->apex_position += mutateReg->coeffs.x0;
         assert(mutateReg->apex_position > 1); // @todo this should be superfluous
         assert(mutateReg->apex_position < length - 1);
+        mutateReg->jaccard = calcJaccardIdx(intensities, predict.data(), predict.size());
 
         mutateReg->isValid = true;
         return ok;
@@ -2091,6 +2093,7 @@ namespace qAlgorithms
     bool isValidPeakArea(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
     // @todo this function re-checks regression limits, we should always use the regression range for that
     {
+        // function checks for coverage of the area by the regression
         double doubleScale = double(coeffs->scale);
         double b1 = coeffs->b1;
         double b2 = coeffs->b2;
