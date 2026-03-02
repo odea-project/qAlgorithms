@@ -106,7 +106,7 @@ namespace qAlgorithms
         // the binning tolerates at most three non-occurrences of a mass in order, but should not include interpolated spectra for this.
         // for conversion, number_MS1 is also the index into a vector that stores the "corrected" scan numbers after interpolation
         unsigned int number_MS1 = 0;
-        unsigned int df = 0; // degrees of freedom
+        // unsigned int df = 0; // degrees of freedom
         ProfilePos trace = {0};
         unsigned int numCompetitors = 0;
         unsigned int scale = 0;

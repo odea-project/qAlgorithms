@@ -58,28 +58,6 @@ namespace qAlgorithms
 
     LoggingParams globalLogStruct;
 
-    size_t hardFilter(std::vector<double> *mz, std::vector<double> *intensity, double minMZ, double maxMZ)
-    {
-        std::vector<double> mz_new;
-        std::vector<double> int_new;
-
-        size_t pos = 0;
-        while (pos < mz->size() && mz->at(pos) < minMZ)
-            pos += 1;
-
-        while (pos < mz->size() && mz->at(pos) < maxMZ)
-        {
-            mz_new.push_back(mz->at(pos));
-            int_new.push_back(intensity->at(pos));
-            pos += 1;
-        }
-
-        *mz = mz_new;
-        *intensity = int_new;
-
-        return pos;
-    }
-
     void retransformPeaks(
         const std::vector<RegressionGauss> *peaks,
         const float *x_values,
@@ -1516,6 +1494,7 @@ namespace qAlgorithms
         double RSS_log = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
         assert(RSS_log > 0);
         double RSS_exp = calcRSS(predict.data(), intensities, &mutateReg->regSpan);
+        assert(RSS_exp > 0);
         double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
 
@@ -1535,7 +1514,7 @@ namespace qAlgorithms
             return f_test_fail; // H0 holds, the two distributions are not noticeably different
         }
 
-        if (!isValidQuadraticTerm(&mutateReg->coeffs, mse_log, df_sum))
+        if (!isValidQuadraticTerm(&mutateReg->coeffs, mse_log, df_sum)) // @todo replace with the exponential mse?
         {
             // this should be caught by the f test (?) @todo it is not caught by the F test
             // printf("invalid quadratic triggered\n");
@@ -1734,7 +1713,7 @@ namespace qAlgorithms
 
             // quality params
             peak.DQSC = 1 - erf_approx_f(regression->area_uncert / regression->area);
-            peak.df = regression->df;
+            // peak.df = regression->df;
 
             peak.numCompetitors = regression->numCompetitors;
             peak.scale = regression->coeffs.scale;
@@ -2463,15 +2442,10 @@ namespace qAlgorithms
 
 #pragma region "find centroids"
 
-    inline float calcRTDiff(const std::vector<double> *retention_times)
-    {
-        float sum = 0.0;
-        for (size_t i = 1; i < retention_times->size(); ++i)
-        {
-            sum += retention_times->at(i) - retention_times->at(i - 1);
-        }
-        return sum / (retention_times->size() - 1);
-    }
+    size_t getProfileRegions(
+        std::vector<ProfileBlock> *groupedData,
+        const std::vector<float> *spectrum_mz,
+        const std::vector<float> *spectrum_int);
 
     int findCentroids(XML_File &data, // @todo get rid of the direct coupling to pugixml
                       const std::vector<unsigned int> *selectedIndices,
@@ -2526,6 +2500,25 @@ namespace qAlgorithms
         const std::vector<float> *spectrum_int,
         ProfileBlock *block);
 
+    CentroidPeak peakToCen(const PeakFit *peak, size_t id, size_t specNum)
+    {
+        CentroidPeak cen = {0};
+
+        cen.area = peak->area;
+        cen.areaUncertainty = peak->area_uncert;
+        cen.DQSC = peak->dqs;
+        cen.height = peak->height;
+        cen.heightUncertainty = peak->height_uncert;
+        cen.ID = id;
+        cen.mz = peak->position;
+        cen.mzUncertainty = peak->position_uncert;
+        cen.number_MS1 = specNum;
+        cen.scale = peak->coeffs.scale;
+        cen.width = peak->fwhm;
+
+        return cen;
+    }
+
     int findCentroids_new(XML_File &data, // @todo move this into the xml file specific part of qAlgorithms
                           const std::vector<unsigned int> *selectedIndices,
                           std::vector<CentroidPeak> *centroids)
@@ -2558,6 +2551,7 @@ namespace qAlgorithms
 
             qpeaks_find(block.intensity, block.mz, nullptr, block.length, GLOBAL_MAXSCALE_CENTROID, &ret);
         }
+        // move peak data structure into centroid struct @todo remember spectrum id
 
         for (unsigned int i = 0; i < centroids->size(); i++)
         {
@@ -2686,29 +2680,6 @@ namespace qAlgorithms
         return exp((coeff->b1 + x * b23) * x);
     }
 
-    double derivSum_b1(
-        const RegCoeffs *coeff,
-        const float *observed, // pointer to first intensity within range
-        const int x_start,
-        const size_t width)
-    {
-        double sumNum = 0;
-        double sumDenom = 0;
-        double b1 = coeff->b1;
-        double x = x_start;
-        for (size_t i = 0; i < width; i++)
-        {
-            double b23 = x < 0 ? coeff->b2 : coeff->b3;
-            double y = observed[i];
-            double val = exp((b1 + b23 * x) * x) * y;
-            sumNum += val * x;
-            sumDenom += val;
-
-            x += 1;
-        }
-        return sumNum / sumDenom;
-    }
-
     double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x)
     {
         // solve height / 2 = exp(b0 + x b1 + x^2 b2)
@@ -2811,69 +2782,4 @@ namespace qAlgorithms
         double area_F = (area_L + area_R) * delta_x;
         return area_F;
     }
-
-#if false
-    double peakHalfIntegral_L(const double b0, const double b1, const double b2)
-    {
-        if (b2 < 0)
-        {
-            const double t1 = exp(b0 - (b1 * b1) / (4 * b2));
-            const double t2 = sqrt(M_PI / -b2) / 2;
-            const double t3 = 1 - erf(b1 / (2 * sqrt(-b2))); // important: + or - depending on peak half
-            return t1 * t2 * t3;
-        }
-        else
-        {
-            assert(false);
-        }
-    }
-
-    double peakHalfIntegral_R(const double b0, const double b1, const double b3)
-    {
-        if (b3 < 0)
-        {
-            const double t1 = exp(b0 - (b1 * b1) / (4 * b3));
-            const double t2 = sqrt(M_PI / -b3) / 2;
-            const double t3 = 1 - erf(b1 / (2 * sqrt(-b3))); // important: + or - depending on peak half
-            return t1 * t2 * t3;
-        }
-        else
-        {
-            assert(false);
-        }
-    }
-
-    double peakAreaFull(const RegCoeffs *coeff, const double delta_x)
-    {
-        // for derivation of the integral, see docs directory
-        // before using the form y = exp(b0 + x * b1 + x^2 * b2),
-        // we have to account for the transformation in x the area undergoes.
-        // To revert it, x' has to be adjusted by the delta and x0.
-        // x' = (x - x0) / delta_x -> x = x' * delta_x + x0
-
-        // the full equation reads: y = exp(b0 + b1 * (x' * delta_x + x0) + b2 * (x * delta_x + x0)^2)
-        // this can be retransformed into the first used form by isolating x
-        // b2 * (x * delta_x + x0)^2 = b2 * (x^2 * delta_x^2 + 2 * x * delta_x * x0 + x0^2)
-        // == b2 * x^2 * delta_x^2 + (2 * b2 * delta_x * x0) * x + (b2 * x0^2)
-        // b1 * (x * delta_x + x0) = (b1 * delta_x) * x + (b1 * x0)
-        // x^2:  b2 * x^2 * delta_x^2
-        // x:   (2 * b2 * delta_x * x0) * x + (b1 * delta_x) * x
-        // 1:   (b2 * x0^2) + (b1 * x0) + b0
-        // these terms can be assembled into new coefficients for the retransformed equation
-        // note that this process is dependent on b2 / b3, so b1 and b0 are no longer shared
-        // for x0 = 0, the original equation is restored. The area is independent of the
-        // position of the peak -> we can assume x0 = 0
-
-        const double b0 = coeff->b0;
-        const double b1 = coeff->b1; // * delta_x;
-        const double b2 = coeff->b2; // * delta_x * delta_x;
-        const double b3 = coeff->b3; // * delta_x * delta_x;
-
-        // since there are two coefficients, the peak area must be calculated
-        // for every peak half before summing up
-        double area_L = peakHalfIntegral_L(b0, b1, b2);
-        double area_R = peakHalfIntegral_R(b0, b1, b3);
-        return area_L + area_R;
-    }
-#endif
 }

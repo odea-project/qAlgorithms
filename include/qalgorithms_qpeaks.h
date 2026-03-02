@@ -114,11 +114,6 @@ namespace qAlgorithms
                       const std::vector<unsigned int> *selectedIndices,
                       std::vector<CentroidPeak> *centroids);
 
-    size_t getProfileRegions(
-        std::vector<ProfileBlock> *groupedData,
-        const std::vector<float> *spectrum_mz,
-        const std::vector<float> *spectrum_int);
-
     void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
                            const std::vector<ProfileBlock> *subprofiles,
                            const size_t scanNumber,
@@ -137,11 +132,9 @@ namespace qAlgorithms
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data,
                                           const RT_Converter *convertRT);
 
-    // ### Retention Time Conversion @todo make less annoying ### //
+    // ### Retention Time Conversion @todo remove ### //
 
     RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes);
-
-    inline float calcRTDiff(const std::vector<double> *retention_times);
 
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
