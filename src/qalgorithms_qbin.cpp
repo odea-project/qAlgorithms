@@ -811,7 +811,7 @@ namespace qAlgorithms
             tmp_DQSC[access] = point->DQSC;
             tmp_cenID[access] = point->ID;
 
-            tmp_df[access] = point->df == 0 ? 0 : 1; // ignore the individual degrees of freedom for centroids (for now)
+            tmp_df[access] = point->ID == 0 ? 0 : 1; // ignore the individual degrees of freedom for centroids (for now)
         }
 
         // cumulative degrees of freedom

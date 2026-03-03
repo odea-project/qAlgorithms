@@ -188,7 +188,7 @@ namespace qAlgorithms
             else if ((argument == "-pc") || (argument == "-printcentroids"))
             {
                 args.printCentroids = true;
-                args.term = std::max(args.term, centroids);
+                args.term = std::max(args.term, centroids); // @todo rework this to be less hacky
             }
             else if ((argument == "-pb") || (argument == "-printbins"))
             {
@@ -635,15 +635,14 @@ namespace qAlgorithms
             return;
         }
         output << "cenID,mz,mzUncertainty,number_MS1,retentionTime,area,areaUncertainty,"
-               //    << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,interpolations,competitors\n";
-               << "height,heightUncertainty,scale,degreesOfFreedom,DQSC,competitors\n";
+               << "height,heightUncertainty,scale,DQSC,competitors\n";
         for (size_t j = 0; j < peaktable->size(); ++j)
         {
             const CentroidPeak peak = peaktable->at(j);
             char buffer[256];
-            snprintf(buffer, 256, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%u,%0.5f,%d\n",
+            snprintf(buffer, 256, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%0.5f,%d\n",
                      peak.ID, peak.mz, peak.mzUncertainty, peak.number_MS1, convertRT->at(peak.number_MS1),
-                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.df, peak.DQSC,
+                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.DQSC,
                      //  peak.interpolations,
                      peak.numCompetitors);
             output << buffer;

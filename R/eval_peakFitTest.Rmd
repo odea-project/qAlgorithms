@@ -12,17 +12,17 @@ library(viridis)
 ```
 
 ```{r}
-test = read_csv("../build/peaktest.csv")
+test = read_csv("../build/peaktest.csv", show_col_types = FALSE)
 test_fail = test[which(test$dqs == -1),]
 test =  test[which(test$dqs > 0),] |> drop_na()
 
-sum(test$closedPeak == F) # no positive coefficients when working with single peaks!
+# sum(test$closedPeak == F) # no positive coefficients when working with single peaks!
 
 
-hist(test$d_area_rel, breaks = 20)
-hist(test$d_fwhm_rel, breaks = 20)
-hist(test$d_height_rel, breaks = 20)
-hist(test$d_apex_abs, breaks = 20) # relative apex position does not make sense!
+# hist(test$d_area_rel, breaks = 20)
+# hist(test$d_fwhm_rel, breaks = 20)
+# hist(test$d_height_rel, breaks = 20)
+# hist(test$d_apex_abs, breaks = 20) # relative apex position does not make sense!
 
 # height should probably not be used for quality estimation since it is influenced
 # both by tau and sdev. 
@@ -64,24 +64,34 @@ ggplot(data = test)+
 
 ################################################################################
 
-ggplot(data = test) +
+ggplot(data = test)+
     aes(sdev, tau)+
     geom_tile(aes(fill = d_area_rel))+
     scale_fill_viridis(discrete=FALSE, option = "turbo")
 
-ggplot(data = test) +
+ggplot(data = test)+
     aes(sdev, tau)+
     geom_tile(aes(fill = d_height_rel))+
     scale_fill_viridis(discrete=FALSE, option = "turbo")
 
-ggplot(data = test) +
+ggplot(data = test)+
     aes(sdev, tau)+
     geom_tile(aes(fill = d_fwhm_rel))+
     scale_fill_viridis(discrete=FALSE, option = "turbo")
 
-ggplot(data = test) +
+ggplot(data = test)+
     aes(sdev, tau)+
     geom_tile(aes(fill = d_apex_abs))+
+    scale_fill_viridis(discrete=FALSE, option = "turbo")
+
+ggplot(data = test)+ # the jaccard index does not match the expected trend expected from other quality metrics
+    aes(sdev, tau)+
+    geom_tile(aes(fill = 1 - jaccard))+
+    scale_fill_viridis(discrete=FALSE, option = "turbo")
+
+ggplot(data = test)+ # the dqs roughly matches the observed trend in height deviation, but not area
+    aes(sdev, tau)+
+    geom_tile(aes(fill = 1 - dqs))+
     scale_fill_viridis(discrete=FALSE, option = "turbo")
 ```
 
@@ -134,5 +144,26 @@ ggplot(data = test)+
     geom_point(aes(y = d_fwhm_rel), colour = "green2")
 
 
+```
+
+```{r}
+# check why the example peak is not found
+real = c(32, 475, 711, 472, 207, 132, 57, 14)
+pred1 = c(31.5905552, 434.025146, 758.338318, 431.283966, 204.351395, 0, 0, 0)
+pred2 = c(123.223518, 464.963226, 715.658569, 449.319702, 208.356323, 0, 0, 0)
+pred3 = c(471.32312, 329.7854, 212.635117, 126.336647, 69.169487, 0, 0, 0)
+pred4 = c(181.241394, 39.401413, 10.9762993, 3.91822815, 1.79231024, 0, 0, 0)
+pred5 = c(33.8263397, 308.203827, 760.776367, 508.758789, 197.784195, 95.9145737, 58.0217857, 0)
+pred6 = c(323.206024, 487.692688, 537.598328, 432.926758, 254.692307, 116.864052, 44.6507378, 0)
+
+ggplot()+
+    aes(x = 0:7)+
+    geom_line(aes(y = real), colour = "black")+
+    geom_line(aes(y = pred1), colour = "red")+
+    geom_line(aes(y = pred2), colour = "orange")
+    # geom_line(aes(y = pred3), colour = "yellow2")+
+    # geom_line(aes(y = pred4), colour = "green")+
+    # geom_line(aes(y = pred5), colour = "lightblue")+
+    # geom_line(aes(y = pred6), colour = "blue2")
 ```
 

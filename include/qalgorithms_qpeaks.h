@@ -21,9 +21,9 @@ namespace qAlgorithms
     /// @param degreesOfFreedom_cum cumulative degrees of freedom to account for interpolations and mean values. This is the cumulative
     ///                             sum of the number of measured points for all y. It has the same length as x and y.
     ///                             This can be set to nullptr if all df are one.
+    /// @param length length of y, x and df if supplied
     /// @param maxScale_in up to which scale regressions should be attempted. The maximum peak width (in points) is maxScale * 2 + 1. maxScale must be > 1.
     ///                 If maxScale would exceed the length of x or y, it is set to (the length of either -1) / 2.
-    /// @param length length of y, x and df if supplied
     /// @param result All found peaks are appended to this vector.
     /// @return the total number of appended peaks. If this is < 0, the function did not execute correctly.
     /// @details Errorcodes:
@@ -48,7 +48,8 @@ namespace qAlgorithms
     /// @param coeffs Sets of coefficients for all possible regressions. They are written out in the order scale = 2, scale = 3, ... , scale = maxscale
     ///               Note that not all scales have the same number of regressions
     void findCoefficients(
-        const std::vector<float> *intensity_log,
+        const float *intensity_log,
+        const size_t length,
         size_t maxscale,
         std::vector<RegCoeffs> *coeffs);
 
@@ -102,6 +103,7 @@ namespace qAlgorithms
     invalid makeValidRegression(
         const float *intensities,
         const std::vector<float> *intensities_log,
+        const std::vector<float> *predict,
         const size_t df_sum,
         const size_t length,
         RegressionGauss *mutateReg);

@@ -101,8 +101,6 @@ namespace qAlgorithms
             peak.area = regression->area * factorArea;
             peak.area_uncert = regression->area_uncert * factorArea;
 
-            volatile double area_2 = 0; // peakAreaFull(&coeff, delta_x); // <- this is even worse than the other one
-
             // @todo, also check for negative width where appropriate
             // the empirical peak width is generally estimated at half maximum. Our peak
             // model only has a standard deviation for the apex peak
@@ -278,8 +276,28 @@ namespace qAlgorithms
             reg.coeffs = coefficients->at(i);
             reg.regSpan = range;
 
+            /*
+           Prediction for coefficients that are not b0. Since any "true" prediction
+           value is produced by multiplying with exp(b0), this only needs to be calculated
+           once, at least until regressions are compared. @todo consider having this at
+           higher scope of validation
+       */
+            std::vector<float> predict(length, 0);
+
+            /*
+                Adjustment of b0 coefficient:
+                When working with log-transformed data, the coefficients are suboptimal for the exponential case.
+                Since we must work with a log system to perform a linear regression, there is a bias in the
+                results which is somewhat corrected here. While correction could occur before validation, the
+                initial tests filter out a lot of bad regressions which reduces processing time. The tests are
+                presumed to be better when using the transformed coefficients in terms of applicability of the results.
+                This function also modifies the "predict" vector supplied as its argument!
+            */
+            correctB0(intensities, &range, &predict, &reg.coeffs);
+
             failpoint = makeValidRegression(intensities,
                                             intensities_log,
+                                            &predict,
                                             df_sum,
                                             length,
                                             &reg);
@@ -348,7 +366,7 @@ namespace qAlgorithms
         // coefficients for single-b0 peaks, spans all regressions over a peak window
         // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
         std::vector<RegCoeffs> coefficients;
-        findCoefficients(intensities_log, maxScale, &coefficients);
+        findCoefficients(intensities_log->data(), length, maxScale, &coefficients);
 
         std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
         validRegsTmp.reserve(coefficients.size() / 2);
@@ -1168,14 +1186,14 @@ namespace qAlgorithms
 #pragma endregion "eliminate conflicting regs"
 
     void findCoefficients(
-        const std::vector<float> *intensity_log,
+        const float *intensity_log,
+        const size_t length,
         size_t maxScale,
         std::vector<RegCoeffs> *coeffs)
     {
         assert(maxScale >= GLOBAL_MINSCALE);
         assert(maxScale <= MAXSCALE);
 
-        const size_t length = intensity_log->size();
         assert(length > 4);
         maxScale = min(maxScale, (length - 1) / 2);
 
@@ -1190,7 +1208,7 @@ namespace qAlgorithms
         const size_t limit = length - GLOBAL_MINSCALE;
         for (size_t x0 = GLOBAL_MINSCALE; x0 < limit; x0++)
         {
-            const float *cen = intensity_log->data() + x0; // this is initially the third real point
+            const float *cen = intensity_log + x0; // this is initially the third real point
 
             // calculate the convolution with the kernel of the lowest scale - 1 (= 1), i.e. xT * intensity_log[cen - 1 : cen + 1]
             // the product sums are the rows of the design matrix (xT) * intensity_log[i:i+4] (dot product)
@@ -1354,8 +1372,9 @@ namespace qAlgorithms
         double position_b3 = -coeffs->b1 / (2 * coeffs->b3);
         double x0d = double(coeffs->x0);
 
-        // cast to int because we are interested in number of points, not absolute distance
         double apexd = apexLeft ? position_b2 : position_b3;
+
+        // there must be at least two full points to either side of the apex @todo consider degrees of freedom here?
         if (abs(apexd) >= double(coeffs->scale - 1))
             return invalid_apex; // apex outside of regression window
 
@@ -1367,26 +1386,19 @@ namespace qAlgorithms
         if (!(valley_left || valley_right))
             return ok; // all ok by definition
 
-        double dscale = double(coeffs->scale);
+        // it is already established that the apex side of the regression is acceptable.
+        // now, we only need to check that the valley is at least two points away from the apex
+        // since only the difference is relevant, this is independent of the side on which the apex is
+        assert(position_b2 < position_b3);
+        if (position_b3 - position_b2 <= 2)
+            return invalid_apex;
+
         if (valley_left)
         {
-            if (position_b2 >= -GLOBAL_MINSCALE)
-                return invalid_apex;
-
-            if (position_b2 <= -dscale)
-                return ok; // valley does not matter
-
-            // new cast already rounds value down
             lim_l = max(lim_l, coeffs->x0 - size_t(-position_b2));
         }
         else // if (valley_right)
         {
-            if (position_b3 <= GLOBAL_MINSCALE)
-                return invalid_apex;
-
-            if (position_b3 >= dscale)
-                return ok;
-
             lim_r = min(lim_r, coeffs->x0 + size_t(position_b3));
         }
         assert(lim_l <= apex);
@@ -1406,6 +1418,7 @@ namespace qAlgorithms
     invalid makeValidRegression( // returns the number of the failed test
         const float *intensities,
         const std::vector<float> *intensities_log,
+        const std::vector<float> *predict,
         const size_t df_sum,
         const size_t length,
         RegressionGauss *mutateReg)
@@ -1413,11 +1426,13 @@ namespace qAlgorithms
     {
         assert(!mutateReg->isValid);
         const size_t scale = mutateReg->coeffs.scale;
+        const RegCoeffs coeffs = mutateReg->coeffs;
+
         assert(scale > 1);
-        assert(mutateReg->coeffs.x0 + scale < length);
+        assert(coeffs.x0 + scale < length);
 
         // for a regression to be valid, at least one coefficient must be < 0
-        if (mutateReg->coeffs.b2 >= 0 && mutateReg->coeffs.b3 >= 0)
+        if (coeffs.b2 >= 0 && coeffs.b3 >= 0)
         {
             return no_apex; // b0 independent
         }
@@ -1436,10 +1451,10 @@ namespace qAlgorithms
         }
 
         Range_i comp = mutateReg->regSpan;
-        updateRegRange(&mutateReg->coeffs, valley_position, &mutateReg->regSpan);
+        updateRegRange(&coeffs, valley_position, &mutateReg->regSpan);
         assert(mutateReg->regSpan.endIdx < length);
-        if (mutateReg->coeffs.x0 - mutateReg->regSpan.startIdx < GLOBAL_MINSCALE ||
-            (mutateReg->regSpan.endIdx - mutateReg->coeffs.x0 < GLOBAL_MINSCALE))
+        if (coeffs.x0 - mutateReg->regSpan.startIdx < GLOBAL_MINSCALE ||
+            (mutateReg->regSpan.endIdx - coeffs.x0 < GLOBAL_MINSCALE))
         {
             // only one half of the regression applies to the data, since the
             // degrees of freedom for the "squished" half results in an invalid regression
@@ -1447,25 +1462,6 @@ namespace qAlgorithms
         }
         assert(comp.startIdx == mutateReg->regSpan.startIdx);
         assert(comp.endIdx == mutateReg->regSpan.endIdx);
-
-        /*
-            Prediction for coefficients that are not b0. Since any "true" prediction
-            value is produced by multiplying with exp(b0), this only needs to be calculated
-            once, at least until regressions are compared. @todo consider having this at
-            higher scope of validation
-        */
-        std::vector<float> predict(length, 0);
-
-        /*
-            Adjustment of b0 coefficient:
-            When working with log-transformed data, the coefficients are suboptimal for the exponential case.
-            Since we must work with a log system to perform a linear regression, there is a bias in the
-            results which is somewhat corrected here. While correction could occur before validation, the
-            initial tests filter out a lot of bad regressions which reduces processing time. The tests are
-            presumed to be better when using the transformed coefficients in terms of applicability of the results.
-            This function also modifies the "predict" vector supplied as its argument!
-        */
-        correctB0(intensities, &mutateReg->regSpan, &predict, &mutateReg->coeffs);
 
         // this is the error term for the corrected regression. Of the original 4 x 4 matrix,
         // only the first row is needed
@@ -1493,7 +1489,7 @@ namespace qAlgorithms
         // everything involving the RSS is dependent on b0!
         double RSS_log = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
         assert(RSS_log > 0);
-        double RSS_exp = calcRSS(predict.data(), intensities, &mutateReg->regSpan);
+        double RSS_exp = calcRSS(predict->data(), intensities, &mutateReg->regSpan);
         assert(RSS_exp > 0);
         double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
@@ -1548,6 +1544,7 @@ namespace qAlgorithms
         */
         // it might be preferential to combine both functions again or store the common matrix somewhere
         calcPeakAreaUncert(mutateReg);
+        mutateReg->area = peakArea(coeffs.b0, coeffs.b1, coeffs.b2, coeffs.b3, 1); // @todo scale area later
         if (mutateReg->area / mutateReg->area_uncert <= T_VALUES[df_sum])
         {
             return invalid_area; // statistical insignificance of the area
@@ -1560,7 +1557,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid. @todo why?
         */
-        double chiSquare = calcSSE_chisqared(mutateReg, intensities, &predict);
+        double chiSquare = calcSSE_chisqared(mutateReg, intensities, predict);
         if (chiSquare > CHI_SQUARES[df_sum])
         {
             return invalid_chisq; // statistical insignificance of the chi-square value
@@ -1571,7 +1568,8 @@ namespace qAlgorithms
         mutateReg->apex_position += mutateReg->coeffs.x0;
         assert(mutateReg->apex_position > 1); // @todo this should be superfluous
         assert(mutateReg->apex_position < length - 1);
-        mutateReg->jaccard = calcJaccardIdx(intensities, predict.data(), predict.size());
+        assert(predict->size() == length);
+        mutateReg->jaccard = calcJaccardIdx(intensities, predict->data(), length);
 
         mutateReg->isValid = true;
         return ok;
@@ -1725,7 +1723,7 @@ namespace qAlgorithms
 
             peak.ID = peaks->size();
 
-            peaks->push_back(std::move(peak));
+            peaks->push_back(peak);
         }
     }
 
@@ -1801,7 +1799,7 @@ namespace qAlgorithms
             peak.interpolationCount = rangeLen(&regression->regSpan) - regression->df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
             peak.competitorCount = regression->numCompetitors;
 
-            peaks->push_back(std::move(peak));
+            peaks->push_back(peak);
         }
     }
 #pragma endregion "create peaks"
@@ -1961,15 +1959,15 @@ namespace qAlgorithms
 
     bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
     {
+        // @todo explain
+        // checks if both quadratic terms are significant - should we only check the apex coeff?
         assert(mse > 0);
-        // inverseMatrix_2_2 is at position 4 of initialize()
         const double inv_E = qalgo_matInverse[coeffs->scale].E;
-        double divisor = std::sqrt(inv_E * mse);
-        double abs2 = std::abs(coeffs->b2);
-        double abs3 = std::abs(coeffs->b3);
-        double tValue = abs2 > abs3 ? abs2 : abs3;
-        return tValue > T_VALUES[df_sum] * divisor; // statistical significance of the quadratic term
-        // note that the tvalue would have to be divided by the divisor, but this is not always compiled to a multiplication
+        double divisor = sqrt(inv_E * mse);
+        double abs2 = abs(coeffs->b2);
+        double abs3 = abs(coeffs->b3);
+        double tValue = max(abs2, abs3);
+        return tValue / divisor > T_VALUES[df_sum] * divisor; // statistical significance of the quadratic term
     }
 
     void calcPeakHeightUncert(RegressionGauss *mutateReg)
@@ -2028,8 +2026,8 @@ namespace qAlgorithms
         double b1 = mutateReg->coeffs.b1;
         double b2 = mutateReg->coeffs.b2;
         double b3 = mutateReg->coeffs.b3;
-        double _SQRTB2 = 1 / std::sqrt(std::abs(b2));
-        double _SQRTB3 = 1 / std::sqrt(std::abs(b3));
+        double _SQRTB2 = 1 / sqrt(abs(b2));
+        double _SQRTB3 = 1 / sqrt(abs(b3));
         double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
         double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
         double B1_2_B2 = b1 / 2 / b2;
@@ -2037,11 +2035,11 @@ namespace qAlgorithms
 
         // error calculation uses imaginary part if coefficient is > 0
         double err_L = (b2 < 0)
-                           ? experfc(B1_2_SQRTB2, -1.0) // 1 - std::erf(b1 / 2 / SQRTB2) // ordinary peak
+                           ? experfc(B1_2_SQRTB2, -1.0) // 1 - erf(b1 / 2 / SQRTB2) // ordinary peak
                            : dawson5(B1_2_SQRTB2);      // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
         double err_R = (b3 < 0)
-                           ? experfc(B1_2_SQRTB3, 1.0) // 1 + std::erf(b1 / 2 / SQRTB3) // ordinary peak
+                           ? experfc(B1_2_SQRTB3, 1.0) // 1 + erf(b1 / 2 / SQRTB3) // ordinary peak
                            : dawson5(-B1_2_SQRTB3);    // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
         // calculate the Jacobian matrix terms
@@ -2111,10 +2109,10 @@ namespace qAlgorithms
             else
             {
                 // no valley point
-                // error = 1 - std::erf(b1 / 2 / SQRTB2)
+                // error = 1 - erf(b1 / 2 / SQRTB2)
                 double err_L = experfc(B1_2_SQRTB2, -1.0);
                 // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-                // std::erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
+                // erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
                 err_L_covered = erf_approx_f((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12;
             }
         }
@@ -2146,10 +2144,10 @@ namespace qAlgorithms
             else
             {
                 // no valley point
-                // error = 1 + std::erf(b1 / 2 / SQRTB3)
+                // error = 1 + erf(b1 / 2 / SQRTB3)
                 double err_R = experfc(B1_2_SQRTB3, 1.0);
                 // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-                // err_R - 1 - std::erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
+                // err_R - 1 - erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
                 err_R_covered = err_R - SQRTPI_2 * EXP_B13 - erf_approx_f((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13;
             }
         }
@@ -2326,9 +2324,9 @@ namespace qAlgorithms
         // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
         // use the index df[limit] - 1 into the original, non-interpolated vector
 
-        unsigned int limit_L = eic->df[currentPeak->idxPeakStart];
-        limit_L = std::min(limit_L, limit_L - 1); // uint underflows, so no issues.
-        unsigned int limit_R = eic->df[currentPeak->idxPeakEnd] - 1;
+        size_t limit_L = eic->df[currentPeak->idxPeakStart];
+        limit_L = min(limit_L, limit_L - 1); // uint underflows, so no issues.
+        size_t limit_R = eic->df[currentPeak->idxPeakEnd] - 1;
         assert(limit_L < limit_R);
 
         currentPeak->idxBinStart = limit_L;
@@ -2382,7 +2380,7 @@ namespace qAlgorithms
             logIntensity.resize(length);
             logIntensity.clear();
 
-            size_t maxScale = std::min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2);
+            size_t maxScale = min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2);
 
             runningRegression(
                 currentEIC.ints_area.data(),
@@ -2781,5 +2779,17 @@ namespace qAlgorithms
         area_R = abs(area_R);
         double area_F = (area_L + area_R) * delta_x;
         return area_F;
+    }
+
+    double peakAreaUncert(const RegCoeffs *coeffs, const double delta_x, const double area)
+    {
+        // uses the jacobi matrix for uncertainty calculation of the area
+        // refer to the supplement to qPeaks
+        double jacobi[4] = {area / delta_x, 0, 0, 0};
+        jacobi[1] = (exp(coeffs->b0) / 2 - jacobi[0] * coeffs->b1 / 2) * (1 / coeffs->b2 + 1 / coeffs->b3);
+        jacobi[2] = -1 / (2 * coeffs->b2) * (jacobi[0] + jacobi[1] * coeffs->b1);
+        jacobi[3] = -1 / (2 * coeffs->b3) * (jacobi[0] + jacobi[1] * coeffs->b1);
+
+        // @todo
     }
 }

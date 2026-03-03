@@ -136,7 +136,7 @@ namespace qAlgorithms
         std::vector<float> predInterval{0};
         std::vector<float> ints_area{0};
         std::vector<float> ints_height{0};
-        std::vector<unsigned int> df{0};
+        std::vector<unsigned int> df{0}; // this is required for dealing with interpolations, but should be moved into qPeaks eventually @todo
         std::vector<float> DQSB{0};
         std::vector<float> DQSC{0};
         std::vector<unsigned int> cenID{0};

@@ -14,10 +14,11 @@ int main()
     using namespace qAlgorithms;
     // check if a basic regression succeeds
     {
-        std::vector<float> logInts = {6.40492535, 7.95729923, 8.44852829, 8.27999401, 7.23839712};
+        const float logInts[] = {6.40492535, 7.95729923, 8.44852829, 8.27999401, 7.23839712};
+        const size_t len = sizeof(logInts) / sizeof(float);
         size_t scale = 2;
         std::vector<qAlgorithms::RegCoeffs> reg;
-        findCoefficients(&logInts, scale, &reg);
+        findCoefficients(logInts, len, scale, &reg);
         auto c = reg.front();
         // note that the regressions seems to be a numerically unstable process
         assert(roundTo_d(c.b0, 4) == roundTo_d(8.5012159, 4), "b0 is incorrect!");
