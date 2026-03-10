@@ -43,6 +43,10 @@ namespace qAlgorithms
         const size_t maxScale_in,
         std::vector<PeakFit> *result);
 
+    int findCentroids_new(XML_File &data,
+                          const std::vector<unsigned int> *selectedIndices,
+                          std::vector<CentroidPeak> *centroids);
+
     /// @param intensity_log logarithmy of the intensity values. This is the y axis of the fit. The x axis is required to be equidistant.
     /// @param maxscale maximum scale of a peak that should be attempted to fit.
     /// @param coeffs Sets of coefficients for all possible regressions. They are written out in the order scale = 2, scale = 3, ... , scale = maxscale

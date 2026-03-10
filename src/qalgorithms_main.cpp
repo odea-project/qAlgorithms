@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
 {
     using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
 
-    volatile bool debug = true;
+    volatile bool debug = false;
     if (debug)
     {
         std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
@@ -457,6 +457,12 @@ int main(int argc, char *argv[])
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             int centroidCount = findCentroids(inputFile, &selectedIndices, centroids); // it is guaranteed that only profile mode data is used
+
+            std::vector<CentroidPeak> *centroids2 = new std::vector<CentroidPeak>;
+            int centroidCount2 = findCentroids_new(inputFile, &selectedIndices, centroids2); // it is guaranteed that only profile mode data is used
+
+            assert(centroidCount2 == centroidCount);
+            assert(centroids2->back().mz == centroids->back().mz);
 
             if (centroidCount == 0)
             {

@@ -80,18 +80,14 @@ namespace qAlgorithms
             // @todo ensure that this is a good way to estimate delta_x for real data
             // we could also use a strategy such as taking the distance closest to the apex.
 
-            // no +1 for the length is used here because there are n-1 distances for n points
-            double delta_x = (x_values[end] - x_values[start]) / (end - start);
+            // check if the chosen delta_x is acceptable @todo
+            size_t leftOfApex = size_t(apex);
+            double delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
 
             // position is determined relative to the point left of the apex
-            size_t leftOfApex = size_t(apex);
             double apexFraction = delta_x * (apex - trunc(apex));
             peak.position = x_values[leftOfApex] + apexFraction;
             peak.position_uncert = regression->position_uncert * delta_x;
-
-            // check if the chosen delta_x is acceptable
-            double delta_x_2 = x_values[leftOfApex + 1] - x_values[leftOfApex];
-            assert(abs(delta_x - delta_x_2) < delta_x * 0.05);
 
             // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
             peak.height = exp(coeff.b0 + (apex - coeff.x0) * coeff.b1 * 0.5);
@@ -1318,6 +1314,7 @@ namespace qAlgorithms
         {
             double x = double(i) - x0;
             predicted->at(i) = regExp_fac(coeff, x);
+            assert(predicted->at(i) > 0);
         }
 
         double sum_predictSq = 0;
@@ -1328,7 +1325,6 @@ namespace qAlgorithms
         for (int i = start; i < end; i++)
         {
             double pred = predicted->at(i) * b0_exp;
-            assert(pred > 0);
             sum_predictSq += pred * pred;
             sum_predictReal += pred * intensities[i];
         }
@@ -1374,7 +1370,7 @@ namespace qAlgorithms
 
         double apexd = apexLeft ? position_b2 : position_b3;
 
-        // there must be at least two full points to either side of the apex @todo consider degrees of freedom here?
+        // there must be at least two full points to either side of the apex
         if (abs(apexd) >= double(coeffs->scale - 1))
             return invalid_apex; // apex outside of regression window
 
@@ -1395,11 +1391,17 @@ namespace qAlgorithms
 
         if (valley_left)
         {
-            lim_l = max(lim_l, coeffs->x0 - size_t(-position_b2));
+            size_t spanLeft = size_t(-position_b2);
+            size_t altLim = coeffs->x0 < spanLeft ? 0 : coeffs->x0 - spanLeft;
+            lim_l = max(lim_l, altLim);
+            if (coeffs->x0 - lim_l < 2)
+                return invalid_apex;
         }
         else // if (valley_right)
         {
             lim_r = min(lim_r, coeffs->x0 + size_t(position_b3));
+            if (lim_r - coeffs->x0 < 2)
+                return invalid_apex;
         }
         assert(lim_l <= apex);
         assert(lim_r >= apex);
@@ -1502,9 +1504,9 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo test this function
         */
-        // bool f_ok_log = f_testRegression(intensities_log, RSS_log, &mutateReg->regSpan);
+        // bool f_ok_log = f_testRegression(intensities_log->data(), RSS_log, &mutateReg->regSpan);
         bool f_ok = f_testRegression(intensities, RSS_exp, &mutateReg->regSpan);
-        // assert(f_ok == f_ok_exp);
+        // assert(f_ok_log == f_ok);
         if (!f_ok)
         {
             return f_test_fail; // H0 holds, the two distributions are not noticeably different
@@ -2458,6 +2460,7 @@ namespace qAlgorithms
         std::vector<float> spectrum_mz(1000);
         std::vector<float> spectrum_int(1000);
 
+        size_t profCount = 0;
         std::vector<ProfileBlock> subprofiles(500);
         for (size_t scanNum = 0; scanNum < countSelected; ++scanNum)
         {
@@ -2477,7 +2480,11 @@ namespace qAlgorithms
 
             // add sum statistics to log struct
             globalLogStruct.checkedRegionCount += subprofiles.size();
+            profCount += subprofiles.size();
+
+            printf("%d,", subprofiles.size());
         }
+        // printf("cen1: %d profiles || ", profCount);
 
         globalLogStruct.totalPeakCount += centroids->size();
 
@@ -2493,7 +2500,7 @@ namespace qAlgorithms
         return centroids->size();
     }
 
-    int getNextProfileRegion(
+    bool getNextProfileRegion(
         const std::vector<float> *spectrum_mz,
         const std::vector<float> *spectrum_int,
         ProfileBlock *block);
@@ -2532,9 +2539,12 @@ namespace qAlgorithms
         std::vector<PeakFit> ret; // @todo add tracking stuff for retaining spectrum / startpoint information
         ProfileBlock block;
         size_t ID_spectrum = selectedIndices->front();
+        size_t profCount = 0;
+        printf("\n\n");
         while (scanNum < countSelected)
         {
-            if (getNextProfileRegion(&spectrum_mz, &spectrum_int, &block))
+            bool endOfSPectrumReached = getNextProfileRegion(&spectrum_mz, &spectrum_int, &block);
+            if (endOfSPectrumReached)
             {
                 // avoid needless allocation / deallocation of otherwise scope-local vectors
                 spectrum_mz.clear();
@@ -2544,17 +2554,24 @@ namespace qAlgorithms
                 data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
 
                 scanNum += 1;
+
+                printf("%d,", profCount);
+                profCount = 0;
             }
             // at this point, the block contains one continuus region of points in the source spectrum
 
+            profCount += block.length > 4 ? 1 : 0;
             qpeaks_find(block.intensity, block.mz, nullptr, block.length, GLOBAL_MAXSCALE_CENTROID, &ret);
-        }
-        // move peak data structure into centroid struct @todo remember spectrum id
 
-        for (unsigned int i = 0; i < centroids->size(); i++)
-        {
-            centroids->at(i).ID = i;
+            for (size_t i = 0; i < ret.size(); i++)
+            {
+                PeakFit *p = ret.data() + i;
+                size_t id = centroids->size();
+                centroids->push_back(peakToCen(p, id, ID_spectrum));
+            }
+            ret.clear();
         }
+        // printf("cen2: %d\n", profCount);
 
         return centroids->size(); // @todo rework centroids to be multiple separate arrays
     }
@@ -2594,6 +2611,7 @@ namespace qAlgorithms
                         spectrum_mz->data() + idxL,
                         idxL,
                         idxR - idxL + 1};
+                    assert(b.length >= 5);
                     groupedData->push_back(b);
 
                     maxLength = maxLength > currLen ? maxLength : currLen;
@@ -2624,7 +2642,7 @@ namespace qAlgorithms
         return maxLength;
     }
 
-    int getNextProfileRegion(
+    bool getNextProfileRegion(
         const std::vector<float> *spectrum_mz,
         const std::vector<float> *spectrum_int,
         ProfileBlock *block)
@@ -2638,7 +2656,7 @@ namespace qAlgorithms
             block->mz = nullptr;
             block->length = 0;
             block->startPos = 0;
-            return 1;
+            return true;
         }
 
         const float minIntensity = 10; // @todo bad solution?
@@ -2654,16 +2672,22 @@ namespace qAlgorithms
         size_t length = 0;
         for (size_t i = idx; i < len; i++)
         {
-            length += 1;
             if (spectrum_int->at(i) < minIntensity)
                 break;
+            length += 1;
+        }
+
+        if (length > 5)
+        {
+            assert(intensity[length - 1] > 0);
+            assert(intensity[length] < minIntensity);
         }
 
         block->intensity = intensity;
         block->mz = mz;
         block->startPos = idx;
         block->length = length;
-        return 0;
+        return false;
     }
 
     inline double regAt(const RegCoeffs *coeff, const double x)
@@ -2691,6 +2715,19 @@ namespace qAlgorithms
         double x_l, x_r, dummy;
         solveQuadratic(a_l, b, c, &x_l, &dummy);
         solveQuadratic(a_r, b, c, &dummy, &x_r);
+
+        // special case: valley is such that one half of the peak is not defined at half maximum
+
+        if (x_l == INFINITY)
+        {
+            assert(a_l > 0);
+            x_l = -b / (2 * a_l);
+        }
+        if (x_r == INFINITY)
+        {
+            assert(a_r > 0);
+            x_r = -b / (2 * a_r);
+        }
 
         assert(x_l < x_r);
 

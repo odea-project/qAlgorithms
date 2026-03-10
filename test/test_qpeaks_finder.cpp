@@ -196,6 +196,7 @@ struct ErrorEMG
     bool negativeB23 = true;
 };
 
+// void control_sim_EMG(float x_start, float x_step, float y_min, size_t n_samples, ErrorEMG *in_out)
 void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
 {
     // generate data using an exponentially modified gaussian on an equidistant x axis
@@ -218,6 +219,13 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     {
         in_out->dqs = -2;
         return;
+    }
+
+    // take n equidistant samples from the generated distribution, starting at y_min.
+    size_t idx_start = 0;
+    for (idx_start; idx_start < length; idx_start++)
+    {
+        // @todo
     }
 
     std::vector<PeakFit> ret;
