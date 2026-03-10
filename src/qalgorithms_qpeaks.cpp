@@ -2482,7 +2482,7 @@ namespace qAlgorithms
             globalLogStruct.checkedRegionCount += subprofiles.size();
             profCount += subprofiles.size();
 
-            printf("%d,", subprofiles.size());
+            // printf("%d,", subprofiles.size());
         }
         // printf("cen1: %d profiles || ", profCount);
 
@@ -2540,12 +2540,16 @@ namespace qAlgorithms
         ProfileBlock block;
         size_t ID_spectrum = selectedIndices->front();
         size_t profCount = 0;
-        printf("\n\n");
-        while (scanNum < countSelected)
+        while (scanNum < countSelected + 1) // this is because the scan number is incremented after obtaining the spectrum
         {
             bool endOfSPectrumReached = getNextProfileRegion(&spectrum_mz, &spectrum_int, &block);
             if (endOfSPectrumReached)
             {
+                profCount = 0;
+                if (scanNum >= countSelected)
+                {
+                    break;
+                }
                 // avoid needless allocation / deallocation of otherwise scope-local vectors
                 spectrum_mz.clear();
                 spectrum_int.clear();
@@ -2554,9 +2558,6 @@ namespace qAlgorithms
                 data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
 
                 scanNum += 1;
-
-                printf("%d,", profCount);
-                profCount = 0;
             }
             // at this point, the block contains one continuus region of points in the source spectrum
 
@@ -2571,7 +2572,6 @@ namespace qAlgorithms
             }
             ret.clear();
         }
-        // printf("cen2: %d\n", profCount);
 
         return centroids->size(); // @todo rework centroids to be multiple separate arrays
     }

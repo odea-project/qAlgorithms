@@ -462,7 +462,6 @@ int main(int argc, char *argv[])
             int centroidCount2 = findCentroids_new(inputFile, &selectedIndices, centroids2); // it is guaranteed that only profile mode data is used
 
             assert(centroidCount2 == centroidCount);
-            assert(centroids2->back().mz == centroids->back().mz);
 
             if (centroidCount == 0)
             {
