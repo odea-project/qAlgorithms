@@ -43,9 +43,9 @@ namespace qAlgorithms
         const size_t maxScale_in,
         std::vector<PeakFit> *result);
 
-    int findCentroids_new(XML_File &data,
-                          const std::vector<unsigned int> *selectedIndices,
-                          std::vector<CentroidPeak> *centroids);
+    int findCentroids(XML_File &data,
+                      const std::vector<unsigned int> *selectedIndices,
+                      std::vector<CentroidPeak> *centroids);
 
     /// @param intensity_log logarithmy of the intensity values. This is the y axis of the fit. The x axis is required to be equidistant.
     /// @param maxscale maximum scale of a peak that should be attempted to fit.
@@ -116,15 +116,9 @@ namespace qAlgorithms
 
     // ### Centroiding-specific Code ### //
 
-    int findCentroids(XML_File &data, // @todo get rid of the direct coupling to pugixml
-                      const std::vector<unsigned int> *selectedIndices,
-                      std::vector<CentroidPeak> *centroids);
-
-    void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
-                           const std::vector<ProfileBlock> *subprofiles,
-                           const size_t scanNumber,
-                           const size_t ID_spectrum,
-                           const size_t maxWindowSize);
+    int findCentroids_old(XML_File &data,
+                          const std::vector<unsigned int> *selectedIndices,
+                          std::vector<CentroidPeak> *centroids);
 
     void createCentroidPeaks(
         std::vector<CentroidPeak> *peaks,

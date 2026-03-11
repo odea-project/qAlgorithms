@@ -187,60 +187,12 @@ namespace qAlgorithms
         return -42;
     }
 
-#pragma region "find peaks"
-
-    void findCentroidPeaks(std::vector<CentroidPeak> *retPeaks, // results are appended to this vector
-                           const std::vector<ProfileBlock> *subprofiles,
-                           const size_t scanNumber,
-                           const size_t ID_spectrum,
-                           const size_t maxWindowSize)
-
-    {
-        assert(!subprofiles->empty());
-
-        std::vector<float> logIntensity(maxWindowSize + 2 * GLOBAL_MAXSCALE_CENTROID, NAN);
-
-        static_assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
-
-        std::vector<RegressionGauss> validRegressions;
-        validRegressions.reserve(subprofiles->size() / 2); // probably too large, shouldn't matter
-        for (size_t i = 0; i < subprofiles->size(); i++)
-        {
-            const ProfileBlock *const block = subprofiles->data() + i;
-
-            // this is now filled inside the function, the vector only reserves space. We do not
-            // perform this step in the function so that it is explicitly empty. This should be
-            // replaced by a non-malloc calling scratch space eventually
-            logIntensity.clear();
-            runningRegression(
-                block->intensity,
-                &logIntensity,
-                nullptr,
-                block->length,
-                GLOBAL_MAXSCALE_CENTROID,
-                &validRegressions);
-
-            volatile bool purge = false;
-            if (purge)
-                validRegressions.clear();
-
-            if (validRegressions.empty())
-            {
-                continue; // no valid peaks
-            }
-            createCentroidPeaks(retPeaks, &validRegressions, block, scanNumber, ID_spectrum);
-            validRegressions.clear();
-        }
-    }
-
-#pragma endregion "find peaks"
-
 #pragma region "running regression"
 
     volatile bool debug = false;
     std::vector<invalid> failCodes; // @todo: make a logging function / struct thing that can be used to check failure points later
 
-    int validateRegressions( // @todo this should be specific to centroids, features or components
+    int validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
         const float *intensities,
         const std::vector<float> *intensities_log,
         const unsigned int *const degreesOfFreedom_cum,
@@ -312,6 +264,8 @@ namespace qAlgorithms
 
         return validCount;
     }
+
+#pragma region "Conflict Elimination"
 
     int pruneConflictingRegs(
         std::vector<RegressionGauss> *validRegressions,
@@ -422,8 +376,6 @@ namespace qAlgorithms
         return;
     }
 
-#pragma region "eliminate conflicting regs"
-
     int pruneRegsByApex(const float *intensities,
                         const unsigned int *const df_cum,
                         std::vector<RegressionGauss> *validRegressions)
@@ -479,27 +431,6 @@ namespace qAlgorithms
         // the main issue with multiple regressions is estimating if the greater scale ones cover too many points.
         // if not, should overlap between regressions be permitted?
         return 0;
-    }
-
-    double calcMSE_exp(const RegCoeffs *coeff,
-                       const float *observed,
-                       const Range_i *regSpan,
-                       const double df)
-    {
-        double idxCenter = double(coeff->x0);
-        double x = double(regSpan->startIdx) - idxCenter;
-        double result = 0.0;
-        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
-        { // this loop is vectorised at level O3
-            double pred = exp(regAt(coeff, x));
-            double obs = observed[i];
-            double newdiff = (obs - pred) * (obs - pred);
-            result += newdiff;
-            x += 1.0;
-        }
-        double mse = result / df;
-        assert(mse > 0);
-        return mse;
     }
 
     int pruneConflictingRegs(
@@ -1638,9 +1569,6 @@ namespace qAlgorithms
 
         return varSignal / mse;
     }
-#pragma endregion "validate Regression"
-
-#pragma endregion "validate regression"
 
 #pragma region "create peaks"
 
@@ -2345,7 +2273,7 @@ namespace qAlgorithms
                                 .mean;
     }
 
-    std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs,
+    std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs, // @todo rework this to also utilise qpeaks_find()
                                           const RT_Converter *convertRT)
     {
         // reset the logger, not the upcount
@@ -2442,64 +2370,6 @@ namespace qAlgorithms
 
 #pragma region "find centroids"
 
-    size_t getProfileRegions(
-        std::vector<ProfileBlock> *groupedData,
-        const std::vector<float> *spectrum_mz,
-        const std::vector<float> *spectrum_int);
-
-    int findCentroids(XML_File &data, // @todo get rid of the direct coupling to pugixml
-                      const std::vector<unsigned int> *selectedIndices,
-                      std::vector<CentroidPeak> *centroids)
-    {
-        // resetting the logger does not change the number of runs or the features field
-        resetLogger(&globalLogStruct);
-        globalLogStruct.features = false;
-
-        const size_t countSelected = selectedIndices->size();
-
-        std::vector<float> spectrum_mz(1000);
-        std::vector<float> spectrum_int(1000);
-
-        size_t profCount = 0;
-        std::vector<ProfileBlock> subprofiles(500);
-        for (size_t scanNum = 0; scanNum < countSelected; ++scanNum)
-        {
-            // avoid needless allocation / deallocation of otherwise scope-local vectors
-            spectrum_mz.clear();
-            spectrum_int.clear();
-            subprofiles.clear();
-
-            size_t ID_spectrum = selectedIndices->at(scanNum);
-            data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
-
-            size_t maxWindowSize = getProfileRegions(&subprofiles, &spectrum_mz, &spectrum_int);
-            if (maxWindowSize == 0) // this is also relevant to filtering, add a warning if no filter?
-                continue;
-
-            findCentroidPeaks(centroids, &subprofiles, scanNum, ID_spectrum, maxWindowSize);
-
-            // add sum statistics to log struct
-            globalLogStruct.checkedRegionCount += subprofiles.size();
-            profCount += subprofiles.size();
-
-            // printf("%d,", subprofiles.size());
-        }
-        // printf("cen1: %d profiles || ", profCount);
-
-        globalLogStruct.totalPeakCount += centroids->size();
-
-        // log printing has to be handled by the logged function itself
-        // data ID is only incremented after feature processing
-        loggerPrint(&globalLogStruct);
-
-        for (unsigned int i = 0; i < centroids->size(); i++)
-        {
-            centroids->at(i).ID = i;
-        }
-
-        return centroids->size();
-    }
-
     bool getNextProfileRegion(
         const std::vector<float> *spectrum_mz,
         const std::vector<float> *spectrum_int,
@@ -2524,9 +2394,9 @@ namespace qAlgorithms
         return cen;
     }
 
-    int findCentroids_new(XML_File &data, // @todo move this into the xml file specific part of qAlgorithms
-                          const std::vector<unsigned int> *selectedIndices,
-                          std::vector<CentroidPeak> *centroids)
+    int findCentroids(XML_File &data, // @todo move this into the xml file specific part of qAlgorithms
+                      const std::vector<unsigned int> *selectedIndices,
+                      std::vector<CentroidPeak> *centroids)
     {
         const size_t countSelected = selectedIndices->size();
 
@@ -2564,6 +2434,8 @@ namespace qAlgorithms
             profCount += block.length > 4 ? 1 : 0;
             qpeaks_find(block.intensity, block.mz, nullptr, block.length, GLOBAL_MAXSCALE_CENTROID, &ret);
 
+            // printf("%d,", block.length);
+
             for (size_t i = 0; i < ret.size(); i++)
             {
                 PeakFit *p = ret.data() + i;
@@ -2577,70 +2449,6 @@ namespace qAlgorithms
     }
 
     size_t removedPoints = 0;
-
-    size_t getProfileRegions(
-        std::vector<ProfileBlock> *groupedData,
-        const std::vector<float> *spectrum_mz,
-        const std::vector<float> *spectrum_int)
-    {
-        assert(groupedData->empty());
-        assert(spectrum_int->size() == spectrum_mz->size());
-        // this function walks through both spectra and fills a vector of blocks
-        // every block is a region which is searched for centroids. Further, the
-        // edges of the block are interpolated such that the third real point (which
-        // is the start of valid regressions) can be occupied with a symmetric regression
-        // of the maximum scale (currently 8)
-        // the function returns the largest created block.
-
-        const float minIntensity = 10; // @todo bad solution?
-
-        size_t maxLength = 0;
-        size_t currLen = 0; // current length
-        size_t lastZero = 0;
-        for (size_t pos = 0; pos < spectrum_int->size(); pos++)
-        {
-            if (spectrum_int->at(pos) < minIntensity)
-            {
-                if (currLen >= 5)
-                {
-                    size_t idxL = lastZero + 1;
-                    size_t idxR = pos - 1;
-
-                    ProfileBlock b = {
-                        spectrum_int->data() + idxL,
-                        spectrum_mz->data() + idxL,
-                        idxL,
-                        idxR - idxL + 1};
-                    assert(b.length >= 5);
-                    groupedData->push_back(b);
-
-                    maxLength = maxLength > currLen ? maxLength : currLen;
-                }
-                currLen = 0;
-                lastZero = pos;
-            }
-            else
-            {
-                currLen += 1;
-            }
-        }
-        if (currLen >= 5)
-        {
-            size_t idxL = lastZero + 1;
-            size_t idxR = spectrum_int->size() - 1;
-            ProfileBlock b = {
-                spectrum_int->data() + idxL,
-                spectrum_mz->data() + idxL,
-                idxL,
-                idxR - idxL + 1};
-            groupedData->push_back(b);
-
-            maxLength = maxLength > currLen ? maxLength : currLen;
-        }
-
-        assert(maxLength > 4);
-        return maxLength;
-    }
 
     bool getNextProfileRegion(
         const std::vector<float> *spectrum_mz,
@@ -2689,6 +2497,8 @@ namespace qAlgorithms
         block->length = length;
         return false;
     }
+
+#pragma region "Helper math"
 
     inline double regAt(const RegCoeffs *coeff, const double x)
     {
@@ -2828,5 +2638,27 @@ namespace qAlgorithms
         jacobi[3] = -1 / (2 * coeffs->b3) * (jacobi[0] + jacobi[1] * coeffs->b1);
 
         // @todo
+        return 0;
+    }
+
+    double calcMSE_exp(const RegCoeffs *coeff,
+                       const float *observed,
+                       const Range_i *regSpan,
+                       const double df)
+    {
+        double idxCenter = double(coeff->x0);
+        double x = double(regSpan->startIdx) - idxCenter;
+        double result = 0.0;
+        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
+        { // this loop is vectorised at level O3
+            double pred = exp(regAt(coeff, x));
+            double obs = observed[i];
+            double newdiff = (obs - pred) * (obs - pred);
+            result += newdiff;
+            x += 1.0;
+        }
+        double mse = result / df;
+        assert(mse > 0);
+        return mse;
     }
 }

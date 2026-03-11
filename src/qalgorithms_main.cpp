@@ -458,11 +458,6 @@ int main(int argc, char *argv[])
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             int centroidCount = findCentroids(inputFile, &selectedIndices, centroids); // it is guaranteed that only profile mode data is used
 
-            std::vector<CentroidPeak> *centroids2 = new std::vector<CentroidPeak>;
-            int centroidCount2 = findCentroids_new(inputFile, &selectedIndices, centroids2); // it is guaranteed that only profile mode data is used
-
-            assert(centroidCount2 == centroidCount);
-
             if (centroidCount == 0)
             {
                 fprintf(stderr, "Error: no centroids found despite valid indices");
