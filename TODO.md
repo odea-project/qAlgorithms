@@ -49,7 +49,7 @@ Additional functionality of the core library that should be added at some point.
 * expose core functions to R, python and other languages (java / C# for compatibility with openchrom and mzmine)
 * add post-hoc correction for binning falsely separating mass traces
 * design a qAlgorithms-specific binary storage format for mass spectra 
-* deconvolution of (probable) isomeric compounds forming double-peaks 
+* deconvolution of (probable) double-peak systems like isomeric compounds or other strong coelution of similar masses 
 * include the pressure profile and other column parameters as data for describing a feature
 * devise a better quality score for binning
 * add functionality to read vendor formats
@@ -57,9 +57,9 @@ Additional functionality of the core library that should be added at some point.
 * RT distance harmoniser should work within a specific window if the distance changes at one point in the measurement (make it local to every bin? Check potential performance impact)
 * consider adding the artifact removal presented here: https://chemrxiv.org/doi/pdf/10.26434/chemrxiv.10001734/v1
 * add a function to calculate an exact fit using the model and the complete x axis via the pseudoinverse (fast matrix: https://gist.github.com/nadavrot/5b35d44e8ba3dd718e595e40184d03f0)
-* write output data of centroiding to mzML and other MS formats
+* write output data of centroiding to mzML (centroids only, introduce as dedicated option) and other MS formats
 * add support for multithreading
-* peak parameters: theoretical plate height, FWHM
+* peak parameters: theoretical plate height
 
 ## Testing
 Any code that is not run when processing data and concerned with logical correctness of the program.

@@ -114,19 +114,6 @@ namespace qAlgorithms
 
     invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
 
-    // ### Centroiding-specific Code ### //
-
-    int findCentroids_old(XML_File &data,
-                          const std::vector<unsigned int> *selectedIndices,
-                          std::vector<CentroidPeak> *centroids);
-
-    void createCentroidPeaks(
-        std::vector<CentroidPeak> *peaks,
-        const std::vector<RegressionGauss> *validRegressionsVec,
-        const ProfileBlock *block,
-        const size_t scanNumber,
-        const size_t ID_spectrum);
-
     // ### Feature-specific Code ### //
 
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data,

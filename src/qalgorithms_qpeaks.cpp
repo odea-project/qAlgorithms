@@ -1605,58 +1605,6 @@ namespace qAlgorithms
         return {float(weighted_mean), float(uncertaintiy)};
     };
 
-    void createCentroidPeaks(
-        std::vector<CentroidPeak> *peaks,
-        const std::vector<RegressionGauss> *validRegressionsVec,
-        const ProfileBlock *block, // @todo replace with mz and trace range
-        const size_t scanNumber,
-        const size_t ID_spectrum)
-    {
-        assert(!validRegressionsVec->empty());
-        // iterate over the validRegressions vector
-        for (size_t i = 0; i < validRegressionsVec->size(); i++)
-        {
-            const RegressionGauss *regression = validRegressionsVec->data() + i;
-            assert(regression->isValid);
-            CentroidPeak peak;
-            peak.number_MS1 = scanNumber;
-            // add height
-            RegCoeffs coeff = regression->coeffs;
-            peak.height = exp_approx_d(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
-            // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
-            peak.heightUncertainty = regression->height_uncert * peak.height;
-
-            size_t offset = (size_t)std::floor(regression->apex_position);
-            double mz0 = block->mz[offset];
-            double delta_mz = block->mz[offset + 1] - mz0;
-
-            // add scaled area
-            double scalar = exp(coeff.b0) * delta_mz;
-            peak.area = regression->area * scalar;
-            peak.areaUncertainty = regression->area_uncert * scalar;
-
-            // add scaled apex position (mz)
-            peak.mz = mz0 + delta_mz * (regression->apex_position - std::floor(regression->apex_position));
-            peak.mzUncertainty = regression->position_uncert * delta_mz * T_VALUES[regression->df] * sqrt(1 + 1 / (regression->df + 4));
-
-            // quality params
-            peak.DQSC = 1 - erf_approx_f(regression->area_uncert / regression->area);
-            // peak.df = regression->df;
-
-            peak.numCompetitors = regression->numCompetitors;
-            peak.scale = regression->coeffs.scale;
-
-            // traceability information
-            peak.trace.ID_spectrum = ID_spectrum;
-            peak.trace.start = block->startPos;
-            peak.trace.end = block->startPos + block->length - 1;
-
-            peak.ID = peaks->size();
-
-            peaks->push_back(peak);
-        }
-    }
-
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
@@ -2364,6 +2312,46 @@ namespace qAlgorithms
         std::sort(peaks.begin(), peaks.end(), [](FeaturePeak lhs, FeaturePeak rhs)
                   { return lhs.retentionTime < rhs.retentionTime; });
         return peaks;
+    }
+
+    FeaturePeak peakToFeat(const PeakFit *peak, size_t id, const double DQSB)
+    {
+        FeaturePeak ret;
+        ret.area = peak->area;
+        ret.areaUncertainty = peak->area_uncert;
+        ret.coefficients = peak->coeffs;
+        ret.competitorCount = 0; // @todo
+        ret.componentID = 0;
+        ret.DQSB = DQSB;
+    }
+
+    int findFeatures_new(const std::vector<EIC> *EICs,
+                         const std::vector<float> *convertRT, // correct RT corresponding to every scan number
+                         std::vector<FeaturePeak> *res)
+    {
+        std::vector<PeakFit> peaks;
+
+        // the only relevant change here is that the start point of the x axis (RT) depends on the first scan in an EIC
+        // it is already assured that a bin contains continuous data
+        size_t binCount = EICs->size();
+        for (size_t eic = 0; eic < binCount; eic++)
+        {
+            const EIC *bin = EICs->data() + eic;
+            const float *rt = convertRT->data() + bin->scanNumbers[0];
+            size_t binLen = bin->df.size();
+            qpeaks_find(bin->ints_area.data(), rt, bin->df.data(), binLen, 40, &peaks); // @todo dynamic maxscale
+            for (size_t peak = 0; peak < peaks.size(); peak++)
+            {
+                res->push_back(peakToFeat(&peaks[peak], res->size()));
+            }
+            peaks.clear();
+        }
+
+        // peaks are sorted here so they can be treated as const throughout the rest of the program
+        std::sort(res->begin(), res->end(), [](FeaturePeak lhs, FeaturePeak rhs)
+                  { return lhs.retentionTime < rhs.retentionTime; });
+
+        return res->size();
     }
 
 #pragma endregion "Feature Detection"
