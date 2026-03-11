@@ -311,11 +311,9 @@ int main(int argc, char *argv[])
                 predict[i] = exp(regAt(&test, x));
             }
             double diffs[8] = {0};
-            double totallErr = 0;
             for (int i = 0; i < 8; i++)
             {
                 diffs[i] = block.intensity[i] - predict[i];
-                totallErr += abs(diffs[i]);
             }
         }
     }
@@ -342,21 +340,6 @@ int main(int argc, char *argv[])
     {
         std::cerr << "Warning: removing the first " << userArgs.skipAhead << " elements from the tasklist.\n";
     }
-
-    FILE *queue = fopen("./processedFiles.csv", "a");
-    fprintf(queue, "ID, Name\n");
-    for (size_t pathIdx = skipAhead; pathIdx < tasklist.size(); pathIdx++)
-    {
-        int ID = pathIdx - skipAhead;
-        std::string name = tasklist[pathIdx].filename().string();
-        fprintf(queue, "%d, %s\n", ID, name.c_str());
-    }
-    fclose(queue);
-
-    // hacked in logging part, @todo make this better
-    FILE *log = fopen("./logdata.csv", "a");
-    fprintf(log, "type, regions, peaks, passed, no_apex, invalid_apex, no_df, invalid_apexToEdge, f_test_fail, invalid_quadratic, invalid_area, invalid_height, invalid_chisq\n");
-    fclose(log);
 
     auto absoluteStart = std::chrono::high_resolution_clock::now();
 
@@ -581,45 +564,6 @@ int main(int argc, char *argv[])
             }
 
             continue;
-
-            // make sure that every peak contains only one mass trace
-            // assert(features.size() <= binnedData.size());
-            // @todo this is not intrinsically true, a very crowded spectrum might contain multiple features per Bin
-
-            int peaksWithMassGaps = 0;
-            double meanDQSF = 0;
-            double meanInterpolations = 0;
-            for (size_t i = 0; i < features.size(); i++)
-            {
-                assert(features[i].scanPeakEnd < retentionTimes.size());
-                int binIdx = features[i].idxBin;
-                auto massesBin = binnedData[binIdx].mz;
-                auto scansBin = binnedData[binIdx].scanNumbers;
-                unsigned int binStart = features[i].idxBinStart;
-                unsigned int binEnd = features[i].idxBinEnd;
-                assert(binStart < massesBin.size() - 4);
-                assert(binEnd < massesBin.size());
-
-                // idxPeakStart/End are the index referring to the bin in which a peak was found
-                if (!massTraceStable(massesBin, binStart, binEnd))
-                {
-                    ++peaksWithMassGaps;
-                    // peaks[i].DQSF *= -1;
-                    // @todo consider removing these or add a correction set somewhere later
-                    // @todo add some documentation regarding the scores
-                }
-                else
-                {
-                    meanDQSF += features[i].DQSF;
-                }
-                meanInterpolations += features[i].interpolationCount - 4;
-            }
-            meanDQSF /= double(features.size() - peaksWithMassGaps);
-            meanInterpolations /= double(features.size());
-            if (userArgs.verboseProgress)
-            {
-                std::cout << peaksWithMassGaps << " peaks were erroneously constructed from more than one mass trace\n";
-            }
 
             timeEnd = std::chrono::high_resolution_clock::now();
 

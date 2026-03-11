@@ -763,7 +763,7 @@ namespace qAlgorithms
             float RT_end = convertRT->at(scanNums->at(peak.idxBinEnd));
 
             char buffer[256];
-            snprintf(buffer, 256, "%d,%d,%zu,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+            snprintf(buffer, 256, "%d,%d,%zu,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%zu,%d,%d,%0.5f,%0.5f,%0.5f,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                      peak.componentID, counter, binID, peak.idxBinStart, peak.idxBinEnd, peak.mz, peak.mzUncertainty,
                      peak.retentionTime, peak.RT_Uncertainty, RT_start, RT_end,
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.coefficients.scale,
@@ -816,24 +816,24 @@ namespace qAlgorithms
         output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,scan,"
                << "area,height,degreesOfFreedom,DQSC,DQSB,DQSF,b0,b1,b2,b3\n";
 
-        unsigned int counter = 1;
-        for (size_t i = 0; i < peaktable->size(); i++)
-        {
-            const FeaturePeak peak = peaktable->at(i);
-            int binID = peak.idxBin;
-            const EIC bin = originalBins->at(binID);
-            char buffer[256];
-            for (size_t cen = peak.idxBinStart; cen < peak.idxBinEnd + 1; cen++)
-            {
-                assert(false);
-                // snprintf(buffer, 256, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%d,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                //          counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen], bin.scanNumbers[cen],
-                //          bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
-                //          peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
-                output << buffer;
-            }
-            ++counter;
-        }
+        // unsigned int counter = 1;
+        // for (size_t i = 0; i < peaktable->size(); i++)
+        // {
+        //     const FeaturePeak peak = peaktable->at(i);
+        //     int binID = peak.idxBin;
+        //     const EIC bin = originalBins->at(binID);
+        //     char buffer[256];
+        //     for (size_t cen = peak.idxBinStart; cen < peak.idxBinEnd + 1; cen++)
+        //     {
+        //         assert(false);
+        // snprintf(buffer, 256, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%d,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
+        //          counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen], bin.scanNumbers[cen],
+        //          bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
+        //          peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+        //     output << buffer;
+        // }
+        // ++counter;
+        // }
 
         file_out << output.str();
         file_out.close();

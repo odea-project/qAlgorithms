@@ -64,16 +64,17 @@ namespace qAlgorithms
         const size_t length,
         std::vector<PeakFit> *result)
     {
+        assert(length == peaks->size());
         // retransforming is probably best if the range of x values is as small as necessary
-        for (size_t i = 0; i < peaks->size(); i++)
+        for (size_t i = 0; i < length; i++)
         {
             const RegressionGauss *regression = peaks->data() + i;
             assert(regression->isValid);
             const RegCoeffs coeff = regression->coeffs;
 
             double apex = regression->apex_position;
-            size_t start = regression->regSpan.startIdx;
-            size_t end = regression->regSpan.endIdx;
+            // size_t start = regression->regSpan.startIdx;
+            // size_t end = regression->regSpan.endIdx;
 
             PeakFit peak;
 
@@ -338,7 +339,7 @@ namespace qAlgorithms
 
         resolveScaleConflicts(&validRegsTmp, intensities, degreesOfFreedom_cum);
 
-        int apexCount = pruneRegsByApex(intensities, degreesOfFreedom_cum, &validRegsTmp);
+        /*int apexCount =*/pruneRegsByApex(intensities, degreesOfFreedom_cum, &validRegsTmp);
 
         // temp storage vector, eventually delete everything below this comment @todo
         std::vector<RegressionGauss> validRegsTmp2;
@@ -850,7 +851,6 @@ namespace qAlgorithms
         std::vector<RegressionGauss> validRegsAtScale;
         size_t currentScale = GLOBAL_MINSCALE;
         validRegsTmp->push_back({0}); // doing this avoids a second check for the last scale group
-        validRegsTmp->back().coeffs.scale = 0;
         RegressionGauss *currentReg = validRegsTmp->data();
 
         while (currentReg->coeffs.scale != 0)
@@ -1212,7 +1212,7 @@ namespace qAlgorithms
     double correctB0(const float *const intensities,
                      const Range_i *range,
                      std::vector<float> *predicted,
-                     RegCoeffs *coeff)
+                     RegCoeffs *coeff) // @todo also correct the error matrix, assess degree of correction applied
     {
         // problem: after the log transform, regression residuals are not directly transferable to
         // the retransformed model. This is corrected by adjusting b0 so that the MSE in the
@@ -1234,7 +1234,7 @@ namespace qAlgorithms
         // possible due to the value of y being required. This is not a large performance concern since we can combine it
         // with the calculations that are already necessary for obntaining the modified b0.
 
-        double b0_old = coeff->b0;
+        // double b0_old = coeff->b0;
 
         int start = int(range->startIdx);
         assert(0 <= start);
@@ -1398,7 +1398,7 @@ namespace qAlgorithms
 
         // this is the error term for the corrected regression. Of the original 4 x 4 matrix,
         // only the first row is needed
-        double errorMat[4] = {0};
+        // double errorMat[4] = {0};
 
         // @todo new error correction here. Previous covariance matrix was mse (log) * (XtX)^-1,
         // multiply with matrix U, where first four terms are partial derivative of equation in
@@ -1423,8 +1423,8 @@ namespace qAlgorithms
         double RSS_log = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
         assert(RSS_log > 0);
         double RSS_exp = calcRSS(predict->data(), intensities, &mutateReg->regSpan);
-        assert(RSS_exp > 0);
-        double mse_exp = RSS_exp / double(df_sum);
+        // assert(RSS_exp > 0);
+        // double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
 
         mutateReg->mse = mse_log; // @todo the mse should be calculated in the function that uses it
@@ -2313,7 +2313,7 @@ namespace qAlgorithms
         return peaks;
     }
 
-    FeaturePeak peakToFeat(const PeakFit *peak, size_t id)
+    FeaturePeak peakToFeat(const PeakFit *peak)
     {
         FeaturePeak ret;
         ret.area = peak->area;
@@ -2327,6 +2327,8 @@ namespace qAlgorithms
         ret.heightUncertainty = peak->height_uncert;
         ret.retentionTime = peak->position;
         ret.RT_Uncertainty = peak->position_uncert;
+
+        return ret;
     }
 
     int findFeatures_new(const std::vector<EIC> *EICs,
@@ -2346,7 +2348,7 @@ namespace qAlgorithms
             qpeaks_find(bin->ints_area.data(), rt, bin->df.data(), binLen, 40, &peaks); // @todo dynamic maxscale
             for (size_t peak = 0; peak < peaks.size(); peak++)
             {
-                FeaturePeak feat = peakToFeat(&peaks[peak], res->size());
+                FeaturePeak feat = peakToFeat(&peaks[peak]);
                 fillPeakVals(bin, &feat); // set mz, its uncertainty and DQSC / DQSB
 
                 res->push_back(feat);
@@ -2402,15 +2404,13 @@ namespace qAlgorithms
 
         size_t scanNum = 0;
         std::vector<PeakFit> ret; // @todo add tracking stuff for retaining spectrum / startpoint information
-        ProfileBlock block;
+        ProfileBlock block = {nullptr, nullptr, 0, 0};
         size_t ID_spectrum = selectedIndices->front();
-        size_t profCount = 0;
         while (scanNum < countSelected + 1) // this is because the scan number is incremented after obtaining the spectrum
         {
             bool endOfSPectrumReached = getNextProfileRegion(&spectrum_mz, &spectrum_int, &block);
             if (endOfSPectrumReached)
             {
-                profCount = 0;
                 if (scanNum >= countSelected)
                 {
                     break;
@@ -2425,8 +2425,6 @@ namespace qAlgorithms
                 scanNum += 1;
             }
             // at this point, the block contains one continuus region of points in the source spectrum
-
-            profCount += block.length > 4 ? 1 : 0;
             qpeaks_find(block.intensity, block.mz, nullptr, block.length, GLOBAL_MAXSCALE_CENTROID, &ret);
 
             // printf("%d,", block.length);

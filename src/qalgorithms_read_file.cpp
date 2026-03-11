@@ -86,7 +86,7 @@ namespace qAlgorithms
         std::vector<char> output(length);
         auto simd_res = simdutf::base64_to_binary(encoded_string.c_str(), encoded_string.size(), output.data());
 
-        if (simd_res.error != 0) [[unlikely]]
+        if (simd_res.error != 0) // [[unlikely]]
         {
             return {char(simd_res.count)}; // error message is handled one function above
         }

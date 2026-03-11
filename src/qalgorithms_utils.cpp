@@ -38,10 +38,10 @@ namespace qAlgorithms
         int dfn_int = params_complex - params_simple;
         int dfd_int = numPoints - params_complex;
         size_t key = hashm(dfn_int, dfd_int);
-        if (/*global_fhash_5perc.contains(key) && */ (alpha == 0.05)) // @todo generalise for all alpha
+        if (alpha == 0.05) // @todo generalise for all alpha
         {
             double Fhash = global_fhash_5perc[key];
-            if (Fhash != 0)
+            if (Fhash != 0) // this serves as a check for the key existing
                 return Fhash;
         }
 

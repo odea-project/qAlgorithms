@@ -1082,7 +1082,7 @@ namespace qAlgorithms
         float vcrit = binningCritVal(peaksize, stddev);
         for (size_t i = 1; i < peaksize; i++)
         {
-            [[unlikely]] if (massesPeak[i] - massesPeak[i - 1] > vcrit)
+            if (massesPeak[i] - massesPeak[i - 1] > vcrit)
             {
                 return false;
             }
