@@ -171,7 +171,6 @@ namespace qAlgorithms
         // temporary values, @todo remove?
         unsigned int interpolationCount = 0;
         unsigned int competitorCount = 0;
-        unsigned int scale = 0;
         float mse_base = 0;
         float lowerRT = 0;
         float upperRT = 0; // @todo set these during feature construction

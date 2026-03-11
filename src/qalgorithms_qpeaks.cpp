@@ -102,7 +102,7 @@ namespace qAlgorithms
             // model only has a standard deviation for the apex peak
             peak.fwhm = fullWidthHalfMax(&coeff, peak.height, delta_x);
 
-            peak.dqs = 1 - erf_approx_f(regression->area_uncert / regression->area);
+            peak.dqs = 1 - erf(regression->area_uncert / regression->area);
             peak.jaccard = regression->jaccard;
 
             peak.coeffs = regression->coeffs;
@@ -1625,7 +1625,7 @@ namespace qAlgorithms
             // add height
             RegCoeffs coeff = regression->coeffs;
             // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
-            peak.height = exp_approx_d(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
+            peak.height = exp(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
             peak.heightUncertainty = regression->height_uncert * peak.height;
 
             // calculate the apex position in RT
@@ -1655,12 +1655,12 @@ namespace qAlgorithms
             peak.RT_Uncertainty = regression->position_uncert * delta_rt;
 
             // add area
-            float exp_b0 = exp_approx_d(coeff.b0); // exp(b0)
+            float exp_b0 = exp(coeff.b0); // exp(b0)
             peak.area = regression->area * exp_b0 * delta_rt;
             peak.areaUncertainty = regression->area_uncert * exp_b0 * delta_rt;
 
             // mz, mzUncertainty, mean DQSC and meanDQSF are all calculated in after this function is called in measurement_data
-            peak.DQSF = 1 - erf_approx_f(regression->area_uncert / regression->area);
+            peak.DQSF = 1 - erf(regression->area_uncert / regression->area);
 
             assert(regression->regSpan.endIdx - coeff.x0 > 1);
             peak.idxPeakStart = regression->regSpan.startIdx;
@@ -1673,7 +1673,6 @@ namespace qAlgorithms
             peak.coefficients = coeff;
             peak.mse_base = regression->mse;
 
-            peak.scale = regression->coeffs.scale;
             peak.interpolationCount = rangeLen(&regression->regSpan) - regression->df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
             peak.competitorCount = regression->numCompetitors;
 
@@ -1975,7 +1974,7 @@ namespace qAlgorithms
                 if (-B1_2_B2 < -doubleScale)
                 {
                     // valley point is outside the window, use scale as limit
-                    err_L_covered = err_L - erfi_qalgo((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12;
+                    err_L_covered = err_L - liberfc::erfi((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12;
                 }
                 else
                 {
@@ -1991,7 +1990,7 @@ namespace qAlgorithms
                 double err_L = experfc(B1_2_SQRTB2, -1.0);
                 // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
                 // erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
-                err_L_covered = erf_approx_f((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12;
+                err_L_covered = erf((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12;
             }
         }
 
@@ -2010,7 +2009,7 @@ namespace qAlgorithms
                 if (-B1_2_B3 > doubleScale)
                 {
                     // valley point is outside the window, use scale as limit
-                    err_R_covered = erfi_qalgo((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * EXP_B13 + err_R;
+                    err_R_covered = liberfc::erfi((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * EXP_B13 + err_R;
                 }
                 else
                 {
@@ -2026,7 +2025,7 @@ namespace qAlgorithms
                 double err_R = experfc(B1_2_SQRTB3, 1.0);
                 // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
                 // err_R - 1 - erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
-                err_R_covered = err_R - SQRTPI_2 * EXP_B13 - erf_approx_f((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13;
+                err_R_covered = err_R - SQRTPI_2 * EXP_B13 - erf((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13;
             }
         }
         assert(x_left < x_right);
@@ -2034,8 +2033,8 @@ namespace qAlgorithms
         double J_covered[4]; // Jacobian matrix for the covered peak area
         {
             // b0 not used on purpose, error is height independent
-            const double y_left = exp_approx_d(b1 * x_left + b2 * x_left * x_left);
-            const double y_right = exp_approx_d(b1 * x_right + b3 * x_right * x_right);
+            const double y_left = exp(b1 * x_left + b2 * x_left * x_left);
+            const double y_right = exp(b1 * x_right + b3 * x_right * x_right);
             const double dX = x_right - x_left;
 
             // calculate the Jacobian matrix terms
@@ -2193,7 +2192,7 @@ namespace qAlgorithms
         return {totalRTs, idxToGrouping};
     }
 
-    void fillPeakVals(EIC *eic, FeaturePeak *currentPeak)
+    void fillPeakVals(const EIC *eic, FeaturePeak *currentPeak)
     {
         currentPeak->scanPeakStart = eic->scanNumbers.front();
         currentPeak->scanPeakEnd = eic->scanNumbers.back();
@@ -2314,7 +2313,7 @@ namespace qAlgorithms
         return peaks;
     }
 
-    FeaturePeak peakToFeat(const PeakFit *peak, size_t id, const double DQSB)
+    FeaturePeak peakToFeat(const PeakFit *peak, size_t id)
     {
         FeaturePeak ret;
         ret.area = peak->area;
@@ -2322,7 +2321,12 @@ namespace qAlgorithms
         ret.coefficients = peak->coeffs;
         ret.competitorCount = 0; // @todo
         ret.componentID = 0;
-        ret.DQSB = DQSB;
+        ret.DQSB = -1; // set during fillPeakVals
+        ret.DQSF = peak->dqs;
+        ret.height = peak->height;
+        ret.heightUncertainty = peak->height_uncert;
+        ret.retentionTime = peak->position;
+        ret.RT_Uncertainty = peak->position_uncert;
     }
 
     int findFeatures_new(const std::vector<EIC> *EICs,
@@ -2342,7 +2346,10 @@ namespace qAlgorithms
             qpeaks_find(bin->ints_area.data(), rt, bin->df.data(), binLen, 40, &peaks); // @todo dynamic maxscale
             for (size_t peak = 0; peak < peaks.size(); peak++)
             {
-                res->push_back(peakToFeat(&peaks[peak], res->size()));
+                FeaturePeak feat = peakToFeat(&peaks[peak], res->size());
+                fillPeakVals(bin, &feat); // set mz, its uncertainty and DQSC / DQSB
+
+                res->push_back(feat);
             }
             peaks.clear();
         }

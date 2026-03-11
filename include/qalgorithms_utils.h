@@ -98,27 +98,6 @@ namespace qAlgorithms
                    const Range_i *range);
 
     /**
-     * @brief Fast exponential approximation base on Bit Manipulation.
-     * @details This function is a fast approximation of the exponential
-     * function. It is based on the bit manipulation of the double value.
-     * The function is not as accurate as the standard exponential function
-     * but is much faster. It is based on the following repository:
-     * https://github.com/edrosten/fasterexp
-     *
-     * @param x : value between 0 and 26
-     * @return double
-     */
-    double exp_approx_d(const double x);
-
-    /**
-     * @brief Fast approximation of the error function erf(x) using Abramowitz and Stegun approach.
-     *
-     * @param x
-     * @return float
-     */
-    float erf_approx_f(const float x);
-
-    /**
      * @brief Fast calculation of the Dawson integral by courtesy of Extra Byte, www.ebyte.it.
      * @details The Dawson integral is defined as: F(x) = exp(-x^2) * erfi(x)
      * * sqrt(pi)/2. For more details on this approximation, see www.dx.doi.org/10.3247/SL4Soft12.001
@@ -139,8 +118,6 @@ namespace qAlgorithms
      * @return double
      */
     double experfc(double x, double sign = -1.0);
-
-    double erfi_qalgo(const double x);
 
     /**
      * @brief returns the critical value for binning using the order spaces

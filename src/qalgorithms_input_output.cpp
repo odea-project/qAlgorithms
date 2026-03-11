@@ -766,7 +766,7 @@ namespace qAlgorithms
             snprintf(buffer, 256, "%d,%d,%zu,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%d,%d,%d,%0.5f,%0.5f,%0.5f,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                      peak.componentID, counter, binID, peak.idxBinStart, peak.idxBinEnd, peak.mz, peak.mzUncertainty,
                      peak.retentionTime, peak.RT_Uncertainty, RT_start, RT_end,
-                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale,
+                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.coefficients.scale,
                      peak.interpolationCount, peak.competitorCount, peak.DQSC, peak.DQSB, peak.DQSF,
                      // properties relevant for componentisation, remove this later
                      peak.mse_base, peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
