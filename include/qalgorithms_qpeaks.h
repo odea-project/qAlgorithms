@@ -129,28 +129,6 @@ namespace qAlgorithms
         const RT_Converter *convertRT,
         const std::vector<float> *RTs);
 
-    /// @brief calculate the residual sum of squares for the log regression / data
-    /// @param mutateReg relevant regression
-    /// @param y_start log data
-    /// @return RSS value
-    double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
-
-    /// @brief performs two F-tests against the log data. First H0 is the mean, second y = mx + b
-    /// @param observed log data (or normal data, depends on the use case)
-    /// @param RSS_reg previously calculated residual sum of squares of the complex model. Hard assumpion of four coefficients.
-    /// @param range range of the regression.
-    /// @return true: Regression is significant; false: Regression is not better than either alternative.
-    bool f_testRegression(const float *observed, double RSS_reg, const Range_i *range);
-
-    double calcMSE_exp(const RegCoeffs *coeff,
-                       const float *observed,
-                       const Range_i *regSpan,
-                       const double df);
-
-    double calcSSE_chisqared(const RegressionGauss *mutateReg,
-                             const float *observed,
-                             const std::vector<float> *predict);
-
     struct RegPair
     {
         unsigned int idx;
@@ -162,15 +140,6 @@ namespace qAlgorithms
         const std::vector<RegressionGauss> *regressions,
         const unsigned int *const degreesOfFreedom_cum,
         const Range_i regSpan);
-
-    /**
-     * @brief updates apex position field of mutateReg and the supplied valley_position
-     * @return 0 if positions could be calculated, otherwise the point of failure in the
-     * function is returned.
-     */
-    int calcApexAndValleyPos(
-        RegressionGauss *mutateReg,
-        double *valley_position);
 
     // take a jacobian matrix as input and return the transpose at scale
     double matProductReg(const double J[4], const size_t scale);

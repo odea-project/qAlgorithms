@@ -61,12 +61,12 @@ namespace qAlgorithms
     void retransformPeaks(
         const std::vector<RegressionGauss> *peaks,
         const float *x_values,
-        const size_t length,
+        const size_t numPeaks,
         std::vector<PeakFit> *result)
     {
-        assert(length == peaks->size());
+        assert(numPeaks == peaks->size());
         // retransforming is probably best if the range of x values is as small as necessary
-        for (size_t i = 0; i < length; i++)
+        for (size_t i = 0; i < numPeaks; i++)
         {
             const RegressionGauss *regression = peaks->data() + i;
             assert(regression->isValid);
@@ -183,7 +183,7 @@ namespace qAlgorithms
         // validregressions contains all relevant peak candidates
 
         // reverse the not-calculated transform of the x axis only for region where peaks exist
-        retransformPeaks(&validRegressions, x_values, length, result);
+        retransformPeaks(&validRegressions, x_values, validRegressions.size(), result);
 
         return -42;
     }
@@ -281,6 +281,11 @@ namespace qAlgorithms
     int pruneRegsByApex(const float *intensities,
                         const unsigned int *const df_cum,
                         std::vector<RegressionGauss> *validRegressions);
+
+    double calcMSE_exp(const RegCoeffs *coeff,
+                       const float *observed,
+                       const Range_i *regSpan,
+                       const double df);
 
     // ----------- old functions -------------//
 
@@ -1344,9 +1349,24 @@ namespace qAlgorithms
         return ok;
     }
 
-    void updateRegRange(const RegCoeffs *coeffs, const double valleyPos, Range_i *regSpan);
-
     double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
+
+    /// @brief calculate the residual sum of squares for the log regression / data
+    /// @param mutateReg relevant regression
+    /// @param y_start log data
+    /// @return RSS value
+    double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
+
+    /// @brief performs two F-tests against the log data. First H0 is the mean, second y = mx + b
+    /// @param observed log data (or normal data, depends on the use case)
+    /// @param RSS_reg previously calculated residual sum of squares of the complex model. Hard assumpion of four coefficients.
+    /// @param range range of the regression.
+    /// @return true: Regression is significant; false: Regression is not better than either alternative.
+    bool f_testRegression(const float *observed, double RSS_reg, const Range_i *range);
+
+    double calcSSE_chisqared(const RegressionGauss *mutateReg,
+                             const float *observed,
+                             const std::vector<float> *predict);
 
     invalid makeValidRegression( // returns the number of the failed test
         const float *intensities,
@@ -1360,41 +1380,10 @@ namespace qAlgorithms
         assert(!mutateReg->isValid);
         const size_t scale = mutateReg->coeffs.scale;
         const RegCoeffs coeffs = mutateReg->coeffs;
+        const Range_i regSpan = mutateReg->regSpan;
 
         assert(scale > 1);
         assert(coeffs.x0 + scale < length);
-
-        // for a regression to be valid, at least one coefficient must be < 0
-        if (coeffs.b2 >= 0 && coeffs.b3 >= 0)
-        {
-            return no_apex; // b0 independent
-        }
-
-        /*
-          Apex and Valley Position Filter:
-          This block of code implements the apex and valley position filter.
-          It calculates the apex and valley positions based on the coefficients
-          matrix B. If the test fails, one of the peak halves has less than two points.
-        */
-        double valley_position = 0;
-        int failure = calcApexAndValleyPos(mutateReg, &valley_position);
-        if (failure != 0) // something went wrong
-        {
-            return invalid_apex; // invalid apex and valley positions, b0 independent
-        }
-
-        Range_i comp = mutateReg->regSpan;
-        updateRegRange(&coeffs, valley_position, &mutateReg->regSpan);
-        assert(mutateReg->regSpan.endIdx < length);
-        if (coeffs.x0 - mutateReg->regSpan.startIdx < GLOBAL_MINSCALE ||
-            (mutateReg->regSpan.endIdx - coeffs.x0 < GLOBAL_MINSCALE))
-        {
-            // only one half of the regression applies to the data, since the
-            // degrees of freedom for the "squished" half results in an invalid regression
-            return no_df; // b0 independent
-        }
-        assert(comp.startIdx == mutateReg->regSpan.startIdx);
-        assert(comp.endIdx == mutateReg->regSpan.endIdx);
 
         // this is the error term for the corrected regression. Of the original 4 x 4 matrix,
         // only the first row is needed
@@ -1419,10 +1408,11 @@ namespace qAlgorithms
             return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
         }
 
+        // @todo differentiate between tests performed in log and exp domain better
         // everything involving the RSS is dependent on b0!
-        double RSS_log = calcRSS_log(mutateReg, intensities_log); // @todo we should use the exponential for this
+        double RSS_log = calcRSS_log(mutateReg, intensities_log);
         assert(RSS_log > 0);
-        double RSS_exp = calcRSS(predict->data(), intensities, &mutateReg->regSpan);
+        double RSS_exp = calcRSS(predict->data(), intensities, &regSpan);
         // assert(RSS_exp > 0);
         // double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
@@ -1435,8 +1425,8 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo test this function
         */
-        // bool f_ok_log = f_testRegression(intensities_log->data(), RSS_log, &mutateReg->regSpan);
-        bool f_ok = f_testRegression(intensities, RSS_exp, &mutateReg->regSpan);
+        // bool f_ok_log = f_testRegression(intensities_log->data(), RSS_log, &regSpan);
+        bool f_ok = f_testRegression(intensities, RSS_exp, &regSpan);
         // assert(f_ok_log == f_ok);
         if (!f_ok)
         {
@@ -1506,35 +1496,6 @@ namespace qAlgorithms
 
         mutateReg->isValid = true;
         return ok;
-    }
-
-    void updateRegRange(const RegCoeffs *coeffs, const double valleyPos, Range_i *regSpan)
-    {
-        const size_t scale = coeffs->scale;
-        const size_t idxCenter = coeffs->x0;
-        size_t rangeStart = idxCenter - scale;
-        size_t rangeEnd = idxCenter + scale;
-
-        *regSpan = {rangeStart, rangeEnd};
-        if (valleyPos == 0) // no valley point exists
-            return;
-
-        // set start or end to the valley point if it is within the regression span
-        size_t absValley = size_t(abs(valleyPos));
-        bool valleyLeft = valleyPos < 0;
-        bool updateVal = absValley < scale;
-        if (!updateVal)
-            return;
-
-        if (valleyLeft)
-        {
-            regSpan->startIdx = idxCenter - absValley;
-        }
-        else
-        {
-            regSpan->endIdx = idxCenter + absValley;
-        }
-        assert(regSpan->endIdx > regSpan->startIdx);
     }
 
     double signalToNoise(const std::vector<float> *predict,
@@ -1780,46 +1741,6 @@ namespace qAlgorithms
     }
 
 #pragma endregion calcSSE
-
-    int calcApexAndValleyPos(
-        RegressionGauss *mutateReg,
-        double *valley_position)
-    {
-        const bool valley_left = mutateReg->coeffs.b2 >= 0;
-        const bool valley_right = mutateReg->coeffs.b3 >= 0;
-        const bool apexLeft = mutateReg->coeffs.b1 < 0;
-
-        // the apex cannot be on the same side as the valley point
-        if (valley_left && apexLeft)
-            return 1;
-        if (valley_right && (!apexLeft))
-            return 1;
-
-        // position maximum / minimum of b2 or b3. This is just the frst derivative of the peak half equation
-        // (d of y = b0 + b1 x + b23 x^2 => y b1 + 2 * b23 x) solved for y = 0
-        double position_b2 = -mutateReg->coeffs.b1 / (2 * mutateReg->coeffs.b2);
-        double position_b3 = -mutateReg->coeffs.b1 / (2 * mutateReg->coeffs.b3);
-
-        // the apex must be at least minscale different from the valley, if it exists
-        if (valley_left || valley_right)
-        {
-            if ((position_b3 - position_b2) <= GLOBAL_MINSCALE)
-                return 2;
-
-            *valley_position = apexLeft ? position_b3 : position_b2;
-        }
-        // at this stage, the apex position is relating to x0. This is adjusted at a later point
-        mutateReg->apex_position = apexLeft ? position_b2 : position_b3;
-
-        // if this difference from 0 (rounded down) is exceeded by the apex position,
-        // there are not enough points to validate the peak half left
-        // example: at a scale of 2, the apex position must always be smaller than 1
-        double maxApexDist = double(mutateReg->coeffs.scale - GLOBAL_MINSCALE + 1);
-        if (abs(mutateReg->apex_position) > maxApexDist)
-            return 3;
-
-        return 0;
-    }
 
     double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities)
     {

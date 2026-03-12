@@ -67,21 +67,28 @@ Since the regression is performed on log-transformed data, the height is adjuste
 untransformed values of y. Since b1, b2 and b3 are not affected, this can be solved with
 linear regression.
 
-### Stage 3: Statistical Plausibility Tests
-All regressions are individually checked for plausibility using established statistical tests.
-Where logical impossibilities are evident (example: the peak has no apex), no tests need to be
-performed. The tests are set for an alpha of 0.05 by default, which cannot be adjusted in the 
-present implementation.
+### Stage 3: Plausibility Tests
 
-In order of execution, the employed checks are:
-* is the apex of the peak defined?
-* does the peak have at least five degrees of freedom?
-* does each peak halve have at least two points?
-* is the description of the data as just a straight line preferable (using the F-test)?
-* are b2 and b3 significantly different from 0?
-* is the area statistically significant?
-* is the height statistically significant?
-* chi-squared test for goodness of fit
+The two types of tests employed here are those for logical contradictions, which always have 
+to be true if a real peak exists, and those for statistical plausibility, which test with
+a hard-coded significance level of 0.05. Regressions are considered individually and 
+independently during testing.
+
+The following conditions must hold for a peak to be defined:
+* The peak must have exactly one maximum (the apex)
+* every half of the peak must be described by at least two points
+* at least five points, not counting eventual interpolations, must be within the regression window
+* the observed maximum within the regression window must be at least twice as large as the smallest value at the edge of the regression window
+
+If these conditions are fulfilled, statitical tests (t-test and F-test) are used to ensure
+that the calculated individual peak properties are significant. If one of these tests fails,
+the regression is considered to be invalid:
+* F-test against a two-coefficient model y = b1 x + b0 prefers the simple model
+* Either b2 or b3 is significantly different from 0
+* The area that is fully described by the regression is significant when assuming the two outermost points are baseline
+* The height is significant
+* The total area, including outside of regression bounds, is significant
+* The entire regression fulfills minimal goodness-of-fit criteria via the chi-squared test
 
 ### Stage 4: Optimal Regression Selection
 Since for a well-described peak, multiple regressions will be defined, the optimal description of a 

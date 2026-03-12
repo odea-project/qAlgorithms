@@ -264,33 +264,26 @@ int main(int argc, char *argv[])
 {
     using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
 
-    volatile bool debug = false;
+    volatile bool debug = true;
     if (debug)
     {
-        std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
-        std::vector<float> mz = {205.120056, 205.125031, 205.130005, 205.134979, 205.139954, 205.144928, 205.149902, 205.154877};
+        std::vector<float> intensity = {16649.7441, 34118.1367, 46703.2617, 41025.5352, 53125.8086, 140134.125, 402735.812, 689393.625, 907356.938, 728596.75, 432838.844, 156655.438, 43841.4922, 11888.1475, 3812.54126};
+        // std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
         // std::vector<float> intensity = {157.883072, 1325.722046, 2188.603760, 5415.137695, 12294.484375, 16239.560547, 13575.218750, 9618.787109, 7654.178223, 20002.025391, 69383.062500, 147876.296875, 233001.171875, 244286.796875, 162216.375000, 82337.882812, 23717.978516, 5968.742676, 2921.130859, 945.386047};
         // std::vector<float> intensity = {1274.10596, 5653.32959, 19341.3398, 51021.3789, 103777.039, 162754.797, 179871.859, 128027.453, 58688.5547, 17326.6309, 3294.46802};
-        // std::vector<float> mz = {};
-        std::vector<unsigned int> df = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
-        ProfileBlock block = {
-            intensity.data(),
-            mz.data(),
-            0,
-            intensity.size()};
         size_t failcount = 0;
         std::vector<RegressionGauss> validRegressions;
 
         volatile bool repeat = false;
-        while (validRegressions.empty() || repeat)
+        while (debug && (validRegressions.empty() || repeat))
         {
-            const size_t length = block.length;
+            const size_t length = intensity.size();
             const size_t maxScale = 8; // @todo not bound to centroid maxscale
             std::vector<float> logIntensity;
             logIntensity.reserve(length);
             validRegressions.clear();
             runningRegression(
-                block.intensity,
+                intensity.data(),
                 &logIntensity,
                 nullptr,
                 length,
@@ -313,7 +306,7 @@ int main(int argc, char *argv[])
             double diffs[8] = {0};
             for (int i = 0; i < 8; i++)
             {
-                diffs[i] = block.intensity[i] - predict[i];
+                diffs[i] = intensity[i] - predict[i];
             }
         }
     }
@@ -447,7 +440,7 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            for (int cenID = 1; cenID < centroidCount; cenID++) // dummy value at idx 0 @todo
+            for (int cenID = 0; cenID < centroidCount; cenID++)
             {
                 size_t scanNumber = centroids->at(cenID).number_MS1;
                 size_t realRT_idx = rt_index.indexOfOriginalInInterpolated[scanNumber];
