@@ -40,6 +40,7 @@ namespace liberfc
             double v;
             struct
             {
+#define ENDIAN_IS_LITTLE (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 #if ENDIAN_IS_LITTLE
                 unsigned long long mantissa : 52;
                 unsigned long long exponent : 11;
