@@ -1833,12 +1833,12 @@ namespace qAlgorithms
 
         // error calculation uses imaginary part if coefficient is > 0
         double err_L = (b2 < 0)
-                           ? experfc(B1_2_SQRTB2, -1.0) // 1 - erf(b1 / 2 / SQRTB2) // ordinary peak
-                           : dawson5(B1_2_SQRTB2);      // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
+                           ? experfc(B1_2_SQRTB2, -1.0)    // 1 - erf(b1 / 2 / SQRTB2) // ordinary peak
+                           : liberfc::dawson(B1_2_SQRTB2); // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
         double err_R = (b3 < 0)
-                           ? experfc(B1_2_SQRTB3, 1.0) // 1 + erf(b1 / 2 / SQRTB3) // ordinary peak
-                           : dawson5(-B1_2_SQRTB3);    // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
+                           ? experfc(B1_2_SQRTB3, 1.0)      // 1 + erf(b1 / 2 / SQRTB3) // ordinary peak
+                           : liberfc::dawson(-B1_2_SQRTB3); // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
         // calculate the Jacobian matrix terms
         double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
@@ -1890,7 +1890,7 @@ namespace qAlgorithms
             {
                 // valley point on the left side of the apex
                 // error = erfi(b1 / 2 / SQRTB2)
-                double err_L = dawson5(B1_2_SQRTB2);
+                double err_L = liberfc::dawson(B1_2_SQRTB2);
                 // check if the valley point is inside the window for the regression and consider it if necessary
                 if (-B1_2_B2 < -doubleScale)
                 {
@@ -1926,7 +1926,7 @@ namespace qAlgorithms
             {
                 // valley point is on the right side of the apex
                 // error = - erfi(b1 / 2 / SQRTB3)
-                double err_R = dawson5(-B1_2_SQRTB3);
+                double err_R = liberfc::dawson(-B1_2_SQRTB3);
                 if (-B1_2_B3 > doubleScale)
                 {
                     // valley point is outside the window, use scale as limit
@@ -2491,18 +2491,6 @@ namespace qAlgorithms
     // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
     double peakArea(const double b0, const double b1, const double b2, const double b3, const double delta_x)
     {
-        // reasoning: the regression operates on the transformed x-axis x' = (x - x0) / delta_x.
-        // In order for the area to be correct, the position of the regression is irrelevant, so
-        // we can assume x0 = 0. This means that for the retransformation, we must use:
-        // y = exp(b0 + b1 * (x / dx) + b2 * (x / dx)^2)
-        // This can be factored out to modified coefficients (b0 is not modified).
-        // double b1 = b1_in * delta_x;
-        // double b2 = b2_in * delta_x * delta_x;
-        // double b3 = b3_in * delta_x * delta_x;
-        // @todo this is not working in practice. Observation shows that the transformation from
-        // the predicted area at delta_x = 1 (A1) to the area in the untransformed x axis is A = A1 * delta_x
-        // Since that is a sensible result, we will stick to the single multiplication and unmodified coeffs
-
         bool b2_pos = b2 > 0;
         bool b3_pos = b3 > 0;
         assert(!(b2_pos && b3_pos));
@@ -2532,18 +2520,69 @@ namespace qAlgorithms
         double F_b3_zero = (sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3;
         double area_R = F_b3_inf - F_b3_zero;
 
-        assert((area_L > 0) == (area_R > 0));
-        // there are cases where both areas are negative, but result in the correct value when summed anyway
-        // assert(area_L > 0);
-        // assert(area_R > 0);
+        assert((area_L > 0) == (area_R > 0)); // there are cases where both areas are negative, but result in the correct value when summed anyway
         area_L = abs(area_L);
         area_R = abs(area_R);
-        double area_F = (area_L + area_R) * delta_x;
-        return area_F;
+
+        double area_F = area_L + area_R;
+
+        // ### uncertainty calculation here ###
+        // the uncertainty of the area is the sum of the uncertainties for both halves of the area
+        // the individual uncertainties depend on the variance-covariance matrix, only considering pairwise covariance
+        // s_area_h = var_b0 * (d area / d b0) + etc. + 2 * covar_b0_b1 * (d area / d b0) * (d area / d b1) + etc.
+        // since the area is calculated from the antiderivative evaluated at two points, its derivative differs depending
+        // on the value of b2 / b3 (presence of a valley)
+        // b0:
+        // F(0) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
+        // F(0) is always evaluated for both halves, so we always need all derivatives:
+        // F(0) d b0; [ const * e^( b0 - b1^2/(4 b2) ) * const ] / const => F(0) d b0 = e^( b0 - b1^2/(4 b2) )
+        // The derivative of exp(x) is exp(x), so no further steps are needed
+        // Since the equation does not change, the derivative at F(0) is F(0). The same logic holds for all other
+        // values of x, so the area differentiated by b0 is itself.
+        //
+        double diff_b0 = area_F;
+        // b1:
+        // F(0) d b1 = [ const * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / const d b1
+        // using wolfram alpha:
+        // -(e^b0 (sqrt(b2) - x dawson(x/(2 sqrt(b2)))))/(2 b2^(3/2)) [for x = 0]
+        // for + / - infinity:
+        // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2)) * (b1 / (2 b2))
+        // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b3) ) * -1 ] / (2 sqrt(-b3)) * (b1 / (2 b3))
+        // if a valley exists:
+        // -(e^(b0 + x (b2 x + b1)) (sqrt(b2) - b1 dawson((2 b2 x + b1)/(2 sqrt(b2)))))/(2 b2^(3/2))
+
+        return area_F * delta_x;
     }
+
+    struct RegVariances
+    {
+        double var_b0, var_b1, var_b2, var_b3; // individual variances
+        double covar_b0_b1, covar_b0_b2, covar_b0_b3;
+        double covar_b1_b2, covar_b1_b3;
+        // b2 and b3 do not have a covariance since they never apply to the same points
+    };
 
     double peakAreaUncert(const RegCoeffs *coeffs, const double delta_x, const double area)
     {
+        // the uncertainty of the area is the sum of the uncertainties for both halves of the area
+        // the individual uncertainties depend on the variance-covariance matrix, only considering pairwise covariance
+        // s_area_h = var_b0 * (d area / d b0) + etc. + 2 * covar_b0_b1 * (d area / d b0) * (d area / d b1) + etc.
+        // since the area is calculated from the antiderivative evaluated at two points, its derivative differs depending
+        // on the value of b2 / b3 (presence of a valley)
+        // b0:
+        // F(0) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
+        // F(0) is always evaluated for both halves, so we always need all derivatives:
+        // F(0) d b0; [ const * e^( b0 - b1^2/(4 b2) ) * const ] / const => F(0) d b0 = e^( b0 - b1^2/(4 b2) )
+        // The derivative of exp(x) is exp(x), so no further steps are needed
+        // Since the equation does not change, the final result is the area again
+        // b1:
+        //
+
+        const double b0 = coeffs->b0;
+        const double b1 = coeffs->b1;
+        const double b2 = coeffs->b2;
+        const double b3 = coeffs->b3;
+
         // uses the jacobi matrix for uncertainty calculation of the area
         // refer to the supplement to qPeaks
         double jacobi[4] = {area / delta_x, 0, 0, 0};

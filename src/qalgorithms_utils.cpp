@@ -221,15 +221,6 @@ namespace qAlgorithms
         return RSS;
     }
 
-    double dawson5(double x)
-    {
-        double y, p, q;
-        y = x * x;
-        p = 1.0 + y * (0.1049934947 + y * (0.0424060604 + y * (0.0072644182 + y * (0.0005064034 + y * (0.0001789971)))));
-        q = 1.0 + y * (0.7715471019 + y * (0.2909738639 + y * (0.0694555761 + y * (0.0140005442 + y * (0.0008327945 + 2 * 0.0001789971 * y)))));
-        return x * (p / q);
-    }
-
     double experfc(double x, double sign) // @todo get rid of this function
     {
         constexpr double a = 0.978795604954049; // empirically determined

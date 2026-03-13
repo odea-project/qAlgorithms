@@ -98,16 +98,6 @@ namespace qAlgorithms
                    const Range_i *range);
 
     /**
-     * @brief Fast calculation of the Dawson integral by courtesy of Extra Byte, www.ebyte.it.
-     * @details The Dawson integral is defined as: F(x) = exp(-x^2) * erfi(x)
-     * * sqrt(pi)/2. For more details on this approximation, see www.dx.doi.org/10.3247/SL4Soft12.001
-     *
-     * @param x
-     * @return double
-     */
-    double dawson5(double x);
-
-    /**
      * @brief Fast calculation of exp(-x^2) * erfc(x) * sqrt(pi)/2.
      * @details This function uses an empirical approximation : exp(-x^2)
      * * erfc(x) * sqrt(pi)/2 ~ exp(-x^2) * sqrt(pi)/2 +- a * x * exp(-b * x^2).
