@@ -185,7 +185,7 @@ namespace qAlgorithms
         // reverse the not-calculated transform of the x axis only for region where peaks exist
         retransformPeaks(&validRegressions, x_values, validRegressions.size(), result);
 
-        return -42;
+        return int(validRegressions.size());
     }
 
 #pragma region "running regression"
