@@ -4,7 +4,6 @@
 
 // internal
 #include "qalgorithms_datatypes.h"
-#include "qalgorithms_read_file.h" // @todo get rid of this coupling!
 
 #include <vector>
 
@@ -43,6 +42,7 @@ namespace qAlgorithms
         const size_t maxScale_in,
         std::vector<PeakFit> *result);
 
+    class XML_File; // forward declaration so at least the header does not couple with read_file
     int findCentroids(XML_File &data,
                       const std::vector<unsigned int> *selectedIndices,
                       std::vector<CentroidPeak> *centroids);

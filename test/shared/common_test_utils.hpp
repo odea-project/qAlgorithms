@@ -4,6 +4,9 @@
 #include <ctime>
 #include <vector>
 #include <qalgorithms_qpeaks.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <cfloat>
 
 using namespace qAlgorithms;
 
