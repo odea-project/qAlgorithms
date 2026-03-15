@@ -116,10 +116,6 @@ namespace qAlgorithms
         // return all indices of spectra that match the required criteria
         std::vector<unsigned int> filter_spectra(const bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
 
-        std::vector<unsigned int> filter_spectra_suspects(
-            std::vector<CompoundFilter> *suspects,
-            bool ms1, bool polarity, bool centroided);
-
         std::vector<float> get_spectra_RT(const std::vector<unsigned int> *indices);
 
         void free_linknodes();

@@ -15,6 +15,13 @@ which allows many regressions to be performed in sequence. These are then filter
 statistical tests for validation and finally, conflicting peak descriptions are resolved.
 The final peaks are described by position, height, width and area.
 
+## Limitations
+qPeaks uses a regression model with four coefficients. This means that any sparsely sampled
+signal will incur a massive increase in relative error from a lack of degrees of freedom.
+When fitting five points, even a very poor fit of a straight line will be preferable to the
+"obvious" peak shape since it has more degrees of freedom by a factor of four. This and 
+similar effects could cause a lower than desired peak recognition rate.
+
 ## Processing Stages
 
 ### Stage 0: Prerequisites

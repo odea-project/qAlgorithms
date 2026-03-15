@@ -5,7 +5,6 @@
 #include <vector>
 #define _USE_MATH_DEFINES
 #include <math.h> // INFINITY and other number macros
-#include <string>
 #include <qalgorithms_utils.h>
 
 /*  This file includes the structs used for data management in qAlgorithms.
@@ -21,27 +20,6 @@ namespace qAlgorithms
         positive,
         negative,
         mixed,
-    };
-
-    struct CompoundFilter
-    {
-        // this struct is used to limit the amount of operations performed by the program to
-        // a selection of masses and RTs that is relevant to the analysis at hand.
-        double mz_expected[16] = {0}; // @todo reasonable amount of points?
-        double mz_tolerance_ppm = 0;  // @todo is ppm the only relevant choice?
-
-        double RT = -1;
-        double RT_tol = -1; // tolerance to either side, assumes symmetrical peaks
-
-        std::string compoundName = ""; // @todo better solution?
-        std::string methodName = "";
-        Polarities polarity = Polarities::unknown_polarity;
-    };
-
-    struct slice_d
-    {
-        double *const start;
-        size_t length;
     };
 
     struct ProfileBlock

@@ -2348,8 +2348,6 @@ namespace qAlgorithms
             // at this point, the block contains one continuus region of points in the source spectrum
             qpeaks_find(block.intensity, block.mz, nullptr, block.length, GLOBAL_MAXSCALE_CENTROID, &ret);
 
-            // printf("%d,", block.length);
-
             for (size_t i = 0; i < ret.size(); i++)
             {
                 PeakFit *p = ret.data() + i;
@@ -2361,8 +2359,6 @@ namespace qAlgorithms
 
         return centroids->size(); // @todo rework centroids to be multiple separate arrays
     }
-
-    size_t removedPoints = 0;
 
     bool getNextProfileRegion(
         const std::vector<float> *spectrum_mz,

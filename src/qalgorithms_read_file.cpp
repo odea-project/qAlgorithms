@@ -114,8 +114,8 @@ namespace qAlgorithms
         }
         else
         {
-            std::cerr << "Error: .mzML file could not be opened. Error description:\n"
-                      << loading_result.description() << "\n";
+            fprintf(stderr, "Error: .mzML file could not be opened. Error description:\n%s\n",
+                    loading_result.description());
             defective = true;
             return;
         }
@@ -260,7 +260,7 @@ namespace qAlgorithms
 
         if (linknodes->size() == 0)
         {
-            std::cerr << "Error: no spectra found for index" << index << "\n";
+            fprintf(stderr, "Error: no spectra found for index %zu\n", index);
             return;
         }
 
@@ -283,7 +283,7 @@ namespace qAlgorithms
             // error handling
             if (decoded_string.size() == 1)
             {
-                std::cerr << "Error: spectrum " << index << " could not be decoded as base64 correctly. Please ensure your input file is not corrupted.\n";
+                fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 correctly. Ensure the input file is not corrupted.\n", index);
                 // this does not work @todo
                 //   << "The error occured at character " << decoded_string[0] << " as reported by the \"simdutf\" library.\n";
                 return; // implement a defined way to skip the current file? @todo
@@ -313,7 +313,7 @@ namespace qAlgorithms
             // error handling
             if (decoded_string.size() == 1)
             {
-                std::cerr << "Error: spectrum " << index << " could not be decoded as base64 correctly. Please ensure your input file is not corrupted.\n";
+                fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 correctly. Ensure the input file is not corrupted.\n", index);
                 //   << "The error occured at character " << decoded_string[0] << " as reported by the \"simdutf\" library.\n";
                 return; // implement a defined way to skip the current file? @todo
             }
@@ -532,67 +532,6 @@ namespace qAlgorithms
             bool isMS1 = 1 == level;
             if (isMS1 != ms1)
                 continue; // only ms1 or msn data can be retrieved at once.
-
-            indices.push_back(i);
-        }
-        indices.shrink_to_fit();
-        return indices;
-    }
-
-    std::vector<unsigned int> XML_File::filter_spectra_suspects(
-        std::vector<CompoundFilter> *suspects, bool ms1, bool polarity, bool centroided)
-    {
-        for (auto suspect : *suspects)
-        {
-            double safetyPeakWidth = 30; // tolerated RT (in seconds) difference in addition to user-specified tolerance
-            double limit_low = suspect.RT - suspect.RT_tol - safetyPeakWidth;
-            double limit_up = suspect.RT + suspect.RT_tol + safetyPeakWidth;
-            printf("%s: %f, %f | ", suspect.compoundName.c_str(), limit_low, limit_up);
-        }
-        pugi::xml_node spec2 = (*linknodes)[number_spectra - 1];
-        printf("\nmaxRT: %f\n", extract_scan_RT(spec2));
-        // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
-        assert(!this->defective);
-        assert(number_spectra > 0);
-        std::vector<unsigned int> indices;
-        indices.reserve(number_spectra);
-
-        // pugi::char_t *cv = "cvParam"; // @todo this does not work, abstract accessor fields somehow
-
-        for (unsigned int i = 0; i < number_spectra; i++)
-        {
-            pugi::xml_node spec = (*linknodes)[i];
-
-            bool isCentroid = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127");
-            if (isCentroid != centroided)
-                continue; // this does not allow for processing of partially centroided data
-
-            bool polarityPos = spec.find_child_by_attribute("cvParam", "accession", "MS:1000130");
-            if (polarityPos != polarity)
-                continue;
-
-            pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
-            int level = level_node.attribute("value").as_int();
-            bool isMS1 = 1 == level;
-            if (isMS1 != ms1)
-                continue; // only ms1 or msn data can be retrieved at once.
-
-            double RT = extract_scan_RT(spec);
-            bool notFound = true;
-            for (auto suspect : *suspects)
-            {
-                double safetyPeakWidth = 30; // tolerated RT (in seconds) difference in addition to user-specified tolerance
-                double limit_low = suspect.RT - suspect.RT_tol - safetyPeakWidth;
-                double limit_up = suspect.RT + suspect.RT_tol + safetyPeakWidth;
-                if ((RT > limit_low) && (RT < limit_up))
-                {
-                    // printf("accepted RT: %f | ", RT);
-                    notFound = false;
-                    break;
-                }
-            }
-            if (notFound)
-                continue;
 
             indices.push_back(i);
         }
