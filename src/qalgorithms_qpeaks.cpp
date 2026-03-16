@@ -1368,6 +1368,8 @@ namespace qAlgorithms
                              const float *observed,
                              const std::vector<float> *predict);
 
+    std::vector<int> failbook;
+
     invalid makeValidRegression( // returns the number of the failed test
         const float *intensities,
         const std::vector<float> *intensities_log,
@@ -1375,7 +1377,6 @@ namespace qAlgorithms
         const size_t df_sum,
         const size_t length,
         RegressionGauss *mutateReg)
-
     {
         assert(!mutateReg->isValid);
         const size_t scale = mutateReg->coeffs.scale;
@@ -1384,6 +1385,8 @@ namespace qAlgorithms
 
         assert(scale > 1);
         assert(coeffs.x0 + scale < length);
+
+        int failstates = 0x00000000;
 
         // this is the error term for the corrected regression. Of the original 4 x 4 matrix,
         // only the first row is needed
@@ -1404,8 +1407,8 @@ namespace qAlgorithms
         float apexToEdge = apexToEdgeRatio(mutateReg, intensities);
         if (apexToEdge < 2)
         {
-            // printf("apexToEdge triggered!\n");
-            return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
+            failstates += 1;
+            // return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
         }
 
         // @todo differentiate between tests performed in log and exp domain better
@@ -1430,18 +1433,19 @@ namespace qAlgorithms
         // assert(f_ok_log == f_ok);
         if (!f_ok)
         {
-            return f_test_fail; // H0 holds, the two distributions are not noticeably different
+            failstates += 2;
+            // return f_test_fail; // H0 holds, the two distributions are not noticeably different
         }
 
         if (!isValidQuadraticTerm(&mutateReg->coeffs, mse_log, df_sum)) // @todo replace with the exponential mse?
         {
-            // this should be caught by the f test (?) @todo it is not caught by the F test
-            // printf("invalid quadratic triggered\n");
-            return invalid_quadratic; // statistical insignificance of the quadratic term
+            failstates += 4;
+            // return invalid_quadratic; // statistical insignificance of the quadratic term
         }
         if (!isValidPeakArea(&mutateReg->coeffs, mse_log, df_sum)) // mse used in the "calcUncertainty" function call
         {
-            return invalid_area; // statistical insignificance of the area
+            failstates += 8;
+            // return invalid_area; // statistical insignificance of the area
         }
 
         /*
@@ -1454,7 +1458,8 @@ namespace qAlgorithms
         calcPeakHeightUncert(mutateReg);                      // mse use, again
         if (1 / mutateReg->height_uncert <= T_VALUES[df_sum]) // statistical significance of the peak height
         {
-            return invalid_height;
+            failstates += 16;
+            // return invalid_height;
         }
 
         /*
@@ -1470,7 +1475,8 @@ namespace qAlgorithms
         mutateReg->area = peakArea(coeffs.b0, coeffs.b1, coeffs.b2, coeffs.b3, 1); // @todo scale area later
         if (mutateReg->area / mutateReg->area_uncert <= T_VALUES[df_sum])
         {
-            return invalid_area; // statistical insignificance of the area
+            failstates += 32;
+            // return invalid_area; // statistical insignificance of the area
         }
 
         /*
@@ -1483,7 +1489,8 @@ namespace qAlgorithms
         double chiSquare = calcSSE_chisqared(mutateReg, intensities, predict);
         if (chiSquare > CHI_SQUARES[df_sum])
         {
-            return invalid_chisq; // statistical insignificance of the chi-square value
+            failstates += 64;
+            // return invalid_chisq; // statistical insignificance of the chi-square value
         }
 
         calcUncertaintyPos(mutateReg);
@@ -1493,6 +1500,10 @@ namespace qAlgorithms
         assert(mutateReg->apex_position < length - 1);
         assert(predict->size() == length);
         mutateReg->jaccard = calcJaccardIdx(intensities, predict->data(), length);
+
+        failbook.push_back(failstates);
+        if (failstates != 0)
+            return invalid::invalid_apex;
 
         mutateReg->isValid = true;
         return ok;
@@ -2356,6 +2367,13 @@ namespace qAlgorithms
             }
             ret.clear();
         }
+
+        FILE *F = fopen("./faildump.txt", "w");
+        for (size_t i = 0; i < failbook.size(); i++)
+        {
+            fprintf(F, "%d,", failbook[i]);
+        }
+        fclose(F);
 
         return centroids->size(); // @todo rework centroids to be multiple separate arrays
     }

@@ -12,6 +12,30 @@ library(viridis)
 ```
 
 ```{r}
+# read results of text dump for failing tests during centroiding
+
+library(tidyverse)
+
+Sys.setenv("VROOM_CONNECTION_SIZE" = 10e8)
+data_raw = read_lines("../build/faildump.txt")
+
+# Convert the text to a list of integers
+data_numbers = str_split(data_raw, ",") |> unlist() |> as.integer()
+
+
+df = as.data.frame(
+    do.call(rbind, lapply(data_numbers, function(x) {
+        # Ensure we only take the lower 7 bits
+        as.logical(intToBits(x)[7:1])
+    }))
+)
+  
+colnames(df) = c("apexToEdge", "f_fail", "invalid_quadratic", "invalid_area", "invalid_height", "area_uncertain", "chisquared")
+
+```
+
+
+```{r}
 test = read_csv("../build/peaktest.csv", show_col_types = FALSE)
 test_fail = test[which(test$dqs == -1),]
 test =  test[which(test$dqs > 0),] |> drop_na()

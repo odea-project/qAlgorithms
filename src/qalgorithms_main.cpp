@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
         auto timeStart = std::chrono::high_resolution_clock::now();
         if (!userArgs.silent)
         {
-            printf("\nreading file %zu of %zu\n%s\n", pathIdx, tasklist.size(), pathSource.c_str());
+            printf("\nreading file %zu of %zu\n%ls\n", pathIdx + 1, tasklist.size(), pathSource.c_str());
         }
 
         XML_File inputFile(std::filesystem::canonical(pathSource));
