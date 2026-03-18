@@ -73,18 +73,17 @@ namespace qAlgorithms
             const RegCoeffs coeff = regression->coeffs;
             double b23 = coeff.b1 < 0 ? coeff.b2 : coeff.b3;
 
-            double apex = -coeff.b1 / (b23 * 2);
+            double apex_raw = -coeff.b1 / (b23 * 2);
+            double apex = apex_raw + double(coeff.x0);
             // size_t start = regression->regSpan.startIdx;
             // size_t end = regression->regSpan.endIdx;
 
             PeakFit peak;
-            peak.position = apex + coeff.x0;
 
             // @todo ensure that this is a good way to estimate delta_x for real data
             // we could also use a strategy such as taking the distance closest to the apex.
-
             // check if the chosen delta_x is acceptable @todo
-            size_t leftOfApex = size_t(apex + coeff.x0);
+            size_t leftOfApex = size_t(apex);
             double delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
 
             // position is determined relative to the point left of the apex
@@ -92,8 +91,8 @@ namespace qAlgorithms
             peak.position = x_values[leftOfApex] + apexFraction;
             peak.position_uncert = regression->position_uncert * delta_x;
 
-            // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
-            peak.height = exp(coeff.b0 + (apex - coeff.x0) * coeff.b1 * 0.5);
+            // peak height = regression at apex position before transformation
+            peak.height = exp(regAt(&coeff, apex_raw));
             peak.height_uncert = regression->height_uncert * peak.height;
 
             peak.area = regression->area * delta_x;
