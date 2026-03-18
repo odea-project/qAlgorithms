@@ -46,10 +46,10 @@ Additional functionality of the core library that should be added at some point.
 * component-based matching of repeat injections
 * automated estimation of the upper limit of the regression search window
 * conceptual compatibility with retention indices for comparing multiple injections
-* expose core functions to R, python and other languages (java / C# for compatibility with openchrom and mzmine)
 * add post-hoc correction for binning falsely separating mass traces
 * design a qAlgorithms-specific binary storage format for mass spectra 
 * deconvolution of (probable) double-peak systems like isomeric compounds or other strong coelution of similar masses 
+* add functionality for extracting pressure, UV, temperature from the mzML files
 * include the pressure profile and other column parameters as data for describing a feature
 * devise a better quality score for binning
 * add functionality to read vendor formats
@@ -60,6 +60,15 @@ Additional functionality of the core library that should be added at some point.
 * write output data of centroiding to mzML (centroids only, introduce as dedicated option) and other MS formats
 * add support for multithreading
 * peak parameters: theoretical plate height
+* Function that takes a feature and file path as input and produces only the centroids specified by the feature
+* comparison of peaks: can the F-test be used with the different number of points as degrees of freedom for the model? In the current system of comparison, the bigger regression is generally preferred even if it incorporates too much baseline
+
+## Interface to high-level languages
+* Expose core functions to R, python, java, julia (?), C# (?)
+* potentially also add an interface for openMS
+* Function: qpeaks_find(): Basic functionality already implemented, takes a single contiguous spectrum and returns all peaks therein
+* Function to process a single spectrum with non-equidistant x axis and potential gaps
+* Function to process a complete file based on a filepath and returns a feature list
 
 ## Testing
 Any code that is not run when processing data and concerned with logical correctness of the program.

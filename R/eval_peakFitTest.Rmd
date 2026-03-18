@@ -32,6 +32,33 @@ df = as.data.frame(
   
 colnames(df) = c("apexToEdge", "f_fail", "invalid_quadratic", "invalid_area", "invalid_height", "area_uncertain", "chisquared")
 
+# problem: potential overlap between tests
+df$sum = 0
+for (i in 1:7) {
+    df$sum = df$sum + df[,i]
+}
+```
+
+```{r}
+sum(df$sum == 1);
+no_chisq = which((df$sum > 0) & (!df$chisquared))
+chisq_free = df[no_chisq,]
+
+percs = c(rep(0,7))
+total = c(rep(0,7))
+for (i in 1:7) {
+    percs[i] = mean(chisq_free[,i])
+    total[i] = mean(df[,i])
+}
+
+# interestingly, a majority of the tests that do not coincide with the chisquared filter do not coincide with any other filters
+# also notable: the least effective filter is the one for overall significance of the area; probably because area uncertainty is not calculated correctly (?)
+# Possibly also structural problem, area can never be close to 0, which is what we test against
+length(chisq_free$sum)
+sum(chisq_free$sum == 1)
+
+hist(df$sum)
+
 ```
 
 

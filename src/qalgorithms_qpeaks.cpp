@@ -2516,8 +2516,8 @@ namespace qAlgorithms
         double x = -b1 / (2 * (b2_pos ? b2 : b3));
 
         // note: this is not factored out into a separate function since + and - inf use different terms
-        double dsqrt_b2 = 2 * sqrt(-b2);
-        double dsqrt_b3 = 2 * sqrt(-b3);
+        double dsqrt_b2 = 2 * sqrt(abs(b2));
+        double dsqrt_b3 = 2 * sqrt(abs(b3));
         double eterm_b2 = exp(b0 - (b1 * b1) / (4 * b2));
         double eterm_b3 = exp(b0 - (b1 * b1) / (4 * b3));
         const double sqrt_pi = 1.7724538509055158819; // sqrt(M_PI);
@@ -2549,7 +2549,7 @@ namespace qAlgorithms
         // b0:
         // F(0) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
         // F(0) is always evaluated for both halves, so we always need all derivatives:
-        // F(0) d b0; [ const * e^( b0 - b1^2/(4 b2) ) * const ] / const => F(0) d b0 = e^( b0 - b1^2/(4 b2) )
+        // F(0) d b0; [ const * e^( b0 - b1^2/(4 b2) ) * const ] / const => F(0) d b0 = e^( b0 - b1^2/(4 b2) ) * const
         // The derivative of exp(x) is exp(x), so no further steps are needed
         // Since the equation does not change, the derivative at F(0) is F(0). The same logic holds for all other
         // values of x, so the area differentiated by b0 is itself.
@@ -2575,38 +2575,6 @@ namespace qAlgorithms
         double covar_b1_b2, covar_b1_b3;
         // b2 and b3 do not have a covariance since they never apply to the same points
     };
-
-    double peakAreaUncert(const RegCoeffs *coeffs, const double delta_x, const double area)
-    {
-        // the uncertainty of the area is the sum of the uncertainties for both halves of the area
-        // the individual uncertainties depend on the variance-covariance matrix, only considering pairwise covariance
-        // s_area_h = var_b0 * (d area / d b0) + etc. + 2 * covar_b0_b1 * (d area / d b0) * (d area / d b1) + etc.
-        // since the area is calculated from the antiderivative evaluated at two points, its derivative differs depending
-        // on the value of b2 / b3 (presence of a valley)
-        // b0:
-        // F(0) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
-        // F(0) is always evaluated for both halves, so we always need all derivatives:
-        // F(0) d b0; [ const * e^( b0 - b1^2/(4 b2) ) * const ] / const => F(0) d b0 = e^( b0 - b1^2/(4 b2) )
-        // The derivative of exp(x) is exp(x), so no further steps are needed
-        // Since the equation does not change, the final result is the area again
-        // b1:
-        //
-
-        const double b0 = coeffs->b0;
-        const double b1 = coeffs->b1;
-        const double b2 = coeffs->b2;
-        const double b3 = coeffs->b3;
-
-        // uses the jacobi matrix for uncertainty calculation of the area
-        // refer to the supplement to qPeaks
-        double jacobi[4] = {area / delta_x, 0, 0, 0};
-        jacobi[1] = (exp(coeffs->b0) / 2 - jacobi[0] * coeffs->b1 / 2) * (1 / coeffs->b2 + 1 / coeffs->b3);
-        jacobi[2] = -1 / (2 * coeffs->b2) * (jacobi[0] + jacobi[1] * coeffs->b1);
-        jacobi[3] = -1 / (2 * coeffs->b3) * (jacobi[0] + jacobi[1] * coeffs->b1);
-
-        // @todo
-        return 0;
-    }
 
     double calcMSE_exp(const RegCoeffs *coeff,
                        const float *observed,
