@@ -459,7 +459,7 @@ int main()
     test_singlePeak();
     test_areaPrediction();
     control_sim_gauss();
-    survey_EMG();
+    // survey_EMG();
 
     return 0;
 }

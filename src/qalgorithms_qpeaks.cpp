@@ -71,18 +71,20 @@ namespace qAlgorithms
             const RegressionGauss *regression = peaks->data() + i;
             assert(regression->isValid);
             const RegCoeffs coeff = regression->coeffs;
+            double b23 = coeff.b1 < 0 ? coeff.b2 : coeff.b3;
 
-            double apex = regression->apex_position;
+            double apex = -coeff.b1 / (b23 * 2);
             // size_t start = regression->regSpan.startIdx;
             // size_t end = regression->regSpan.endIdx;
 
             PeakFit peak;
+            peak.position = apex + coeff.x0;
 
             // @todo ensure that this is a good way to estimate delta_x for real data
             // we could also use a strategy such as taking the distance closest to the apex.
 
             // check if the chosen delta_x is acceptable @todo
-            size_t leftOfApex = size_t(apex);
+            size_t leftOfApex = size_t(apex + coeff.x0);
             double delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
 
             // position is determined relative to the point left of the apex
@@ -94,9 +96,8 @@ namespace qAlgorithms
             peak.height = exp(coeff.b0 + (apex - coeff.x0) * coeff.b1 * 0.5);
             peak.height_uncert = regression->height_uncert * peak.height;
 
-            double factorArea = exp(coeff.b0) * delta_x;
-            peak.area = regression->area * factorArea;
-            peak.area_uncert = regression->area_uncert * factorArea;
+            peak.area = regression->area * delta_x;
+            peak.area_uncert = regression->area_uncert * exp(coeff.b0) * delta_x;
 
             // @todo, also check for negative width where appropriate
             // the empirical peak width is generally estimated at half maximum. Our peak
@@ -2503,6 +2504,7 @@ namespace qAlgorithms
     // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2))
     // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 ] / (2 sqrt(-b2))
     // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
+    // if b2 or b3 are positive, erfi has to be used. The positive part of the function replaces F(+-inf)
     double peakArea(const double b0, const double b1, const double b2, const double b3, const double delta_x)
     {
         bool b2_pos = b2 > 0;
@@ -2522,17 +2524,25 @@ namespace qAlgorithms
         double eterm_b3 = exp(b0 - (b1 * b1) / (4 * b3));
         const double sqrt_pi = 1.7724538509055158819; // sqrt(M_PI);
 
-        double F_b2_ninf = (sqrt_pi * eterm_b2 * 1) / dsqrt_b2;
+        double F_b2_lim = b2_pos // outer left limit for the integral
+                              ? (sqrt_pi * eterm_b2 * liberfc::erfi((b1 + 2 * b2 * x) / dsqrt_b2)) / dsqrt_b2
+                              : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2;
         // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
-        double error_b2 = b2_pos ? liberfc::erfi((b1 + 2 * b2 * x) / dsqrt_b2) : erf(b1 / dsqrt_b2);
+        double error_b2 = b2_pos
+                              ? liberfc::erfi(b1 / dsqrt_b2)
+                              : erf(b1 / dsqrt_b2);
         double F_b2_zero = (sqrt_pi * eterm_b2 * error_b2) / dsqrt_b2;
-        double area_L = F_b2_zero - F_b2_ninf;
+        double area_L = F_b2_zero - F_b2_lim;
 
         // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;
-        double F_b3_inf = (sqrt_pi * eterm_b3 * -1) / dsqrt_b3;
-        double error_b3 = b3_pos ? liberfc::erfi((b1 + 2 * b3 * x) / dsqrt_b3) : erf(b1 / dsqrt_b3);
+        double F_b3_lim = b3_pos // outer right limit for the integral
+                              ? (sqrt_pi * eterm_b3 * liberfc::erfi((b1 + 2 * b3 * x) / dsqrt_b3)) / dsqrt_b3
+                              : (sqrt_pi * eterm_b3 * -1) / dsqrt_b3;
+        double error_b3 = b3_pos
+                              ? liberfc::erfi(b1 / dsqrt_b3)
+                              : erf(b1 / dsqrt_b3);
         double F_b3_zero = (sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3;
-        double area_R = F_b3_inf - F_b3_zero;
+        double area_R = F_b3_lim - F_b3_zero;
 
         assert((area_L > 0) == (area_R > 0)); // there are cases where both areas are negative, but result in the correct value when summed anyway
         area_L = abs(area_L);
@@ -2556,12 +2566,11 @@ namespace qAlgorithms
         //
         double diff_b0 = area_F;
         // b1:
-        // F(0) d b1 = [ const * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / const d b1
-        // using wolfram alpha:
-        // -(e^b0 (sqrt(b2) - x dawson(x/(2 sqrt(b2)))))/(2 b2^(3/2)) [for x = 0]
         // for + / - infinity:
         // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2)) * (b1 / (2 b2))
         // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b3) ) * -1 ] / (2 sqrt(-b3)) * (b1 / (2 b3))
+        double diff_b1_lim_L = F_b2_lim * (b1 / (2 * b2));
+        double diff_b1_lim_R = F_b3_lim * (b1 / (2 * b3));
         // if a valley exists:
         // -(e^(b0 + x (b2 x + b1)) (sqrt(b2) - b1 dawson((2 b2 x + b1)/(2 sqrt(b2)))))/(2 b2^(3/2))
 
