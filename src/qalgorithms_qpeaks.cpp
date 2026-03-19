@@ -91,6 +91,10 @@ namespace qAlgorithms
             peak.position = x_values[leftOfApex] + apexFraction;
             peak.position_uncert = regression->position_uncert * delta_x;
 
+            // left and right limits
+            peak.limit_L = x_values[regression->regSpan.startIdx];
+            peak.limit_R = x_values[regression->regSpan.endIdx];
+
             // peak height = regression at apex position before transformation
             peak.height = exp(regAt(&coeff, apex_raw));
             peak.height_uncert = regression->height_uncert * peak.height;
@@ -98,7 +102,6 @@ namespace qAlgorithms
             peak.area = regression->area * delta_x;
             peak.area_uncert = regression->area_uncert * exp(coeff.b0) * delta_x;
 
-            // @todo, also check for negative width where appropriate
             // the empirical peak width is generally estimated at half maximum. Our peak
             // model only has a standard deviation for the apex peak
             peak.fwhm = fullWidthHalfMax(&coeff, peak.height, delta_x);
@@ -2564,14 +2567,70 @@ namespace qAlgorithms
         // values of x, so the area differentiated by b0 is itself.
         //
         double diff_b0 = area_F;
+
         // b1:
+        // since d/dx f(x) + g(x) = f'(x) + g'(x), we differentiate the individual pieces of b1 and sum up
         // for + / - infinity:
         // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2)) * (b1 / (2 b2))
         // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b3) ) * -1 ] / (2 sqrt(-b3)) * (b1 / (2 b3))
-        double diff_b1_lim_L = F_b2_lim * (b1 / (2 * b2));
-        double diff_b1_lim_R = F_b3_lim * (b1 / (2 * b3));
         // if a valley exists:
-        // -(e^(b0 + x (b2 x + b1)) (sqrt(b2) - b1 dawson((2 b2 x + b1)/(2 sqrt(b2)))))/(2 b2^(3/2))
+        // e^(b0 + b1 x + b2 x^2)/(2 b2) - (e^(b0 - b1^2/(4 b2)) sqrt(pi) b1 erfi((2 b2 x + b1)/(2 sqrt(b2))))/(4 b2^(3/2))
+        // the part after the minus is just the antiderivative times b1 / (2 b2)
+        double diff_b1_lim_L = b2_pos
+                                   ? exp(b0 + b1 * x + b2 * x * x) / (2 * b2) - F_b2_lim * b1 / (2 * b2)
+                                   : F_b2_lim * (b1 / (2 * b2));
+        double diff_b1_lim_R = b3_pos
+                                   ? exp(b0 + b1 * x + b3 * x * x) / (2 * b3) - F_b3_lim * b1 / (2 * b3)
+                                   : F_b3_lim * (b1 / (2 * b3));
+        // for x0, follow the same scheme as above for positive b23
+        // e^(b0 - b1^2/(2 b2))/(2 b2) - (sqrt(pi) b1 e^(b0 - b1^2/(4 b2)) erf(b1/(2 sqrt(b2))))/(2 sqrt(b2) * 2 b2)
+        double diff_b1_zero_L = b2_pos
+                                    ? exp(b0) / (2 * b2) - F_b2_zero * b1 / (2 * b2)
+                                    : exp(b0 - b1 * b1 / (2 * b2)) / (2 * b2) - F_b2_zero * b1 / (2 * b2);
+        double diff_b1_zero_R = b3_pos
+                                    ? exp(b0) / (2 * b3) - F_b3_zero * b1 / (2 * b3)
+                                    : exp(b0 - b1 * b1 / (2 * b3)) / (2 * b3) - F_b3_zero * b1 / (2 * b3);
+        // area = zero_l - lim_l + lim_r - zero_r
+        double diff_b1 = diff_b1_zero_L - diff_b1_lim_L + diff_b1_lim_R - diff_b1_zero_R;
+
+        // b2 / b3:
+        // Since b2 and b3 apply to different halves of the regression, the derivative also only covers one half
+        // the actual calculations are still identical
+        // b2: left zero - left limit
+        // for -inf (* -1 for -inf): ( (b1^2 - 2 b2) sqrt(pi) e^(b0 - b1^2/(4 b2))) / (2 sqrt(b2) * 4 b2^2)
+        // for positive b2:
+        // { e^(b0 - b1^2/(4 x)) *
+        // [ sqrt(pi) (b1^2 - 2 b2) erfi((b1 + 2 x b2)/(2 sqrt(b2)))
+        //     - 2 sqrt(b2) e^((b1 + 2 x b2)^2/(4 b2)) (b1 - 2 x b2) ] }
+        // / (4 b2^2 * 2 sqrt(b2))
+        // the original area term is contained in the first part of the substraction when expanding:
+        // F_lim_b2 * (b1^2 - 2 b2) / (4 b2^2)
+        // - eterm_b2 * exp((b1 + 2x b2)^2 / 4 b2) * (b1 - 2 x b2) / (4 b2^2)
+        double diff_b2_lim = b2_pos
+                                 ? F_b2_lim * (b1 * b1 - 2 * b2) / (4 * b2 * b2) - eterm_b2 * exp((b1 + 2 * x * b2) * (b1 + 2 * x * b2) / 4 * b2) * (b1 - 2 * x * b2) / (4 * b2 * b2)
+                                 : (b1 * b1 - 2 * b2) * F_b2_lim / (4 * b2 * b2);
+        double diff_b3_lim = b3_pos
+                                 ? F_b3_lim * (b1 * b1 - 2 * b3) / (4 * b3 * b3) - eterm_b3 * exp((b1 + 2 * x * b3) * (b1 + 2 * x * b3) / 4 * b3) * (b1 - 2 * x * b3) / (4 * b3 * b3)
+                                 : (b1 * b1 - 2 * b3) * F_b3_lim / (4 * b3 * b3);
+        // at x = 0, follows the same principle as above
+        // (e^(b0 - b1^2/(2 b2)) (sqrt(pi) e^(b1^2/(4 b2)) (b1^2 - 2 b2) erf(b1/(2 sqrt(b2)))) / (4 b2^2 * 2 sqrt(b2))
+        // - (e^(b0 - b1^2/(2 b2)) 2 b1 sqrt(b2))) / (4 b2^2 * 2 sqrt(b2))
+        // e^(b0 - b1^2/(2 b2) * e^(b1^2/(4 b2)) = e^(b0 - b1^2/(4 b2), simplify:
+        // (e^(b0 - b1^2/(4 b2)) sqrt(pi) (b1^2 - 2 b2) erf(b1/(2 sqrt(b2))) / (4 b2^2 * 2 sqrt(b2)) = F_b2_zero * (b1^2 - 2 b2) / (4 b2^2)
+        // - (e^(b0 - b1^2/(2 b2)) b1) / (4 b2^2) // 4 b2^2 can be moved out of both terms
+        // if erfi is used, only the substractor changes to  exp(b0) * b1
+        double substr_b2 = b2_pos
+                               ? exp(b0) * b1
+                               : (exp(b0 - b1 * b1 / (2 * b2)) * b1);
+        double diff_b2_zero = (F_b2_zero * (b1 * b1 - 2 * b2) - substr_b2) / (4 * b2 * b2);
+
+        double substr_b3 = b3_pos
+                               ? exp(b0) * b1
+                               : (exp(b0 - b1 * b1 / (2 * b3)) * b1);
+        double diff_b3_zero = (F_b3_zero * (b1 * b1 - 2 * b3) - substr_b3) / (4 * b3 * b3);
+
+        double diff_b2 = diff_b2_zero - diff_b2_lim;
+        double diff_b3 = diff_b3_lim - diff_b3_zero;
 
         return area_F * delta_x;
     }
