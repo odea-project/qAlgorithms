@@ -2643,6 +2643,41 @@ namespace qAlgorithms
         // b2 and b3 do not have a covariance since they never apply to the same points
     };
 
+    double peakPositionUncert(const RegCoeffs *c, const RegVariances *var)
+    {
+        // peak position: -b1 / (2 b23)
+        double b23 = c->b1 < 0 ? c->b2 : c->b3;
+        // double deriv_b0 = 0;
+        double deriv_b1 = -1 / (2 * b23);
+        double deriv_b23 = c->b1 / (2 * b23 * b23); // -b1 * -1
+        // uncertainty: multiply derivatives with variances / covariances
+        double var_b23 = c->b1 < 0 ? var->var_b2 : var->var_b3;
+        double covar = c->b1 < 0 ? var->covar_b1_b2 : var->covar_b1_b3;
+        double uncert = deriv_b1 * var->var_b1 + deriv_b23 * var_b23 + deriv_b1 * deriv_b23 * covar;
+        return uncert;
+    }
+
+    double peakHeightUncert(const RegCoeffs *c, const RegVariances *var, const double height)
+    {
+        // height: exp( b0 + b1 * -b1 / (2 b23) + b23 * (-b1 / (2 b23))^2 )
+        // = b0 (-b1^2 / (2 b23)) * (2 / 2) + b1^2 / (4 b23)
+        // = exp( b0 - b1^2 / (4 b23) )
+        // derivative by b0 is just the height again
+        double b23 = c->b1 < 0 ? c->b2 : c->b3;
+        double b1_sq = c->b1 * c->b1;
+        double deriv_b0 = height;
+        double deriv_b1 = height * -2 * b1_sq / (4 * b23);
+        double deriv_b23 = height * b1_sq / (4 * b23 * b23);
+
+        double var_b23 = c->b1 < 0 ? var->var_b2 : var->var_b3;
+        double covar_0_23 = c->b1 < 0 ? var->covar_b0_b2 : var->covar_b0_b3;
+        double covar_1_23 = c->b1 < 0 ? var->covar_b1_b2 : var->covar_b1_b3;
+
+        double uncert_A = deriv_b0 * var->var_b0 + deriv_b1 * var->var_b1 + deriv_b23 * var_b23;
+        double uncert_B = deriv_b0 * deriv_b1 * var->covar_b0_b1 + deriv_b0 * deriv_b23 * covar_0_23 + deriv_b1 * deriv_b23 * covar_1_23;
+        return uncert_A + uncert_B;
+    }
+
     double calcMSE_exp(const RegCoeffs *coeff,
                        const float *observed,
                        const Range_i *regSpan,
