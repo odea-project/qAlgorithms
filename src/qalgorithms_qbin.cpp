@@ -13,66 +13,49 @@ namespace qAlgorithms
 {
     const size_t MAX_SCAN_GAP = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
 
+    int qbin_group(const float *dim_continuum,
+                   const size_t *dim_discrete,
+                   const size_t count_total,
+                   // output EICs for now, find a good in-place solution?
+                   std::vector<EIC> *eics_ret)
+    {
+        // core idea: ensure that all groups fulfill the criteria of a bin and split at the point of highest dissimilarity
+
+        // the function operates using a window of five points
+        if (dim_discrete[count_total - 1] < 5)
+            return -1;
+        // check that arriving data is sorted in the discrete dimension
+        for (size_t i = 1; i < count_total; i++)
+        {
+            int dist = int(dim_discrete[i]) - int(dim_discrete[i - 1]);
+            if (dist != 1)
+                return -2;
+        }
+        // A problem with the previous implementation is that it operates on all data at once.
+        // This will lead to imprecise splitting if too broad a region in the discrete dimension is observed.
+        // For this reason, bins in this function are created from the lowest scan upwards.
+        std::vector<int> indices(count_total);
+        for (size_t i = 0; i < count_total; i++)
+            indices[i] = int(i);
+
+        // in a first step, all masses in the first scan are evaluated
+        // if two masses are part of the same bin, they will have the lowest distance to each other
+        // to make the decision easier, the point with the largest distance in the continuus dimension
+        // to other members of this discrete group is taken as the first starting point.
+        size_t discrete_start = dim_discrete[0];
+        size_t idx_start = 0;
+        double maxDiff = 0;
+        for (size_t i = 1; i < count_total; i++)
+        {
+            size_t idx_now = dim_discrete[i];
+        }
+    }
+
     // helper functions for the main binning functions that are not part of the header
     void initContainer(BinContainer *activeBins, std::vector<CentroidPeak> *centroids);
     void resetContainer(BinContainer *activeBins, bool which); // move centroids from the bin container to the notInBins category
     size_t setFinalBins(BinContainer *activeBins);
     size_t resetUnbinned(BinContainer *activeBins);
-
-    std::vector<Bin> performQbinning(std::vector<CentroidPeak> *centroids)
-    {
-        BinContainer activeBins;
-        initContainer(&activeBins, centroids);
-
-        // counting stats: if these stay the same throughout two iterations, terminate the loop
-        size_t censInBins = centroids->size();
-        bool censInBins_stable = false;
-        size_t censNotInBins = 0;
-        bool censNotInBins_stable = false;
-
-        bool binningInProgress = true;
-        while (binningInProgress) // @todo prove that this loop always terminates
-        {
-            subsetBins(activeBins);
-            size_t currentFinal = setFinalBins(&activeBins);
-            size_t currentRemoved = resetUnbinned(&activeBins);
-            { // check if loop should continue
-                if (currentFinal == censInBins)
-                {
-                    censInBins_stable = true;
-                }
-                censInBins = currentFinal;
-
-                if (currentRemoved == censNotInBins)
-                {
-                    censNotInBins_stable = true;
-                }
-                censNotInBins = currentRemoved;
-
-                assert(censInBins + censNotInBins == centroids->size());
-
-                binningInProgress = !(censInBins_stable && censNotInBins_stable);
-            }
-        }
-        // no change in bin result, so all remaining bins cannot be coerced into a valid state
-        resetContainer(&activeBins, false);
-        assert(activeBins.processBinsT.empty());
-        // resetContainer(&activeBins, true);
-
-        { // calculate the DQSB as the silhouette score, considering only non-separated points
-            std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                      { return lhs->mz < rhs->mz; });
-
-            // setting start position to 0 at this point means that it can be reused, since it is incremented in makeDQSB
-            size_t shared_idxStart = 0;
-            for (size_t i = 0; i < activeBins.finalBins.size(); i++)
-            {
-                shared_idxStart = activeBins.finalBins[i].makeDQSB(&activeBins.notInBins, shared_idxStart);
-            }
-        }
-
-        return activeBins.finalBins;
-    }
 
     void initContainer(BinContainer *activeBins, std::vector<CentroidPeak> *centroids)
     {
@@ -1065,28 +1048,4 @@ namespace qAlgorithms
         return (minOuterDist - meanInnerDist) / fmal(meanInnerDist, maxInVal, maxInVal);
     }
 #pragma endregion "Functions"
-
-    bool massTraceStable(std::vector<float> massesBin, int idxStart, int idxEnd) // @todo do this in regression
-    {
-        assert(idxEnd > idxStart);
-        size_t peaksize = idxEnd - idxStart + 1;
-        std::vector<double> massesPeak;
-        for (size_t i = 0; i < peaksize; i++)
-        {
-            massesPeak.push_back(massesBin[idxStart + i]);
-        }
-        std::sort(massesPeak.begin(), massesPeak.end());
-
-        double stddev = sdev(massesPeak.data(), peaksize);
-
-        float vcrit = binningCritVal(peaksize, stddev);
-        for (size_t i = 1; i < peaksize; i++)
-        {
-            if (massesPeak[i] - massesPeak[i - 1] > vcrit)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
 }

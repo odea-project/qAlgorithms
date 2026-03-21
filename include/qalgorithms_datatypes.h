@@ -22,14 +22,6 @@ namespace qAlgorithms
         mixed,
     };
 
-    struct ProfileBlock
-    {
-        const float *intensity;
-        const float *mz;
-        size_t startPos;
-        size_t length;
-    };
-
     struct RegCoeffs
     {
         double b0 = 0, b1 = 0, b2 = 0, b3 = 0;

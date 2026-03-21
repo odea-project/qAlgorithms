@@ -2302,6 +2302,14 @@ namespace qAlgorithms
 
 #pragma region "find centroids"
 
+    struct ProfileBlock // @todo eventually remove this (?)
+    {
+        const float *intensity;
+        const float *mz;
+        size_t startPos;
+        size_t length;
+    };
+
     bool getNextProfileRegion(
         const std::vector<float> *spectrum_mz,
         const std::vector<float> *spectrum_int,
