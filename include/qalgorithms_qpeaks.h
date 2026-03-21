@@ -129,18 +129,6 @@ namespace qAlgorithms
         const RT_Converter *convertRT,
         const std::vector<float> *RTs);
 
-    struct RegPair
-    {
-        unsigned int idx;
-        double mse;
-    };
-
-    RegPair findBestRegression(
-        const float *intensities,
-        const std::vector<RegressionGauss> *regressions,
-        const unsigned int *const degreesOfFreedom_cum,
-        const Range_i regSpan);
-
     // take a jacobian matrix as input and return the transpose at scale
     double matProductReg(const double J[4], const size_t scale);
 
@@ -153,25 +141,6 @@ namespace qAlgorithms
         const double apexToEdge);
 
     void calcPeakHeightUncert(RegressionGauss *mutateReg);
-
-    /**
-     * @brief Check if the peak area and the covered peak area are valid using t-test.
-     * @details The function calculates the peak area and the covered peak area using the
-     * regression coefficients. The peak area is the integral of the regression model
-     * from -infinity to +infinity. The covered peak area is the integral of the regression
-     * model from the left limit of the regression window to the right limit of the
-     * regression window. Moreover, the trapzoid under the peak is considered as
-     * not covered peak area.
-     *
-     * @param coeff : Matrix of regression coefficients
-     * @param mse : mean squared error
-     * @param scale : Window size scale, e.g., 5 means the window size is 11 (2*5+1)
-     * @param df_sum : sum of the degree of freedom of the regression model
-     * @param area : area of the peak
-     * @param area_uncert : uncertainty of the area
-     * @return true : if the peak area is valid
-     * @return false : if the peak area is not valid
-     */
 
     void calcPeakAreaUncert(RegressionGauss *mutateReg);
 
@@ -200,115 +169,54 @@ namespace qAlgorithms
 
     double medianVec(const std::vector<float> *vec);
 
-    // double peakAreaFull(const RegCoeffs *coeff, const double delta_x);
-
     double peakArea(const double b0, const double b1, const double b2, const double b3, const double delta_x);
 
     // ### pre-calculate the regression matrix ### //
-#define MAXSCALE 63
-#define GLOBAL_MAXSCALE_CENTROID 8 // @todo this is a critical part of the algorithm and should not be hard-coded
 #define GLOBAL_MINSCALE 2
 
 #include "../external/qalgorithms_matinverse.h"
 
-///     This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
+    ///     This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
 
-///     (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
-///     Only six values of the final matrix are required for the simple case, see below:
+    ///     (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
+    ///     Only six values of the final matrix are required for the simple case, see below:
 
-///     xT is the transpose of the design matrix X.
-///     for scale = 2:
-///     xT = | 1  1  1  1  1 |    : all ones
-///          |-2 -1  0  1  2 |    : from -scale to scale
-///          | 4  1  0  0  0 |    : x^2 values for x < 0
-///          | 0  0  0  1  4 |    : x^2 values for x > 0
+    ///     xT is the transpose of the design matrix X.
+    ///     for scale = 2:
+    ///     xT = | 1  1  1  1  1 |    : all ones
+    ///          |-2 -1  0  1  2 |    : from -scale to scale
+    ///          | 4  1  0  0  0 |    : x^2 values for x < 0
+    ///          | 0  0  0  1  4 |    : x^2 values for x > 0
 
-///     It contains one additional row of all ones for every additional peak that is added into the model
+    ///     It contains one additional row of all ones for every additional peak that is added into the model
 
-///     When adding multiple peaks to the regression model, we need to adjust the inverse values.
-///     This will change the number of unique values in the inv_values array from 6 to 7.
-///     Here we use the inv_array[1] position and shift all values from that point onwards to the right.
-///     example for num_peaks = 2:
-///     original matrix with the unique values [a, b, c, d, e, f] (six unique values)
-///     | a  0  b  b |
-///     | 0  c  d -d |
-///     | b  d  e  f |
-///     | b -d  f  e |
+    ///     When adding multiple peaks to the regression model, we need to adjust the inverse values.
+    ///     This will change the number of unique values in the inv_values array from 6 to 7.
+    ///     Here we use the inv_array[1] position and shift all values from that point onwards to the right.
+    ///     example for num_peaks = 2:
+    ///     original matrix with the unique values [a, b, c, d, e, f] (six unique values)
+    ///     | a  0  b  b |
+    ///     | 0  c  d -d |
+    ///     | b  d  e  f |
+    ///     | b -d  f  e |
 
-///     new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
-///     | A1  A2  0  B  B |
-///     | A2  A1  0  B  B |
-///     | 0   0   C  D -D |
-///     | B   B   D  E  F |
-///     | B   B  -D  F  E |
+    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+    ///     | A1  A2  0  B  B |
+    ///     | A2  A1  0  B  B |
+    ///     | 0   0   C  D -D |
+    ///     | B   B   D  E  F |
+    ///     | B   B  -D  F  E |
 
-///     for num_peaks = 3:
-///     new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
-///     | A1  A2  A2  0  B  B |
-///     | A2  A1  A2  0  B  B |
-///     | A2  A2  A1  0  B  B |
-///     | 0   0   0   C  D -D |
-///     | B   B   B   D  E  F |
-///     | B   B   B  -D  F  E |
+    ///     for num_peaks = 3:
+    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
+    ///     | A1  A2  A2  0  B  B |
+    ///     | A2  A1  A2  0  B  B |
+    ///     | A2  A2  A1  0  B  B |
+    ///     | 0   0   0   C  D -D |
+    ///     | B   B   B   D  E  F |
+    ///     | B   B   B  -D  F  E |
 
-///     Note that no more than seven different values are needed per scale, even for a multidimensional approach.
-#if 0
-    constexpr std::array<double, (MAXSCALE + 1) * 6> initialize()
-    {
-        static_assert(GLOBAL_MINSCALE == 2); // everything will break if this value is changed!
-        static_assert(GLOBAL_MAXSCALE_CENTROID <= MAXSCALE);
-
-        std::array<double, (MAXSCALE + 1) * 6> invArray = {0}; // array to store the 6 unique values of the inverse matrix for each scale
-        // init invArray
-        // XtX = transposed(Matrix X ) * Matrix X
-        // XtX_xy: x = row number; y = column number
-        double XtX_00 = 1;
-        double XtX_02 = 0;
-        double XtX_11 = 0;
-        double XtX_12 = 0;
-        double XtX_13 = 0;
-        double XtX_22 = 0;
-        for (int i = 1; i < MAXSCALE; ++i)
-        {
-            XtX_00 += 2;
-            XtX_02 += double(i * i);
-            XtX_11 = XtX_02 * 2;
-            XtX_13 += double(i * i * i);
-            XtX_12 = -XtX_13;
-            XtX_22 += double(i * i * i * i);
-
-            // decomposition matrix L, see https://en.wikipedia.org/wiki/Cholesky_decomposition
-            double L_00 = std::sqrt(XtX_00);
-            double L_11 = std::sqrt(XtX_11);
-            double L_20 = XtX_02 / L_00;
-            double L_21 = XtX_12 / L_11;
-            double L_20sq = L_20 * L_20;
-            double L_21sq = L_21 * L_21;
-            double L_22 = std::sqrt(XtX_22 - L_20sq - L_21sq);
-            double L_32 = 1 / L_22 * (-L_20sq + L_21sq);
-            double L_33 = std::sqrt(XtX_22 - L_20sq - L_21sq - L_32 * L_32);
-
-            // inverse of L
-            double inv_00 = 1 / L_00;
-            double inv_11 = 1 / L_11;
-            double inv_22 = 1 / L_22;
-            double inv_33 = 1 / L_33;
-            double inv_20 = -L_20 * inv_00 / L_22;
-            double inv_30 = -(L_20 * inv_00 + L_32 * inv_20) / L_33;
-            double inv_21 = -L_21 * inv_11 / L_22;
-            double inv_31 = -(-L_21 * inv_11 + L_32 * inv_21) / L_33;
-            double inv_32 = -L_32 * inv_22 / L_33;
-
-            invArray[i * 6 + 0] = inv_00 * inv_00 + inv_20 * inv_20 + inv_30 * inv_30; // cell: 0,0
-            invArray[i * 6 + 1] = inv_22 * inv_20 + inv_32 * inv_30;                   // cell: 0,2
-            invArray[i * 6 + 2] = inv_11 * inv_11 + inv_21 * inv_21 + inv_31 * inv_31; // cell: 1,1
-            invArray[i * 6 + 3] = -inv_31 * inv_33;                                    // cell: 1,2
-            invArray[i * 6 + 4] = inv_33 * inv_33;                                     // cell: 2,2
-            invArray[i * 6 + 5] = inv_32 * inv_33;                                     // cell: 2,3
-        }
-        return invArray;
-    }
-#endif
+    ///     Note that no more than seven different values are needed per scale, even for a multidimensional approach.
 }
 
 #endif

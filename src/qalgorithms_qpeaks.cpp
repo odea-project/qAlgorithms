@@ -889,6 +889,18 @@ namespace qAlgorithms
         validRegsTmp->pop_back();
     }
 
+    struct RegPair
+    {
+        unsigned int idx;
+        double mse;
+    };
+
+    RegPair findBestRegression(
+        const float *intensities,
+        const std::vector<RegressionGauss> *regressions,
+        const unsigned int *const degreesOfFreedom_cum,
+        const Range_i regSpan);
+
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
                         std::vector<RegressionGauss> *validRegsTmp,
                         const float *intensities,
@@ -904,8 +916,6 @@ namespace qAlgorithms
             - At least one apex of a pair of peaks is within the window of the other peak.
             (Overlap of two maxima)
         */
-        // @todo could this part be combined with merge over scales?
-        // vector with the access pattern [2*i] for start and [2*i + 1] for end point of a regression group
         std::vector<Range_i> groups;
         groups.reserve(validRegsTmp->size());
 
@@ -1004,7 +1014,7 @@ namespace qAlgorithms
             }
         }
         assert(regressions->at(bestRegIdx).isValid);
-        return {bestRegIdx, float(best_mse)};
+        return {bestRegIdx, best_mse};
     }
 
     void mergeRegressionsOverScales(
@@ -1127,7 +1137,7 @@ namespace qAlgorithms
         std::vector<RegCoeffs> *coeffs)
     {
         assert(maxScale >= GLOBAL_MINSCALE);
-        assert(maxScale <= MAXSCALE);
+        assert(maxScale <= QALGORITHMS_MAXSCALE_PRECOMPILED);
 
         assert(length > 4);
         maxScale = min(maxScale, (length - 1) / 2);
@@ -2166,7 +2176,7 @@ namespace qAlgorithms
         // @todo this is not a universal limit and only chosen for computational speed at the moment
         // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
         static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
-        assert(GLOBAL_MAXSCALE_FEATURES <= MAXSCALE);
+        assert(GLOBAL_MAXSCALE_FEATURES <= QALGORITHMS_MAXSCALE_PRECOMPILED);
 
         std::vector<FeaturePeak> peaks;    // return vector for feature list
         peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
@@ -2368,7 +2378,9 @@ namespace qAlgorithms
                 scanNum += 1;
             }
             // at this point, the block contains one continuus region of points in the source spectrum
-            qpeaks_find(block.intensity, block.mz, nullptr, block.length, GLOBAL_MAXSCALE_CENTROID, &ret);
+            // @todo find a better way of determining the smallest possible upper scale
+            static const size_t maxscale_centroid = 10;
+            qpeaks_find(block.intensity, block.mz, nullptr, block.length, maxscale_centroid, &ret);
 
             for (size_t i = 0; i < ret.size(); i++)
             {

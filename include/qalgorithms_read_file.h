@@ -55,21 +55,14 @@ namespace qAlgorithms
         "sampled_noise_baseline", "ion_mobility", "mass", "quadrupole_position_lower_bound_mz",
         "quadrupole_position_upper_bound_mz"};
 
-    struct XML_Attribute
-    {
-        char *name;
-        char *attr_name;
-        char *attr_value;
-    };
-
     /* ### WARNING: THIS CONSTRUCTOR ALLOCATES A SEPARATE ARRAY ### */
-    class XML_File // @todo this is just a complicated way of having a filetype specific accession struct and a generalised container
+    class XML_File
     {
-        // @todo change this to a generalised XML class which includes cases for mzML, mzXML and others
+        // @todo change this to a generalised XML document interface for mass spec data
     private:
         std::vector<BinaryMetadata> spectra_binary_metadata;
 
-        BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin, int *warn);
+        BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
 
         double extract_scan_RT(const pugi::xml_node &spec);
 
@@ -110,8 +103,6 @@ namespace qAlgorithms
         std::vector<unsigned int> get_spectra_index(const std::vector<unsigned int> *indices,
                                                     const std::vector<pugi::xml_node> *spectra_nodes_ex);
         std::vector<int> get_spectra_level(const std::vector<unsigned int> *indices);
-        std::vector<bool> get_spectra_mode();
-        std::vector<bool> get_spectra_polarity(const std::vector<unsigned int> *indices);
 
         // return all indices of spectra that match the required criteria
         std::vector<unsigned int> filter_spectra(const bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2

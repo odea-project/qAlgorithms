@@ -269,8 +269,6 @@ namespace qAlgorithms
 
     void subsetBins(BinContainer &bincontainer) // @todo string return values are stupid
     {
-        // auto timeStart = std::chrono::high_resolution_clock::now();
-        // auto timeEnd = std::chrono::high_resolution_clock::now();
         bincontainer.readFrom = false; // starting bin is in processBinsF
         assert(bincontainer.processBinsT.empty());
         // assert(!bincontainer.processBinsF.empty());

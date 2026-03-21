@@ -137,10 +137,12 @@ namespace qAlgorithms
 
             size_t counter = 0;
 
-            int warn = 0;
+            bool warn_float32 = false;
             for (const pugi::xml_node &bin : binary_list.children("binaryDataArray"))
             {
-                BinaryMetadata mtd = extract_binary_metadata(bin, &warn);
+                BinaryMetadata mtd = extract_binary_metadata(bin);
+
+                warn_float32 = warn_float32 || (!mtd.isDouble);
 
                 mtd.index = counter;
 
@@ -148,7 +150,7 @@ namespace qAlgorithms
 
                 counter++;
             }
-            if (warn == 1)
+            if (warn_float32)
                 fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
 
             number_spectra_binary_arrays = counter;
@@ -169,7 +171,7 @@ namespace qAlgorithms
         polarityMode = get_polarity_mode();
     };
 
-    BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin, int *warn)
+    BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin)
     {
         BinaryMetadata mtd;
 
@@ -178,28 +180,24 @@ namespace qAlgorithms
         pugi::xml_node node_integer_64 = bin.find_child_by_attribute("cvParam", "accession", "MS:1000522");
         pugi::xml_node node_float_64 = bin.find_child_by_attribute("cvParam", "accession", "MS:1000523");
 
+        assert(node_float_32 || node_float_64);
+
         if (node_float_64)
         {
             mtd.isDouble = true;
         }
-        else if (node_float_32)
+        else // if (node_float_32)
         {
-            *warn = *warn == 0 ? 1 : *warn;
             mtd.isDouble = false;
         }
-        else if (node_integer_64) // @todo this is not necessarily equivalent
+
+        if (node_integer_64)
         {
-            mtd.isDouble = true;
+            assert(mtd.isDouble);
         }
-        else if (node_integer_32)
+        else // if (node_integer_32)
         {
-            *warn = *warn == 0 ? 1 : *warn;
-            mtd.isDouble = false;
-        }
-        else
-        {
-            assert(false);
-            // Encoding precision with accession MS:1000519, MS:1000521, MS:1000522 or MS:1000523 not found
+            assert(!mtd.isDouble);
         }
 
         pugi::xml_node node_comp = bin.find_child_by_attribute("cvParam", "accession", "MS:1000574");
@@ -232,8 +230,7 @@ namespace qAlgorithms
                 break;
             }
         }
-        assert(has_bin_data_type);
-        // throw("Encoded data type could not be found matching the mzML official vocabulary!");
+        assert(has_bin_data_type); // Encoded data type could not be found matching the mzML official vocabulary
 
         if (mtd.data_name_short == "other") // this should be separated into a check for null / termination condition @todo
         {
@@ -370,30 +367,6 @@ namespace qAlgorithms
         return retention_times; // 4800869
     };
 
-    std::vector<bool> XML_File::get_spectra_polarity(
-        const std::vector<unsigned int> *indices)
-    {
-        assert(indices->size() > 0);
-        std::vector<bool> polarities;
-
-        for (size_t i = 0; i < indices->size(); ++i)
-        {
-            int idx = indices->at(i);
-            pugi::xml_node spec = (*linknodes)[idx];
-            if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000130"))
-            {
-                polarities.push_back(true);
-            }
-            else
-            {
-                assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000129")); // @todo a single check should be enough
-                polarities.push_back(false);
-            }
-        }
-
-        return polarities;
-    };
-
     Polarities XML_File::get_polarity_mode()
     {
         assert(linknodes->size() > 1);
@@ -463,57 +436,16 @@ namespace qAlgorithms
         return levels;
     };
 
-    std::vector<bool> XML_File::get_spectra_mode() // centroid or profile
-    {
-        assert(this->number_spectra > 0);
-
-        // the check for centroided data is made here, will likely require different approach down the line
-        std::vector<unsigned int> accessor(this->number_spectra, 0);
-        std::iota(accessor.begin(), accessor.end(), 0);
-
-        std::vector<bool> modes; // @todo now this can be initialised without an accessor
-
-        for (size_t i = 0; i < accessor.size(); ++i)
-        {
-            size_t idx = accessor[i];
-            pugi::xml_node spec = (*linknodes)[idx];
-            if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000128"))
-            {
-                modes.push_back(true); // profile mode
-            }
-            else
-            {
-                // @todo is there any case where the mode is neither profile nor centroid?
-                assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000127"));
-                modes.push_back(false); // centroided
-            }
-        }
-        return modes;
-    };
-
     std::vector<unsigned int> XML_File::filter_spectra(
         bool ms1, bool polarity, bool centroided)
     {
-        // extract relevant properties out of the function call @todo make all relevant fields part of a
-        // context struct the class holds
-        // XML_Attribute centroidsXMLA;
-        // XML_Attribute polarityXMLA;
-        // XML_Attribute msLevelXMLA;
-
-        // if (filetype == mzML)
-        // {
-        //     *centroidsXMLA.name = 'cvParam';
-        //     *centroidsXMLA.attr_name = 'accession';
-        //     *centroidsXMLA.attr_value = 'MS:1000127';
-        // }
+        // @todo this function should take a struct with the field names as input and switch it depending on format specifics
 
         // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
         assert(!this->defective);
         assert(number_spectra > 0);
         std::vector<unsigned int> indices;
         indices.reserve(number_spectra);
-
-        // pugi::char_t *cv = "cvParam"; // @todo this does not work, abstract accessor fields somehow
 
         for (unsigned int i = 0; i < number_spectra; i++)
         {

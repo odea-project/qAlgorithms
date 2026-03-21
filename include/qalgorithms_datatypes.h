@@ -86,7 +86,7 @@ namespace qAlgorithms
         // unsigned int interpolations;
     };
 
-    struct RT_Grouping
+    struct RT_Grouping // @todo remove this
     {
         size_t originalIndex = -1;
         size_t interpolatedIndex = -1;

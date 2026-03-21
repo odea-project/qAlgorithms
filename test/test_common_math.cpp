@@ -4,7 +4,6 @@
 #include <math.h>
 #include <cstdint>
 #include "../../external/fastexp.h"
-#include <chrono>
 
 using namespace qAlgorithms;
 

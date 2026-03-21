@@ -5,8 +5,8 @@
 #include "qalgorithms_input_output.h"
 #include "qalgorithms_read_file.h"
 
-// other includes are avoided here to reduce header duplication @todo do not use std::chrono
-#include <chrono>
+// other includes are avoided here to reduce header duplication
+#include <time.h>
 
 int main(int argc, char *argv[])
 {
@@ -40,22 +40,6 @@ int main(int argc, char *argv[])
 
             failcount += 1;
             assert(failcount != 10); // manually turn this into an endless loop by setting failcount > 10
-            if (validRegressions.empty())
-                continue;
-
-            double predict[8] = {0};
-            RegCoeffs test = validRegressions.front().coeffs;
-
-            for (int i = 0; i < 8; i++)
-            {
-                int x = i - test.x0;
-                predict[i] = exp(regAt(&test, x));
-            }
-            double diffs[8] = {0};
-            for (int i = 0; i < 8; i++)
-            {
-                diffs[i] = intensity[i] - predict[i];
-            }
         }
     }
 
@@ -66,7 +50,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    // auto filterRanges = processFilters(&pfasFilter, true); // @todo make optional
+    /// @todo add some form of m/z + RT filtering here (although m/z is probably the more relevant one). This should also include MS2
 
     // the final task list contains only unique files, sorted by filesize
     std::vector<std::filesystem::path> tasklist = controlInput(&userArgs.inputPaths);
@@ -82,7 +66,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Warning: removing the first %zu elements from the tasklist.\n", userArgs.skipAhead);
     }
 
-    auto absoluteStart = std::chrono::high_resolution_clock::now();
+    clock_t absoluteStart = clock();
 
 #pragma region file processing
     std::string filename;
@@ -91,7 +75,7 @@ int main(int argc, char *argv[])
     for (size_t pathIdx = skipAhead; pathIdx < tasklist.size(); pathIdx++)
     {
         std::filesystem::path pathSource = tasklist[pathIdx];
-        auto timeStart = std::chrono::high_resolution_clock::now();
+        clock_t timeStart = clock();
         if (!userArgs.silent)
         {
             printf("\nreading file %zu of %zu\n%ls\n", pathIdx + 1, tasklist.size(), pathSource.c_str());
@@ -215,24 +199,21 @@ int main(int argc, char *argv[])
             }
             size_t totalScans = centroids->back().number_MS1;
 
-            auto timeEnd = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
+            clock_t timeEnd = clock();
+            double timePassed_s = double(timeEnd - timeStart) / CLOCKS_PER_SEC;
 
             if (!userArgs.silent)
             {
                 printf("    produced %d centroids from %zu spectra in %0.3f s\n",
-                       centroidCount, totalScans, timePassed.count());
+                       centroidCount, totalScans, timePassed_s);
             }
 
 #pragma region "binning"
-            timeStart = std::chrono::high_resolution_clock::now();
+            timeStart = clock();
 
-            // RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
             std::vector<EIC> binnedData = performQbinning_old(centroids, &rt_index);
 
-            // filterBins_mz_rt(&binnedData, &filterRanges);
-
-            timeEnd = std::chrono::high_resolution_clock::now();
+            timeEnd = clock();
 
             if (binnedData.size() == 0)
             {
@@ -251,8 +232,8 @@ int main(int argc, char *argv[])
 
             if (!userArgs.silent)
             {
-                timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
-                printf("    assembled %zu bins in %f s\n", binnedData.size(), timePassed.count());
+                timePassed_s = double(timeEnd - timeStart) / CLOCKS_PER_SEC;
+                printf("    assembled %zu bins in %f s\n", binnedData.size(), timePassed_s);
             }
             if (userArgs.printBins)
             {
@@ -271,15 +252,11 @@ int main(int argc, char *argv[])
             }
             delete centroids;
 
-            // continue; // @todo ensure centroiding and binning work as best they can first
-
 #pragma region "feature construction"
-            timeStart = std::chrono::high_resolution_clock::now();
+            timeStart = clock();
             // every subvector of peaks corresponds to the bin ID
 
             auto features = findFeatures(binnedData, &rt_index);
-
-            // filterFeatures_mz_rt(&features, &filterRanges);
 
             if (features.size() == 0)
             {
@@ -293,12 +270,12 @@ int main(int argc, char *argv[])
                                  userArgs.silent, userArgs.noOverwrite);
             }
 
-            timeEnd = std::chrono::high_resolution_clock::now();
+            timeEnd = clock();
 
             if (!userArgs.silent)
             {
-                timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeStart);
-                printf("    constructed %zu features in %f s\n", features.size(), timePassed.count());
+                timePassed_s = double(timeEnd - timeStart) / CLOCKS_PER_SEC;
+                printf("    constructed %zu features in %f s\n", features.size(), timePassed_s);
             }
 
             continue;
@@ -332,11 +309,10 @@ int main(int argc, char *argv[])
     }
 
 #pragma region "Logging and similar" // @todo add an option for custom logfile names
-    auto absoluteEnd = std::chrono::high_resolution_clock::now();
     if (!userArgs.silent)
     {
-        std::chrono::duration<float> timePassed = std::chrono::duration_cast<std::chrono::milliseconds>(absoluteEnd - absoluteStart);
-        printf("Completed data processing on %zu files in %f s.\n", tasklist.size() - userArgs.skipAhead, timePassed.count());
+        double timePassed_s = double(clock() - absoluteStart) / CLOCKS_PER_SEC;
+        printf("Completed data processing on %zu files in %f s.\n", tasklist.size() - userArgs.skipAhead, timePassed_s);
         if (errorCount > 0)
         {
             printf("Skipped %zu files which could not be processed.\n", errorCount);
