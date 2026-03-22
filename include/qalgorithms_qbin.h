@@ -2,7 +2,6 @@
 #define _QALGORITHMS_QBIN_INCLUDED
 
 #include <vector>
-#include <string>
 
 #include "qalgorithms_datatypes.h"
 

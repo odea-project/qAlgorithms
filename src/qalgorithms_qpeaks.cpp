@@ -11,7 +11,6 @@
 #include <vector>
 
 #include <algorithm> // sorting @todo get rid of this
-// #include <stdint.h> // max numeric vals
 
 namespace qAlgorithms
 {
@@ -2546,7 +2545,7 @@ namespace qAlgorithms
         double eterm_b3 = exp(b0 - (b1 * b1) / (4 * b3));
         const double sqrt_pi = 1.7724538509055158819; // sqrt(M_PI);
 
-        double F_b2_lim = b2_pos // outer left limit for the integral
+        double F_b2_lim = b2_pos // outer left limit for the integral @todo area calculation is wrong for positive b2
                               ? (sqrt_pi * eterm_b2 * liberfc::erfi((b1 + 2 * b2 * x) / dsqrt_b2)) / dsqrt_b2
                               : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2;
         // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;

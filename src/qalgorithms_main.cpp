@@ -74,14 +74,15 @@ int main(int argc, char *argv[])
     size_t errorCount = 0;
     for (size_t pathIdx = skipAhead; pathIdx < tasklist.size(); pathIdx++)
     {
-        std::filesystem::path pathSource = tasklist[pathIdx];
+        std::filesystem::path pathSource = std::filesystem::canonical(tasklist[pathIdx]);
         clock_t timeStart = clock();
         if (!userArgs.silent)
         {
             printf("\nreading file %zu of %zu\n%ls\n", pathIdx + 1, tasklist.size(), pathSource.c_str());
         }
 
-        XML_File inputFile(std::filesystem::canonical(pathSource));
+        assert(pathSource.extension() == ".mzML"); // @todo support other filetypes
+        XML_File inputFile(pathSource.c_str(), mzML);
 
         if (inputFile.defective)
         {

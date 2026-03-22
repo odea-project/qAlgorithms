@@ -4,14 +4,11 @@
 #include "../external/simdutf/simdutf.h" // use a fast base64 decode function that makes proper use of SIMD
 #include "../external/pugixml-1.14/src/pugixml.h"
 
-#include <iostream>
-#include <filesystem>
+// #include <filesystem>
 #include <vector>
 #include <string>
-#include <cstring>
 #include <zlib.h>
 #include <cassert>
-#include <numeric> // iota
 
 namespace qAlgorithms
 {
@@ -94,18 +91,12 @@ namespace qAlgorithms
         return output;
     };
 
-    XML_File::XML_File(const std::filesystem::path &file)
+    XML_File::XML_File(const char *file, const SourceFileType type)
     {
-        if (file.extension() == ".mzML")
-        {
-            filetype = mzML;
-        }
-        else if (file.extension() == ".mzXML")
-        {
-            assert(false); // @todo support mzXML and other xml based formats
-        }
+        filetype = type;
+        assert(filetype == mzML); // @todo support mzXML and other xml based formats
 
-        loading_result = mzml_base_document.load_file(file.c_str(), pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
+        loading_result = mzml_base_document.load_file(file, pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
 
         if (loading_result)
         {

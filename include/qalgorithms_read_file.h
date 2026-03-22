@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <string>
-#include <filesystem>
 #include "qalgorithms_datatypes.h"
 
 #define PUGIXML_HEADER_ONLY
@@ -93,7 +92,7 @@ namespace qAlgorithms
 
         bool isCentroided = false;
 
-        XML_File(const std::filesystem::path &file);
+        XML_File(const char *fileconst, SourceFileType type);
 
         void get_spectrum(
             std::vector<float> *const spectrum_mz,
