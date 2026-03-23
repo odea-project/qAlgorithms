@@ -11,11 +11,12 @@ High-Resolution Mass Spectrometry (LC-HRMS) data. Our goal is to provide a solut
 processing pipeline that does not require any additional user input, delivers error estimates for results
 and is very fast / computationally efficient.
 
-While `qAlgorithms` started as a library for processing, the high interdependency of every
-step from profile mode mass spectrum to feature means it requires extensive work from the
-end user to use only one "step" of the processing algorithm. As such, we decided to provide
-a pre-compiled executeable with a low-complexity user interface. It is a low-priority goal of
-ours to provide library bindings to more widespread programming environments like R and python.
+The individual algorithms within `qAlgorithms` are not restricted to the domain of HPLC-HRMS,
+although we do not actively pursue other applications. For users only interested in a part of
+the full pipeline, we are collaborating with the [patRoon project by Helmus et al](https://github.com/rickhelmus/patRoon).
+patRoon is an R project and will include bindings for "ready to use" parts of `qAlgorithms` 
+relatively soon. Bindings to other languages and data analysis frameworks are planned, but
+not currently in development.
 
 We are always open for suggestions and feedback regarding your useage of our algorithms,
 so do not hesitate to open an issue on our github page. You can also find us on [Codeberg](https://codeberg.org/ODEA-Project/qAlgorithms).
@@ -28,6 +29,7 @@ support. You can contact us by opening an issue or sending a request to our [Zen
 Here, we have also provided example files for trying out `qAlgorithms`.
 
 ## Installation and Usage
+The following only applies for the standalone project.
 
 ### Windows
 The entire `qAlgorithms` workflow is provided as an executable under ["Releases"](https://github.com/odea-project/qAlgorithms/releases) 
@@ -144,7 +146,8 @@ for non-target questions will adopt or improve on these ideals.
 
 ## Documentation
 All currently existing documentation can be found in the `./docs` directory of this repository.
-It is incomplete as of now and not concerned with the programmatic interface of qAlgorithms.
+It is incomplete as of now and focuses on the theoretical considerations behind implemented
+methods rather than the implementation. For those details, refer to the commented code.
 
 ## Current Offerings
 
