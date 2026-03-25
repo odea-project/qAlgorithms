@@ -179,7 +179,7 @@ void control_sim_gauss()
     // RegCoeffs c = reg.coeffs;
     // float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step);
 
-    assert(abs(apex - apex_p) < reg.position_uncert, "inaccurate position\n");
+    assert(abs(apex - apex_p) < FLT_EPSILON, "inaccurate position\n");
     assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
     assert(abs(fwhm - fwhm_p) < 10e-4, "inaccurate width\n");
     assert(abs(area - area_p) < 0.01, "inaccurate area (%f vs. %f), empiric %f\n", area, area_p, area_e);

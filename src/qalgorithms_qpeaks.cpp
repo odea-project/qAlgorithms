@@ -2545,9 +2545,9 @@ namespace qAlgorithms
         double eterm_b3 = exp(b0 - (b1 * b1) / (4 * b3));
         const double sqrt_pi = 1.7724538509055158819; // sqrt(M_PI);
 
-        double F_b2_lim = b2_pos // outer left limit for the integral @todo area calculation is wrong for positive b2
-                              ? (sqrt_pi * eterm_b2 * liberfc::erfi((b1 + 2 * b2 * x) / dsqrt_b2)) / dsqrt_b2
-                              : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2;
+        // if there is a valley point, this half of the equation is always zero. This is
+        // because erfi(b1 + 2 b2 x) resolves to erfi(b1 + 2 b2 * (-b1 / (2 b2))) == 0
+        double F_b2_lim = b2_pos ? 0 : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2; // outer left limit for the integral @todo area calculation is wrong for positive b2
         // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
         double error_b2 = b2_pos
                               ? liberfc::erfi(b1 / dsqrt_b2)
@@ -2556,9 +2556,8 @@ namespace qAlgorithms
         double area_L = F_b2_zero - F_b2_lim;
 
         // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;
-        double F_b3_lim = b3_pos // outer right limit for the integral
-                              ? (sqrt_pi * eterm_b3 * liberfc::erfi((b1 + 2 * b3 * x) / dsqrt_b3)) / dsqrt_b3
-                              : (sqrt_pi * eterm_b3 * -1) / dsqrt_b3;
+        // is zero for a valley point for the same reasons as above
+        double F_b3_lim = b3_pos ? 0 : (sqrt_pi * eterm_b3 * -1) / dsqrt_b3; // outer right limit for the integral
         double error_b3 = b3_pos
                               ? liberfc::erfi(b1 / dsqrt_b3)
                               : erf(b1 / dsqrt_b3);
