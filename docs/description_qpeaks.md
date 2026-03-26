@@ -135,7 +135,12 @@ coefficients being negative. Here, the area is first calculated for the transfor
 multiplied with the (uniform) distance in x between points to scale it to the original axis. 
 The used antiderivative contains the imaginary error function erfi(x), but the normal error function
 applies if the quadratic coefficient is negative since we take its square root. If the coefficient is
-positive, erfi() is used. The initial area is first calculated for every peak half and then summed up.
+positive, erfi(x) is used. The initial area is first calculated for every peak half and then summed up.
+Since the integral for an open parabola is infinite towards infinity, in those cases the valley of the
+relevant peak half is taken as the outer limit of the peak. This introduces additional systematic 
+uncertainty in area estimates of peaks with tailing or similar properties.
+
+An example for the case of one positive coefficient is provided here: [(external link)](https://www.desmos.com/calculator/pgac3buccd)
 
 
 

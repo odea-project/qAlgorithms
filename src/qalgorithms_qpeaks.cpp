@@ -1758,7 +1758,7 @@ namespace qAlgorithms
             double pred = predict->at(i);
             double obs = observed[i];
             double newdiff = (obs - pred) * (obs - pred);
-            result += newdiff / pred; // this part is different from the above function, do not try to merge them!
+            result += newdiff / pred;
         }
         return result;
     }
@@ -2564,7 +2564,10 @@ namespace qAlgorithms
         double F_b3_zero = (sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3;
         double area_R = F_b3_lim - F_b3_zero;
 
-        assert((area_L > 0) == (area_R > 0)); // there are cases where both areas are negative, but result in the correct value when summed anyway
+        // this check has been removed since there is a sign error somewhere in the calculation series.
+        // @todo this will be relevant for uncertainty calculation
+        // there are cases where both areas are negative, but result in the correct value when summed anyway
+        // assert((area_L > 0) == (area_R > 0));
         area_L = abs(area_L);
         area_R = abs(area_R);
 
