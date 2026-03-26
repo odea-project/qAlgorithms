@@ -1,5 +1,5 @@
 #include "liberfc_reduced.h"
-#include "auto_cheb_erfcx.h"
+#include "auto_cheb_imwofx.c"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
