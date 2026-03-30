@@ -280,7 +280,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
 
     in_out->negativeB23 = (c.b2 < 0) && (c.b3 < 0);
 
-    float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step);
+    float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step, nullptr, nullptr);
 
     // empiric estimation of peak parameters
 
@@ -439,7 +439,7 @@ void test_areaPrediction()
     float x_step = 1;
     simulate_stepwise(&coeff, &x, &y, x_step * 0.05); // note: the sampling rate is not equal to the stride of x
     double area_e = area_empiric(&x, &y);
-    double area_t = peakArea(coeff.b0, coeff.b1, coeff.b2, coeff.b3, x_step);
+    double area_t = peakArea(coeff.b0, coeff.b1, coeff.b2, coeff.b3, x_step, nullptr, nullptr);
 
     // the area calculation is wrong!
     // RegressionGauss testreg;

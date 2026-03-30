@@ -1432,7 +1432,7 @@ namespace qAlgorithms
         // double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
 
-        mutateReg->mse = mse_log; // @todo the mse should be calculated in the function that uses it
+        mutateReg->mse = mse_log;
 
         /*
         competing regressions filter:
@@ -1460,6 +1460,9 @@ namespace qAlgorithms
             // return invalid_area; // statistical insignificance of the area
         }
 
+        // uncertainty calculation and t-tests against peak properties
+        RegVariances var = calcVarianceCoeffs(scale, mse_log);
+
         /*
           Height Filter:
           This block of code implements the height filter. It calculates the height
@@ -1484,7 +1487,8 @@ namespace qAlgorithms
         */
         // it might be preferential to combine both functions again or store the common matrix somewhere
         calcPeakAreaUncert(mutateReg);
-        mutateReg->area = peakArea(coeffs.b0, coeffs.b1, coeffs.b2, coeffs.b3, 1); // @todo scale area later
+        double uncertainty = -1;
+        mutateReg->area = peakArea(coeffs.b0, coeffs.b1, coeffs.b2, coeffs.b3, 1, &var, &uncertainty);
         if (mutateReg->area / mutateReg->area_uncert <= T_VALUES[df_sum])
         {
             failstates += 32;
@@ -2512,6 +2516,50 @@ namespace qAlgorithms
         return fwhm / divisor;
     }
 
+    // struct RegVariances
+    // {
+    //     double var_b0, var_b1, var_b2, var_b3; // individual variances
+    //     double covar_b0_b1, covar_b0_b2, covar_b0_b3;
+    //     double covar_b1_b2, covar_b1_b3;
+    //     // three-way interactions are not considered
+    //     // the covariance between b2 and b3 is never relevant in the application
+    // };
+
+    RegVariances calcVarianceCoeffs(const size_t scale, const double mse)
+    {
+        // the variance-covariance matrix for beta is MSE * (X^T X)^(-1)
+        // the MSE is calculated from the predicted values, while X is only dependent on the scale
+        ///     | A  0  B  B |
+        ///     | 0  C  D -D |
+        ///     | B  D  E  F |
+        ///     | B -D  F  E |
+        // the covariance matrix is 4 x 4 and symmetric, meaning triangular:
+
+        //  v_b0    cv_b0_b1    cv_b0_b2    cv_b0_b3
+        //          v_b1        cv_b1_b2    cv_b1_b3
+        //                      v_b2        cv_b2_b3
+        //                                  v_b3
+
+        // Note that there is no covariance between b0 and b1 by definition.
+        // The covariance cv_b1_b2 is -1 * cv_b1_b3, which makes sense in model
+        // since b2 applies to negative values of x and b3 to positive ones.
+        // Their variance and covariance with b0 is equal for the same reason.
+
+        MatInverse inv = qalgo_matInverse[scale];
+        RegVariances ret;
+        // redundancy in the return matrix is worth the gained readability
+        ret.var_b0 = inv.A * mse;
+        ret.var_b1 = inv.C * mse;
+        ret.var_b2 = inv.E * mse;
+        ret.var_b3 = inv.E * mse;
+        ret.covar_b0_b1 = 0; // see above
+        ret.covar_b0_b2 = inv.B * mse;
+        ret.covar_b0_b3 = inv.B * mse;
+        ret.covar_b1_b2 = inv.D * mse;
+        ret.covar_b1_b2 = inv.D * mse * -1;
+        return ret;
+    }
+
     // base function: integral e^(b0 + b1 x + b2 x^2) dx =
     // [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ] / (2 sqrt(b2))   // source: wolfram alpha
     // erfi(x) = i * erf(i * x)
@@ -2526,7 +2574,8 @@ namespace qAlgorithms
     // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 ] / (2 sqrt(-b2))
     // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
     // if b2 or b3 are positive, erfi has to be used. The positive part of the function replaces F(+-inf)
-    double peakArea(const double b0, const double b1, const double b2, const double b3, const double delta_x)
+    double peakArea(const double b0, const double b1, const double b2, const double b3,
+                    const double delta_x, const RegVariances *var, double *uncert)
     {
         bool b2_pos = b2 > 0;
         bool b3_pos = b3 > 0;
@@ -2572,6 +2621,14 @@ namespace qAlgorithms
         area_R = abs(area_R);
 
         double area_F = area_L + area_R;
+
+        if (var == nullptr)
+        {
+            // it should be possible to calculate the area without supplying a valid
+            // variance-covariance matrix
+            assert(uncert == nullptr);
+            return area_F;
+        }
 
         // ### uncertainty calculation here ###
         // the uncertainty of the area is the sum of the uncertainties for both halves of the area
@@ -2653,51 +2710,15 @@ namespace qAlgorithms
         double diff_b2 = diff_b2_zero - diff_b2_lim;
         double diff_b3 = diff_b3_lim - diff_b3_zero;
 
+// uncertainty: multiply partial derivatives with variances
+// v: variance term of the coefficient; cv: covariance term of the two named coefficients
+#define v(b) (diff_##b * var->var_##b)
+#define cv(b, c) (diff_##b * diff_##c * var->covar_##b##_##c)
+
+        *uncert = v(b0) + v(b1) + v(b2) + v(b3) + cv(b0, b1) + cv(b0, b2) + cv(b0, b3) + cv(b1, b2) + cv(b1, b3);
         return area_F * delta_x;
-    }
-
-    struct RegVariances
-    {
-        double var_b0, var_b1, var_b2, var_b3; // individual variances
-        double covar_b0_b1, covar_b0_b2, covar_b0_b3;
-        double covar_b1_b2, covar_b1_b3;
-        // three-way interactions are not considered
-        // the covariance between b2 and b3 is never relevant in the application
-    };
-
-    RegVariances calcVarianceCoeffs(const size_t scale, const double mse)
-    {
-        // the variance-covariance matrix for beta is MSE * (X^T X)^(-1)
-        // the MSE is calculated from the predicted values, while X is only dependent on the scale
-        ///     | A  0  B  B |
-        ///     | 0  C  D -D |
-        ///     | B  D  E  F |
-        ///     | B -D  F  E |
-        // the covariance matrix is 4 x 4 and symmetric, meaning triangular:
-
-        //  v_b0    cv_b0_b1    cv_b0_b2    cv_b0_b3
-        //          v_b1        cv_b1_b2    cv_b1_b3
-        //                      v_b2        cv_b2_b3
-        //                                  v_b3
-
-        // Note that there is no covariance between b0 and b1 by definition.
-        // The covariance cv_b1_b2 is -1 * cv_b1_b3, which makes sense in model
-        // since b2 applies to negative values of x and b3 to positive ones.
-        // Their variance and covariance with b0 is equal for the same reason.
-
-        MatInverse inv = qalgo_matInverse[scale];
-        RegVariances ret;
-        // redundancy in the return matrix is worth the gained readability
-        ret.var_b0 = inv.A * mse;
-        ret.var_b1 = inv.C * mse;
-        ret.var_b2 = inv.E * mse;
-        ret.var_b3 = inv.E * mse;
-        ret.covar_b0_b1 = 0; // see above
-        ret.covar_b0_b2 = inv.B * mse;
-        ret.covar_b0_b3 = inv.B * mse;
-        ret.covar_b1_b2 = inv.D * mse;
-        ret.covar_b1_b2 = inv.D * mse * -1;
-        return ret;
+#undef v
+#undef cv
     }
 
     double peakPositionUncert(const RegCoeffs *c, const RegVariances *var)
