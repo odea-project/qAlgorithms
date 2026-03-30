@@ -16,13 +16,13 @@ namespace qAlgorithms
     /// @brief This function serves as the central interface for performing peak detection on an arbitrary set of x and y data.
     /// @param y_values Values used to determine height of the peak
     /// @param x_values Values used as width of the peak, same length as y_values. It is a requirement that x values are evenly
-    ///                 spaced when applying this function, since it depends on that assumption for its precalculated matric transform.
+    //             spaced when applying this function, since it depends on that assumption for its precalculated matric transform.
     /// @param degreesOfFreedom_cum cumulative degrees of freedom to account for interpolations and mean values. This is the cumulative
-    ///                             sum of the number of measured points for all y. It has the same length as x and y.
-    ///                             This can be set to nullptr if all df are one.
+    //                         sum of the number of measured points for all y. It has the same length as x and y.
+    //                         This can be set to nullptr if all df are one.
     /// @param length length of y, x and df if supplied
     /// @param maxScale_in up to which scale regressions should be attempted. The maximum peak width (in points) is maxScale * 2 + 1. maxScale must be > 1.
-    ///                 If maxScale would exceed the length of x or y, it is set to (the length of either -1) / 2.
+    //             If maxScale would exceed the length of x or y, it is set to (the length of either -1) / 2.
     /// @param result All found peaks are appended to this vector.
     /// @return the total number of appended peaks. If this is < 0, the function did not execute correctly.
     /// @details Errorcodes:
@@ -50,7 +50,7 @@ namespace qAlgorithms
     /// @param intensity_log logarithmy of the intensity values. This is the y axis of the fit. The x axis is required to be equidistant.
     /// @param maxscale maximum scale of a peak that should be attempted to fit.
     /// @param coeffs Sets of coefficients for all possible regressions. They are written out in the order scale = 2, scale = 3, ... , scale = maxscale
-    ///               Note that not all scales have the same number of regressions
+    //           Note that not all scales have the same number of regressions
     void findCoefficients(
         const float *intensity_log,
         const size_t length,
@@ -176,47 +176,53 @@ namespace qAlgorithms
 
 #include "../external/qalgorithms_matinverse.h"
 
-    ///     This function performs a convolution with the kernel (xTx)^-1 xT and the data array intensity_log.
+    // This file contains precomputed values for the inverse matrix transpose (X^T X)^(-1).
+    // The precalculation is required since it is a very expensive operation, especially for large X.
 
-    ///     (xTx)^-1 is pre-calculated and stored in the vector INV_ARRAY (calculated in the "initialise" function).
-    ///     Only six values of the final matrix are required for the simple case, see below:
+    // (X^T X)^(-1) is pre-calculated and stored in the array qalgo_matInverse (included via qalgorithms_matinverse.h).
+    // Every array element is accessed by the index of its corresponding scale. This means that, while
+    // qalgo_matInverse[0] and qalgo_matInverse[1] are defined, they can never be used to calculate anything
+    // because the regression function is only defined starting at scale 2.
+    // Only six values of the final matrix are required for the simple case, see below:
 
-    ///     xT is the transpose of the design matrix X.
-    ///     for scale = 2:
-    ///     xT = | 1  1  1  1  1 |    : all ones
-    ///          |-2 -1  0  1  2 |    : from -scale to scale
-    ///          | 4  1  0  0  0 |    : x^2 values for x < 0
-    ///          | 0  0  0  1  4 |    : x^2 values for x > 0
+    // xT is the transpose of the design matrix X.
+    // for scale = 2:
+    // xT = | 1  1  1  1  1 |    : all ones
+    //      |-2 -1  0  1  2 |    : from -scale to scale
+    //      | 4  1  0  0  0 |    : x^2 values for x < 0
+    //      | 0  0  0  1  4 |    : x^2 values for x > 0
 
-    ///     It contains one additional row of all ones for every additional peak that is added into the model
+    // It contains one additional row of all ones for every additional peak that is added into the model
 
-    ///     When adding multiple peaks to the regression model, we need to adjust the inverse values.
-    ///     This will change the number of unique values in the inv_values array from 6 to 7.
-    ///     Here we use the inv_array[1] position and shift all values from that point onwards to the right.
-    ///     example for num_peaks = 2:
-    ///     original matrix with the unique values [a, b, c, d, e, f] (six unique values)
-    ///     | a  0  b  b |
-    ///     | 0  c  d -d |
-    ///     | b  d  e  f |
-    ///     | b -d  f  e |
+    // When adding multiple peaks to the regression model, we need to adjust the inverse values.
+    // This will change the number of unique values in the inv_values array from 6 to 7.
+    // Here we use the inv_array[1] position and shift all values from that point onwards to the right.
+    // example for num_peaks = 2:
+    // original matrix with the unique values [a, b, c, d, e, f] (six unique values)
+    // | A  0  B  B |
+    // | 0  C  D -D |
+    // | B  D  E  F |
+    // | B -D  F  E |
 
-    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
-    ///     | A1  A2  0  B  B |
-    ///     | A2  A1  0  B  B |
-    ///     | 0   0   C  D -D |
-    ///     | B   B   D  E  F |
-    ///     | B   B  -D  F  E |
+    // new matrix with the unique values [A1, A2, B, C, D, E, F] (seven unique values)
+    // | A1  A2  0  B  B |
+    // | A2  A1  0  B  B |
+    // | 0   0   C  D -D |
+    // | B   B   D  E  F |
+    // | B   B  -D  F  E |
 
-    ///     for num_peaks = 3:
-    ///     new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
-    ///     | A1  A2  A2  0  B  B |
-    ///     | A2  A1  A2  0  B  B |
-    ///     | A2  A2  A1  0  B  B |
-    ///     | 0   0   0   C  D -D |
-    ///     | B   B   B   D  E  F |
-    ///     | B   B   B  -D  F  E |
+    // for num_peaks = 3:
+    // new matrix with the unique values [A1, A2, B, C, D, E, F] (the same seven unique values)
+    // | A1  A2  A2  0  B  B |
+    // | A2  A1  A2  0  B  B |
+    // | A2  A2  A1  0  B  B |
+    // | 0   0   0   C  D -D |
+    // | B   B   B   D  E  F |
+    // | B   B   B  -D  F  E |
 
-    ///     Note that no more than seven different values are needed per scale, even for a multidimensional approach.
+    // Note that no more than seven different values are needed per scale, even for a multidimensional approach.
+    // A1 and A2 can be calculated from the initial values of A and B, which is why they are not included in the
+    // precomputation.
 }
 
 #endif

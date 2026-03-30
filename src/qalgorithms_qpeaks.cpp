@@ -2661,8 +2661,44 @@ namespace qAlgorithms
         double var_b0, var_b1, var_b2, var_b3; // individual variances
         double covar_b0_b1, covar_b0_b2, covar_b0_b3;
         double covar_b1_b2, covar_b1_b3;
-        // b2 and b3 do not have a covariance since they never apply to the same points
+        // three-way interactions are not considered
+        // the covariance between b2 and b3 is never relevant in the application
     };
+
+    RegVariances calcVarianceCoeffs(const size_t scale, const double mse)
+    {
+        // the variance-covariance matrix for beta is MSE * (X^T X)^(-1)
+        // the MSE is calculated from the predicted values, while X is only dependent on the scale
+        ///     | A  0  B  B |
+        ///     | 0  C  D -D |
+        ///     | B  D  E  F |
+        ///     | B -D  F  E |
+        // the covariance matrix is 4 x 4 and symmetric, meaning triangular:
+
+        //  v_b0    cv_b0_b1    cv_b0_b2    cv_b0_b3
+        //          v_b1        cv_b1_b2    cv_b1_b3
+        //                      v_b2        cv_b2_b3
+        //                                  v_b3
+
+        // Note that there is no covariance between b0 and b1 by definition.
+        // The covariance cv_b1_b2 is -1 * cv_b1_b3, which makes sense in model
+        // since b2 applies to negative values of x and b3 to positive ones.
+        // Their variance and covariance with b0 is equal for the same reason.
+
+        MatInverse inv = qalgo_matInverse[scale];
+        RegVariances ret;
+        // redundancy in the return matrix is worth the gained readability
+        ret.var_b0 = inv.A * mse;
+        ret.var_b1 = inv.C * mse;
+        ret.var_b2 = inv.E * mse;
+        ret.var_b3 = inv.E * mse;
+        ret.covar_b0_b1 = 0; // see above
+        ret.covar_b0_b2 = inv.B * mse;
+        ret.covar_b0_b3 = inv.B * mse;
+        ret.covar_b1_b2 = inv.D * mse;
+        ret.covar_b1_b2 = inv.D * mse * -1;
+        return ret;
+    }
 
     double peakPositionUncert(const RegCoeffs *c, const RegVariances *var)
     {
@@ -2675,6 +2711,7 @@ namespace qAlgorithms
         double var_b23 = c->b1 < 0 ? var->var_b2 : var->var_b3;
         double covar = c->b1 < 0 ? var->covar_b1_b2 : var->covar_b1_b3;
         double uncert = deriv_b1 * var->var_b1 + deriv_b23 * var_b23 + deriv_b1 * deriv_b23 * covar;
+        assert(uncert > 0);
         return uncert;
     }
 
