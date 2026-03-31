@@ -1392,11 +1392,11 @@ namespace qAlgorithms
     {
         assert(!mutateReg->isValid);
         const size_t scale = mutateReg->coeffs.scale;
-        const RegCoeffs coeffs = mutateReg->coeffs;
+        const RegCoeffs *coeffs = &mutateReg->coeffs;
         const Range_i regSpan = mutateReg->regSpan;
 
         assert(scale > 1);
-        assert(coeffs.x0 + scale < length);
+        assert(coeffs->x0 + scale < length);
 
         int failstates = 0x00000000;
 
@@ -1449,12 +1449,12 @@ namespace qAlgorithms
             // return f_test_fail; // H0 holds, the two distributions are not noticeably different
         }
 
-        if (!isValidQuadraticTerm(&mutateReg->coeffs, mse_log, df_sum)) // @todo replace with the exponential mse?
+        if (!isValidQuadraticTerm(coeffs, mse_log, df_sum)) // @todo replace with the exponential mse?
         {
             failstates += 4;
             // return invalid_quadratic; // statistical insignificance of the quadratic term
         }
-        if (!isValidPeakArea(&mutateReg->coeffs, mse_log, df_sum)) // mse used in the "calcUncertainty" function call
+        if (!isValidPeakArea(coeffs, mse_log, df_sum)) // mse used in the "calcUncertainty" function call
         {
             failstates += 8;
             // return invalid_area; // statistical insignificance of the area
@@ -1462,6 +1462,9 @@ namespace qAlgorithms
 
         // uncertainty calculation and t-tests against peak properties
         RegVariances var = calcVarianceCoeffs(scale, mse_log);
+
+        double uncert_position = peakPositionUncert(coeffs, &var);
+        double uncert_height = peakHeightUncert(coeffs, &var);
 
         /*
           Height Filter:
@@ -1488,7 +1491,7 @@ namespace qAlgorithms
         // it might be preferential to combine both functions again or store the common matrix somewhere
         calcPeakAreaUncert(mutateReg);
         double uncertainty = -1;
-        mutateReg->area = peakArea(coeffs.b0, coeffs.b1, coeffs.b2, coeffs.b3, 1, &var, &uncertainty);
+        mutateReg->area = peakArea(coeffs, 1, &var, &uncertainty);
         if (mutateReg->area / mutateReg->area_uncert <= T_VALUES[df_sum])
         {
             failstates += 32;
@@ -1511,7 +1514,7 @@ namespace qAlgorithms
 
         calcUncertaintyPos(mutateReg);
         mutateReg->df = df_sum;
-        mutateReg->apex_position += mutateReg->coeffs.x0;
+        mutateReg->apex_position += coeffs->x0;
         assert(mutateReg->apex_position > 1); // @todo this should be superfluous
         assert(mutateReg->apex_position < length - 1);
         assert(predict->size() == length);
@@ -2550,13 +2553,11 @@ namespace qAlgorithms
         // redundancy in the return matrix is worth the gained readability
         ret.var_b0 = inv.A * mse;
         ret.var_b1 = inv.C * mse;
-        ret.var_b2 = inv.E * mse;
-        ret.var_b3 = inv.E * mse;
+        ret.var_b23 = inv.E * mse;
         ret.covar_b0_b1 = 0; // see above
-        ret.covar_b0_b2 = inv.B * mse;
-        ret.covar_b0_b3 = inv.B * mse;
+        ret.covar_b0_b23 = inv.B * mse;
         ret.covar_b1_b2 = inv.D * mse;
-        ret.covar_b1_b2 = inv.D * mse * -1;
+        ret.covar_b1_b3 = inv.D * mse * -1;
         return ret;
     }
 
@@ -2574,9 +2575,13 @@ namespace qAlgorithms
     // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 ] / (2 sqrt(-b2))
     // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
     // if b2 or b3 are positive, erfi has to be used. The positive part of the function replaces F(+-inf)
-    double peakArea(const double b0, const double b1, const double b2, const double b3,
-                    const double delta_x, const RegVariances *var, double *uncert)
+    double peakArea(const RegCoeffs *c, const double delta_x, const RegVariances *var, double *uncert)
     {
+        const double b0 = c->b0;
+        const double b1 = c->b1;
+        const double b2 = c->b2;
+        const double b3 = c->b3;
+
         bool b2_pos = b2 > 0;
         bool b3_pos = b3 > 0;
         assert(!(b2_pos && b3_pos));
@@ -2712,10 +2717,13 @@ namespace qAlgorithms
 
 // uncertainty: multiply partial derivatives with variances
 // v: variance term of the coefficient; cv: covariance term of the two named coefficients
-#define v(b) (diff_##b * var->var_##b)
-#define cv(b, c) (diff_##b * diff_##c * var->covar_##b##_##c)
+#define v(n) (var->var_##n)
+#define cv(b, c) (var->covar_##b##_##c)
 
-        *uncert = v(b0) + v(b1) + v(b2) + v(b3) + cv(b0, b1) + cv(b0, b2) + cv(b0, b3) + cv(b1, b2) + cv(b1, b3);
+        *uncert = diff_b0 * v(b0) + diff_b1 * v(b1) + diff_b2 * v(b23) + diff_b3 * v(b23) +
+                  diff_b0 * diff_b1 * cv(b0, b1) +
+                  diff_b0 * diff_b2 * cv(b0, b23) + diff_b0 * diff_b3 * cv(b0, b23) +
+                  diff_b1 * diff_b2 * cv(b1, b2) + diff_b1 * diff_b3 * cv(b1, b3);
         return area_F * delta_x;
 #undef v
 #undef cv
@@ -2729,14 +2737,14 @@ namespace qAlgorithms
         double deriv_b1 = -1 / (2 * b23);
         double deriv_b23 = c->b1 / (2 * b23 * b23); // -b1 * -1
         // uncertainty: multiply derivatives with variances / covariances
-        double var_b23 = c->b1 < 0 ? var->var_b2 : var->var_b3;
+        double var_b23 = var->var_b23;
         double covar = c->b1 < 0 ? var->covar_b1_b2 : var->covar_b1_b3;
         double uncert = deriv_b1 * var->var_b1 + deriv_b23 * var_b23 + deriv_b1 * deriv_b23 * covar;
         assert(uncert > 0);
         return uncert;
     }
 
-    double peakHeightUncert(const RegCoeffs *c, const RegVariances *var, const double height)
+    double peakHeightUncert(const RegCoeffs *c, const RegVariances *var)
     {
         // height: exp( b0 + b1 * -b1 / (2 b23) + b23 * (-b1 / (2 b23))^2 )
         // = b0 (-b1^2 / (2 b23)) * (2 / 2) + b1^2 / (4 b23)
@@ -2744,17 +2752,21 @@ namespace qAlgorithms
         // derivative by b0 is just the height again
         double b23 = c->b1 < 0 ? c->b2 : c->b3;
         double b1_sq = c->b1 * c->b1;
+        double height = exp(c->b0 - b1_sq / (4 * b23));
         double deriv_b0 = height;
-        double deriv_b1 = height * -2 * b1_sq / (4 * b23);
+        double deriv_b1 = -c->b1 * height / (2 * b23);
         double deriv_b23 = height * b1_sq / (4 * b23 * b23);
 
-        double var_b23 = c->b1 < 0 ? var->var_b2 : var->var_b3;
-        double covar_0_23 = c->b1 < 0 ? var->covar_b0_b2 : var->covar_b0_b3;
+        // note: var_b2 and var_b3 are identical, same for covariances - this block is useless
+        double var_b23 = var->var_b23;
+        double covar_0_23 = var->covar_b0_b23;
         double covar_1_23 = c->b1 < 0 ? var->covar_b1_b2 : var->covar_b1_b3;
 
         double uncert_A = deriv_b0 * var->var_b0 + deriv_b1 * var->var_b1 + deriv_b23 * var_b23;
         double uncert_B = deriv_b0 * deriv_b1 * var->covar_b0_b1 + deriv_b0 * deriv_b23 * covar_0_23 + deriv_b1 * deriv_b23 * covar_1_23;
-        return uncert_A + uncert_B;
+        double uncert = uncert_A + uncert_B;
+        assert(uncert > 0);
+        return uncert;
     }
 
     double calcMSE_exp(const RegCoeffs *coeff,
