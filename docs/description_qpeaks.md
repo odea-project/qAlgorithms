@@ -32,7 +32,7 @@ Any data that is used with qPeaks must fulfill the following criteria for the al
 * All values of y must be greater than zero
 * If a relevant baseline exists, it has to be substracted before applying qPeaks
 
-Note that the "y > 0" condition is mostly based on the fact that instruments will
+Note that the "$y > 0$" condition is mostly based on the fact that instruments will
 generally use zeroes to separate blocks internally. Since the sensitivity is never
 high enough to fully detect all ions of a peak, including these zeroes during 
 processing will lead to the peak being distorted. Something to keep in mind is that
@@ -42,9 +42,68 @@ than that obtained from naively taking the area under the measured points.
 
 The axis used for later transforms is calculated for all integer values between the
 maximum scales (-scale to +scale). For the used peak model, this results in a design
-matrix `X` with four columns. The first represents the intercept and is one (`x^0`)
+matrix $X$ with four columns. The first represents the intercept and is one ($x^0$)
 for all values. The second is the x-axis. The quadratic coefficent is only defined
-for `x < 0` for b2 and `x > 0` for b3 (`x = 0`)
+for $x < 0$ for b2 and $x > 0$ for b3 (no quadratic term is relevant at $x = 0$).
+
+Example matrices for scale = 2 and scale = 3:
+```math
+A = \begin{bmatrix}
+1 & -2 & -4 & 0 \cr
+1 & -1 & -1 & 0\cr
+1 &  0 &  0 &0\cr
+1 &  1 &  0 &1\cr
+1 &  2 &  0&4
+\end{bmatrix}
+;
+B = \begin{bmatrix}
+1 & -3 & -9 &0 \cr
+1 & -2 & -4 &0\cr
+1 & -1 & -1 &0\cr
+1 &  0 &  0 &0\cr
+1 &  1 &  0 &1\cr
+1 &  2 &  0 &4\cr
+1 &  3 &  0&9
+\end{bmatrix}
+```
+
+The convolution (for scale = 2) $(X^T X)^{-1}$ is then:
+```math
+\left(
+\begin{bmatrix}
+1 & 1 & 1 & 1 & 1 \cr
+2 & 1 & 0 & 1 & 2 \cr
+-4 & -1 & 0 & 0 & 0 \cr
+0 & 0 & 0 & 1 & 4 
+\end{bmatrix} 
+\cdot
+\begin{bmatrix}
+1 & -2 & -4 & 0 \cr
+1 & -1 & -1 & 0\cr
+1 &  0 &  0 &0\cr
+1 &  1 &  0 &1\cr
+1 &  2 &  0&4
+\end{bmatrix}
+\right)^{-1}
+=
+\begin{bmatrix}
+0.48 & 0 & -0.14 & -0.14 \cr
+0 & 2.12 & 1.12 & -1.12\cr
+-0.14 &  1.12 & 0.69 & -0.55\cr
+-0.14 &  -1.12 &  -0.55 & 0.69
+\end{bmatrix}
+```
+
+As can be seen from the numbers, there are symmetries on the axis and for all interactions with the quadratic coefficients. This has the concrete effect that the full matrix can be expressed using just six unique values (not counting zero):
+
+```math
+\begin{bmatrix}
+A & 0 & B & B \cr
+0 & C & D & -D\cr
+B &  D & E & F\cr
+B & -D & F & E
+\end{bmatrix}
+```
 
 ### Stage 1: Data Transform
 Initially, the y-axis is log-transformed using the natural logarithm. This is so
@@ -59,20 +118,39 @@ more than one spectrum.
 
 ### Stage 2: Moving Regression
 The regression is performed stepwise in a nested loop. For every point in x, a linear regression
-is performed with that point set to x = 0 relative to the precalculated matrix. This
+is performed with that point set to $x = 0$ relative to the precalculated matrix. This
 results in no regression being performed for the outermost two points on each side, since the 
-smallest defined matrix requires x to range from -2 t0 2. This distance to 0 on the x-axis is 
+smallest defined matrix requires x to range from $-2$ t0 $2$. This distance to $0$ on the x-axis is 
 called "scale". The smallest possible scale is 2, while the largest possible scale is defined
 as a constant of the algorithm. This is purely for reasons of computational practicality, in
-theory the upper limit is `(length(x) - 1) / 2`. A convolution with the precalculated matrix
+theory the upper limit is $(\text{length}(x) - 1) / 2$. A convolution with the precalculated matrix
 is performed to obtain four regression coefficients describing the peak. The last two coefficents,
-b2 and b3, both describe the quadratic term. At x = 0, the peak switches from being defined as
-`exp(b2 x^2 + b1 x + b0)` to `exp(b3 x^2 + b1 x + b0)`. Regressions are stored with coefficients,
+b2 and b3, both describe the quadratic term. At $x = 0$, the peak switches from being defined as
+$\exp(\text{b2} x^2 + \text{b1} x + \text{b0})$ to $\exp(\text{b3} x^2 + \text{b1} x + \text{b0})$. Regressions are stored with coefficients,
 scale and position of x = 0 relative to the first element of the x-axis.
 
 Since the regression is performed on log-transformed data, the height is adjusted using the
 untransformed values of y. Since b1, b2 and b3 are not affected, this can be solved with
-linear regression.
+linear regression. When only adjusting b0, the peak model equation can be factored as:
+```math
+f(x) = \exp(\text{b0}) * exp(\text{b1} x + \text{b2} x^2)
+```
+Key observation here is that the second exponential term is constant, since all values of x
+within the regression window are known. Accordingly, the function to be minimised is
+```math
+\sum{(y_i - \exp(\text{b0}) * c_i)^2}
+```
+where $y_i$ is the observed intensity and $c_i$ the constant part of the peak equation shown above
+at position $i$. The following will substitute $\exp(\text{b0})$ with $x$.
+
+```math
+\sum{(y_i - x * c_i)^2} = \sum{y_i^2 - 2 * x * c_i * y_i + x^2 * c_i^2} 
+```
+Now take the derivative of the sum:
+```math
+\frac{d}{dx} = \sum{-2 * c_i * y_i + 2 * x * c_i^2} = \sum{2 * c_i * (x * c_i - y_i)} 
+```
+
 
 ### Stage 3: Plausibility Tests
 
@@ -126,18 +204,18 @@ is obtained by evaluating the peak at x = apex. Since the apex in exponential fo
 same position as in logarithmic form, we do not need the exponential function in this step. 
 
 Assuming the apex is in the region $x < 0$:
-$$
-    \frac{d}{dx} b0 + b1 x + b2 x^2 = b1 + 2 b2 x
-    0 = b1 + 2 b2 x
-    x = \frac{-b1}{2 b2}
-$$
+```math
+    \frac{d}{dx} \text{b0} + \text{b1} x + \text{b2} x^2 = \text{b1} + 2 \text{b2} x \\
+    0 = \text{b1} + 2 \text{b2} x \\
+    x = \frac{-\text{b1}}{2 \text{b2}}
+```
 For the height, evaluate the full function at the apex (note that b1 and b2 are factored into the fraction
 already in the term below):
-$$
-    h(x) = exp(b0 + \frac{-b1^2}{2 b2} + \frac{b1^2}{4 b2})
-    h(x) = exp(b0 + \frac{-b1^2}{2 b2} * \frac{2}{2} + \frac{b1^2}{4 b2})
-    h(x) = exp(b0 + \frac{-b1^2}{4 b2}) 
-$$
+```math
+    h(x) = \exp(\text{b0} + \frac{-\text{b1}^2}{2 \text{b2}} + \frac{\text{b1}^2}{4 \text{b2}}) \\
+    h(x) = \exp(\text{b0} + \frac{-\text{b1}^2}{2 \text{b2}} * \frac{2}{2} + \frac{\text{b1}^2}{4 \text{b2}}) \\
+    h(x) = \exp(\text{b0} + \frac{\text{b1}^2}{4 \text{b2}})
+```
 These calculations are only relevant for the half that contains the regression apex. If a regression
 has a valley (one of the quadratic coefficients is positive), its position is calculated in the same manner as the apex.
 
@@ -163,21 +241,25 @@ An example for the case of one positive coefficient is provided here: [(external
 Calculation for the simple case of two negative quadratic coefficients:
 
 The antiderivative of one peak half is:
-$$
-    F(x) = \sqrt{\pi} * \exp(b0 - \frac{b1^2}{4 b2}) * erfi( (b1 + 2 b2 x) * \frac{1}{2 sqrt{b2}} ) * \frac{1}{2 sqrt{b2}}
-$$
-where $erfi(x) = i * erf(i x)$ is the imaginary error function. Using $\sqrt{b2} = i \sqrt{-b2}$, the imaginary values
-cancel each other out. Thus, we substitute $b2 -> -b2$ and use $erf$ instead of $erfi$.
+```math
+    F(x) = \sqrt{\pi} * \exp(\text{b0} - \frac{\text{b1}^2}{4 \text{b2}}) * \text{erfi}( (\text{b1} + 2 \text{b2} x) * \frac{1}{2 \sqrt{\text{b2}}} ) * \frac{1}{2 \sqrt{\text{b2}}}
+```
+where $\text{erfi}(x) = i * \text{erf}(i x)$ is the imaginary error function. Using $\sqrt{b2} = i \sqrt{-b2}$, the imaginary values
+cancel each other out. Thus, we substitute b2 -> $-$b2 and use erf() instead of erfi().
 
 All terms except the error function are constant. Note that there is a sign change for x since no square root is used in that place.
-For $x = 0$, $(b1 + 2 b2 x) = b1$. The error function at minus infinity is $-1$ and $+1$ for positive infinity. This means
-that the full term is multiplied with $-1$ if $b1$ is positive.
+For $x = 0$, $(\text{b1} + 2 \text{b2} x) = \text{b1}$. The error function at minus infinity is $-1$ and $+1$ for positive infinity. This means
+that the full term is multiplied with $-1$ if b1 is positive.
 
 To get the area, evaluate $F(x)$ at zero for both terms and plus or minus infinity depending on the half, substract
 the leftmost result from the rightmost result and sum up the halves for the total area.
 
-If there is a valley point, the outermost limit of integration for that half area is at $x = -b1 / (2 b3)$.
-Since the coefficient is positive, the square root does not take an imaginary part and $erfi$ is used instead of $erf$.
+If there is a valley point, the outermost limit of integration for that half area is at $x = -\text{b1} / (2 \text{b3})$.
+Since the coefficient is positive, the square root does not take an imaginary part and erfi() is used instead of erf().
 
 ## Expansion for Multiple x-axes
+
+The presented regression model can also be used to fit more than one signal at the same time. This is because
+the height of a regression is 
+
 @todo
