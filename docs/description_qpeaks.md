@@ -116,12 +116,30 @@ The regression properties, including uncertainties, we calculate are as follows:
 
 Further, goodness-of-fit parameters are calculated per regression.
 
+For ease of reading, the following equations use b0, b1, b2, b3 instead of $\beta_0$ etc.
+
 **Calculation of Position and Height**
 
-The position is the derivative at y = 0 for the apex-containing part of the peak. This depends on 
-the coefficient b1 -- if b1 < 0, the left half describes the apex (and vice versa). The height
-is obtained by evaluating the peak at x = apex.
+The position is the derivative at $y = 0$ for the apex-containing part of the peak. This depends on 
+the coefficient b1 -- if $b1 < 0$, the left half describes the apex (and vice versa). The height
+is obtained by evaluating the peak at x = apex. Since the apex in exponential form is always at the
+same position as in logarithmic form, we do not need the exponential function in this step. 
 
+Assuming the apex is in the region $x < 0$:
+$$
+    \frac{d}{dx} b0 + b1 x + b2 x^2 = b1 + 2 b2 x
+    0 = b1 + 2 b2 x
+    x = \frac{-b1}{2 b2}
+$$
+For the height, evaluate the full function at the apex (note that b1 and b2 are factored into the fraction
+already in the term below):
+$$
+    h(x) = exp(b0 + \frac{-b1^2}{2 b2} + \frac{b1^2}{4 b2})
+    h(x) = exp(b0 + \frac{-b1^2}{2 b2} * \frac{2}{2} + \frac{b1^2}{4 b2})
+    h(x) = exp(b0 + \frac{-b1^2}{4 b2}) 
+$$
+These calculations are only relevant for the half that contains the regression apex. If a regression
+has a valley (one of the quadratic coefficients is positive), its position is calculated in the same manner as the apex.
 
 **Calculation of FWHM**
 
@@ -142,9 +160,24 @@ uncertainty in area estimates of peaks with tailing or similar properties.
 
 An example for the case of one positive coefficient is provided here: [(external link)](https://www.desmos.com/calculator/pgac3buccd)
 
+Calculation for the simple case of two negative quadratic coefficients:
 
+The antiderivative of one peak half is:
+$$
+    F(x) = \sqrt{\pi} * \exp(b0 - \frac{b1^2}{4 b2}) * erfi( (b1 + 2 b2 x) * \frac{1}{2 sqrt{b2}} ) * \frac{1}{2 sqrt{b2}}
+$$
+where $erfi(x) = i * erf(i x)$ is the imaginary error function. Using $\sqrt{b2} = i \sqrt{-b2}$, the imaginary values
+cancel each other out. Thus, we substitute $b2 -> -b2$ and use $erf$ instead of $erfi$.
 
+All terms except the error function are constant. Note that there is a sign change for x since no square root is used in that place.
+For $x = 0$, $(b1 + 2 b2 x) = b1$. The error function at minus infinity is $-1$ and $+1$ for positive infinity. This means
+that the full term is multiplied with $-1$ if $b1$ is positive.
 
+To get the area, evaluate $F(x)$ at zero for both terms and plus or minus infinity depending on the half, substract
+the leftmost result from the rightmost result and sum up the halves for the total area.
+
+If there is a valley point, the outermost limit of integration for that half area is at $x = -b1 / (2 b3)$.
+Since the coefficient is positive, the square root does not take an imaginary part and $erfi$ is used instead of $erf$.
 
 ## Expansion for Multiple x-axes
 @todo
