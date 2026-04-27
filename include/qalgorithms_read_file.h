@@ -63,8 +63,6 @@ namespace qAlgorithms
 
         BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
 
-        double extract_scan_RT(const pugi::xml_node &spec);
-
         pugi::xml_document mzml_base_document;
 
         pugi::xml_parse_result loading_result;
@@ -98,10 +96,6 @@ namespace qAlgorithms
             std::vector<float> *const spectrum_mz,
             std::vector<float> *const spectrum_int,
             size_t index);
-
-        std::vector<unsigned int> get_spectra_index(const std::vector<unsigned int> *indices,
-                                                    const std::vector<pugi::xml_node> *spectra_nodes_ex);
-        std::vector<int> get_spectra_level(const std::vector<unsigned int> *indices);
 
         // return all indices of spectra that match the required criteria
         std::vector<unsigned int> filter_spectra(const bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2

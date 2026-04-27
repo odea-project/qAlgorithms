@@ -12,41 +12,36 @@
 
 namespace qAlgorithms
 {
-    // Decodes from a little endian binary string to a vector of doubles according to a precision integer.
-    int bytesToFloatVec(
-        std::vector<char> *bytes,
-        const bool isDouble,
-        std::vector<float> *result)
+    int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
+                        std::vector<float> *result)
     {
-        static const size_t fsize = sizeof(float);
-        static const size_t dsize = sizeof(double);
+        // cast the byte array resulting from zlib decompression to a float array
+        const size_t fsize = sizeof(float);
+        const size_t dsize = sizeof(double);
         assert(bytes->size() % (isDouble ? dsize : fsize) == 0);
-        int bytes_size = bytes->size() / (isDouble ? dsize : fsize);
+        int lengthDecoded = bytes->size() / (isDouble ? dsize : fsize);
 
-        result->reserve(bytes_size);
+        result->reserve(lengthDecoded);
 
         if (isDouble)
         {
-            for (int i = 0; i < bytes_size; ++i)
+            const double *dbl = (const double *)bytes->data();
+            for (int i = 0; i < lengthDecoded; ++i)
             {
-                double val = reinterpret_cast<double &>(bytes->at(i * dsize));
-                result->push_back(val);
+                result->push_back((float)dbl[i]); // result must be cast to float individually
             }
         }
         else
         {
-            // this branch should generally never be taken, why was it included initially?
-            // encountered one relevant file "in the wild", keep option for uncompressed mzML
-            for (int i = 0; i < bytes_size; ++i)
+            // encountered one relevant file "in the wild", but this is still rare enough to warrant a warning
+            // @todo replace with memcpy
+            const float *flt = (const float *)bytes->data();
+            for (int i = 0; i < lengthDecoded; ++i)
             {
-                float floatValue;
-                float val = reinterpret_cast<float &>(bytes->at(i * fsize));
-                std::memcpy(&floatValue, &bytes->at(i * fsize), fsize);
-                assert(floatValue == val);
-                result->push_back(floatValue);
+                result->push_back(flt[i]);
             }
         }
-        return bytes_size;
+        return lengthDecoded;
     };
 
     // Decompresses a string using the zlib library (https://zlib.net/).
@@ -85,7 +80,7 @@ namespace qAlgorithms
 
         if (simd_res.error != 0) // [[unlikely]]
         {
-            return {char(simd_res.count)}; // error message is handled one function above
+            return {0}; // error message is handled one function above
         }
         output.resize(simd_res.count);
         return output;
@@ -164,32 +159,36 @@ namespace qAlgorithms
 
     BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin)
     {
+        // extract type of number representation in binary data
+        bool type_double = false, type_float = false, type_int32 = false, type_int64 = false;
+
+        for (pugi::xml_node cvParam = bin.child("cvParam"); cvParam; cvParam = cvParam.next_sibling("cvParam"))
+        {
+            std::string val = cvParam.attribute("accession").value();
+            if (val == "MS:1000523")
+            {
+                type_double = true;
+            }
+            if (val == "MS:1000521")
+            {
+                type_float = true;
+            }
+            if (val == "MS:1000519")
+            {
+                type_int32 = true;
+            }
+            if (val == "MS:1000522")
+            {
+                type_int64 = true;
+            }
+        }
+        assert(type_double != type_float);
+        assert(!type_int32);
+        assert(!type_int64);
+
         BinaryMetadata mtd;
 
-        pugi::xml_node node_integer_32 = bin.find_child_by_attribute("cvParam", "accession", "MS:1000519");
-        pugi::xml_node node_float_32 = bin.find_child_by_attribute("cvParam", "accession", "MS:1000521");
-        pugi::xml_node node_integer_64 = bin.find_child_by_attribute("cvParam", "accession", "MS:1000522");
-        pugi::xml_node node_float_64 = bin.find_child_by_attribute("cvParam", "accession", "MS:1000523");
-
-        assert(node_float_32 || node_float_64);
-
-        if (node_float_64)
-        {
-            mtd.isDouble = true;
-        }
-        else // if (node_float_32)
-        {
-            mtd.isDouble = false;
-        }
-
-        if (node_integer_64)
-        {
-            assert(mtd.isDouble);
-        }
-        else // if (node_integer_32)
-        {
-            assert(!mtd.isDouble);
-        }
+        mtd.isDouble = type_double;
 
         pugi::xml_node node_comp = bin.find_child_by_attribute("cvParam", "accession", "MS:1000574");
         if (node_comp)
@@ -269,11 +268,9 @@ namespace qAlgorithms
             std::vector<char> decoded_string = decode_base64(encoded_string);
 
             // error handling
-            if (decoded_string.size() == 1)
+            if (decoded_string.empty())
             {
                 fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 correctly. Ensure the input file is not corrupted.\n", index);
-                // this does not work @todo
-                //   << "The error occured at character " << decoded_string[0] << " as reported by the \"simdutf\" library.\n";
                 return; // implement a defined way to skip the current file? @todo
             }
 
@@ -299,10 +296,9 @@ namespace qAlgorithms
             std::vector<char> decoded_string = decode_base64(encoded_string);
 
             // error handling
-            if (decoded_string.size() == 1)
+            if (decoded_string.empty())
             {
                 fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 correctly. Ensure the input file is not corrupted.\n", index);
-                //   << "The error occured at character " << decoded_string[0] << " as reported by the \"simdutf\" library.\n";
                 return; // implement a defined way to skip the current file? @todo
             }
 
@@ -322,25 +318,22 @@ namespace qAlgorithms
         }
     };
 
-    double XML_File::extract_scan_RT(const pugi::xml_node &spec)
+    double extract_scan_RT(const pugi::xml_node &spec)
     {
-        pugi::xml_node node_scan = spec.child("scanList").child("scan");
-        pugi::xml_node rt_node = node_scan.find_child_by_attribute("cvParam", "name", "scan start time");
-        const std::string rt_unit = rt_node.attribute("unitName").as_string();
+        pugi::xml_node rt_node = spec.child("scanList").child("scan").find_child_by_attribute("cvParam", "name", "scan start time");
+
         double rt_val = rt_node.attribute("value").as_double();
-        if (rt_unit == "second")
+        const char *rt_unit = rt_node.attribute("unitName").as_string();
+        bool unit_secs = strcmp(rt_unit, "second") == 0; // strcmp returns 0 for equal strings
+        if (!unit_secs)
         {
-            return rt_val;
+            assert(strcmp(rt_unit, "minute") == 0);
         }
-        if (rt_unit == "minute")
-        {
-            return rt_val * 60;
-        }
-        assert(false);
+
+        return unit_secs ? rt_val : rt_val * 60;
     };
 
-    std::vector<float> XML_File::get_spectra_RT(
-        const std::vector<unsigned int> *indices)
+    std::vector<float> XML_File::get_spectra_RT(const std::vector<unsigned int> *indices)
     {
         assert(indices->size() > 0);
         assert(!this->defective);
@@ -393,40 +386,6 @@ namespace qAlgorithms
         }
     };
 
-    std::vector<unsigned int> XML_File::get_spectra_index(const std::vector<unsigned int> *indices,
-                                                          const std::vector<pugi::xml_node> *spectra_nodes_ex)
-    {
-        assert(indices->size() > 0);
-        std::vector<unsigned int> spec_indices;
-
-        for (size_t i = 0; i < indices->size(); ++i)
-        {
-            int idx = indices->at(i);
-            pugi::xml_node spec = (*spectra_nodes_ex)[idx];
-            int index = spec.attribute("index").as_int();
-            spec_indices.push_back(index);
-        }
-
-        return spec_indices;
-    };
-
-    std::vector<int> XML_File::get_spectra_level(const std::vector<unsigned int> *indices)
-    {
-        assert(indices->size() > 0);
-        std::vector<int> levels;
-
-        for (size_t i = 0; i < indices->size(); ++i)
-        {
-            size_t idx = indices->at(i);
-            pugi::xml_node spec = (*linknodes)[idx];
-            pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
-            int level = level_node.attribute("value").as_int();
-            levels.push_back(level);
-        }
-
-        return levels;
-    };
-
     std::vector<unsigned int> XML_File::filter_spectra(
         bool ms1, bool polarity, bool centroided)
     {
@@ -434,11 +393,11 @@ namespace qAlgorithms
 
         // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
         assert(!this->defective);
-        assert(number_spectra > 0);
+        assert(this->number_spectra > 0);
         std::vector<unsigned int> indices;
-        indices.reserve(number_spectra);
+        indices.reserve(this->number_spectra);
 
-        for (unsigned int i = 0; i < number_spectra; i++)
+        for (unsigned int i = 0; i < this->number_spectra; i++)
         {
             pugi::xml_node spec = (*linknodes)[i];
 
@@ -450,8 +409,7 @@ namespace qAlgorithms
             if (polarityPos != polarity)
                 continue;
 
-            pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
-            int level = level_node.attribute("value").as_int();
+            int level = spec.find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
             bool isMS1 = 1 == level;
             if (isMS1 != ms1)
                 continue; // only ms1 or msn data can be retrieved at once.
@@ -471,8 +429,7 @@ namespace qAlgorithms
         {
             pugi::xml_node spec = (*linknodes)[i];
 
-            pugi::xml_node level_node = spec.find_child_by_attribute("cvParam", "name", "ms level");
-            int level = level_node.attribute("value").as_int();
+            int level = spec.find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
             bool isMS1 = 1 == level;
             if (!isMS1)
                 continue;
@@ -491,7 +448,7 @@ namespace qAlgorithms
         if (profile == 0)
             return true;
 
-        if (profile / centroided < 2)
+        if (profile / centroided < 2) // @todo this is a suboptimal solution
             return true;
 
         return false;
