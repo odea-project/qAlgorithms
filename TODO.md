@@ -26,7 +26,7 @@ could be moved into a more generic library for mass spectra processing.
 * improve file reading performance, check if https://doi.org/10.1371/journal.pone.0125108 can be used partially or fully
 * general performance improvements
 * rework code so that the warnings -Wdouble-promotion, -Wconversion and -Weffc++ can be turned on without causing too much noise
-* add build targets for x86 / arm linux and windows with / without AVX512 support. AVX2 can probably be assumed to exist.
+* ensure clang-tidy conditions are fulfilled
 * ensure uniform terminology throughout the codebase (keep a record of correct terms somewhere?)
 * remove the RT transform mess currently implemented in favour of the regression-local delta_x estimation introduced in the retransformPeaks function
 * Optimisation: a lot of time is spent computing exponentials. Identify where these are performance-
@@ -34,9 +34,10 @@ critical and check if they can be replaced with a less accurate estimation, ex. 
 * Optimisation: Ensure that all large computation chains of exponentials / logarithms are vectorised
 * Cleanup: Large parts of the code just pass array pointers downwards, make that part of the code nicer using
 scratch spaces or similar techniques of avoiding a lot of malloc/free
-* Refactoring: check if special functions as implemented here (http://ab-initio.mit.edu/faddeeva/) are faster 
+* check if special functions as implemented here (http://ab-initio.mit.edu/faddeeva/) are faster 
 without being less accurate and replace the currently used slow functions if possible
 * use the PeakFit struct and generic additional data instead of having two separate peak output models for centroids and features 
+* fully separate filtering based on critical test statistics from the calculation of these statistics for all regressions
 
 ## Expansion
 Additional functionality of the core library that should be added at some point.
@@ -60,15 +61,19 @@ Additional functionality of the core library that should be added at some point.
 * write output data of centroiding to mzML (centroids only, introduce as dedicated option) and other MS formats
 * add support for multithreading
 * peak parameters: theoretical plate height
-* Function that takes a feature and file path as input and produces only the centroids specified by the feature
+* Function that takes a feature and file path as input and produces only the profile points / centroids specified by the feature
 * comparison of peaks: can the F-test be used with the different number of points as degrees of freedom for the model? In the current system of comparison, the bigger regression is generally preferred even if it incorporates too much baseline
+* add pre-filled error reporting template that is given to the user when the program fails to encourage bug reporting -> depends on working logger
+* different binning approach growing outward from high intensity signals, but still utilising the order space. Context: We expect the mass spread to be larger when moving towards the edges of a given signal. This could also be useful when trying to bin data without known mass uncertainty (?)
 
 ## Interface to high-level languages
-* Expose core functions to R, python, java, julia (?), C# (?)
+* Expose core functions to R, python, java, julia (?), C# (?), Matlab <- this is relevant because many companies only allow matlab
 * potentially also add an interface for openMS
 * Function: qpeaks_find(): Basic functionality already implemented, takes a single contiguous spectrum and returns all peaks therein
 * Function to process a single spectrum with non-equidistant x axis and potential gaps
 * Function to process a complete file based on a filepath and returns a feature list
+* integration of full qalgo functionality to patroon
+* (maybe) add qalgo to openchrom and mzmine
 
 ## Testing
 Any code that is not run when processing data and concerned with logical correctness of the program.
@@ -89,13 +94,13 @@ The goal of this is to describe correctness based on input data for a generic pe
 * Implement many of the functions used to describe peaks (https://doi.org/10.1021/ac970481d, https://doi.org/10.1016/S0021-9673(01)01136-0)
 * Research if such a system already exists
 * write documentation for unpublished parts and more exotic bits, like separate handling of RT
-* expand documentation for qPeaks
+* expand documentation for qPeaks, remember to also document the kernel for matrix expansion
 
 ## PINTS
 Todos related to the Pipelines In NTS initiative.
 
 * Authorship tool - input names / classifiers of the programs used and get a bibtex file of the complete 
-relevant references. This sould be similar to the 'citation()' function in R, but have it open a pop-up
+relevant references. This should be similar to the 'citation()' function in R, but have it open a pop-up
 window with a "click to copy to clipboard" button. CLI only suffices for a proof-of-concept.
 * (related) central catalog of existing software tools for NTS
 * Output feature list into a standardised database
@@ -105,4 +110,8 @@ Other todos.
 
 * central repo that catalogs all published (raw) data related to NTS
 * plotting utility directly in qAlgorithms (use raylib?)
-* marketing materials (website?)
+* marketing materials 
+* Finish website (https://odea-project.org/)
+* Feedback form for bug reporting on website
+* Raw data viewer that isn't seeMS, using implot (https://github.com/epezent/implot/)
+* own raw data conversion utility
