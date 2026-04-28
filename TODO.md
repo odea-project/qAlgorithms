@@ -38,6 +38,9 @@ scratch spaces or similar techniques of avoiding a lot of malloc/free
 without being less accurate and replace the currently used slow functions if possible
 * use the PeakFit struct and generic additional data instead of having two separate peak output models for centroids and features 
 * fully separate filtering based on critical test statistics from the calculation of these statistics for all regressions
+* Binning: make algorithm more flexible by sorting by mass and then only binning the first n points initially. (how is n determined?)
+Then, return all bins with points where the cutting point is within m/z uncertainty (or uncertainty * 2?) to the unbinned values, extract EICs
+and discard noise. Repeat until all points have been binned. Safeguard against very long traces: always take n new points (check if possible first)
 
 ## Expansion
 Additional functionality of the core library that should be added at some point.
