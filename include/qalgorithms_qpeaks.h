@@ -104,7 +104,7 @@ namespace qAlgorithms
     /// @param intensities_log log of measured intensities - must have same length as intensities
     /// @param mutateReg regression that should be mutated by this function
     /// @return 0 if the regression is valid, otherwise the filter step which kicked it out
-    invalid makeValidRegression(
+    invalid calcRegressionProperties(
         const float *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<float> *predict,

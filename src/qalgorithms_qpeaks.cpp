@@ -204,15 +204,17 @@ namespace qAlgorithms
         std::vector<RegressionGauss> *validRegressions)
     {
         size_t validCount = 0;
+        std::vector<float> predict(length, 0);
         for (size_t i = 0; i < coefficients->size(); i++)
         {
             Range_i range;
-            invalid failpoint = validRegWidth(&(coefficients->at(i)), &range);
-
-            if (failpoint != ok)
-            {
-                globalLogStruct.failData[failpoint] += 1;
-                continue;
+            { // sets the range and checks for validity @todo not applicable for dual peak systems
+                invalid failpoint = validRegWidth(&(coefficients->at(i)), &range);
+                if (failpoint != ok)
+                {
+                    globalLogStruct.failData[failpoint] += 1;
+                    continue;
+                }
             }
 
             size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, &range);
@@ -228,14 +230,6 @@ namespace qAlgorithms
             reg.regSpan = range;
 
             /*
-           Prediction for coefficients that are not b0. Since any "true" prediction
-           value is produced by multiplying with exp(b0), this only needs to be calculated
-           once, at least until regressions are compared. @todo consider having this at
-           higher scope of validation
-       */
-            std::vector<float> predict(length, 0);
-
-            /*
                 Adjustment of b0 coefficient:
                 When working with log-transformed data, the coefficients are suboptimal for the exponential case.
                 Since we must work with a log system to perform a linear regression, there is a bias in the
@@ -246,12 +240,13 @@ namespace qAlgorithms
             */
             correctB0(intensities, &range, &predict, &reg.coeffs);
 
-            failpoint = makeValidRegression(intensities,
-                                            intensities_log,
-                                            &predict,
-                                            df_sum,
-                                            length,
-                                            &reg);
+            failpoint = calcRegressionProperties(
+                intensities,
+                intensities_log,
+                &predict,
+                df_sum,
+                length,
+                &reg);
             failCodes.push_back(failpoint);
             globalLogStruct.failData[failpoint] += 1;
 
@@ -1382,7 +1377,10 @@ namespace qAlgorithms
 
     std::vector<int> failbook;
 
-    invalid makeValidRegression( // returns the number of the failed test
+    // @todo rework: this function only calculates regression properties and the p-value (or something to the same effect)
+    // of every property. Then, a later function can filter the regressions by these quality criteria. Still
+    // some filtering should take place natively to cut down on the total data (?). Either way, the proper
+    invalid calcRegressionProperties( // returns the number of the failed test
         const float *intensities,
         const std::vector<float> *intensities_log,
         const std::vector<float> *predict,
@@ -1398,7 +1396,7 @@ namespace qAlgorithms
         assert(scale > 1);
         assert(coeffs->x0 + scale < length);
 
-        int failstates = 0x00000000;
+        int failstates = 0;
 
         // this is the error term for the corrected regression. Of the original 4 x 4 matrix,
         // only the first row is needed
@@ -1449,8 +1447,9 @@ namespace qAlgorithms
             // return f_test_fail; // H0 holds, the two distributions are not noticeably different
         }
 
-        if (!isValidQuadraticTerm(coeffs, mse_log, df_sum)) // @todo replace with the exponential mse?
+        if (!isValidQuadraticTerm(coeffs, mse_log, df_sum)) // @todo by definition, this tests the same property as the F-test - remove?
         {
+            assert(failstates > 1);
             failstates += 4;
             // return invalid_quadratic; // statistical insignificance of the quadratic term
         }
@@ -2747,15 +2746,18 @@ namespace qAlgorithms
     double peakHeightUncert(const RegCoeffs *c, const RegVariances *var)
     {
         // height: exp( b0 + b1 * -b1 / (2 b23) + b23 * (-b1 / (2 b23))^2 )
-        // = b0 (-b1^2 / (2 b23)) * (2 / 2) + b1^2 / (4 b23)
+        // = exp( b0 + (-b1^2 / (2 b23)) + (b23 * b1^2 / (4 b23^2)) )
+        // = exp( b0 + (-b1^2 / (2 b23)) * (2 / 2) + b1^2 / (4 b23) )
         // = exp( b0 - b1^2 / (4 b23) )
-        // derivative by b0 is just the height again
         double b23 = c->b1 < 0 ? c->b2 : c->b3;
         double b1_sq = c->b1 * c->b1;
         double height = exp(c->b0 - b1_sq / (4 * b23));
-        double deriv_b0 = height;
-        double deriv_b1 = -c->b1 * height / (2 * b23);
-        double deriv_b23 = height * b1_sq / (4 * b23 * b23);
+
+        // uncertainty: calculate uncertainty for the logarithmic case, then transform back
+        // note: this leads to two values for uncertainty
+        double deriv_b0 = -b1_sq / (4 * b23);
+        double deriv_b1 = c->b0 - c->b1 / (2 * b23);
+        double deriv_b23 = c->b0 + b1_sq / (4 * b23 * b23);
 
         // note: var_b2 and var_b3 are identical, same for covariances - this block is useless
         double var_b23 = var->var_b23;
@@ -2763,7 +2765,8 @@ namespace qAlgorithms
         double covar_1_23 = c->b1 < 0 ? var->covar_b1_b2 : var->covar_b1_b3;
 
         double uncert_A = deriv_b0 * var->var_b0 + deriv_b1 * var->var_b1 + deriv_b23 * var_b23;
-        double uncert_B = deriv_b0 * deriv_b1 * var->covar_b0_b1 + deriv_b0 * deriv_b23 * covar_0_23 + deriv_b1 * deriv_b23 * covar_1_23;
+        // deriv_b0 * deriv_b1 * var->covar_b0_b1 is always 0, since the covariance of b0 and b1 is always 0
+        double uncert_B = deriv_b0 * deriv_b23 * covar_0_23 + deriv_b1 * deriv_b23 * covar_1_23;
         double uncert = uncert_A + uncert_B;
         assert(uncert > 0);
         return uncert;
