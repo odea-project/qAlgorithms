@@ -208,13 +208,12 @@ namespace qAlgorithms
         for (size_t i = 0; i < coefficients->size(); i++)
         {
             Range_i range;
-            { // sets the range and checks for validity @todo not applicable for dual peak systems
-                invalid failpoint = validRegWidth(&(coefficients->at(i)), &range);
-                if (failpoint != ok)
-                {
-                    globalLogStruct.failData[failpoint] += 1;
-                    continue;
-                }
+            // sets the range and checks for validity @todo not applicable for dual peak systems
+            invalid failpoint = validRegWidth(&(coefficients->at(i)), &range);
+            if (failpoint != ok)
+            {
+                globalLogStruct.failData[failpoint] += 1;
+                continue;
             }
 
             size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, &range);
@@ -2048,23 +2047,6 @@ namespace qAlgorithms
         return;
     }
 
-#pragma region "convolve regression"
-
-    double matProductReg(const double J[4], const size_t scale)
-    {
-        // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation
-        const MatInverse inv = qalgo_matInverse[scale];
-        double vecMatrxTranspose = J[0] * J[0] * inv.A +
-                                   J[1] * J[1] * inv.C +
-                                   (J[2] * J[2] + J[3] * J[3]) * inv.E +
-                                   2 * (J[2] * J[3] * inv.F +
-                                        J[0] * (J[1] + J[3]) * inv.B +
-                                        J[1] * (J[2] - J[3]) * inv.D);
-        return vecMatrxTranspose;
-    }
-
-#pragma endregion "convolve regression"
-
 #pragma region "Feature Detection"
 
     double medianVec(const std::vector<float> *vec)
@@ -2535,7 +2517,7 @@ namespace qAlgorithms
         ///     | 0  C  D -D |
         ///     | B  D  E  F |
         ///     | B -D  F  E |
-        // the covariance matrix is 4 x 4 and symmetric, meaning triangular:
+        // the covariance matrix is 4 x 4 and symmetric (mirrored axis left empty):
 
         //  v_b0    cv_b0_b1    cv_b0_b2    cv_b0_b3
         //          v_b1        cv_b1_b2    cv_b1_b3
@@ -2558,6 +2540,48 @@ namespace qAlgorithms
         ret.covar_b1_b2 = inv.D * mse;
         ret.covar_b1_b3 = inv.D * mse * -1;
         return ret;
+    }
+
+    double matProductReg(const double J[4], const size_t scale)
+    {
+        // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation,
+        // Where J is the jacobian matrix of the regression property A for which the
+        // uncertainty should be calculated (J = [d A / d b0, d A / d b1, d A / d b2, d A / d b3])
+
+        ///                   | A  0  B  B |    | J0 |
+        ///                   | 0  C  D -D |    | J1 |
+        /// | J0 J1 J2 J3 | x | B  D  E  F | x  | J2 |
+        ///                   | B -D  F  E |    | J3 |
+        ///
+        ///                                                                    | J0 |
+        /// |   J0 A + J1 0;   J0 0 + J1 C;   J0 B + J1 D;   J0 B - J1 D |     | J1 |
+        /// | + J2 B + J3 B; + J2 D - J3 D; + J2 E + J3 F; + J2 F + J3 E |  x  | J2 |
+        ///                                                                    | J3 |
+        /// The product is a scalar
+        ///
+        ///   J0^2 A + J0 J2 B + J0 J3 B
+        /// + J1^2 C + J1 J2 D - J1 J3 D
+        /// + J0 J2 B + J1 J2 D + J2^2 E + J2 J3 F
+        /// + J0 J3 B - J1 J3 D + J2 J3 F + J3^2 E
+        ///
+        /// simplify
+        ///
+        ///   J0^2 A + J1^2 C + (J2^2 + J3^2) E
+        /// + J0 B * (J2 + J3) + J1 D * (J2 - J3)
+        /// + J0 B * (J2 + J3) + J1 D * (J2 - J3)
+        /// + 2 * J2 J3 F
+        ///
+        ///   J0^2 A + J1^2 C + (J2^2 + J3^2) E
+        /// + 2 * J0 B * (J2 + J3) + 2 * J1 D * (J2 - J3) + 2 * J2 J3 F
+        ///
+        /// = J0^2 A + J1^2 C + (J2^2 + J3^2) E + 2 * (J0 B * (J2 + J3) + J1 D * (J2 - J3) + J2 J3 F )
+
+        const MatInverse inv = qalgo_matInverse[scale];
+        double vecMatrxTranspose = J[0] * J[0] * inv.A +
+                                   J[1] * J[1] * inv.C +
+                                   (J[2] * J[2] + J[3] * J[3]) * inv.E +
+                                   2 * (J[0] * inv.B * (J[2] + J[3]) + J[1] * inv.D * (J[2] - J[3]) + J[2] * J[3] * inv.F);
+        return vecMatrxTranspose;
     }
 
     // base function: integral e^(b0 + b1 x + b2 x^2) dx =
