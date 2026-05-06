@@ -12,6 +12,12 @@ namespace qAlgorithms
 {
     // @todo split off into "read file" and "read mzml", where the mzml reader just prepares an intermediate struct, processing of which is handled separately
 
+#if defined(_WIN32)
+    typedef wchar_t path_char;
+#elif
+    typedef char path_char;
+#endif
+
     struct BinaryMetadata // @todo there is no need for a file-specific metadata object
     {
         std::string data_name_short;
@@ -90,7 +96,7 @@ namespace qAlgorithms
 
         bool isCentroided = false;
 
-        XML_File(const char *fileconst, SourceFileType type);
+        XML_File(const path_char *fileconst, SourceFileType type);
 
         void get_spectrum(
             std::vector<float> *const spectrum_mz,

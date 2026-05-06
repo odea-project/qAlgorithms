@@ -86,7 +86,7 @@ namespace qAlgorithms
         return output;
     };
 
-    XML_File::XML_File(const char *file, const SourceFileType type)
+    XML_File::XML_File(const path_char *file, const SourceFileType type)
     {
         filetype = type;
         assert(filetype == mzML); // @todo support mzXML and other xml based formats
