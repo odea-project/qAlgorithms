@@ -68,6 +68,10 @@ Additional functionality of the core library that should be added at some point.
 * comparison of peaks: can the F-test be used with the different number of points as degrees of freedom for the model? In the current system of comparison, the bigger regression is generally preferred even if it incorporates too much baseline
 * add pre-filled error reporting template that is given to the user when the program fails to encourage bug reporting -> depends on working logger
 * different binning approach growing outward from high intensity signals, but still utilising the order space. Context: We expect the mass spread to be larger when moving towards the edges of a given signal. This could also be useful when trying to bin data without known mass uncertainty (?)
+* Instead of going the per-spectrum route, add multiple successive spectra together and also obtain a sort of RT uncertainty
+in the centroid dimension. Problem: m/z variation
+* Test for the effect of non-equidistance
+* Do a non-linear refit for the final features / components
 
 ## Interface to high-level languages
 * Expose core functions to R, python, java, julia (?), C# (?), Matlab <- this is relevant because many companies only allow matlab
