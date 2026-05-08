@@ -169,22 +169,10 @@ namespace qAlgorithms
 
     double medianVec(const std::vector<float> *vec);
 
-    struct RegVariances
-    {
-        double var_b0, var_b1;
-        double var_b23; // individual variances not necessary, since these are always identical
-        double covar_b0_b1;
-        double covar_b0_b23;
-        double covar_b1_b2, covar_b1_b3;
-        // three-way interactions are not considered
-        // the covariance between b2 and b3 is never relevant in the application
-    };
-    RegVariances calcVarianceCoeffs(const size_t scale, const double mse);
+    double peakPositionUncert(const RegCoeffs *c, const double mse);
+    double peakHeightUncert(const RegCoeffs *c, const double mse);
 
-    double peakPositionUncert(const RegCoeffs *c, const RegVariances *var);
-    double peakHeightUncert(const RegCoeffs *c, const RegVariances *var);
-
-    double peakArea(const RegCoeffs *c, const double delta_x, const RegVariances *var, double *uncert);
+    double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert);
 
     // ### pre-calculate the regression matrix ### //
 #define GLOBAL_MINSCALE 2

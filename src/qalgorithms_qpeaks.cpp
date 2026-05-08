@@ -1243,7 +1243,7 @@ namespace qAlgorithms
         //     - ln(sum(exp(b0 + b1 x + b23 x^2)^2)) * sum(exp(b0 + b1 x + b23 x^2)^2 * bx'^2)
         // note that the value of bx' depends on x and cannot be removed from the sum. Precalculation is also not
         // possible due to the value of y being required. This is not a large performance concern since we can combine it
-        // with the calculations that are already necessary for obntaining the modified b0.
+        // with the calculations that are already necessary for obtaining the modified b0.
 
         // double b0_old = coeff->b0;
 
@@ -1459,10 +1459,9 @@ namespace qAlgorithms
         }
 
         // uncertainty calculation and t-tests against peak properties
-        RegVariances var = calcVarianceCoeffs(scale, mse_log);
 
-        double uncert_position = peakPositionUncert(coeffs, &var);
-        double uncert_height = peakHeightUncert(coeffs, &var);
+        double uncert_position = peakPositionUncert(coeffs, mse_log);
+        double uncert_height = peakHeightUncert(coeffs, mse_log);
 
         /*
           Height Filter:
@@ -1489,7 +1488,7 @@ namespace qAlgorithms
         // it might be preferential to combine both functions again or store the common matrix somewhere
         calcPeakAreaUncert(mutateReg);
         double uncertainty = -1;
-        mutateReg->area = peakArea(coeffs, 1, &var, &uncertainty);
+        mutateReg->area = peakArea(coeffs, 1, mse_log, &uncertainty);
         if (mutateReg->area / mutateReg->area_uncert <= T_VALUES[df_sum])
         {
             failstates += 32;
@@ -2509,39 +2508,6 @@ namespace qAlgorithms
     //     // the covariance between b2 and b3 is never relevant in the application
     // };
 
-    RegVariances calcVarianceCoeffs(const size_t scale, const double mse)
-    {
-        // the variance-covariance matrix for beta is MSE * (X^T X)^(-1)
-        // the MSE is calculated from the predicted values, while X is only dependent on the scale
-        ///     | A  0  B  B |
-        ///     | 0  C  D -D |
-        ///     | B  D  E  F |
-        ///     | B -D  F  E |
-        // the covariance matrix is 4 x 4 and symmetric (mirrored axis left empty):
-
-        //  v_b0    cv_b0_b1    cv_b0_b2    cv_b0_b3
-        //          v_b1        cv_b1_b2    cv_b1_b3
-        //                      v_b2        cv_b2_b3
-        //                                  v_b3
-
-        // Note that there is no covariance between b0 and b1 by definition.
-        // The covariance cv_b1_b2 is -1 * cv_b1_b3, which makes sense in model
-        // since b2 applies to negative values of x and b3 to positive ones.
-        // Their variance and covariance with b0 is equal for the same reason.
-
-        MatInverse inv = qalgo_matInverse[scale];
-        RegVariances ret;
-        // redundancy in the return matrix is worth the gained readability
-        ret.var_b0 = inv.A * mse;
-        ret.var_b1 = inv.C * mse;
-        ret.var_b23 = inv.E * mse;
-        ret.covar_b0_b1 = 0; // see above
-        ret.covar_b0_b23 = inv.B * mse;
-        ret.covar_b1_b2 = inv.D * mse;
-        ret.covar_b1_b3 = inv.D * mse * -1;
-        return ret;
-    }
-
     double matProductReg(const double J[4], const size_t scale)
     {
         // Calculate the Matrix Product of J * Xinv * J^T for uncertainty calculation,
@@ -2598,7 +2564,7 @@ namespace qAlgorithms
     // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 ] / (2 sqrt(-b2))
     // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
     // if b2 or b3 are positive, erfi has to be used. The positive part of the function replaces F(+-inf)
-    double peakArea(const RegCoeffs *c, const double delta_x, const RegVariances *var, double *uncert)
+    double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert)
     {
         const double b0 = c->b0;
         const double b1 = c->b1;
@@ -2608,6 +2574,7 @@ namespace qAlgorithms
         bool b2_pos = b2 > 0;
         bool b3_pos = b3 > 0;
         assert(!(b2_pos && b3_pos));
+        assert(delta_x > 0);
 
         // only relevant if one of the coefficients is > 0: Calculate the valley position for a given
         // peak. This is required during the calculation of the erfi term. Always choosing the valley
@@ -2650,15 +2617,17 @@ namespace qAlgorithms
 
         double area_F = area_L + area_R;
 
-        if (var == nullptr)
+        if (mse <= 0)
         {
-            // it should be possible to calculate the area without supplying a valid
-            // variance-covariance matrix
+            // it should be possible to calculate the area without supplying a mse
             assert(uncert == nullptr);
             return area_F;
         }
 
         // ### uncertainty calculation here ###
+        // We cannot directly calculate the uncertainty from the exponential form (true peak area)
+        double J[4];
+
         // the uncertainty of the area is the sum of the uncertainties for both halves of the area
         // the individual uncertainties depend on the variance-covariance matrix, only considering pairwise covariance
         // s_area_h = var_b0 * (d area / d b0) + etc. + 2 * covar_b0_b1 * (d area / d b0) * (d area / d b1) + etc.
@@ -2673,6 +2642,7 @@ namespace qAlgorithms
         // values of x, so the area differentiated by b0 is itself.
         //
         double diff_b0 = area_F;
+        J[0] = diff_b0;
 
         // b1:
         // since d/dx f(x) + g(x) = f'(x) + g'(x), we differentiate the individual pieces of b1 and sum up
@@ -2698,6 +2668,7 @@ namespace qAlgorithms
                                     : exp(b0 - b1 * b1 / (2 * b3)) / (2 * b3) - F_b3_zero * b1 / (2 * b3);
         // area = zero_l - lim_l + lim_r - zero_r
         double diff_b1 = diff_b1_zero_L - diff_b1_lim_L + diff_b1_lim_R - diff_b1_zero_R;
+        J[1] = diff_b1;
 
         // b2 / b3:
         // Since b2 and b3 apply to different halves of the regression, the derivative also only covers one half
@@ -2738,61 +2709,64 @@ namespace qAlgorithms
         double diff_b2 = diff_b2_zero - diff_b2_lim;
         double diff_b3 = diff_b3_lim - diff_b3_zero;
 
-// uncertainty: multiply partial derivatives with variances
-// v: variance term of the coefficient; cv: covariance term of the two named coefficients
-#define v(n) (var->var_##n)
-#define cv(b, c) (var->covar_##b##_##c)
+        J[2] = diff_b2;
+        J[3] = diff_b3;
 
-        *uncert = diff_b0 * v(b0) + diff_b1 * v(b1) + diff_b2 * v(b23) + diff_b3 * v(b23) +
-                  diff_b0 * diff_b1 * cv(b0, b1) +
-                  diff_b0 * diff_b2 * cv(b0, b23) + diff_b0 * diff_b3 * cv(b0, b23) +
-                  diff_b1 * diff_b2 * cv(b1, b2) + diff_b1 * diff_b3 * cv(b1, b3);
+        double u = matProductReg(J, c->scale);
+        assert(u > 0);
+        *uncert = sqrt(u * mse) * delta_x; // @todo taking the log mse and using it with the exponential u is certaintly wrong
+
         return area_F * delta_x;
-#undef v
-#undef cv
     }
 
-    double peakPositionUncert(const RegCoeffs *c, const RegVariances *var)
+    double peakPositionUncert(const RegCoeffs *c, const double mse)
     {
         // peak position: -b1 / (2 b23)
-        double b23 = c->b1 < 0 ? c->b2 : c->b3;
-        // double deriv_b0 = 0;
-        double deriv_b1 = -1 / (2 * b23);
-        double deriv_b23 = c->b1 / (2 * b23 * b23); // -b1 * -1
-        // uncertainty: multiply derivatives with variances / covariances
-        double var_b23 = var->var_b23;
-        double covar = c->b1 < 0 ? var->covar_b1_b2 : var->covar_b1_b3;
-        double uncert = deriv_b1 * var->var_b1 + deriv_b23 * var_b23 + deriv_b1 * deriv_b23 * covar;
-        assert(uncert > 0);
+        // Jacobian (derivatives by b0 to b3) is 0 for b0 and b2 or b3, depending on which peak half contains the apex
+        double J[4] = {0, 0, 0, 0};
+        bool apex_left = c->b1 < 0;
+        double b23 = apex_left ? c->b2 : c->b3;
+        J[1] = -1 / (2 * b23); // dx d b1
+        int idx = apex_left ? 2 : 3;
+        J[idx] = c->b1 / (2 * b23 * b23); // -b1 * -1
+
+        double u = matProductReg(J, c->scale);
+        assert(u > 0);
+        double uncert = sqrt(u * mse);
         return uncert;
     }
 
-    double peakHeightUncert(const RegCoeffs *c, const RegVariances *var)
+    double peakHeightUncert(const RegCoeffs *c, const double mse)
     {
         // height: exp( b0 + b1 * -b1 / (2 b23) + b23 * (-b1 / (2 b23))^2 )
         // = exp( b0 + (-b1^2 / (2 b23)) + (b23 * b1^2 / (4 b23^2)) )
         // = exp( b0 + (-b1^2 / (2 b23)) * (2 / 2) + b1^2 / (4 b23) )
         // = exp( b0 - b1^2 / (4 b23) )
-        double b23 = c->b1 < 0 ? c->b2 : c->b3;
+        // We only deal with the log form here: b0 - b1^2 / (4 b23)
+
+        bool apex_left = c->b1 < 0;
+        double b23 = apex_left ? c->b2 : c->b3;
         double b1_sq = c->b1 * c->b1;
         double height = exp(c->b0 - b1_sq / (4 * b23));
 
         // uncertainty: calculate uncertainty for the logarithmic case, then transform back
         // note: this leads to two values for uncertainty
         double deriv_b0 = -b1_sq / (4 * b23);
-        double deriv_b1 = c->b0 - c->b1 / (2 * b23);
+        double deriv_b1 = c->b0 - c->b1 / (2 * b23); // b0 + apex position
         double deriv_b23 = c->b0 + b1_sq / (4 * b23 * b23);
+        // assign jacobian
+        double J[4] = {deriv_b0, deriv_b1, 0, 0};
+        J[apex_left ? 2 : 3] = deriv_b23;
 
-        // note: var_b2 and var_b3 are identical, same for covariances - this block is useless
-        double var_b23 = var->var_b23;
-        double covar_0_23 = var->covar_b0_b23;
-        double covar_1_23 = c->b1 < 0 ? var->covar_b1_b2 : var->covar_b1_b3;
+        // double J_exp[4] = {height, -c->b1 * height / (2 * b23), 0, 0};
+        // J_exp[apex_left ? 2 : 3] = b1_sq * height / (4 * b23 * b23);
+        // double u_exp = matProductReg(J_exp, c->scale);
+        // double test_u = sqrt(u_exp * mse_exp); // both u_exp and the MSE are too large. The combination via square root is also wrong (?)
 
-        double uncert_A = deriv_b0 * var->var_b0 + deriv_b1 * var->var_b1 + deriv_b23 * var_b23;
-        // deriv_b0 * deriv_b1 * var->covar_b0_b1 is always 0, since the covariance of b0 and b1 is always 0
-        double uncert_B = deriv_b0 * deriv_b23 * covar_0_23 + deriv_b1 * deriv_b23 * covar_1_23;
-        double uncert = uncert_A + uncert_B;
-        assert(uncert > 0);
+        double u = matProductReg(J, c->scale);
+        assert(u > 0);
+        double uncert = sqrt(u * mse);
+        // assert(uncert == test_u); // calculating the error for the exponential case directly leads to wrong results
         return uncert;
     }
 
