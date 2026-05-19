@@ -118,29 +118,37 @@ namespace qAlgorithms
 
         if (number_spectra > 0)
         {
-            auto first_node = spec_list.first_child();
-            pugi::xml_node binary_list = first_node.child("binaryDataArrayList");
+            // pugi::xml_node binary_list = spec_list.first_child().child("binaryDataArrayList");
 
-            size_t counter = 0;
+            // size_t counter = 0;
 
-            bool warn_float32 = false;
-            for (const pugi::xml_node &bin : binary_list.children("binaryDataArray"))
-            {
-                BinaryMetadata mtd = extract_binary_metadata(bin);
+            // bool warn_float32 = false;
+            // for (const pugi::xml_node &bin : binary_list.children("binaryDataArray"))
+            // {
+            //     BinaryMetadata mtd = extract_binary_metadata(bin);
 
-                warn_float32 = warn_float32 || (!mtd.isDouble);
+            //     warn_float32 = warn_float32 || (!mtd.isDouble);
 
-                mtd.index = counter;
+            //     spectra_binary_metadata.push_back(mtd);
 
-                spectra_binary_metadata.push_back(mtd);
+            //     counter++;
+            // }
+            // if (warn_float32)
+            //     fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
 
-                counter++;
-            }
-            if (warn_float32)
+            // assert(counter == 2);
+
+            auto range = spec_list.first_child().child("binaryDataArrayList").children("binaryDataArray");
+            auto iterator = range.begin();
+            this->mtd_mz = extract_binary_metadata(*iterator);
+            assert(mtd_mz.data_name_short == "mz");
+            iterator++;
+            assert(iterator == range.end());
+            this->mtd_intensity = extract_binary_metadata(*iterator);
+            assert(mtd_intensity.data_name_short == "intensity");
+
+            if (!(mtd_mz.isDouble && mtd_intensity.isDouble))
                 fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
-
-            number_spectra_binary_arrays = counter;
-            assert(counter == 2);
         }
 
         std::vector<pugi::xml_node> *spectra = new std::vector<pugi::xml_node>; // intermediate necessary since linknodes is const
@@ -254,7 +262,6 @@ namespace qAlgorithms
         const pugi::xml_node &spectrum_node = (*linknodes)[index];
 
         pugi::xml_node node_binary_list = spectrum_node.child("binaryDataArrayList");
-        assert(number_spectra_binary_arrays == 2);
 
         unsigned int number_traces = spectrum_node.attribute("defaultArrayLength").as_int();
 
@@ -274,15 +281,15 @@ namespace qAlgorithms
                 return; // implement a defined way to skip the current file? @todo
             }
 
-            if (spectra_binary_metadata[0].compressed)
+            if (mtd_mz.compressed)
             {
                 buffer.clear();
                 decompress_zlib(&decoded_string, &buffer);
-                bytesToFloatVec(&buffer, spectra_binary_metadata[0].isDouble, spectrum_mz);
+                bytesToFloatVec(&buffer, mtd_mz.isDouble, spectrum_mz);
             }
             else
             {
-                bytesToFloatVec(&decoded_string, spectra_binary_metadata[0].isDouble, spectrum_mz);
+                bytesToFloatVec(&decoded_string, mtd_mz.isDouble, spectrum_mz);
             }
 
             assert(spectrum_mz->size() == number_traces); // this happens if an index is tried which does not exist in the data
@@ -302,19 +309,19 @@ namespace qAlgorithms
                 return; // implement a defined way to skip the current file? @todo
             }
 
-            if (spectra_binary_metadata[1].compressed)
+            if (mtd_intensity.compressed)
             {
                 buffer.clear();
                 decompress_zlib(&decoded_string, &buffer);
-                bytesToFloatVec(&buffer, spectra_binary_metadata[1].isDouble, spectrum_int);
+                bytesToFloatVec(&buffer, mtd_intensity.isDouble, spectrum_int);
             }
             else
             {
-                bytesToFloatVec(&decoded_string, spectra_binary_metadata[1].isDouble, spectrum_int);
+                bytesToFloatVec(&decoded_string, mtd_intensity.isDouble, spectrum_int);
             }
 
             assert(spectrum_int->size() == number_traces); // this happens if an index is tried which does not exist in the data
-            assert(spectra_binary_metadata[1].data_name_short == "intensity");
+            // assert(spectra_binary_metadata[1].data_name_short == "intensity");
         }
     };
 

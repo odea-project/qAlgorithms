@@ -18,10 +18,9 @@ namespace qAlgorithms
     typedef char path_char;
 #endif
 
-    struct BinaryMetadata // @todo there is no need for a file-specific metadata object
+    struct BinaryMetadata // @todo there is no need for a file-specific metadata object. Is it possible for different spectra and properties to be compressed / uncompressed?
     {
         std::string data_name_short;
-        int index;
         bool compressed;
         bool isDouble;
     };
@@ -65,7 +64,8 @@ namespace qAlgorithms
     {
         // @todo change this to a generalised XML document interface for mass spec data
     private:
-        std::vector<BinaryMetadata> spectra_binary_metadata;
+        // std::vector<BinaryMetadata> spectra_binary_metadata;
+        BinaryMetadata mtd_mz{}, mtd_intensity{};
 
         BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
 
@@ -87,8 +87,6 @@ namespace qAlgorithms
         SourceFileType filetype = unknown_filetype;
 
         unsigned int number_spectra;
-
-        unsigned int number_spectra_binary_arrays; // @todo remove
 
         Polarities polarityMode;
 
