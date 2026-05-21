@@ -34,9 +34,9 @@ namespace qAlgorithms
         Range_i regSpan = {0, 0}; // limits of the peak regression window
         int df = 0;               // degrees of freedom, interpolated data points will not be considered
         float apex_position = 0;  // position of the apex of the peak
-        float mse = 0;            // mean squared error
-        float area = 0;           // area of the peak (in evenly spaced x dimension, scaled later)
-        float area_uncert = 0, position_uncert = 0, height_uncert = 0;
+        // float mse = 0;            // mean squared error
+        float area = 0; // area of the peak (in evenly spaced x dimension, scaled later)
+        float uncert_area = 0, uncert_position = 0, uncert_height = 0;
         int numCompetitors = 0; // number of points that were discarded in favour of this regression
         float jaccard = 0;
         bool isValid = false; // flag to indicate if the regression is valid
@@ -47,14 +47,14 @@ namespace qAlgorithms
     {
         RegCoeffs coeffs = {0};
         float position = 0;
-        float position_uncert = 0;
+        float uncert_position = 0;
         float limit_L = 0;
         float limit_R = 0;
         float height = 0;
-        float height_uncert = 0;
+        float uncert_height = 0;
         float fwhm = 0;
         float area = 0;
-        float area_uncert = 0;
+        float uncert_area = 0;
         float dqs = 0;
         float jaccard = 0;
     };

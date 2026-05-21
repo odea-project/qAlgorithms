@@ -154,6 +154,8 @@ Now take the derivative of the sum:
 
 ### Stage 3: Plausibility Tests
 
+@todo this section is outdated!
+
 The two types of tests employed here are those for logical contradictions, which always have 
 to be true if a real peak exists, and those for statistical plausibility, which test with
 a hard-coded significance level of 0.05. Regressions are considered individually and 
@@ -163,7 +165,9 @@ The following conditions must hold for a peak to be defined:
 * The peak must have exactly one maximum (the apex)
 * every half of the peak must be described by at least two points
 * at least five points, not counting eventual interpolations, must be within the regression window
+  
 * the observed maximum within the regression window must be at least twice as large as the smallest value at the edge of the regression window
+    @todo this is just a static value which, while generally applicable, should be replaced with a proper test.
 
 If these conditions are fulfilled, statitical tests (t-test and F-test) are used to ensure
 that the calculated individual peak properties are significant. If one of these tests fails,
@@ -174,6 +178,18 @@ the regression is considered to be invalid:
 * The height is significant
 * The total area, including outside of regression bounds, is significant
 * The entire regression fulfills minimal goodness-of-fit criteria via the chi-squared test
+
+#### Test for significance of the height
+
+A regression can only describe a valid peak if the height is significantly different from the baseline.
+Further, the outermost two points of a correctly described peak should be at (or very close to) the 
+baseline. As such, we can presume that a regression is only valid if the maximum peak height is 
+significantly different from the maximum height at the limits of the peak window. Assuming that the
+regression is fit over just one "true" signal, the two values depend on each other and we have to
+use a paired t-test instead of a basic one. 
+
+Inversely, the maximum value of the regression should not be significantly different from the 
+measured maximum value.
 
 ### Stage 4: Optimal Regression Selection
 Since for a well-described peak, multiple regressions will be defined, the optimal description of a 

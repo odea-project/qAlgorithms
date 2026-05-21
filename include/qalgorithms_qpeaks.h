@@ -138,15 +138,10 @@ namespace qAlgorithms
         const RegressionGauss *mutateReg,
         const double valley_position,
         const size_t df_sum,
-        const double apexToEdge);
-
-    void calcPeakHeightUncert(RegressionGauss *mutateReg);
-
-    void calcPeakAreaUncert(RegressionGauss *mutateReg);
+        const double apexToEdge,
+        double mse);
 
     bool isValidPeakArea(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
-
-    void calcUncertaintyPos(RegressionGauss *mutateReg);
 
     struct MeanVar
     {

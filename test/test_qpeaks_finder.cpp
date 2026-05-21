@@ -180,7 +180,7 @@ void control_sim_gauss()
     // float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step);
 
     assert(abs(apex - apex_p) < FLT_EPSILON, "inaccurate position\n");
-    assert(abs(height - height_p) < reg.height_uncert, "inaccurate height\n");
+    assert(abs(height - height_p) < reg.uncert_height, "inaccurate height\n");
     assert(abs(fwhm - fwhm_p) < 10e-4, "inaccurate width\n");
     assert(abs(area - area_p) < 0.01, "inaccurate area (%f vs. %f), empiric %f\n", area, area_p, area_e);
 }
@@ -193,6 +193,7 @@ struct ErrorEMG
     float r_apex, d_apex_abs;
     float r_height, d_height_rel, d_height_abs;
     float dqs, jaccard;
+    float uncert_diff_position, uncert_diff_area, uncert_diff_height;
     bool negativeB23 = true;
 };
 
@@ -287,7 +288,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     // assert(abs(apex_e - apex_p) < 0.01, "inaccurate position (%f vs. %f)\n", apex_e, apex_p);
     // assert(abs(height_e - height_p) < height_e * 0.01, "inaccurate height (%f vs. %f)\n", height_e, height_p);
     // assert(abs(fwhm_e - fwhm_p) < fwhm_e * 0.05, "inaccurate width (%f vs. %f)\n", fwhm_e, fwhm_p);
-    // assert(abs(area_e - area_p) < reg.area_uncert, "inaccurate area (%f vs. %f)\n", area_e, area_p);
+    // assert(abs(area_e - area_p) < reg.uncert_area, "inaccurate area (%f vs. %f)\n", area_e, area_p);
 
     in_out->d_area_rel = abs(area_e - area_c) / area_c;
     in_out->d_area_abs = abs(area_e - area_c);
@@ -309,7 +310,7 @@ void survey_EMG()
     ErrorEMG test = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0};
     test.r_apex = 20;
 
-    std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_abs,d_height_rel,d_height_abs,dqs,jaccard,closedPeak\n";
+    std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_abs,d_height_rel,d_height_abs,dqs,jaccard,uncert_diff_position,closedPeak\n";
 
     float heights[5] = {100, 1000, 2500, 5000, 10000};
 
@@ -325,8 +326,8 @@ void survey_EMG()
                 control_sim_EMG(x_start, x_step, &test);
                 testCases.push_back(test);
                 char buffer[500];
-                sprintf(buffer, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%c\n", test.r_height, test.r_sdev, test.r_tau, test.r_apex, test.d_area_rel, test.d_area_abs,
-                        test.d_fwhm_rel, test.d_fwhm_abs, test.d_apex_abs, test.d_height_rel, test.d_height_abs, test.dqs, test.jaccard, test.negativeB23 ? 'T' : 'F');
+                sprintf(buffer, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%c\n", test.r_height, test.r_sdev, test.r_tau, test.r_apex, test.d_area_rel, test.d_area_abs,
+                        test.d_fwhm_rel, test.d_fwhm_abs, test.d_apex_abs, test.d_height_rel, test.d_height_abs, test.dqs, test.jaccard, test.uncert_diff_position, test.negativeB23 ? 'T' : 'F');
                 container += buffer;
                 test.d_height_rel = -1;
                 test.d_height_abs = -1;
@@ -459,7 +460,7 @@ int main()
     test_singlePeak();
     test_areaPrediction();
     control_sim_gauss();
-    // survey_EMG();
+    survey_EMG();
 
     return 0;
 }

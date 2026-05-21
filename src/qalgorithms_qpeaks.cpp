@@ -88,7 +88,7 @@ namespace qAlgorithms
             // position is determined relative to the point left of the apex
             double apexFraction = delta_x * (apex - trunc(apex));
             peak.position = x_values[leftOfApex] + apexFraction;
-            peak.position_uncert = regression->position_uncert * delta_x;
+            peak.uncert_position = regression->uncert_position * delta_x;
 
             // left and right limits
             peak.limit_L = x_values[regression->regSpan.startIdx];
@@ -96,16 +96,16 @@ namespace qAlgorithms
 
             // peak height = regression at apex position before transformation
             peak.height = exp(regAt(&coeff, apex_raw));
-            peak.height_uncert = regression->height_uncert * peak.height;
+            peak.uncert_height = regression->uncert_height * peak.height;
 
             peak.area = regression->area * delta_x;
-            peak.area_uncert = regression->area_uncert * exp(coeff.b0) * delta_x;
+            peak.uncert_area = regression->uncert_area * exp(coeff.b0) * delta_x;
 
             // the empirical peak width is generally estimated at half maximum. Our peak
             // model only has a standard deviation for the apex peak
             peak.fwhm = fullWidthHalfMax(&coeff, peak.height, delta_x);
 
-            peak.dqs = 1 - erf(regression->area_uncert / regression->area);
+            peak.dqs = 1 - erf(regression->uncert_area / regression->area);
             peak.jaccard = regression->jaccard;
 
             peak.coeffs = regression->coeffs;
@@ -960,7 +960,7 @@ namespace qAlgorithms
                                                         groups[groupIdx]);
 
                 RegressionGauss bestReg = validRegsTmp->at(bestRegIdx.idx);
-                bestReg.mse = bestRegIdx.mse;
+                // bestReg.mse = bestRegIdx.mse;
                 assert(bestReg.isValid);
                 validRegressions->push_back(bestReg);
             }
@@ -1355,6 +1355,10 @@ namespace qAlgorithms
         return ok;
     }
 
+    double calcPeakHeightUncert(RegressionGauss *mutateReg, double mse);
+    void calcUncertaintyPos(RegressionGauss *mutateReg, double mse);
+    void calcPeakAreaUncert(RegressionGauss *mutateReg, double mse);
+
     double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
 
     /// @brief calculate the residual sum of squares for the log regression / data
@@ -1370,7 +1374,7 @@ namespace qAlgorithms
     /// @return true: Regression is significant; false: Regression is not better than either alternative.
     bool f_testRegression(const float *observed, double RSS_reg, const Range_i *range);
 
-    double calcSSE_chisqared(const RegressionGauss *mutateReg,
+    double calcSSE_chisqared(const Range_i *regSpan,
                              const float *observed,
                              const std::vector<float> *predict);
 
@@ -1429,7 +1433,7 @@ namespace qAlgorithms
         // double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
 
-        mutateReg->mse = mse_log;
+        // mutateReg->mse = mse_log;
 
         /*
         competing regressions filter:
@@ -1462,20 +1466,24 @@ namespace qAlgorithms
 
         double uncert_position = peakPositionUncert(coeffs, mse_log);
         double uncert_height = peakHeightUncert(coeffs, mse_log);
+        double uncert_height_old = calcPeakHeightUncert(mutateReg, mse_log);
+        mutateReg->uncert_height = uncert_height;
 
-        /*
-          Height Filter:
-          This block of code implements the height filter. It calculates the height
-          of the peak based on the coefficients matrix B. Then it calculates the
-          uncertainty of the height based on the Jacobian matrix and the variance-covariance
-          matrix of the coefficients. @todo this is not what the function actually does!
-        */
-        calcPeakHeightUncert(mutateReg);                      // mse use, again
-        if (1 / mutateReg->height_uncert <= T_VALUES[df_sum]) // statistical significance of the peak height
-        {
-            failstates += 16;
-            // return invalid_height;
-        }
+        // Problem: When performing the test, the uncertainty is < 1 in log space, so lower uncertainty peaks get thrown out
+
+        // calcPeakHeightUncert(mutateReg, mse_log);
+        // if (1 / mutateReg->uncert_height <= T_VALUES[df_sum]) // statistical significance of the peak height
+        // {
+        //     failstates += 16;
+        //     // return invalid_height;
+        // }
+
+        // Height Significance Test:
+        // use a paired t-test to check if the apex height is a significant increase from the
+        // height at regression limits @todo for double peak systems, this will likely prefer
+        // removal of those regressions which correctly find the valley close to the apex
+
+        // @todo t-tests here
 
         /*
           Area Filter:
@@ -1486,10 +1494,10 @@ namespace qAlgorithms
           area multiply both with Exp(b0) later. This is done to avoid exp function at this point
         */
         // it might be preferential to combine both functions again or store the common matrix somewhere
-        calcPeakAreaUncert(mutateReg);
+        calcPeakAreaUncert(mutateReg, mse_log);
         double uncertainty = -1;
         mutateReg->area = peakArea(coeffs, 1, mse_log, &uncertainty);
-        if (mutateReg->area / mutateReg->area_uncert <= T_VALUES[df_sum])
+        if (mutateReg->area / mutateReg->uncert_area <= T_VALUES[df_sum])
         {
             failstates += 32;
             // return invalid_area; // statistical insignificance of the area
@@ -1502,14 +1510,14 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid. @todo why?
         */
-        double chiSquare = calcSSE_chisqared(mutateReg, intensities, predict);
+        double chiSquare = calcSSE_chisqared(&mutateReg->regSpan, intensities, predict);
         if (chiSquare > CHI_SQUARES[df_sum])
         {
             failstates += 64;
             // return invalid_chisq; // statistical insignificance of the chi-square value
         }
 
-        calcUncertaintyPos(mutateReg);
+        calcUncertaintyPos(mutateReg, mse_log);
         mutateReg->df = df_sum;
         mutateReg->apex_position += coeffs->x0;
         assert(mutateReg->apex_position > 1); // @todo this should be superfluous
@@ -1614,7 +1622,7 @@ namespace qAlgorithms
             RegCoeffs coeff = regression->coeffs;
             // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
             peak.height = exp(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
-            peak.heightUncertainty = regression->height_uncert * peak.height;
+            peak.heightUncertainty = regression->uncert_height * peak.height;
 
             // calculate the apex position in RT
             size_t idx_leftOfApex = (size_t)regression->apex_position;
@@ -1640,15 +1648,15 @@ namespace qAlgorithms
             assert(rt_fraction < 1);
             float rt_apex = rt_leftOfApex_true + delta_rt * rt_fraction;
             peak.retentionTime = rt_apex;
-            peak.RT_Uncertainty = regression->position_uncert * delta_rt;
+            peak.RT_Uncertainty = regression->uncert_position * delta_rt;
 
             // add area
             float exp_b0 = exp(coeff.b0); // exp(b0)
             peak.area = regression->area * exp_b0 * delta_rt;
-            peak.areaUncertainty = regression->area_uncert * exp_b0 * delta_rt;
+            peak.areaUncertainty = regression->uncert_area * exp_b0 * delta_rt;
 
             // mz, mzUncertainty, mean DQSC and meanDQSF are all calculated in after this function is called in measurement_data
-            peak.DQSF = 1 - erf(regression->area_uncert / regression->area);
+            peak.DQSF = 1 - erf(regression->uncert_area / regression->area);
 
             assert(regression->regSpan.endIdx - coeff.x0 > 1);
             peak.idxPeakStart = regression->regSpan.startIdx;
@@ -1659,7 +1667,7 @@ namespace qAlgorithms
             assert(peak.idxPeakEnd - peak.idxPeakStart >= 4); // at least five points
 
             peak.coefficients = coeff;
-            peak.mse_base = regression->mse;
+            peak.mse_base = -1; // regression->mse;
 
             peak.interpolationCount = rangeLen(&regression->regSpan) - regression->df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
             peak.competitorCount = regression->numCompetitors;
@@ -1752,12 +1760,12 @@ namespace qAlgorithms
         return true;
     }
 
-    double calcSSE_chisqared(const RegressionGauss *mutateReg,
+    double calcSSE_chisqared(const Range_i *regSpan,
                              const float *observed,
                              const std::vector<float> *predict)
     {
         double result = 0.0;
-        for (size_t i = mutateReg->regSpan.startIdx; i < mutateReg->regSpan.endIdx + 1; i++)
+        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
         {
             double pred = predict->at(i);
             double obs = observed[i];
@@ -1795,33 +1803,12 @@ namespace qAlgorithms
         return tValue / divisor > T_VALUES[df_sum] * divisor; // statistical significance of the quadratic term
     }
 
-    void calcPeakHeightUncert(RegressionGauss *mutateReg)
-    {
-        double Jacobian_height[4]{1, 0, 0, 0};         // Jacobian matrix for the height
-        Jacobian_height[1] = mutateReg->apex_position; // apex_position * height;
-        if (mutateReg->apex_position < 0)
-        {
-            Jacobian_height[2] = mutateReg->apex_position * mutateReg->apex_position; // apex_position * Jacobian_height[1];
-            // Jacobian_height[3] = 0;
-        }
-        else
-        {
-            // Jacobian_height[2] = 0;
-            Jacobian_height[3] = mutateReg->apex_position * mutateReg->apex_position; // apex_position * Jacobian_height[1];
-        }
-        // at this point without height, i.e., to get the real uncertainty
-        // multiply with height later. This is done to avoid exp function at this point
-        // mutateReg->height_uncert = calcUncertainty(Jacobian_height, mutateReg->coeffs.scale, mutateReg->mse);
-        double uncertainty = sqrt(matProductReg(Jacobian_height, mutateReg->coeffs.scale) * mutateReg->mse);
-        mutateReg->height_uncert = uncertainty;
-        return;
-    }
-
     bool isValidPeakHeight(
         const RegressionGauss *mutateReg,
         const double valley_position,
         const size_t df_sum,
-        const double apexToEdge)
+        const double apexToEdge,
+        double mse)
     {
         // check if the peak height is significantly greater than edge signal - deprecated!
         double apex = mutateReg->apex_position;
@@ -1839,14 +1826,14 @@ namespace qAlgorithms
         const double jacobianHeight[4]{0, j1, j2, j3};
 
         // float uncertainty_apexToEdge = calcUncertainty(jacobianHeight, mutateReg->coeffs.scale, mutateReg->mse);
-        double uncertainty_apexToEdge = sqrt(matProductReg(jacobianHeight, mutateReg->coeffs.scale) * mutateReg->mse);
+        double uncertainty_apexToEdge = sqrt(matProductReg(jacobianHeight, mutateReg->coeffs.scale) * mse);
 
         // @todo why -2? Just to account for position?
         bool peakHeightSignificant = (apexToEdge - 2) > T_VALUES[df_sum] * (apexToEdge * uncertainty_apexToEdge);
         return peakHeightSignificant;
     }
 
-    void calcPeakAreaUncert(RegressionGauss *mutateReg) // @todo only take coeffs as input, do not add shadow dependency on multiplication with e^b0
+    void calcPeakAreaUncert(RegressionGauss *mutateReg, double mse) // @todo only take coeffs as input, do not add shadow dependency on multiplication with e^b0
     {
         double b1 = mutateReg->coeffs.b1;
         double b2 = mutateReg->coeffs.b2;
@@ -1885,9 +1872,9 @@ namespace qAlgorithms
 
         // at this point the area is without exp(b0), i.e., to get the real area multiply with exp(b0) later. This is done to avoid exp function at this point
         mutateReg->area = J[0];
-        // mutateReg->area_uncert = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
-        double uncertainty = sqrt(matProductReg(J, mutateReg->coeffs.scale) * mutateReg->mse);
-        mutateReg->area_uncert = uncertainty;
+        // mutateReg->uncert_area = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
+        double uncertainty = sqrt(matProductReg(J, mutateReg->coeffs.scale) * mse);
+        mutateReg->uncert_area = uncertainty;
 
         return;
     }
@@ -2020,7 +2007,7 @@ namespace qAlgorithms
     }
 #pragma endregion isValidPeakArea
 
-    void calcUncertaintyPos(RegressionGauss *mutateReg) // @todo make this mse independent first
+    void calcUncertaintyPos(RegressionGauss *mutateReg, double mse) // @todo make this mse independent first
     {
         const double b1 = mutateReg->coeffs.b1;
         const double b2 = mutateReg->coeffs.b2;
@@ -2040,9 +2027,9 @@ namespace qAlgorithms
             J[3] = -apex / b3;
         }
 
-        // mutateReg->position_uncert = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
+        // mutateReg->uncert_position = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
         double uncertainty = matProductReg(J, mutateReg->coeffs.scale);
-        mutateReg->position_uncert = sqrt(uncertainty * mutateReg->mse);
+        mutateReg->uncert_position = sqrt(uncertainty * mse);
         return;
     }
 
@@ -2248,16 +2235,16 @@ namespace qAlgorithms
     {
         FeaturePeak ret;
         ret.area = peak->area;
-        ret.areaUncertainty = peak->area_uncert;
+        ret.areaUncertainty = peak->uncert_area;
         ret.coefficients = peak->coeffs;
         ret.competitorCount = 0; // @todo
         ret.componentID = 0;
         ret.DQSB = -1; // set during fillPeakVals
         ret.DQSF = peak->dqs;
         ret.height = peak->height;
-        ret.heightUncertainty = peak->height_uncert;
+        ret.heightUncertainty = peak->uncert_height;
         ret.retentionTime = peak->position;
-        ret.RT_Uncertainty = peak->position_uncert;
+        ret.RT_Uncertainty = peak->uncert_position;
 
         return ret;
     }
@@ -2316,13 +2303,13 @@ namespace qAlgorithms
         CentroidPeak cen = {0};
 
         cen.area = peak->area;
-        cen.areaUncertainty = peak->area_uncert;
+        cen.areaUncertainty = peak->uncert_area;
         cen.DQSC = peak->dqs;
         cen.height = peak->height;
-        cen.heightUncertainty = peak->height_uncert;
+        cen.heightUncertainty = peak->uncert_height;
         cen.ID = id;
         cen.mz = peak->position;
-        cen.mzUncertainty = peak->position_uncert;
+        cen.mzUncertainty = peak->uncert_position;
         cen.number_MS1 = specNum;
         cen.scale = peak->coeffs.scale;
         cen.width = peak->fwhm;
@@ -2768,6 +2755,27 @@ namespace qAlgorithms
         double uncert = sqrt(u * mse);
         // assert(uncert == test_u); // calculating the error for the exponential case directly leads to wrong results
         return uncert;
+    }
+
+    double calcPeakHeightUncert(RegressionGauss *mutateReg, double mse)
+    {
+        double Jacobian_height[4]{1, 0, 0, 0};         // Jacobian matrix for the height
+        Jacobian_height[1] = mutateReg->apex_position; // apex_position * height;
+        if (mutateReg->apex_position < 0)
+        {
+            Jacobian_height[2] = mutateReg->apex_position * mutateReg->apex_position; // apex_position * Jacobian_height[1];
+            // Jacobian_height[3] = 0;
+        }
+        else
+        {
+            // Jacobian_height[2] = 0;
+            Jacobian_height[3] = mutateReg->apex_position * mutateReg->apex_position; // apex_position * Jacobian_height[1];
+        }
+        // at this point without height, i.e., to get the real uncertainty
+        // multiply with height later. This is done to avoid exp function at this point
+        // mutateReg->uncert_height = calcUncertainty(Jacobian_height, mutateReg->coeffs.scale, mutateReg->mse);
+        double uncertainty = sqrt(matProductReg(Jacobian_height, mutateReg->coeffs.scale) * mse);
+        return uncertainty;
     }
 
     double calcMSE_exp(const RegCoeffs *coeff,
