@@ -168,6 +168,7 @@ at position $i$. The following will substitute $\exp(\text{b0})$ with $x$.
 ```
 Now take the derivative to find the minimum of the sum, and with it the corrected coefficient b0$_c$:
 ```math
+\begin{gather*}
 \frac{d}{dx} = \sum{-2 * c_i * y_i + 2 * x * c_i^2} = 0 \\
 
 \sum{2 * c_i * y_i} = \sum{2 * x * c_i^2} \\
@@ -177,6 +178,7 @@ Now take the derivative to find the minimum of the sum, and with it the correcte
 x = \frac{\sum{c_i * y_i}}{\sum{c_i^2}} \\
 
 \text{b0}_c = \log(x)
+\end{gather*}
 ```
 
 
@@ -251,20 +253,24 @@ same position as in logarithmic form, we do not need the exponential function in
 
 Assuming the apex is in the region $x < 0$:
 ```math
+\begin{gather*}
     \frac{d}{dx} \text{b0} + \text{b1} x + \text{b2} x^2 = \text{b1} + 2 \text{b2} x \\
 
     0 = \text{b1} + 2 \text{b2} x \\
 
     x = \frac{-\text{b1}}{2 \text{b2}}
+\end{gather*}
 ```
 For the height, evaluate the full function at the apex (note that b1 and b2 are factored into the fraction
 already in the term below):
 ```math
+\begin{gather*}
     h(x) = \exp(\text{b0} + \frac{-\text{b1}^2}{2 \text{b2}} + \frac{\text{b1}^2}{4 \text{b2}}) \\
 
     h(x) = \exp(\text{b0} + \frac{-\text{b1}^2}{2 \text{b2}} * \frac{2}{2} + \frac{\text{b1}^2}{4 \text{b2}}) \\
 
     h(x) = \exp(\text{b0} + \frac{\text{b1}^2}{4 \text{b2}})
+\end{gather*}
 ```
 These calculations are only relevant for the half that contains the regression apex. If a regression
 has a valley (one of the quadratic coefficients is positive), its position is calculated in the same manner as the apex.
