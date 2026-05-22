@@ -93,6 +93,7 @@ Any code that is not run when processing data and concerned with logical correct
 * refine assertions used in the code
 * check that apex is close to local maximum in data
 * also test against Voigt-function as it approaches the lorentzian function for peak shape
+* implement an exact solution for qPeaks (not reliant of equidistance between scans) and check how different the results are
 
 ## Algorithm Characterisation
 The goal of this is to describe correctness based on input data for a generic peak detection algorithm.

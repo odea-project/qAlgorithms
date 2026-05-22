@@ -50,20 +50,20 @@ Example matrices for scale = 2 and scale = 3:
 ```math
 A = \begin{bmatrix}
 1 & -2 & -4 & 0 \cr
-1 & -1 & -1 & 0\cr
-1 &  0 &  0 &0\cr
-1 &  1 &  0 &1\cr
-1 &  2 &  0&4
+1 & -1 & -1 & 0 \cr
+1 &  0 &  0 & 0 \cr
+1 &  1 &  0 & 1 \cr
+1 &  2 &  0 & 4
 \end{bmatrix}
 ;
 B = \begin{bmatrix}
-1 & -3 & -9 &0 \cr
-1 & -2 & -4 &0\cr
-1 & -1 & -1 &0\cr
-1 &  0 &  0 &0\cr
-1 &  1 &  0 &1\cr
-1 &  2 &  0 &4\cr
-1 &  3 &  0&9
+1 & -3 & -9 & 0 \cr
+1 & -2 & -4 & 0 \cr
+1 & -1 & -1 & 0 \cr
+1 &  0 &  0 & 0 \cr
+1 &  1 &  0 & 1 \cr
+1 &  2 &  0 & 4 \cr
+1 &  3 &  0 & 9
 \end{bmatrix}
 ```
 
@@ -71,25 +71,25 @@ The convolution (for scale = 2) $(X^T X)^{-1}$ is then:
 ```math
 \left(
 \begin{bmatrix}
-1 & 1 & 1 & 1 & 1 \cr
-2 & 1 & 0 & 1 & 2 \cr
+1  &  1 & 1 & 1 & 1 \cr
+2  &  1 & 0 & 1 & 2 \cr
 -4 & -1 & 0 & 0 & 0 \cr
-0 & 0 & 0 & 1 & 4 
+0  &  0 & 0 & 1 & 4 
 \end{bmatrix} 
 \cdot
 \begin{bmatrix}
 1 & -2 & -4 & 0 \cr
-1 & -1 & -1 & 0\cr
-1 &  0 &  0 &0\cr
-1 &  1 &  0 &1\cr
-1 &  2 &  0&4
+1 & -1 & -1 & 0 \cr
+1 &  0 &  0 & 0 \cr
+1 &  1 &  0 & 1 \cr
+1 &  2 &  0 & 4
 \end{bmatrix}
 \right)^{-1}
 =
 \begin{bmatrix}
-0.48 & 0 & -0.14 & -0.14 \cr
-0 & 2.12 & 1.12 & -1.12\cr
--0.14 &  1.12 & 0.69 & -0.55\cr
+0.48  & 0      & -0.14  & -0.14 \cr
+0     & 2.12   & 1.12   & -1.12 \cr
+-0.14 &  1.12  & 0.69   & -0.55 \cr
 -0.14 &  -1.12 &  -0.55 & 0.69
 \end{bmatrix}
 ```
@@ -98,10 +98,10 @@ As can be seen from the numbers, there are symmetries on the axis and for all in
 
 ```math
 \begin{bmatrix}
-A & 0 & B & B \cr
-0 & C & D & -D\cr
-B &  D & E & F\cr
-B & -D & F & E
+A &  0 & B &  B \cr
+0 &  C & D & -D \cr
+B &  D & E &  F \cr
+B & -D & F &  E
 \end{bmatrix}
 ```
 
@@ -116,6 +116,18 @@ length as x and y. If a point was interpolated to ensure equidistance, it has ze
 of freedom. Conversely, a point could have more than one degree of freedom if it represents
 more than one spectrum.
 
+Equidistance is one essential assumption of the peak model to pre-calculate the matrix and for
+the resulting algorithmic simplifications that arise when the matrix convolutions required
+during uncertainty estimation are performed. While this assumption is not fully true for real
+data, performing all calculations "the hard way" would both take a substantially longer amount 
+of processing time, potentually making the processing software impractical to use, and require
+substantially more operations which introduce floating point errors. For very long addition 
+chains, this could lead to destructive amplification of error and require unlimited (or very
+high) precision numbers, leading to further increased processing times. For these reasons,
+the assumption of equidistance is preferable if the goal is also to provide a fast software
+implementation of the algoritm. The principles described in this documentation also apply
+to implementations of qPeaks that make the choice to work with exact distances, however.
+
 ### Stage 2: Moving Regression
 The regression is performed stepwise in a nested loop. For every point in x, a linear regression
 is performed with that point set to $x = 0$ relative to the precalculated matrix. This
@@ -129,13 +141,21 @@ b2 and b3, both describe the quadratic term. At $x = 0$, the peak switches from 
 $\exp(\text{b2} x^2 + \text{b1} x + \text{b0})$ to $\exp(\text{b3} x^2 + \text{b1} x + \text{b0})$. Regressions are stored with coefficients,
 scale and position of x = 0 relative to the first element of the x-axis.
 
+The regression is not weighted, since our estimators for uncertainty are biased following 
+the logarithmic transform. This affects both the initial fit and the adjustment using 
+the non-logtransformed observed values (see below). The option of weighthing only applies to feature
+detection, where centroiding was performed with qPeaks also. While weighting would be 
+appropriate if centroids with unbiased, symmetrical log-uncertainties were supplied to
+the algorithm, that is highly unlikely to happen. Further, weighting would make it 
+impossible to use precomputation, meaning the same considerations from [Stage 1](#stage-1-data-transform) apply.
+
 Since the regression is performed on log-transformed data, the height is adjusted using the
 untransformed values of y. Since b1, b2 and b3 are not affected, this can be solved with
 linear regression. When only adjusting b0, the peak model equation can be factored as:
 ```math
 f(x) = \exp(\text{b0}) * exp(\text{b1} x + \text{b2} x^2)
 ```
-Key observation here is that the second exponential term is constant, since all values of x
+Key observation here is that the second exponential term is constant respective to $x$, since all values of $x$
 within the regression window are known. Accordingly, the function to be minimised is
 ```math
 \sum{(y_i - \exp(\text{b0}) * c_i)^2}
@@ -146,10 +166,19 @@ at position $i$. The following will substitute $\exp(\text{b0})$ with $x$.
 ```math
 \sum{(y_i - x * c_i)^2} = \sum{y_i^2 - 2 * x * c_i * y_i + x^2 * c_i^2} 
 ```
-Now take the derivative of the sum:
+Now take the derivative to find the minimum of the sum, and with it the corrected coefficient b0$_c$:
 ```math
-\frac{d}{dx} = \sum{-2 * c_i * y_i + 2 * x * c_i^2} = \sum{2 * c_i * (x * c_i - y_i)} 
+\frac{d}{dx} = \sum{-2 * c_i * y_i + 2 * x * c_i^2} = 0 \\
+
+\sum{2 * c_i * y_i} = \sum{2 * x * c_i^2} \\
+
+\sum{c_i * y_i} = x * \sum{c_i^2} \\
+
+x = \frac{\sum{c_i * y_i}}{\sum{c_i^2}} \\
+
+\text{b0}_c = \log(x)
 ```
+
 
 
 ### Stage 3: Plausibility Tests
@@ -186,7 +215,8 @@ Further, the outermost two points of a correctly described peak should be at (or
 baseline. As such, we can presume that a regression is only valid if the maximum peak height is 
 significantly different from the maximum height at the limits of the peak window. Assuming that the
 regression is fit over just one "true" signal, the two values depend on each other and we have to
-use a paired t-test instead of a basic one. 
+use a paired t-test instead of a basic one. This is not generally possible, since we cannot repeatedly
+sample a point. Without multiple samples, the standard paired test does not work.
 
 Inversely, the maximum value of the regression should not be significantly different from the 
 measured maximum value.
@@ -222,14 +252,18 @@ same position as in logarithmic form, we do not need the exponential function in
 Assuming the apex is in the region $x < 0$:
 ```math
     \frac{d}{dx} \text{b0} + \text{b1} x + \text{b2} x^2 = \text{b1} + 2 \text{b2} x \\
+
     0 = \text{b1} + 2 \text{b2} x \\
+
     x = \frac{-\text{b1}}{2 \text{b2}}
 ```
 For the height, evaluate the full function at the apex (note that b1 and b2 are factored into the fraction
 already in the term below):
 ```math
     h(x) = \exp(\text{b0} + \frac{-\text{b1}^2}{2 \text{b2}} + \frac{\text{b1}^2}{4 \text{b2}}) \\
+
     h(x) = \exp(\text{b0} + \frac{-\text{b1}^2}{2 \text{b2}} * \frac{2}{2} + \frac{\text{b1}^2}{4 \text{b2}}) \\
+
     h(x) = \exp(\text{b0} + \frac{\text{b1}^2}{4 \text{b2}})
 ```
 These calculations are only relevant for the half that contains the regression apex. If a regression

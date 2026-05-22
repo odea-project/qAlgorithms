@@ -1483,7 +1483,8 @@ namespace qAlgorithms
         // height at regression limits @todo for double peak systems, this will likely prefer
         // removal of those regressions which correctly find the valley close to the apex
 
-        // @todo t-tests here
+        // @todo in principle, we should probably use the paired t-test here. This is not possible,
+        // since we cannot assume same sample sizes / variances and generally only have the two means.
 
         /*
           Area Filter:

@@ -5,6 +5,7 @@
 
 // ### functions in this file should never call malloc! ###
 
+/// @brief
 namespace qAlgorithms
 {
     // sqrt(pi) / 2
@@ -23,6 +24,17 @@ namespace qAlgorithms
     {
         return range->endIdx - range->startIdx + 1;
     }
+
+    /**
+     * @brief perform the welch-test for comparing two means of unequal variance
+     * @param mean mean of sample 1 or 2
+     * @param sd standard deviation of sample 1 or 2
+     * @param count number of samples of sample 1 or 2
+     * @return true if H0 is rejected, false otherwise
+     */
+    bool t_test_welch(const double mean_1, const double sd_1, const double count_1,
+                      const double mean_2, const double sd_2, const double count_2,
+                      const float alpha);
 
     /**
      * @brief performs the F-test for comparing two regressions

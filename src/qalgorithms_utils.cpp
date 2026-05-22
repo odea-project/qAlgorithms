@@ -1,6 +1,6 @@
 #include "qalgorithms_utils.h"
 #define _USE_MATH_DEFINES
-#include <math.h> // std::abs()
+#include <math.h>
 #include <cassert>
 #include "cephes.h"
 
@@ -8,6 +8,26 @@
 
 namespace qAlgorithms
 {
+    bool t_test_welch(const double mean_1, const double sd_1, const double count_1,
+                      const double mean_2, const double sd_2, const double count_2,
+                      const float alpha)
+    {
+        assert(alpha == 0.05);
+        // source: https://doi.org/10.1093/beheco/ark016
+        // H0: mean_1 is equal to mean_2
+
+        double t = (mean_1 - mean_2) / sqrt(sd_1 / count_1 + sd_2 / count_2);
+        // the degrees of freedom are a non-integer value and rounded down before comparison
+        double u = (sd_2 * sd_2) / (sd_1 * sd_1);
+        double n1 = count_1 * count_1 * (count_1 - 1);
+        double n2 = count_2 * count_2 * (count_2 - 1);
+        size_t df = size_t((1 / count_1 + u / count_2) * (1 / count_1 + u / count_2) / (1 / n1 + u * u / n2));
+
+        double t_refval = T_VALUES[df]; // @todo support more alphas than 0.05 - maybe return the p-value instead? Also support one / two sided
+        bool reject_H0 = t > t_refval;
+        return reject_H0;
+    }
+
     bool F_test_regs(const double RSS_complex, const double RSS_simple,
                      const double params_complex, const double params_simple,
                      const double n, const double alpha)
