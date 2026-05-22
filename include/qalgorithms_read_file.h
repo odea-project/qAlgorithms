@@ -14,7 +14,7 @@ namespace qAlgorithms
 
 #if defined(_WIN32)
     typedef wchar_t path_char;
-#elif
+#else
     typedef char path_char;
 #endif
 
