@@ -2538,7 +2538,7 @@ namespace qAlgorithms
         return vecMatrxTranspose;
     }
 
-    // base function: integral e^(b0 + b1 x + b2 x^2) dx =
+    // base function: integral of e^(b0 + b1 x + b2 x^2) dx =
     // [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ] / (2 sqrt(b2))   // source: wolfram alpha
     // erfi(x) = i * erf(i * x)
     // under the condition b2 < 0: sqrt(b2) = i * sqrt(-b2), where sqrt(-b2) is a real number
@@ -2579,7 +2579,8 @@ namespace qAlgorithms
 
         // if there is a valley point, this half of the equation is always zero. This is
         // because erfi(b1 + 2 b2 x) resolves to erfi(b1 + 2 b2 * (-b1 / (2 b2))) == 0
-        double F_b2_lim = b2_pos ? 0 : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2; // outer left limit for the integral @todo area calculation is wrong for positive b2
+        // (the valley point is always at -b1 / (2 b2), refer to apex position calculation)
+        double F_b2_lim = b2_pos ? 0 : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2; // outer left limit for the integral
         // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
         double error_b2 = b2_pos
                               ? liberfc::erfi(b1 / dsqrt_b2)
@@ -2596,10 +2597,12 @@ namespace qAlgorithms
         double F_b3_zero = (sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3;
         double area_R = F_b3_lim - F_b3_zero;
 
-        // this check has been removed since there is a sign error somewhere in the calculation series.
-        // @todo this will be relevant for uncertainty calculation
-        // there are cases where both areas are negative, but result in the correct value when summed anyway
-        // assert((area_L > 0) == (area_R > 0));
+        // The above calculation produces negative values for the area if we use the
+        // error function after replacing b2 and b3 with their absolute values. This
+        // should not happen if b2 or b3 is already positive
+        // @todo make sure this does not affect the error calculation
+        assert(b2_pos xor area_L < 0);
+        assert(b3_pos xor area_R < 0);
         area_L = abs(area_L);
         area_R = abs(area_R);
 
@@ -2613,27 +2616,35 @@ namespace qAlgorithms
         }
 
         // ### uncertainty calculation here ###
-        // We cannot directly calculate the uncertainty from the exponential form (true peak area)
+        // We cannot directly calculate the uncertainty from the exponential form (true peak area).
+        // Instead, since the coefficients apply to the logarithmic transform, we calculate the
+        // uncertainty of the logarithm of the area as defined above. log(a * b) = log(a) + log(b)
+        // does not apply here, since the area is defined as A = F_b2(0) - F_b2(-inf) + F_b3(inf) - F_b3(0)
+        // for the normal case and F(x) when a valley exists. Therefore, the derivative of log(A) is A' / A.
+        // the area is already known, for all other derivatives
+
+        // log(F) = log( [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ] / (2 sqrt(b2)) )
+        // = log(sqrt(pi)) + log(e^( b0 - b1^2/(4 b2) )) + log( erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ) - log(2 sqrt(b2)))
+        // = log(sqrt(pi)) + b0 - b1^2/(4 b2) + log( erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ) - log(2) - log(sqrt(b2))
+        // since we take the derivative afterwards, constant terms are ignored
+        // log(F(x)) = b0 - b1^2/(4 b2) + log( erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ) - log(sqrt(b2))
+
+        // for negative b2, the only change is that erf is used instead of erfi. Both
+        // functions cannot be simplified further.
+
         double J[4];
 
-        // the uncertainty of the area is the sum of the uncertainties for both halves of the area
-        // the individual uncertainties depend on the variance-covariance matrix, only considering pairwise covariance
-        // s_area_h = var_b0 * (d area / d b0) + etc. + 2 * covar_b0_b1 * (d area / d b0) * (d area / d b1) + etc.
-        // since the area is calculated from the antiderivative evaluated at two points, its derivative differs depending
-        // on the value of b2 / b3 (presence of a valley)
         // b0:
         // F(0) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
         // F(0) is always evaluated for both halves, so we always need all derivatives:
         // F(0) d b0; [ const * e^( b0 - b1^2/(4 b2) ) * const ] / const => F(0) d b0 = e^( b0 - b1^2/(4 b2) ) * const
-        // The derivative of exp(x) is exp(x), so no further steps are needed
-        // Since the equation does not change, the derivative at F(0) is F(0). The same logic holds for all other
-        // values of x, so the area differentiated by b0 is itself.
-        //
-        double diff_b0 = area_F;
-        J[0] = diff_b0;
+        // The derivative of exp(x) is x' exp(x), since the inner term only has a singular b0 in a sum
+        // the equation does not change and the derivative of F(x) by b0 is F(x).
+        // Following the chain rule, d F(x) / d b0 = A' / A = A / A = 1
+        J[0] = 1;
 
         // b1:
-        // since d/dx f(x) + g(x) = f'(x) + g'(x), we differentiate the individual pieces of b1 and sum up
+        // since d/dx f(x) + g(x) = f'(x) + g'(x), we differentiate the individual pieces of b1 and sum up.
         // for + / - infinity:
         // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2)) * (b1 / (2 b2))
         // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b3) ) * -1 ] / (2 sqrt(-b3)) * (b1 / (2 b3))
@@ -2656,7 +2667,7 @@ namespace qAlgorithms
                                     : exp(b0 - b1 * b1 / (2 * b3)) / (2 * b3) - F_b3_zero * b1 / (2 * b3);
         // area = zero_l - lim_l + lim_r - zero_r
         double diff_b1 = diff_b1_zero_L - diff_b1_lim_L + diff_b1_lim_R - diff_b1_zero_R;
-        J[1] = diff_b1;
+        J[1] = diff_b1 / area_F;
 
         // b2 / b3:
         // Since b2 and b3 apply to different halves of the regression, the derivative also only covers one half
@@ -2697,12 +2708,12 @@ namespace qAlgorithms
         double diff_b2 = diff_b2_zero - diff_b2_lim;
         double diff_b3 = diff_b3_lim - diff_b3_zero;
 
-        J[2] = diff_b2;
-        J[3] = diff_b3;
+        J[2] = diff_b2 / area_F;
+        J[3] = diff_b3 / area_F;
 
         double u = matProductReg(J, c->scale);
         assert(u > 0);
-        *uncert = sqrt(u * mse) * delta_x; // @todo taking the log mse and using it with the exponential u is certaintly wrong
+        *uncert = sqrt(u * mse) * delta_x; // this is the uncertainty of the logarithmic area.
 
         return area_F * delta_x;
     }
