@@ -432,6 +432,7 @@ void test_areaPrediction()
     coeff.b2 = -0.13;
     coeff.b3 = -0.22;
     coeff.x0 = 500;
+    coeff.scale = 6;
 
     std::vector<float> x;
     std::vector<float> y;
@@ -442,14 +443,53 @@ void test_areaPrediction()
     double area_e = area_empiric(&x, &y);
     double area_t = peakArea(&coeff, x_step, 0, nullptr);
 
-    // the area calculation is wrong!
-    // RegressionGauss testreg;
-    // testreg.coeffs = coeff;
-    // calcPeakAreaUncert(&testreg);
-    // double area_c = testreg.area * exp(coeff.b0);
-    // assert(abs(area_e - area_c) < 0.01, "Incorrect area calculation\n");
+    assert(abs(area_e - area_t) < 0.01, "Incorrect area calculation when b2 and b3 < 0\n"); // expected area > 10^5
 
-    assert(abs(area_e - area_t) < 0.01, "Incorrect area calculation\n"); // expected area > 10^5
+    // also check for positive cases
+    coeff.b2 = 0.012;
+    x.clear();
+    simulate_stepwise(&coeff, &x, &y, x_step * 0.05);
+    // remove values of y before the valley point to have equivalent areas
+    double valley = -coeff.b1 / (2 * coeff.b2);
+    size_t idx = 0;
+    while (x[idx] < valley)
+    {
+        y[idx] = 0;
+        idx += 1;
+    }
+    area_e = area_empiric(&x, &y);
+    area_t = peakArea(&coeff, x_step, 0, nullptr);
+    // note: this uses a greater tolerance as the expected difference because when using 1000 steps,
+    // since the valley point is not included exactly. Even if the calculation is slightly unstable,
+    // this error will always be below the expected variance from instrument noise.
+    assert(abs(area_e - area_t) < y[idx] * abs(valley - x[idx]), "Incorrect area calculation when b2 > 0 and b3 < 0\n");
+
+    coeff.b1 = -0.32; // this is necessary because a positive b1 means b3 is the apex
+    coeff.b2 = -0.34;
+    coeff.b3 = 0.021;
+    x.clear();
+    simulate_stepwise(&coeff, &x, &y, x_step * 0.05);
+    valley = -coeff.b1 / (2 * coeff.b3);
+    idx = 999;
+    while (x[idx] > valley)
+    {
+        y[idx] = 0;
+        idx -= 1;
+    }
+    area_e = area_empiric(&x, &y);
+    area_t = peakArea(&coeff, x_step, 0, nullptr);
+
+    assert(abs(area_e - area_t) < y[idx] * abs(valley - x[idx]), "Incorrect area calculation when b2 < 0 and b3 > 0\n");
+
+    // run the uncertainty calculation at least once to check for errors
+    double uncert = 0;
+    double mse = 0.03;
+    coeff.b3 = -0.21;
+    x.clear();
+    simulate_stepwise(&coeff, &x, &y, x_step * 0.05);
+    area_e = area_empiric(&x, &y);
+    area_t = peakArea(&coeff, x_step, mse, &uncert);
+    assert(area_t > uncert, "Too high uncertainty\n");
 }
 
 int main()
@@ -460,7 +500,7 @@ int main()
     test_singlePeak();
     test_areaPrediction();
     control_sim_gauss();
-    survey_EMG();
+    // survey_EMG();
 
     return 0;
 }

@@ -2562,7 +2562,10 @@ namespace qAlgorithms
         bool b2_pos = b2 > 0;
         bool b3_pos = b3 > 0;
         assert(!(b2_pos && b3_pos));
+        assert(!(b2_pos && b1 < 0));
+        assert(!(b3_pos && b1 > 0));
         assert(delta_x > 0);
+        assert(c->scale > 1);
 
         // only relevant if one of the coefficients is > 0: Calculate the valley position for a given
         // peak. This is required during the calculation of the erfi term. Always choosing the valley
