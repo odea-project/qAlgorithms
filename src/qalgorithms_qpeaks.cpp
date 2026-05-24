@@ -2530,6 +2530,7 @@ namespace qAlgorithms
         ///
         /// = J0^2 A + J1^2 C + (J2^2 + J3^2) E + 2 * (J0 B * (J2 + J3) + J1 D * (J2 - J3) + J2 J3 F )
 
+        assert(scale > 1);
         const MatInverse inv = qalgo_matInverse[scale];
         double vecMatrxTranspose = J[0] * J[0] * inv.A +
                                    J[1] * J[1] * inv.C +
@@ -2565,7 +2566,6 @@ namespace qAlgorithms
         assert(!(b2_pos && b1 < 0));
         assert(!(b3_pos && b1 > 0));
         assert(delta_x > 0);
-        assert(c->scale > 1);
 
         // only relevant if one of the coefficients is > 0: Calculate the valley position for a given
         // peak. This is required during the calculation of the erfi term. Always choosing the valley
