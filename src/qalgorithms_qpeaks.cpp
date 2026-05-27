@@ -1378,6 +1378,10 @@ namespace qAlgorithms
                              const float *observed,
                              const std::vector<float> *predict);
 
+    double signalToNoise(const std::vector<float> *predict, // @todo check if this is a good idea
+                         const Range_i *range,
+                         const double mse);
+
     std::vector<int> failbook;
 
     // @todo rework: this function only calculates regression properties and the p-value (or something to the same effect)
@@ -1428,7 +1432,7 @@ namespace qAlgorithms
         // everything involving the RSS is dependent on b0!
         double RSS_log = calcRSS_log(mutateReg, intensities_log);
         assert(RSS_log > 0);
-        double RSS_exp = calcRSS(predict->data(), intensities, &regSpan);
+        // double RSS_exp = calcRSS(predict->data(), intensities, &regSpan);
         // assert(RSS_exp > 0);
         // double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
@@ -1441,8 +1445,8 @@ namespace qAlgorithms
         the regression does not describe a peak. This is done through a nested F-test against a constant that
         is the mean of all predicted values. @todo test this function
         */
-        // bool f_ok_log = f_testRegression(intensities_log->data(), RSS_log, &regSpan);
-        bool f_ok = f_testRegression(intensities, RSS_exp, &regSpan);
+        bool f_ok = f_testRegression(intensities_log->data(), RSS_log, &regSpan);
+        // bool f_ok = f_testRegression(intensities, RSS_exp, &regSpan);
         // assert(f_ok_log == f_ok);
         if (!f_ok)
         {
@@ -1465,18 +1469,11 @@ namespace qAlgorithms
         // uncertainty calculation and t-tests against peak properties
 
         double uncert_position = peakPositionUncert(coeffs, mse_log);
+        mutateReg->uncert_position = uncert_position;
         double uncert_height = peakHeightUncert(coeffs, mse_log);
-        double uncert_height_old = calcPeakHeightUncert(mutateReg, mse_log);
         mutateReg->uncert_height = uncert_height;
 
-        // Problem: When performing the test, the uncertainty is < 1 in log space, so lower uncertainty peaks get thrown out
-
-        // calcPeakHeightUncert(mutateReg, mse_log);
-        // if (1 / mutateReg->uncert_height <= T_VALUES[df_sum]) // statistical significance of the peak height
-        // {
-        //     failstates += 16;
-        //     // return invalid_height;
-        // }
+        double sn = signalToNoise(predict, &mutateReg->regSpan, mse_log);
 
         // Height Significance Test:
         // use a paired t-test to check if the apex height is a significant increase from the
@@ -2604,8 +2601,8 @@ namespace qAlgorithms
         // error function after replacing b2 and b3 with their absolute values. This
         // should not happen if b2 or b3 is already positive
         // @todo make sure this does not affect the error calculation
-        assert(b2_pos xor area_L < 0);
-        assert(b3_pos xor area_R < 0);
+        assert(b2_pos xor (area_L < 0));
+        assert(b3_pos xor (area_R < 0));
         area_L = abs(area_L);
         area_R = abs(area_R);
 
@@ -2749,7 +2746,7 @@ namespace qAlgorithms
         bool apex_left = c->b1 < 0;
         double b23 = apex_left ? c->b2 : c->b3;
         double b1_sq = c->b1 * c->b1;
-        double height = exp(c->b0 - b1_sq / (4 * b23));
+        // double height = exp(c->b0 - b1_sq / (4 * b23));
 
         // uncertainty: calculate uncertainty for the logarithmic case, then transform back
         // note: this leads to two values for uncertainty
@@ -2770,27 +2767,6 @@ namespace qAlgorithms
         double uncert = sqrt(u * mse);
         // assert(uncert == test_u); // calculating the error for the exponential case directly leads to wrong results
         return uncert;
-    }
-
-    double calcPeakHeightUncert(RegressionGauss *mutateReg, double mse)
-    {
-        double Jacobian_height[4]{1, 0, 0, 0};         // Jacobian matrix for the height
-        Jacobian_height[1] = mutateReg->apex_position; // apex_position * height;
-        if (mutateReg->apex_position < 0)
-        {
-            Jacobian_height[2] = mutateReg->apex_position * mutateReg->apex_position; // apex_position * Jacobian_height[1];
-            // Jacobian_height[3] = 0;
-        }
-        else
-        {
-            // Jacobian_height[2] = 0;
-            Jacobian_height[3] = mutateReg->apex_position * mutateReg->apex_position; // apex_position * Jacobian_height[1];
-        }
-        // at this point without height, i.e., to get the real uncertainty
-        // multiply with height later. This is done to avoid exp function at this point
-        // mutateReg->uncert_height = calcUncertainty(Jacobian_height, mutateReg->coeffs.scale, mutateReg->mse);
-        double uncertainty = sqrt(matProductReg(Jacobian_height, mutateReg->coeffs.scale) * mse);
-        return uncertainty;
     }
 
     double calcMSE_exp(const RegCoeffs *coeff,
