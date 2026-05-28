@@ -1378,10 +1378,6 @@ namespace qAlgorithms
                              const float *observed,
                              const std::vector<float> *predict);
 
-    double signalToNoise(const std::vector<float> *predict, // @todo check if this is a good idea
-                         const Range_i *range,
-                         const double mse);
-
     std::vector<int> failbook;
 
     // @todo rework: this function only calculates regression properties and the p-value (or something to the same effect)
@@ -1473,8 +1469,6 @@ namespace qAlgorithms
         double uncert_height = peakHeightUncert(coeffs, mse_log);
         mutateReg->uncert_height = uncert_height;
 
-        double sn = signalToNoise(predict, &mutateReg->regSpan, mse_log);
-
         // Height Significance Test:
         // use a paired t-test to check if the apex height is a significant increase from the
         // height at regression limits @todo for double peak systems, this will likely prefer
@@ -1529,39 +1523,6 @@ namespace qAlgorithms
 
         mutateReg->isValid = true;
         return ok;
-    }
-
-    double signalToNoise(const std::vector<float> *predict,
-                         const Range_i *range,
-                         const double mse)
-    {
-        /*
-          basic idea of this test:
-          under the assumption that the MSE is the total variance caused by noise, we can set a critical
-          signal to noise ratio for every regression. This is done via the f-test. We compare the total
-          variance of the signal to the total variance of the noise (mse). Since this function only returns
-          the f-value, the test itself has to be performed in addition.
-        */
-        double varSignal = 0; // variance of predicted intensities
-
-        size_t start = range->startIdx;
-        size_t end = range->endIdx + 1;
-        size_t len = end - start;
-        double meanSignal = 0;
-        for (size_t i = start; i < end; i++)
-        {
-            meanSignal += predict->at(i);
-        }
-        meanSignal /= len;
-
-        for (size_t i = start; i < end; i++)
-        {
-            double diff = predict->at(i) - meanSignal;
-            varSignal += diff * diff;
-        }
-        varSignal /= len;
-
-        return varSignal / mse;
     }
 
 #pragma region "create peaks"

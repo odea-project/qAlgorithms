@@ -72,6 +72,7 @@ Additional functionality of the core library that should be added at some point.
 in the centroid dimension. Problem: m/z variation
 * Test for the effect of non-equidistance
 * Do a non-linear refit for the final features / components
+* Instead of doing a 2D-2D fit, immediately employ a three-dimensional model and fit a somehow selected region with local maximum nonlinearly
 
 ## Interface to high-level languages
 * Expose core functions to R, python, java, julia (?), C# (?), Matlab <- this is relevant because many companies only allow matlab
