@@ -851,7 +851,9 @@ namespace qAlgorithms
     {
         std::vector<RegressionGauss> validRegsAtScale;
         size_t currentScale = GLOBAL_MINSCALE;
-        validRegsTmp->push_back({0}); // doing this avoids a second check for the last scale group
+        RegressionGauss tmp;
+        tmp.coeffs.scale = 0;
+        validRegsTmp->push_back(tmp); // doing this avoids a second check for the last scale group @todo still very hacky
         RegressionGauss *currentReg = validRegsTmp->data();
 
         while (currentReg->coeffs.scale != 0)
