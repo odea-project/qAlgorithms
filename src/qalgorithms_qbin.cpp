@@ -2,12 +2,10 @@
 #include "qalgorithms_utils.h"
 
 #include <cassert>
-#include <iostream> // error printing
 #include <vector>
 #include <numeric> // used for std::partial_sum during order space construction
 #include <math.h>
 #include <algorithm> // sorting
-#include <string>
 
 namespace qAlgorithms
 {

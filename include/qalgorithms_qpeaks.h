@@ -174,6 +174,10 @@ namespace qAlgorithms
 
 #include "../external/qalgorithms_matinverse.h"
 
+#ifndef QALGORITHMS_MAXSCALE_PRECOMPILED
+    #error Required array of matrix inverses not defined. Ensure that qalgorithms_matinverse.h exists. You can try regenerating it by going into the "external" directory and running 'cc qalgorithms_matinverse.c -o a.exe && ./a.exe'.
+#endif
+
     // This file contains precomputed values for the inverse matrix transpose (X^T X)^(-1).
     // The precalculation is required since it is a very expensive operation, especially for large X.
 

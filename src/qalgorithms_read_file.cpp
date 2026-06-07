@@ -23,6 +23,9 @@ namespace qAlgorithms
 
         result->reserve(lengthDecoded);
 
+        // for only this block, ignore the alignment change. It is intended behavouir.
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wcast-align"
         if (isDouble)
         {
             const double *dbl = (const double *)bytes->data();
@@ -41,6 +44,7 @@ namespace qAlgorithms
                 result->push_back(flt[i]);
             }
         }
+        #pragma clang diagnostic pop
         return lengthDecoded;
     };
 

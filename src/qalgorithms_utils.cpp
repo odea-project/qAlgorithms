@@ -12,7 +12,7 @@ namespace qAlgorithms
                       const double mean_2, const double sd_2, const double count_2,
                       const float alpha)
     {
-        assert(alpha == 0.05);
+        assert(abs(alpha - 0.05) < 0.0001); // @todo this is suboptimal, we should return the p-value
         // source: https://doi.org/10.1093/beheco/ark016
         // H0: mean_1 is equal to mean_2
 
