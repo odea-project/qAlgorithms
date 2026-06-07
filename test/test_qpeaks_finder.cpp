@@ -2,6 +2,7 @@
 #include "qalgorithms_datatypes.h"
 #include "math.h"
 #include "string"
+#include <cfloat>
 
 #include "common_test_utils.hpp"
 
@@ -40,8 +41,8 @@ void simulate_gauss(
     double apex, double height, double sdev,
     std::vector<float> *simulated)
 {
-    assert(!simulated->empty(), "wrong usage of test function\n");
-    assert(xvals->size() == simulated->size(), "wrong usage of test function\n");
+    assert(!simulated->empty(), "wrong usage of test function\n",NULL);
+    assert(xvals->size() == simulated->size(), "wrong usage of test function\n", NULL);
 
     for (size_t i = 0; i < simulated->size(); i++)
     {
@@ -120,8 +121,8 @@ void simulate_EMG(
     double apex, double height, double sdev, double tau,
     std::vector<float> *xvals, std::vector<float> *yvals)
 {
-    assert(yvals->empty(), "wrong usage of test function\n");
-    assert(xvals->empty(), "wrong usage of test function\n");
+    assert(yvals->empty(), "wrong usage of test function\n", NULL);
+    assert(xvals->empty(), "wrong usage of test function\n", NULL);
 
     double x = x_start;
     bool peakDone = false;
@@ -165,8 +166,8 @@ void control_sim_gauss()
     std::vector<PeakFit> ret;
     qpeaks_find(yvals.data(), xvals.data(), nullptr, length, 8, &ret);
 
-    assert(ret.size() != 0, "Peak not found\n");
-    assert(ret.size() == 1, "Too many peaks found\n");
+    assert(ret.size() != 0, "Peak not found\n", NULL);
+    assert(ret.size() == 1, "Too many peaks found\n", NULL);
 
     PeakFit reg = ret.front();
 
@@ -179,9 +180,9 @@ void control_sim_gauss()
     // RegCoeffs c = reg.coeffs;
     // float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step);
 
-    assert(abs(apex - apex_p) < FLT_EPSILON, "inaccurate position\n");
-    assert(abs(height - height_p) < reg.uncert_height, "inaccurate height\n");
-    assert(abs(fwhm - fwhm_p) < 10e-4, "inaccurate width\n");
+    assert(abs(apex - apex_p) < FLT_EPSILON, "inaccurate position\n", NULL);
+    assert(abs(height - height_p) < reg.uncert_height, "inaccurate height\n", NULL);
+    assert(abs(fwhm - fwhm_p) < 10e-4, "inaccurate width\n", NULL);
     assert(abs(area - area_p) < 0.01, "inaccurate area (%f vs. %f), empiric %f\n", area, area_p, area_e);
 }
 
@@ -268,7 +269,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
         return;
     }
 
-    assert(ret.size() == 1, "Too many peaks found\n");
+    assert(ret.size() == 1, "Too many peaks found\n", NULL);
 
     PeakFit reg = ret.front();
 
@@ -307,7 +308,7 @@ void survey_EMG()
     std::vector<ErrorEMG> testCases;
     float x_start = 10;
     float x_step = 1;
-    ErrorEMG test = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0};
+    ErrorEMG test = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, false};
     test.r_apex = 20;
 
     std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_abs,d_height_rel,d_height_abs,dqs,jaccard,uncert_diff_position,closedPeak\n";
@@ -350,7 +351,7 @@ int simulate_profile(
     std::vector<float> *simulated,
     std::vector<float> *simulated_log)
 {
-    assert(coeff->x0 > 1, "error");
+    verify(coeff->x0 > 1);
 
     double x = -double(coeff->x0);
     for (size_t i = 0; i < coeff->x0; i++)
@@ -388,16 +389,16 @@ void test_singlePeak()
     std::vector<RegressionGauss> validRegs;
     runningRegression(simulated.data(), &simulated_log, nullptr, simulated.size(), 5, &validRegs);
 
-    assert(validRegs.size() == 1, "incorrect number of regressions found\n");
+    assert(validRegs.size() == 1, "incorrect number of regressions found\n", NULL);
     double diff_b0 = abs(coeff.b0 - validRegs.front().coeffs.b0);
     double diff_b1 = abs(coeff.b1 - validRegs.front().coeffs.b1);
     double diff_b2 = abs(coeff.b2 - validRegs.front().coeffs.b2);
     double diff_b3 = abs(coeff.b3 - validRegs.front().coeffs.b3);
 
-    assert(diff_b0 < abs(coeff.b0) * 0.05, "> 5%% Error in b0 estimate\n");
-    assert(diff_b1 < abs(coeff.b1) * 0.05, "> 5%% Error in b0 estimate\n");
-    assert(diff_b2 < abs(coeff.b2) * 0.05, "> 5%% Error in b0 estimate\n");
-    assert(diff_b3 < abs(coeff.b3) * 0.05, "> 5%% Error in b0 estimate\n");
+    assert(diff_b0 < abs(coeff.b0) * 0.05, "> 5%% Error in b0 estimate\n", NULL);
+    assert(diff_b1 < abs(coeff.b1) * 0.05, "> 5%% Error in b0 estimate\n", NULL);
+    assert(diff_b2 < abs(coeff.b2) * 0.05, "> 5%% Error in b0 estimate\n", NULL);
+    assert(diff_b3 < abs(coeff.b3) * 0.05, "> 5%% Error in b0 estimate\n", NULL);
 }
 
 int simulate_stepwise(
@@ -406,7 +407,7 @@ int simulate_stepwise(
     std::vector<float> *simulated,
     double delta_x)
 {
-    assert(coeff->x0 > 1, "error");
+    verify(coeff->x0 > 1);
 
     double x = -delta_x * coeff->x0;
     for (size_t i = 0; i < coeff->x0; i++)
@@ -443,7 +444,7 @@ void test_areaPrediction()
     double area_e = area_empiric(&x, &y);
     double area_t = peakArea(&coeff, x_step, 0, nullptr);
 
-    assert(abs(area_e - area_t) < 0.01, "Incorrect area calculation when b2 and b3 < 0\n"); // expected area > 10^5
+    assert(abs(area_e - area_t) < 0.01, "Incorrect area calculation when b2 and b3 < 0\n", NULL); // expected area > 10^5
 
     // also check for positive cases
     coeff.b2 = 0.012;
@@ -462,7 +463,7 @@ void test_areaPrediction()
     // note: this uses a greater tolerance as the expected difference because when using 1000 steps,
     // since the valley point is not included exactly. Even if the calculation is slightly unstable,
     // this error will always be below the expected variance from instrument noise.
-    assert(abs(area_e - area_t) < y[idx] * abs(valley - x[idx]), "Incorrect area calculation when b2 > 0 and b3 < 0\n");
+    assert(abs(area_e - area_t) < y[idx] * abs(valley - x[idx]), "Incorrect area calculation when b2 > 0 and b3 < 0\n", NULL);
 
     coeff.b1 = -0.32; // this is necessary because a positive b1 means b3 is the apex
     coeff.b2 = -0.34;
@@ -479,7 +480,7 @@ void test_areaPrediction()
     area_e = area_empiric(&x, &y);
     area_t = peakArea(&coeff, x_step, 0, nullptr);
 
-    assert(abs(area_e - area_t) < y[idx] * abs(valley - x[idx]), "Incorrect area calculation when b2 < 0 and b3 > 0\n");
+    assert(abs(area_e - area_t) < y[idx] * abs(valley - x[idx]), "Incorrect area calculation when b2 < 0 and b3 > 0\n", NULL);
 
     // run the uncertainty calculation at least once to check for errors
     double uncert = 0;
@@ -489,7 +490,7 @@ void test_areaPrediction()
     simulate_stepwise(&coeff, &x, &y, x_step * 0.05);
     area_e = area_empiric(&x, &y);
     area_t = peakArea(&coeff, x_step, mse, &uncert);
-    assert(area_t > uncert, "Too high uncertainty\n");
+    assert(area_t > uncert, "Too high uncertainty\n", NULL);
 }
 
 int main()

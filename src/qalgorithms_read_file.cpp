@@ -24,6 +24,7 @@ namespace qAlgorithms
         result->reserve(lengthDecoded);
 
         // for only this block, ignore the alignment change. It is intended behavouir.
+        #pragma GCC diagnostic ignored "-Wunknown-pragmas"
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Wcast-align"
         if (isDouble)

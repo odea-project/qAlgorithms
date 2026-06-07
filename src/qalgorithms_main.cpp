@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
         while (debug && (validRegressions.empty() || repeat))
         {
             const size_t length = intensity.size();
-            const size_t maxScale = 8; // @todo not bound to centroid maxscale
+            const size_t maxscale = 8; // @todo not bound to centroid maxscale
             std::vector<float> logIntensity;
             logIntensity.reserve(length);
             validRegressions.clear();
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
                 &logIntensity,
                 nullptr,
                 length,
-                maxScale,
+                maxscale,
                 &validRegressions);
 
             failcount += 1;
@@ -78,7 +78,12 @@ int main(int argc, char *argv[])
         clock_t timeStart = clock();
         if (!userArgs.silent)
         {
-            printf("\nreading file %zu of %zu\n%ls\n", pathIdx + 1, tasklist.size(), pathSource.c_str());
+            #ifdef WIN32
+            const char format[] = "\nreading file %zu of %zu\n%ls\n";
+            #else
+            const char format[] = "\nreading file %zu of %zu\n%s\n";
+            #endif
+            printf(format, pathIdx + 1, tasklist.size(), pathSource.c_str());
         }
 
         assert(pathSource.extension() == ".mzML"); // @todo support other filetypes

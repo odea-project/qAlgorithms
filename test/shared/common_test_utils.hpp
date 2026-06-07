@@ -6,7 +6,7 @@
 #include <qalgorithms_qpeaks.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <cfloat>
+#include <cfloat> // placing this here instead of in every individual test
 
 using namespace qAlgorithms;
 
@@ -32,9 +32,16 @@ inline void default_assertion_handler(const char *assertion_as_cstring, const ch
     va_end(argument_list);
     putchar('\n'); // the format string will not contain a newline
     /* set breakpoint here! */
-    int a = 3;
-    __asm__("int $3");
+    volatile int a = 3;
+    #if defined(__i386__) || defined(__x86_64__)
+        __asm__ volatile("int $3");
+    #elif defined(__arm__) || defined(__aarch64__)
+        __asm__ volatile("brk #0");
+    #else
+        #error "Unsupported architecture for breakpoint trap"
+    #endif
     a++;
+    printf("%d\n", a);
     exit(1);
 }
 #define verify(condition) assert(condition, "Verify Failed")

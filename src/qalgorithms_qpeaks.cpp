@@ -120,10 +120,10 @@ namespace qAlgorithms
         const float *x_values,
         const unsigned int *degreesOfFreedom_cum,
         const size_t length,
-        const size_t maxScale_in,
+        size_t maxscale,
         std::vector<PeakFit> *result)
     {
-        // control input for nullpointers, mismatching x and y, and fitting maxScale
+        // control input for nullpointers, mismatching x and y, and fitting maxscale
         // @todo use one enum for errors uniformly throughout the code
         if (y_values == nullptr || x_values == nullptr || result == nullptr)
         {
@@ -137,7 +137,7 @@ namespace qAlgorithms
         {
             return -3;
         }
-        if (maxScale_in < GLOBAL_MINSCALE)
+        if (maxscale < GLOBAL_MINSCALE)
         {
             return -4;
         }
@@ -163,8 +163,7 @@ namespace qAlgorithms
 
         // core operation: identify best-fit regressions for the input data
 
-        size_t maxScale = (length - 1) / 2; // apex is not included in scale -> -1
-        maxScale = maxScale_in > maxScale ? maxScale : maxScale_in;
+        maxscale = min(maxscale, (length - 1) / 2); // apex is not included in scale -> -1
 
         /*
         The fitting routine assumes that all present peaks have a modified gaussian base function.
@@ -179,7 +178,7 @@ namespace qAlgorithms
             &y_log,
             degreesOfFreedom_cum,
             length,
-            maxScale,
+            maxscale,
             &validRegressions);
 
         // validregressions contains all relevant peak candidates
@@ -302,7 +301,7 @@ namespace qAlgorithms
         std::vector<float> *intensities_log,
         const unsigned int *const degreesOfFreedom_cum,
         const size_t length,
-        const size_t maxScale,
+        const size_t maxscale,
         std::vector<RegressionGauss> *validRegressions)
     {
         assert(validRegressions->empty());
@@ -318,7 +317,7 @@ namespace qAlgorithms
         // coefficients for single-b0 peaks, spans all regressions over a peak window
         // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
         std::vector<RegCoeffs> coefficients;
-        findCoefficients(intensities_log->data(), length, maxScale, &coefficients);
+        findCoefficients(intensities_log->data(), length, maxscale, &coefficients);
 
         std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
         validRegsTmp.reserve(coefficients.size() / 2);
@@ -1128,17 +1127,17 @@ namespace qAlgorithms
     void findCoefficients(
         const float *intensity_log,
         const size_t length,
-        size_t maxScale,
+        size_t maxscale,
         std::vector<RegCoeffs> *coeffs)
     {
-        assert(maxScale >= GLOBAL_MINSCALE);
-        assert(maxScale <= QALGORITHMS_MAXSCALE_PRECOMPILED);
+        assert(maxscale >= GLOBAL_MINSCALE);
+        assert(maxscale <= QALGORITHMS_MAXSCALE_PRECOMPILED);
 
         assert(length > 4);
-        maxScale = min(maxScale, (length - 1) / 2);
+        maxscale = min(maxscale, (length - 1) / 2);
 
         size_t totalRegs = 0;
-        for (size_t scale = GLOBAL_MINSCALE; scale <= maxScale; scale++)
+        for (size_t scale = GLOBAL_MINSCALE; scale <= maxscale; scale++)
         {
             totalRegs += length - 2 * scale;
         }
@@ -1162,17 +1161,17 @@ namespace qAlgorithms
             // b3 is 0, 0, 1
             double product_sum_b3 = cen[1];
 
-            size_t maxScale_absolute = 0;
+            size_t maxscale_absolute = 0;
             { // the largest valid scale depends on x0
-                size_t maxScale_left = x0;
-                size_t maxScale_right = length - x0 - 1;
-                size_t maxScale_limits = min(maxScale_left, maxScale_right);
-                maxScale_absolute = min(maxScale_limits, maxScale);
+                size_t maxscale_left = x0;
+                size_t maxscale_right = length - x0 - 1;
+                size_t maxscale_limits = min(maxscale_left, maxscale_right);
+                maxscale_absolute = min(maxscale_limits, maxscale);
             }
 
             // var for access in inner loop
             size_t offset_prev = 0;
-            for (size_t scale = GLOBAL_MINSCALE; scale <= maxScale_absolute; scale++)
+            for (size_t scale = GLOBAL_MINSCALE; scale <= maxscale_absolute; scale++)
             {
                 // random access is difficult to vectorise
                 double leftVal = cen[-scale];
@@ -2136,14 +2135,14 @@ namespace qAlgorithms
             logIntensity.resize(length);
             logIntensity.clear();
 
-            size_t maxScale = min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2);
+            size_t maxscale = min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2);
 
             runningRegression(
                 currentEIC.ints_area.data(),
                 &logIntensity,
                 currentEIC.df.data(),
                 currentEIC.ints_area.size(),
-                maxScale,
+                maxscale,
                 &validRegressions);
 
             if (!validRegressions.empty())
