@@ -13,52 +13,59 @@ namespace qAlgorithms
 {
 #pragma region helpstring
 
-    const std::string helpinfo = " help information:\n\n" // @todo provide an up-to-date version of this and use a normal const char
-                                 "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
-                                 "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
-                                 "    As of now (2025-05-02), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
-                                 "      -h, -help:  Open this help menu\n\n"
-                                 "    Note that filenames may never start with a \"-\".\n"
-                                 "    Input settings:\n"
-                                 "      Note that duplicate input files are removed by default, even when they have a different name.\n"
-                                 "      -i,  -input <PATH> [PATH]   Input files or directories in which to recursively search for .mzML files.\n"
-                                 "                                  you can enter any number of targets, as long as no file starts with a \"-\"\n"
-                                 "                                  or contains two dots in a row. It is possible to use the -i flag multiple\n"
-                                 "                                  times within one execution.\n"
-                                 "                                  Note that qAlgorithms is case-sensitive when searching for files recursively. Make\n"
-                                 "                                  sure all your files have the correct extension (.mzML) and are not all lowercase (.mzml).\n"
-                                 //   "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
-                                 //   "                                  to search recursively and output directories for different blocks of the input files.\n"
-                                 //   "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
-                                 "    Single-file output settings:\n"
-                                 "      The filename is always the original filename extended by the polarity and the processing step.\n"
-                                 "      -o,  -output <DIRECTORY>:   Directory into which all output files should be printed.\n"
-                                 "      -pc, -printcentroids:       Print all centroids produced after the first run of qcentroids.\n"
-                                 "      -pb, -printbins:            If this flag is set, both bin summary information and\n"
-                                 "                                  all binned centroids will be printed to the output location\n"
-                                 "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
-                                 "      -pf, -printfeatures         Print the feature list as csv.\n"
-                                 //   "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
-                                 //   "                                  were used to create the final peaks. This does not return any quality\n"
-                                 //   "                                  scores. Only use this option when reading in prodile mode files.\n"
-                                 "      -px, -printfeatcen:         Print all centroids that are a part of the final feature list, including debug data.\n"
-                                 "      -ppf, -printcomponentsF     Print the component regressions that belong to the generated feature list. The values for\n"
-                                 "                                  beta 0 are printed in order of the retention time of the associated features (check the feature\n"
-                                 "                                  list for this) and separated by a semicolon. The feature list is always printend if this is set.\n"
-                                 "      -ppb, -printcomponentsB     Print all centroids that are part of components. Similar to -ppf, but considers the range of the\n"
-                                 "                                  newly constructed regression for which centroids are relevant. Also prints the components themselves.\n"
-                                 "      -pa, -printall:             Print all availvable resutlts. You will probably not need to do this.\n"
-                                 "    Program behaviour:\n"
-                                 "      -s, -silent:    do not print progress reports to standard out.\n" // @todo add an option for printing all process stats without timing and explanations for use with CLI toolchains
-                                 //   "      -v, -verbose:   print a detailed progress report to standard out.\n"
-                                 "      -skip-existing  Do not write to files that already exist, even if an output option is set.\n"
-                                 "      -skip-error:    If processing fails, the program will not exit and instead start processing\n"
-                                 "                      the next file in the tasklist.\n"
-                                 "      -skipAhead <n>  Skip the first n entries in the tasklist when starting processing \n"
-                                 "      -fullLoop       Override default behaviour and always perform all possible processing steps, even if the results are not printed.\n"
-                                 "      -log:           This option will create a detailed log file in the program directory.\n"
-                                 "                      It will provide an overview for every processed file which can help you find and\n"
-                                 "                      reason about anomalous behaviour in the results.";
+    const char helpinfo[] = " help information:\n\n" // @todo provide an up-to-date version of this and use a normal const char
+                            "    qAlgorithms is a software project for non-target screening using mass spectrometry.\n"
+                            "    For more information, visit our github page: https://github.com/odea-project/qAlgorithms.\n"
+                            "    As of now (2026-06-08), only mzML files are supported. This program accepts the following command-line arguments:\n\n"
+                            "      -h, -help:  Open this help menu\n"
+                            "\n    Input settings:\n"
+                            "      -i,  -input <PATH> [PATH] : Input files or directories in which to recursively search for .mzML\n"
+                            "                                  files. You can enter any number of targets, as long as no file starts\n"
+                            "                                  with a \"-\" or contains two dots in a row. It is possible to use\n"
+                            "                                  the -i flag multiple times within one execution.\n"
+                            "                                  Note that:\n"
+                            "                                  1) qAlgorithms is case-sensitive when searching for files recursively.\n"
+                            "                                     Make sure all your files have the correct extension (.mzML) and are\n"
+                            "                                     not all lowercase (.mzml).\n"
+                            "                                  2) duplicate input files are removed by default, even when they have\n"
+                            "                                     a different name.\n"
+                            "                                  3) filenames may never start with a \"-\".\n"
+                            //   "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
+                            //   "                                  to search recursively and output directories for different blocks of the input files.\n"
+                            //   "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
+                            "\n    Single-file output settings:\n"
+                            "      Note                      : The filename is always the original filename extended by the polarity\n"
+                            "                                  and the processing step. For example, printing features of the file\n"
+                            "                                  \"test.mzML\" would produce the output file \"test_pos_features.csv\".\n"
+                            "      -o,  -output <DIRECTORY>  : Directory into which all output files should be printed.\n"
+                            "      -pc, -printcentroids      : Print all centroids produced after the first run of qcentroids.\n"
+                            "      -pb, -printbins:          : If this flag is set, both bin summary information and\n"
+                            "                                  all binned centroids will be printed to the output location\n"
+                            "                                  in addition to the final peak table. The file ends in _bins.csv.\n"
+                            "      -pf, -printfeatures         Print the feature list as csv.\n"
+                            //   "      -sp, -subprofile:           (not implemented yet) instead of the peaks, print all proflie-mode data points which\n" // @todo
+                            //   "                                  were used to create the final peaks. This does not return any quality\n"
+                            //   "                                  scores. Only use this option when reading in prodile mode files.\n"
+                            "      -px, -printfeatcen        : Print all centroids that are a part of the final feature list, including debug data.\n"
+                            "      -ppf, -printcomponentsF   : Print the component regressions that belong to the generated feature list.\n"
+                            "                                  The values for beta 0 are printed in order of the retention time of the\n"
+                            "                                  associated features (check the feature list for this) and separated by a semicolon.\n"
+                            "                                  The feature list is always printend if this is set.\n"
+                            "      -ppb, -printcomponentsB   : Print all centroids that are part of components. Similar to -ppf, but considers the range of the\n"
+                            "                                  newly constructed regression for which centroids are relevant. Also prints the components themselves.\n"
+                            "      -pa, -printall            : Print all availvable resutlts. You will probably not need to do this.\n"
+                            "\n    Program behaviour:\n"
+                            "      -s, -silent               : do not print progress reports to standard out.\n" // @todo add an option for printing all process stats without timing and explanations for use with CLI toolchains
+                            //   "      -v, -verbose:   print a detailed progress report to standard out.\n"
+                            "      -skip-existing            : Do not write to files that already exist, even if an output option is set.\n"
+                            "      -skip-error               : If processing fails, the program will not exit and instead start processing\n"
+                            "                                  the next file in the tasklist.\n"
+                            "      -skipAhead <n>            : Skip the first n entries in the tasklist when starting processing \n"
+                            "      -fullLoop                 : Override default behaviour and always perform all possible processing steps,\n"
+                            "                                  even if the results are not printed.\n"
+                            "      -log                      : This option will create a detailed log file in the program directory.\n"
+                            "                                  It will provide an overview for every processed file which can help you find and\n"
+                            "                                  reason about anomalous behaviour in the results.\n";
     //   "                      A name can be supplied with a string following the argument. If this is not\n"
     //   "                      done by the user, the default log will be written or overwritten.\n"
     //   "    Analysis options:\n"
@@ -95,10 +102,8 @@ namespace qAlgorithms
             std::string argument = argv[i];
             if ((argument == "-h") || (argument == "-help"))
             {
-                printf("\n    %s%s", argv[0], helpinfo.c_str());
-                // printf("\n    " << argv[0] << helpinfo;
+                printf("\n    %s%s", argv[0], helpinfo);
                 exit(0);
-                // return args;
             }
             else if ((argument == "-s") || (argument == "-silent"))
             {

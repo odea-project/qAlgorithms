@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 {
     using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
 
-    volatile bool debug = true;
+    volatile bool debug = false;
     if (debug)
     {
         std::vector<float> intensity = {16649.7441, 34118.1367, 46703.2617, 41025.5352, 53125.8086, 140134.125, 402735.812, 689393.625, 907356.938, 728596.75, 432838.844, 156655.438, 43841.4922, 11888.1475, 3812.54126};
