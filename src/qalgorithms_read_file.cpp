@@ -23,10 +23,10 @@ namespace qAlgorithms
 
         result->reserve(lengthDecoded);
 
-        // for only this block, ignore the alignment change. It is intended behavouir.
-        #pragma GCC diagnostic ignored "-Wunknown-pragmas"
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wcast-align"
+// for only this block, ignore the alignment change. It is intended behavouir.
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-align"
         if (isDouble)
         {
             const double *dbl = (const double *)bytes->data();
@@ -45,7 +45,7 @@ namespace qAlgorithms
                 result->push_back(flt[i]);
             }
         }
-        #pragma clang diagnostic pop
+#pragma clang diagnostic pop
         return lengthDecoded;
     };
 
@@ -148,12 +148,13 @@ namespace qAlgorithms
             this->mtd_mz = extract_binary_metadata(*iterator);
             assert(mtd_mz.data_name_short == "mz");
             iterator++;
-            assert(iterator == range.end());
+            // assert(iterator == range.end());
             this->mtd_intensity = extract_binary_metadata(*iterator);
             assert(mtd_intensity.data_name_short == "intensity");
 
             if (!(mtd_mz.isDouble && mtd_intensity.isDouble))
                 fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
+            // @todo note: the number of spectra differs from the required one by one
         }
 
         std::vector<pugi::xml_node> *spectra = new std::vector<pugi::xml_node>; // intermediate necessary since linknodes is const
