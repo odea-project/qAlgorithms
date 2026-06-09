@@ -78,11 +78,11 @@ int main(int argc, char *argv[])
         clock_t timeStart = clock();
         if (!userArgs.silent)
         {
-            #ifdef WIN32
+#ifdef _WIN32
             const char format[] = "\nreading file %zu of %zu\n%ls\n";
-            #else
+#else
             const char format[] = "\nreading file %zu of %zu\n%s\n";
-            #endif
+#endif
             printf(format, pathIdx + 1, tasklist.size(), pathSource.c_str());
         }
 

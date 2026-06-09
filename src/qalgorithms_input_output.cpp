@@ -546,7 +546,12 @@ namespace qAlgorithms
         {
             if (noOverwrite)
             {
-                fprintf(stderr, "Warning: \"%s\" already exists and will not be overwritten\n", pathOutput.c_str());
+#ifdef _WIN32
+                const char format[] = "Warning: \"%ls\" already exists and will not be overwritten\n";
+#else
+                const char format[] = "Warning: \"%s\" already exists and will not be overwritten\n";
+#endif
+                fprintf(stderr, format, pathOutput.c_str());
                 return;
             }
             std::filesystem::remove(pathOutput);
@@ -573,7 +578,12 @@ namespace qAlgorithms
 
         if (!silent)
         {
-            printf("writing centroids to: %s\n", pathOutput.c_str());
+#ifdef _WIN32
+            const char format[] = "writing centroids to: %ls\n";
+#else
+            const char format[] = "writing centroids to: %s\n";
+#endif
+            printf(format, pathOutput.c_str());
         }
 
         std::ofstream file_out;
@@ -581,7 +591,12 @@ namespace qAlgorithms
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
         {
-            fprintf(stderr, "Error: could not open output path during peaklist printing. No files have been written.\nFilename: %s\n", pathOutput.c_str());
+#ifdef _WIN32
+            const char format[] = "Error: could not open output path during centroid printing. No files have been written.\nFilename: %ls\n";
+#else
+            const char format[] = "Error: could not open output path during centroid printing. No files have been written.\nFilename: %s\n";
+#endif
+            fprintf(stderr, format, pathOutput.c_str());
             return;
         }
         output << "cenID,mz,mzUncertainty,number_MS1,retentionTime,area,areaUncertainty,"
@@ -617,7 +632,13 @@ namespace qAlgorithms
         {
             if (noOverwrite)
             {
-                fprintf(stderr, "Warning: %s already exists and will not be overwritten\n", pathOutput.c_str());
+#ifdef _WIN32
+                const char format[] = "Warning: %ls already exists and will not be overwritten\n";
+#else
+                const char format[] = "Warning: %s already exists and will not be overwritten\n";
+#endif
+                fprintf(stderr, format, pathOutput.c_str());
+
                 return;
             }
             std::filesystem::remove(pathOutput);
@@ -625,7 +646,12 @@ namespace qAlgorithms
 
         if (!silent)
         {
-            printf("writing bins to: %s\n", pathOutput.c_str());
+#ifdef _WIN32
+            const char format[] = "writing bins to: %ls\n";
+#else
+            const char format[] = "writing bins to: %s\n";
+#endif
+            printf(format, pathOutput.c_str());
         }
 
         std::ofstream file_out;
@@ -633,14 +659,17 @@ namespace qAlgorithms
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
         {
-            fprintf(stderr, "Error: could not open output path during bin printing. No files have been written.\n"
-                            "Filename: %s\n",
-                    pathOutput.c_str());
+#ifdef _WIN32
+            const char format[] = "Error: could not open output path during bin printing. No files have been written.\nFilename: %ls\n";
+#else
+            const char format[] = "Error: could not open output path during bin printing. No files have been written.\nFilename: %s\n";
+#endif
+            fprintf(stderr, format, pathOutput.c_str());
             return;
         }
         // @todo consider if the mz error is relevant when checking individual bins
         output << "binID,cenID,mz,mzUncertainty,retentionTime,number_MS1,area,height,degreesOfFreedom,DQSC\n";
-        for (size_t binID = 0; binID < bins->size(); binID++)
+        for (unsigned long binID = 0; binID < bins->size(); binID++)
         {
             const EIC bin = bins->at(binID);
             if (bin.scanNumbers.empty())
@@ -676,14 +705,24 @@ namespace qAlgorithms
         {
             if (noOverwrite)
             {
-                fprintf(stderr, "Warning: %s already exists and will not be overwritten\n", pathOutput.c_str());
+#ifdef _WIN32
+                const char format[] = "writing bins to: %ls\n";
+#else
+                const char format[] = "writing bins to: %s\n";
+#endif
+                printf(format, pathOutput.c_str());
                 return;
             }
             std::filesystem::remove(pathOutput);
         }
         if (!silent)
         {
-            printf("writing features to: %s\n", pathOutput.c_str());
+#ifdef _WIN32
+            const char format[] = "writing features to: %ls\n";
+#else
+            const char format[] = "writing features to: %s\n";
+#endif
+            printf(format, pathOutput.c_str());
         }
 
         std::ofstream file_out;
@@ -691,9 +730,12 @@ namespace qAlgorithms
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
         {
-            fprintf(stderr, "Error: could not open output path during peaklist printing. No files have been written.\n"
-                            "Filename: %s\n",
-                    pathOutput.c_str());
+#ifdef _WIN32
+            const char format[] = "Error: could not open output path during feature printing. No files have been written.\nFilename: %ls\n";
+#else
+            const char format[] = "Error: could not open output path during feature printing. No files have been written.\nFilename: %s\n";
+#endif
+            fprintf(stderr, format, pathOutput.c_str());
             return;
         }
 
@@ -706,7 +748,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < peaktable->size(); i++)
         {
             const FeaturePeak peak = peaktable->at(i);
-            size_t binID = peak.idxBin;
+            unsigned long binID = peak.idxBin;
             assert(binID < originalBins->size());
             const std::vector<unsigned int> *scanNums = &(originalBins->at(binID).scanNumbers);
             assert(peak.idxBinStart < peak.idxBinEnd);
@@ -718,75 +760,13 @@ namespace qAlgorithms
             snprintf(buffer, 256, "%d,%d,%lu,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%lu,%d,%d,%0.5f,%0.5f,%0.5f,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                      peak.componentID, counter, binID, peak.idxBinStart, peak.idxBinEnd, peak.mz, peak.mzUncertainty,
                      peak.retentionTime, peak.RT_Uncertainty, RT_start, RT_end,
-                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.coefficients.scale,
+                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, (unsigned long)peak.coefficients.scale,
                      peak.interpolationCount, peak.competitorCount, peak.DQSC, peak.DQSB, peak.DQSF,
                      // properties relevant for componentisation, remove this later
                      peak.mse_base, peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
             output << buffer;
             ++counter;
         }
-
-        file_out << output.str();
-        file_out.close();
-        return;
-    }
-
-    void printFeatureCentroids(const std::vector<FeaturePeak> *peaktable,
-                               std::filesystem::path pathOutput,
-                               std::string filename,
-                               const std::vector<EIC> *originalBins,
-                               //    const std::vector<float> *convertRT, // @todo
-                               bool silent, bool noOverwrite)
-    {
-        filename += "_featCen.csv";
-        pathOutput /= filename;
-
-        if (std::filesystem::exists(pathOutput))
-        {
-            if (noOverwrite)
-            {
-                fprintf(stderr, "Warning: %s already exists and will not be overwritten\n", pathOutput.c_str());
-                return;
-            }
-            std::filesystem::remove(pathOutput);
-        }
-        if (!silent)
-        {
-            printf("writing feature centroids to: %s\n", pathOutput.c_str());
-        }
-
-        std::ofstream file_out;
-        std::stringstream output;
-        file_out.open(pathOutput, std::ios::out);
-        if (!file_out.is_open())
-        {
-            fprintf(stderr, "Error: could not open output path during featCen printing. No files have been written.\n"
-                            "Filename: %s\n",
-                    pathOutput.c_str());
-            return;
-        }
-
-        output << "featureID,binID,cenID,mz,mzUncertainty,retentionTime,scan,"
-               << "area,height,degreesOfFreedom,DQSC,DQSB,DQSF,b0,b1,b2,b3\n";
-
-        // unsigned int counter = 1;
-        // for (size_t i = 0; i < peaktable->size(); i++)
-        // {
-        //     const FeaturePeak peak = peaktable->at(i);
-        //     int binID = peak.idxBin;
-        //     const EIC bin = originalBins->at(binID);
-        //     char buffer[256];
-        //     for (size_t cen = peak.idxBinStart; cen < peak.idxBinEnd + 1; cen++)
-        //     {
-        //         assert(false);
-        // snprintf(buffer, 256, "%d,%d,%d,%0.6f,%0.6f,%0.4f,%d,%0.3f,%0.3f,%d,%0.5f,%0.5f,%0.5f,%s,%0.8f,%0.8f,%0.8f,%0.8f\n",
-        //          counter, binID, bin.cenID[cen], bin.mz[cen], bin.predInterval[cen], bin.rententionTimes[cen], bin.scanNumbers[cen],
-        //          bin.ints_area[cen], bin.ints_height[cen], bin.df[cen], bin.DQSC[cen], bin.DQSB[cen], peak.DQSF,
-        //          peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
-        //     output << buffer;
-        // }
-        // ++counter;
-        // }
 
         file_out << output.str();
         file_out.close();
