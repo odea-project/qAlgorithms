@@ -73,9 +73,7 @@ namespace qAlgorithms
 
         pugi::xml_parse_result loading_result;
 
-        // pugi::xml_node mzml_root_node;
-
-        const std::vector<pugi::xml_node> *linknodes; // allocation during initialisation, has to be deallocated manually with the supplied function
+        std::vector<pugi::xml_node> *linknodes = nullptr; // allocation during initialisation, has to be deallocated manually with the supplied function
 
         bool isCentroided_fun();
 

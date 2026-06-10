@@ -85,6 +85,20 @@ namespace qAlgorithms
             size_t leftOfApex = size_t(apex);
             double delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
 
+            // control against all distances in the peak, test if they are equidistant enough
+            double delta_min = delta_x;
+            double delta_max = delta_x;
+            double delta_mean = 0;
+            for (size_t pos = regression->regSpan.startIdx; pos < regression->regSpan.endIdx; pos++)
+            {
+                double d = x_values[pos + 1] - x_values[pos];
+                delta_min = min(d, delta_min);
+                delta_max = max(d, delta_max);
+                delta_mean += d;
+                printf("%f, ", d);
+            }
+            delta_mean /= rangeLen(&regression->regSpan) - 1;
+
             // position is determined relative to the point left of the apex
             double apexFraction = delta_x * (apex - trunc(apex));
             peak.position = x_values[leftOfApex] + apexFraction;
@@ -1489,7 +1503,9 @@ namespace qAlgorithms
         // it might be preferential to combine both functions again or store the common matrix somewhere
         calcPeakAreaUncert(mutateReg, mse_log);
         double uncertainty = -1;
+
         mutateReg->area = peakArea(coeffs, 1, mse_log, &uncertainty);
+
         if (mutateReg->area / mutateReg->uncert_area <= T_VALUES[df_sum])
         {
             failstates += 32;
@@ -2539,9 +2555,29 @@ namespace qAlgorithms
         double eterm_b3 = exp(b0 - (b1 * b1) / (4 * b3));
         const double sqrt_pi = 1.7724538509055158819; // sqrt(M_PI);
 
-        // if there is a valley point, this half of the equation is always zero. This is
-        // because erfi(b1 + 2 b2 x) resolves to erfi(b1 + 2 b2 * (-b1 / (2 b2))) == 0
+        // if there is a valley point, the antiderivative evaluated at the valley is always zero. This
+        // is because erfi(b1 + 2 b2 x) resolves to erfi(b1 + 2 b2 * (-b1 / (2 b2))) == 0
         // (the valley point is always at -b1 / (2 b2), refer to apex position calculation)
+
+        // if b2 or b3 is close to 0, there is a large loss of precision from the error function.
+        // for the normal case (b23 < 0), this leads to a very large number being multiplied by a
+        // erf(very small number), which gets rounded to -1 exactly. Since the two terms are otherwise
+        // identical, they cancel out and the respective part of the area is 0. To mitigate this, we
+        // use the complimentary error function erfc(z) = 1 - erf(z)
+
+        double area_L_2 = 0;
+        if (b2_pos)
+        {
+            double error_b2 = liberfc::erfi(b1 / dsqrt_b2);
+            area_L_2 = (sqrt_pi * eterm_b2 * error_b2) / dsqrt_b2;
+        }
+        else
+        {
+            double common_fac = (sqrt_pi * eterm_b2) / dsqrt_b2;
+            // area = common_fac * (error_b2 - 1); replace erf in function with 1 - erfc
+            double difference = -erfc(b1 / dsqrt_b2);
+            area_L_2 = common_fac * difference;
+        }
         double F_b2_lim = b2_pos ? 0 : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2; // outer left limit for the integral
         // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
         double error_b2 = b2_pos
@@ -2549,6 +2585,9 @@ namespace qAlgorithms
                               : erf(b1 / dsqrt_b2);
         double F_b2_zero = (sqrt_pi * eterm_b2 * error_b2) / dsqrt_b2;
         double area_L = F_b2_zero - F_b2_lim;
+
+        double diff_L = area_L - area_L_2;
+        assert(diff_L < 1);
 
         // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;
         // is zero for a valley point for the same reasons as above
@@ -2558,6 +2597,23 @@ namespace qAlgorithms
                               : erf(b1 / dsqrt_b3);
         double F_b3_zero = (sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3;
         double area_R = F_b3_lim - F_b3_zero;
+
+        double area_R_2 = 0;
+        if (b3_pos)
+        {
+            double error_b3 = liberfc::erfi(b1 / dsqrt_b3);
+            area_R_2 = -(sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3; // negative since we substract from the right valley
+        }
+        else
+        {
+            double common_fac = (sqrt_pi * eterm_b3) / dsqrt_b3;
+            // area = common_fac * (-1 - eterm_b3); replace -erf in function with -1 + erfc
+            double difference = erfc(b1 / dsqrt_b3) - 2;
+            area_R_2 = common_fac * difference;
+            double diff_R = area_R - area_R_2;
+            assert(diff_R < 1);
+            assert(b3_pos xor (area_R < 0));
+        }
 
         // The above calculation produces negative values for the area if we use the
         // error function after replacing b2 and b3 with their absolute values. This

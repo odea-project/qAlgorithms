@@ -123,26 +123,6 @@ namespace qAlgorithms
 
         if (number_spectra > 0)
         {
-            // pugi::xml_node binary_list = spec_list.first_child().child("binaryDataArrayList");
-
-            // size_t counter = 0;
-
-            // bool warn_float32 = false;
-            // for (const pugi::xml_node &bin : binary_list.children("binaryDataArray"))
-            // {
-            //     BinaryMetadata mtd = extract_binary_metadata(bin);
-
-            //     warn_float32 = warn_float32 || (!mtd.isDouble);
-
-            //     spectra_binary_metadata.push_back(mtd);
-
-            //     counter++;
-            // }
-            // if (warn_float32)
-            //     fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
-
-            // assert(counter == 2);
-
             auto range = spec_list.first_child().child("binaryDataArrayList").children("binaryDataArray");
             auto iterator = range.begin();
             this->mtd_mz = extract_binary_metadata(*iterator);
@@ -154,21 +134,26 @@ namespace qAlgorithms
 
             if (!(mtd_mz.isDouble && mtd_intensity.isDouble))
                 fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
-            // @todo note: the number of spectra differs from the required one by one
         }
 
-        std::vector<pugi::xml_node> *spectra = new std::vector<pugi::xml_node>; // intermediate necessary since linknodes is const
+        linknodes = new std::vector<pugi::xml_node>(number_spectra);
+        linknodes->clear();
         for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
         {
-            spectra->push_back(child);
+            linknodes->push_back(child);
         }
-        assert(spectra->size() > 0);
-
-        linknodes = spectra;
+        assert(linknodes->size() == number_spectra);
 
         isCentroided = isCentroided_fun();
 
         polarityMode = get_polarity_mode();
+    };
+
+    void XML_File::free_linknodes()
+    {
+        if (linknodes != nullptr)
+            delete linknodes;
+        defective = true;
     };
 
     BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin)
@@ -243,13 +228,6 @@ namespace qAlgorithms
 
         return mtd;
     }
-
-    void XML_File::free_linknodes()
-    {
-        if (linknodes != nullptr)
-            delete linknodes;
-        defective = true;
-    };
 
     void XML_File::get_spectrum( // this obviously only extracts data that is in profile mode.
         std::vector<float> *const spectrum_mz,
