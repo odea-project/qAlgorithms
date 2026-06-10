@@ -6,6 +6,7 @@
 #include "liberfc_reduced.h"
 
 #include <cassert>
+#include <cstdio>
 #define _USE_MATH_DEFINES // relevant for windows to have math constants
 #include <math.h>
 #include <vector>
@@ -98,6 +99,7 @@ namespace qAlgorithms
                 printf("%f, ", d);
             }
             delta_mean /= rangeLen(&regression->regSpan) - 1;
+            printf(" | mean: %f\n", delta_mean);
 
             // position is determined relative to the point left of the apex
             double apexFraction = delta_x * (apex - trunc(apex));
@@ -445,6 +447,11 @@ namespace qAlgorithms
 
         // the main issue with multiple regressions is estimating if the greater scale ones cover too many points.
         // if not, should overlap between regressions be permitted?
+
+        // use all input params for nothing here to suppress warnings - fix this @todo
+        assert(df_cum[0]);
+        assert(intensities[0] > apexes[0]);
+
         return 0;
     }
 
@@ -2546,7 +2553,7 @@ namespace qAlgorithms
         // peak. This is required during the calculation of the erfi term. Always choosing the valley
         // will lead to distortion, but it should overall be lower than if the peak is always cut off
         // at the end of the peak window.
-        double x = -b1 / (2 * (b2_pos ? b2 : b3));
+        const double x = -b1 / (2 * (b2_pos ? b2 : b3));
 
         // note: this is not factored out into a separate function since + and - inf use different terms
         double dsqrt_b2 = 2 * sqrt(abs(b2));
@@ -2601,8 +2608,8 @@ namespace qAlgorithms
         double area_R_2 = 0;
         if (b3_pos)
         {
-            double error_b3 = liberfc::erfi(b1 / dsqrt_b3);
-            area_R_2 = -(sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3; // negative since we substract from the right valley
+            double error_b3_new = liberfc::erfi(b1 / dsqrt_b3);
+            area_R_2 = -(sqrt_pi * eterm_b3 * error_b3_new) / dsqrt_b3; // negative since we substract from the right valley
         }
         else
         {

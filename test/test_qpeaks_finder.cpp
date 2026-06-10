@@ -213,7 +213,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
 
     simulate_EMG(x_start, x_step, apex, height, sdev, tau, &xvals, &yvals);
     x_start = xvals.front();
-    float x_end = xvals.back();
+    // float x_end = xvals.back();  
     size_t length = xvals.size();
     in_out->jaccard = 0;
 
@@ -225,7 +225,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
 
     // take n equidistant samples from the generated distribution, starting at y_min.
     size_t idx_start = 0;
-    for (idx_start; idx_start < length; idx_start++)
+    for (; idx_start < length; idx_start++)
     {
         // @todo
     }

@@ -1,5 +1,4 @@
 // internal
-#include "qalgorithms_utils.h"
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_qbin.h"
 #include "qalgorithms_input_output.h"
@@ -70,7 +69,6 @@ int main(int argc, char *argv[])
 
 #pragma region file processing
     std::string filename;
-    size_t counter = 1;
     size_t errorCount = 0;
     for (size_t pathIdx = skipAhead; pathIdx < tasklist.size(); pathIdx++)
     {
@@ -94,7 +92,6 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Error: the file is defective.\n");
             if (userArgs.skipError)
             {
-                ++counter;
                 ++errorCount;
                 continue;
             }
@@ -107,7 +104,6 @@ int main(int argc, char *argv[])
         if (inputFile.isCentroided) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
         {
             fprintf(stderr, "Error: centroided data is not supported by qAlgorithms for the time being.\n");
-            counter++;
             continue;
         }
         if (!userArgs.silent)
@@ -230,7 +226,6 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    ++counter;
                     ++errorCount;
                     continue;
                 }
@@ -311,7 +306,6 @@ int main(int argc, char *argv[])
         }
         // @todo this function really needs to be shortened
         inputFile.free_linknodes();
-        counter++;
     }
 
 #pragma region "Logging and similar" // @todo add an option for custom logfile names

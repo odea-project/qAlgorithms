@@ -431,8 +431,8 @@ namespace cephes
         return (x);
     }
 
-    const double LS2PI = 0.91893853320467274178; // log( sqrt( 2*pi ) )
-    const double LOGPI = 1.14472988584940017414;
+    // const double LS2PI = 0.91893853320467274178; // log( sqrt( 2*pi ) )
+    // const double LOGPI = 1.14472988584940017414;
 
 #define MAXLGM 2.556348e305
 
