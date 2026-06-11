@@ -11,6 +11,8 @@ namespace liberfc
     double erfi(double x);
 
     double dawson(double x);
+
+    double erfcx(double x);
 }
 
 #endif

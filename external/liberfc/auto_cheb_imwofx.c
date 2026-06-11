@@ -6,17 +6,17 @@
 //            "Code generation for piecewise Chebyshev approximation."
 //
 // clang-format off
-static const double ppapp_a = 0.5; // begin of domain
-static const double ppapp_b = 12; // end of domain
-static const int ppapp_M = 5; // 2^M subdomains per octave
-static const int ppapp_N = 10; // polynomial degree
-static const int ppapp_nr = 144; // total number of subdomains
-static const int ppapp_j0 = 0; // first octave starts at 2^(j0−1)
-static const int ppapp_l0 = 0; // index of a in first octave
-static const int ppapp_Nout = 12; // stored coeffs per subdomain
-static const int ppapp_nTables = 2;
+static const double ppapp_a_imw = 0.5; // begin of domain
+static const double ppapp_b_imw = 12; // end of domain
+static const int ppapp_M_imw = 5; // 2^M subdomains per octave
+static const int ppapp_N_imw = 10; // polynomial degree
+static const int ppapp_nr_imw = 144; // total number of subdomains
+static const int ppapp_j0_imw = 0; // first octave starts at 2^(j0−1)
+static const int ppapp_l0_imw = 0; // index of a in first octave
+static const int ppapp_Nout_imw = 12; // stored coeffs per subdomain
+static const int ppapp_nTables_imw = 2;
 
-alignas(64) static const double ppapp_Coeffs0[144 * 8] = {
+alignas(64) static const double ppapp_Coeffs0_imw[144 * 8] = {
     -0x1.5f64e22c62f72p-77, -0x1.4966ce7e468c4p-70, 0x1.05741c6266c93p-61, 0x1.dba728f22ea3ap-55, -0x1.23a3c180da8aep-45, -0x1.dfffcd55d84a5p-41, 0x1.c4b1a0a360ce9p-30, -0x1.35c476fb1ab4ap-24, // subdomain 0:0 (0.5..0.515625)
     -0x1.4486166055455p-77, -0x1.63d0423100db9p-70, 0x1.f2cd9ddc0065ap-62, 0x1.0dc38852202ddp-54, -0x1.1cb24fa01b080p-45, -0x1.5c170679a3826p-40, 0x1.c1d1f91a89952p-30, -0x1.fab2d97783a0fp-25, // subdomain 0:1 (0.515625..0.53125)
     -0x1.285c8940e85e8p-77, -0x1.7c1315a102464p-70, 0x1.d8eac748f5a48p-62, 0x1.2c23614adec51p-54, -0x1.14e6b5d0236e5p-45, -0x1.c56a5c8f207b6p-40, 0x1.bde77b72f3e02p-30, -0x1.8ab62e7cf5347p-25, // subdomain 0:2 (0.53125..0.546875)
@@ -163,7 +163,7 @@ alignas(64) static const double ppapp_Coeffs0[144 * 8] = {
     0x1.3299b48bfaf57p-69, -0x1.b486eea8a4bb1p-64, 0x1.37cd383c1109dp-57, -0x1.bfa0dc2e4f1dep-51, 0x1.427a3bb1f72e5p-44, -0x1.d270099438623p-38, 0x1.52a049b9be3b5p-31, -0x1.ed89bd3fd428ap-25, // subdomain 4:15 (11.75..12.0)
 };
 
-alignas(64) static const double ppapp_Coeffs1[144 * 4] = {
+alignas(64) static const double ppapp_Coeffs1_imw[144 * 4] = {
     -0x1.9d5e2f887fe99p-15, 0x1.461380c17af85p-8, 0x1.ef90904c7eeeep-2, 0, // subdomain 0:0 (0.5..0.515625)
     -0x1.a0aac55ff7b75p-15, 0x1.391aec16a4582p-8, 0x1.f98d5b983b626p-2, 0, // subdomain 0:1 (0.515625..0.53125)
     -0x1.a34eb4d108597p-15, 0x1.2c0a96301c7a0p-8, 0x1.0190ffdb18ffap-1, 0, // subdomain 0:2 (0.53125..0.546875)

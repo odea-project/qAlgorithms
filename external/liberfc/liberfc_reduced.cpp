@@ -83,22 +83,22 @@ namespace liberfc
     //! Returns polynomial approximation to f(x), using auto-tabulated expansion coefficients.
     //! Code taken from https://jugit.fz-juelich.de/mlz/ppapp.
 
-    static double chebApproximant(double x)
+    static double chebApproximant_imw(double x)
     {
         // Application-specific constants:
-        static const int loff = (ppapp_j0 + 1) * (1 << ppapp_M) + ppapp_l0; // precomputed offset
+        static const int loff = (ppapp_j0_imw + 1) * (1 << ppapp_M_imw) + ppapp_l0_imw; // precomputed offset
 
         // For given x, obtain mantissa xm and exponent je:
         int je;                           // will be set in next line
         const double xm = frexp2(x, &je); // sets xm and je
 
         // Integer arithmetics to obtain reduced coordinate t:
-        const int ip = (int)((1 << (ppapp_M + 1)) * xm); // index in octave + 2^M
-        const int lij = je * (1 << ppapp_M) + ip - loff; // index in lookup table
-        const double t = (1 << (ppapp_M + 2)) * xm - (1 + 2 * ip);
+        const int ip = (int)((1 << (ppapp_M_imw + 1)) * xm); // index in octave + 2^M
+        const int lij = je * (1 << ppapp_M_imw) + ip - loff; // index in lookup table
+        const double t = (1 << (ppapp_M_imw + 2)) * xm - (1 + 2 * ip);
 
-        const double *const P = ppapp_Coeffs0 + lij * 8;
-        const double *const Q = ppapp_Coeffs1 + lij * 4;
+        const double *const P = ppapp_Coeffs0_imw + lij * 8;
+        const double *const Q = ppapp_Coeffs1_imw + lij * 4;
         return ((((((((((P[0]) * t + P[1]) * t + P[2]) * t + P[3]) * t + P[4]) * t + P[5]) * t + P[6]) * t + P[7]) * t + Q[0]) * t + Q[1]) * t + Q[2];
     }
 
@@ -203,7 +203,7 @@ namespace liberfc
         {
             // Intermediate range: Use Chebyshev approximants.
 
-            return copysign(chebApproximant(ax), x);
+            return copysign(chebApproximant_imw(ax), x);
         }
 
         /* else */ {
@@ -272,7 +272,152 @@ namespace liberfc
             return 5.641895835477562793e-01 / x;
         }
 
-    } // im_w_of_z
+    } // im_w_of_z}
+
+#undef ppapp_Coeffs0
+#undef ppapp_Coeffs1
+#include "auto_cheb_erfcx.c"
+
+    //! Returns polynomial approximation to f(x), using auto-tabulated expansion coefficients.
+    //! Code taken from https://jugit.fz-juelich.de/mlz/ppapp.
+
+    static double chebApproximant_erfcx(double x)
+    {
+        // Application-specific constants:
+        static const int loff = (ppapp_j0_erfcx + 1) * (1 << ppapp_M_erfcx) + ppapp_l0_erfcx; // precomputed offset
+
+        // For given x, obtain mantissa xm and exponent je:
+        int je;                           // will be set in next line
+        const double xm = frexp2(x, &je); // sets xm and je
+
+        // Integer arithmetics to obtain reduced coordinate t:
+        const int ip = (int)((1 << (ppapp_M_erfcx + 1)) * xm); // index in octave + 2^M
+        const int lij = je * (1 << ppapp_M_erfcx) + ip - loff; // index in lookup table
+        const double t = (1 << (ppapp_M_erfcx + 2)) * xm - (1 + 2 * ip);
+
+        const double *const P = ppapp_Coeffs0_erfcx + lij * 8;
+        const double *const Q = ppapp_Coeffs1_erfcx + lij * 2;
+        return ((((((((P[0] * t + P[1]) * t + P[2]) * t + P[3]) * t + P[4]) * t + P[5]) * t + P[6]) * t + P[7]) * t + Q[0]) * t + Q[1];
+    }
+
+    /******************************************************************************/
+    /*  Library function erfcx                                                    */
+    /******************************************************************************/
+
+    double erfcx(double x)
+    {
+        // Uses the following methods:
+        // - asymptotic expansion for large positive x,
+        // - Chebyshev polynomials for medium positive x,
+        // - Taylor (Maclaurin) series for small |x|,
+        // - 2*exp(x^2)-erfcx(-x) for medium negative x,
+        // - Asymptote 2exp(x^2) for large negative x.
+
+        double ax = fabs(x);
+
+        if (ax < .125)
+        {
+            // Use Taylor expansion
+            return ((((((((((((((+1.9841269841269841e-04) * x -
+                                5.3440090793734269e-04) *
+                                   x +
+                               1.3888888888888889e-03) *
+                                  x -
+                              3.4736059015927274e-03) *
+                                 x +
+                             8.3333333333333332e-03) *
+                                x -
+                            1.9104832458760001e-02) *
+                               x +
+                           4.1666666666666664e-02) *
+                              x -
+                          8.5971746064419999e-02) *
+                             x +
+                         1.6666666666666666e-01) *
+                            x -
+                        3.0090111122547003e-01) *
+                           x +
+                       5.0000000000000000e-01) *
+                          x -
+                      7.5225277806367508e-01) *
+                         x +
+                     1.0000000000000000e+00) *
+                        x -
+                    1.1283791670955126e+00) *
+                       x +
+                   1.0000000000000000e+00;
+        }
+
+        if (x < 0)
+        {
+            if (x < -26.7)
+                return HUGE_VAL;
+            if (x < -6.1)
+                return 2 * exp(x * x);
+            return 2 * exp(x * x) - chebApproximant_erfcx(-x);
+        }
+
+        if (x < 12)
+            return chebApproximant_erfcx(x);
+
+        /* else */ {
+            // Use asymptotic expansion
+            //
+            // Coefficient are a_0 = 1/sqrt(pi), a_N = (2N-1)!!/2^N/sqrt(pi).
+
+            const double r = 1 / x;
+
+            if (x < 150)
+            {
+                if (x < 23.2)
+                    return (((((((((((+3.6073371500083758e+05) * (r * r) -
+                                     3.7971970000088164e+04) *
+                                        (r * r) +
+                                    4.4672905882456671e+03) *
+                                       (r * r) -
+                                   5.9563874509942218e+02) *
+                                      (r * r) +
+                                  9.1636730015295726e+01) *
+                                     (r * r) -
+                                 1.6661223639144676e+01) *
+                                    (r * r) +
+                                3.7024941420321507e+00) *
+                                   (r * r) -
+                               1.0578554691520430e+00) *
+                                  (r * r) +
+                              4.2314218766081724e-01) *
+                                 (r * r) -
+                             2.8209479177387814e-01) *
+                                (r * r) +
+                            5.6418958354775628e-01) *
+                           r;
+                return (((((((+9.1636730015295726e+01) * (r * r) -
+                             1.6661223639144676e+01) *
+                                (r * r) +
+                            3.7024941420321507e+00) *
+                               (r * r) -
+                           1.0578554691520430e+00) *
+                              (r * r) +
+                          4.2314218766081724e-01) *
+                             (r * r) -
+                         2.8209479177387814e-01) *
+                            (r * r) +
+                        5.6418958354775628e-01) *
+                       r;
+            }
+            if (x < 6.9e7)
+                return ((((-1.0578554691520430e+00) * (r * r) +
+                          4.2314218766081724e-01) *
+                             (r * r) -
+                         2.8209479177387814e-01) *
+                            (r * r) +
+                        5.6418958354775628e-01) *
+                       r;
+            // 1-term expansion, important to avoid overflow
+            return 0.56418958354775629 * r;
+        }
+
+    } // erfcx
 }
 
 /* Copyright:
