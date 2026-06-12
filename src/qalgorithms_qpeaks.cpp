@@ -2521,6 +2521,8 @@ namespace qAlgorithms
         return vecMatrxTranspose;
     }
 
+    double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert)
+    {
     // base function: integral of e^(b0 + b1 x + b2 x^2) dx =
     // [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ] / (2 sqrt(b2))   // source: wolfram alpha
     // erfi(x) = i * erf(i * x) * -1
@@ -2528,27 +2530,43 @@ namespace qAlgorithms
     // [(real part) * -1 * i * erf( i * (real) / (i * 2 * sqrt(-b2)) ) ] / (i * 2 * sqrt(-b2))
     // i within and outside of the error function cancel each other out: i / i = 1
     // erf(0) = 0 ; erf(-inf) = -1 ; erf(inf) = 1
-    // assuming b2 < 0:
     // F(-inf) = [ (...) * -1 * erf( (b1 + 2 b2 * -inf) / (> 0) ) ] / (...)
     // when evaluating F towards infinity, b2 or b3 always have a negative sign
     // b2 * -inf = +inf ; b2 * +inf = -inf
     // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * +1 ] / (2 sqrt(-b2))
     // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * -1 ] / (2 sqrt(-b2))
-    // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
+    // F(0)    = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
     // if b2 or b3 are positive, erfi has to be used. The positive part of the function replaces F(+-inf)
     // for reasons of numerical stability, the constant scaling factor    sqrt(pi) * e^(b0) / 2    is factored out.
     // the final equation is composed as follows:
     // A = constant_b0 * (F(0)_b2 - F(-inf)_b2 + F(inf)_b3 - F(0)_b3)
     // for every peak half, F can be written as exp_b23 * erf_b23 / sqrt_b23, where only erf_b23 changes. As such:
     // A = constant_b0 * (exp_b2 / sqrt_b2 * (erf_b2_0 - erf_b2_-inf) + exp_b3 / sqrt_b3 * (erf_b3_inf - erf_b3_0))
-    // left: erf_b2_0 - erf_b2_-inf = erf(b1 / (2 sqrt(-b2)) - 1 = -erfc(b1 / (2 sqrt(-b2))
-    // right: erf_b3_inf - erf_b3_0 = -1 - erf(b1 / (2 sqrt(-b3)) = erfc(b1 / (2 sqrt(-b2)) - 2
-    // the following identities apply:
-    // erf(-x) = -erf(x); erfc(-x) = erf(x) + 1
-    // erfcx(x) = e^(x^2) * erfc(x)
-    // left: e^(-b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) / (2 sqrt(-b2))
-    double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert)
-    {
+    // apply erf(-x) = -erf(x); erfc(-x) = erf(x) + 1:
+    // left:  erf_b2_0 - erf_b2_-inf = -erf(b1 / (2 sqrt(-b2)) + 1 = erfc(b1 / (2 sqrt(-b2)))
+    // right: erf_b3_inf - erf_b3_0  = 1 + erf(b1 / (2 sqrt(-b3))  = erfc(-b1 / (2 sqrt(-b3)))
+    // A = constant_b0 * (
+    //      e^(-b1^2/(4 b2)) * erfc( b1 / (2 sqrt(-b2)) ) / (2 sqrt(-b2)) + 
+    //      e^(-b1^2/(4 b3)) * erfc(-b1 / (2 sqrt(-b3)) ) / (2 sqrt(-b3)) 
+    // )
+    // erfcx(x) = e^(x^2) * erfc(x); (b1 / (2 sqrt(-b2)))^2 = -b1^2 / (4 b2); (-b1 / (2 sqrt(-b2)))^2 = -b1^2 / (4 b2)
+    // A = constant_b0 * ( 
+    //      erfcx( b1 / (2 sqrt(-b2)) ) / (2 sqrt(-b2)) + 
+    //      erfcx(-b1 / (2 sqrt(-b3)) ) / (2 sqrt(-b3))
+    // )
+    // in implementation, sqrt(pi) / 2 is multiplied with each half individually so that the case
+    // of a positive coefficient is handled cleanly.
+
+    // if there is a valley point, the antiderivative evaluated at the valley is always zero. This
+    // is because erfi(b1 + 2 b2 x) resolves to erfi(b1 + 2 b2 * (-b1 / (2 b2))) == 0
+    // (the valley point is always at -b1 / (2 b2), refer to apex position calculation).
+    // The area of the half is then:
+    // A_L = e^(b0) * sqrt(pi) / 2 * e^(-b1^2/(4 b2)) * erfi(b1 / (2 sqrt(b2))  / (2 sqrt(b2))
+    // This suffers from the same algorithmic instability as the positive case.
+    // Here, we can use Dawson's integral D = 1/2 sqrt(pi) * e^(-x^2) * erfi(x)
+    // A_L = e^(b0) * D(b1 / (2 sqrt(b2)) / (2 sqrt(b2))
+    // The same transformation applied to b3.
+
         const double b0 = c->b0;
         const double b1 = c->b1;
         const double b2 = c->b2;
@@ -2571,94 +2589,32 @@ namespace qAlgorithms
         double dsqrt_b2 = 2 * sqrt(abs(b2));
         double dsqrt_b3 = 2 * sqrt(abs(b3));
 
-        double eterm_b2 = exp(-(b1 * b1) / (4 * b2));
-        double eterm_b3 = exp(-(b1 * b1) / (4 * b3));
-
         const double sqrt_pi_2 = 1.7724538509055158819 / 2; // sqrt(M_PI);
-        double constant_b0 = exp(b0) * sqrt_pi_2;
+        double b0_exp = exp(b0);
 
-        // if there is a valley point, the antiderivative evaluated at the valley is always zero. This
-        // is because erfi(b1 + 2 b2 x) resolves to erfi(b1 + 2 b2 * (-b1 / (2 b2))) == 0
-        // (the valley point is always at -b1 / (2 b2), refer to apex position calculation)
-
-        // if b2 or b3 is close to 0, there is a large loss of precision from the error function.
-        // for the normal case (b23 < 0), this leads to a very large number being multiplied by a
-        // erf(very small number), which gets rounded to -1 exactly. Since the two terms are otherwise
-        // identical, they cancel out and the respective part of the area is 0. To mitigate this, we
-        // use the complimentary error function erfc(z) = 1 - erf(z)
-
-        double area_L_2 = 0;
+        double area_L = -1;
         if (b2_pos)
         {
-            double error_b2 = liberfc::erfi(b1 / dsqrt_b2);
-            area_L_2 = eterm_b2 * error_b2 / dsqrt_b2;
+            area_L = liberfc::dawson(b1 / dsqrt_b2) / dsqrt_b2;
         }
         else
         {
-            double common_fac = eterm_b2 / dsqrt_b2;
-            // area = common_fac * (error_b2 - 1); replace erf in function with 1 - erfc
-            double difference = -erfc(b1 / dsqrt_b2);
-            area_L_2 = common_fac * difference;
-            // the below implementation is numerically unstable for small numbers, instead use the
-            // Scaled complementary error function erfcx(x) = e(x^2) * erfc(x)
-            double x = b1 / dsqrt_b2;
-            double difference_2 = -liberfc::erfcx(x) / exp(x * x);
-            // assert(abs(area_L_2 - difference_2 * common_fac) < 10e-10);
+            area_L = liberfc::erfcx(b1/dsqrt_b2) / dsqrt_b2 * sqrt_pi_2;
         }
-        double F_b2_lim = b2_pos ? 0 : eterm_b2 * 1 / dsqrt_b2; // outer left limit for the integral
-        double error_b2 = b2_pos
-                              ? liberfc::erfi(b1 / dsqrt_b2)
-                              : erf(b1 / dsqrt_b2);
-        double F_b2_zero = eterm_b2 * error_b2 / dsqrt_b2;
-        double area_L = F_b2_zero - F_b2_lim;
+        assert(area_L > 0);
 
-        double diff_L = area_L - area_L_2;
-        assert(diff_L < 1);
-
-        // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;
-        // is zero for a valley point for the same reasons as above
-        double F_b3_lim = b3_pos ? 0 : eterm_b3 * -1 / dsqrt_b3; // outer right limit for the integral
-        double error_b3 = b3_pos
-                              ? liberfc::erfi(b1 / dsqrt_b3)
-                              : erf(b1 / dsqrt_b3);
-        double F_b3_zero = eterm_b3 * error_b3 / dsqrt_b3;
-        double area_R = F_b3_lim - F_b3_zero;
-
-        double area_R_2 = 0;
+        double area_R = -1;
         if (b3_pos)
         {
-            double error_b3_new = liberfc::erfi(b1 / dsqrt_b3);
-            area_R_2 = -(eterm_b3 * error_b3_new) / dsqrt_b3; // negative since we substract from the right valley
+            area_R = liberfc::dawson(b1 / dsqrt_b3) / dsqrt_b3;
         }
         else
         {
-            long double common_fac = eterm_b3 / dsqrt_b3;
-            // area = common_fac * (-1 - eterm_b3); replace -erf in function with -1 + erfc
-            long double difference = erfc(b1 / dsqrt_b3) - 2;
-            area_R_2 = common_fac * difference;
-
-            long double z = b1 / dsqrt_b3;
-            long double difference_2 = liberfc::erfcx(z) / exp(z * z) - 2;
-            long double difference_3 = exp(log(liberfc::erfcx(z)) - z * z) - 2;
-            // instead of just the difference, use erfcx to avoid underflow <- this does not work, either - we have too little precision
-
-            // assert(abs(area_R_2 - difference_2 * common_fac) < 10e-10);
-
-            double diff_R = area_R - area_R_2;
-            assert(diff_R < 1);
-            assert(b3_pos xor (area_R < 0));
+            area_R = liberfc::erfcx(-b1/dsqrt_b3) / dsqrt_b3 * sqrt_pi_2;
         }
+        assert(area_R > 0);
 
-        // The above calculation produces negative values for the area if we use the
-        // error function after replacing b2 and b3 with their absolute values. This
-        // should not happen if b2 or b3 is already positive
-        // @todo make sure this does not affect the error calculation
-        assert(b2_pos xor (area_L < 0));
-        assert(b3_pos xor (area_R < 0));
-        area_L = abs(area_L);
-        area_R = abs(area_R);
-
-        double area_F = constant_b0 * (area_L + area_R);
+        double area_F = b0_exp * (area_L + area_R);
 
         if (mse <= 0)
         {
@@ -2703,6 +2659,21 @@ namespace qAlgorithms
         // if a valley exists:
         // e^(b0 + b1 x + b2 x^2)/(2 b2) - (e^(b0 - b1^2/(4 b2)) sqrt(pi) b1 erfi((2 b2 x + b1)/(2 sqrt(b2))))/(4 b2^(3/2))
         // the part after the minus is just the antiderivative times b1 / (2 b2)
+
+        double eterm_b2 = exp(-(b1 * b1) / (4 * b2));
+        double eterm_b3 = exp(-(b1 * b1) / (4 * b3));
+        double F_b2_lim = b2_pos ? 0 : eterm_b2 * 1 / dsqrt_b2; // outer left limit for the integral
+        double error_b2 = b2_pos
+                              ? liberfc::erfi(b1 / dsqrt_b2)
+                              : erf(b1 / dsqrt_b2);
+        double F_b2_zero = eterm_b2 * error_b2 / dsqrt_b2;
+
+        double F_b3_lim = b3_pos ? 0 : eterm_b3 * -1 / dsqrt_b3; // outer right limit for the integral
+        double error_b3 = b3_pos
+                              ? liberfc::erfi(b1 / dsqrt_b3)
+                              : erf(b1 / dsqrt_b3);
+        double F_b3_zero = eterm_b3 * error_b3 / dsqrt_b3;
+
         double diff_b1_lim_L = b2_pos
                                    ? exp(b0 + b1 * x + b2 * x * x) / (2 * b2) - F_b2_lim * b1 / (2 * b2)
                                    : F_b2_lim * (b1 / (2 * b2));
