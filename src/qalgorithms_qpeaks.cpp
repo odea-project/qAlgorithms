@@ -2523,17 +2523,18 @@ namespace qAlgorithms
 
     // base function: integral of e^(b0 + b1 x + b2 x^2) dx =
     // [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ] / (2 sqrt(b2))   // source: wolfram alpha
-    // erfi(x) = i * erf(i * x)
+    // erfi(x) = i * erf(i * x) * -1
     // under the condition b2 < 0: sqrt(b2) = i * sqrt(-b2), where sqrt(-b2) is a real number
-    // [(real part) * i * erf( i * (real) / (i * 2 * sqrt(-b2)) ) ] / (i * 2 * sqrt(-b2))
+    // [(real part) * -1 * i * erf( i * (real) / (i * 2 * sqrt(-b2)) ) ] / (i * 2 * sqrt(-b2))
     // i within and outside of the error function cancel each other out: i / i = 1
     // erf(0) = 0 ; erf(-inf) = -1 ; erf(inf) = 1
     // assuming b2 < 0:
-    // F(-inf) = [ (...) * erf( (b1 + 2 b2 * -inf) / (> 0) ) ] / (...)
+    // F(-inf) = [ (...) * -1 * erf( (b1 + 2 b2 * -inf) / (> 0) ) ] / (...)
+    // when evaluating F towards infinity, b2 or b3 always have a negative sign
     // b2 * -inf = +inf ; b2 * +inf = -inf
-    // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2))
-    // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 ] / (2 sqrt(-b2))
-    // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
+    // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * +1 ] / (2 sqrt(-b2))
+    // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * -1 ] / (2 sqrt(-b2))
+    // F(0) =    [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
     // if b2 or b3 are positive, erfi has to be used. The positive part of the function replaces F(+-inf)
     // for reasons of numerical stability, the constant scaling factor    sqrt(pi) * e^(b0) / 2    is factored out.
     // the final equation is composed as follows:
@@ -2542,6 +2543,10 @@ namespace qAlgorithms
     // A = constant_b0 * (exp_b2 / sqrt_b2 * (erf_b2_0 - erf_b2_-inf) + exp_b3 / sqrt_b3 * (erf_b3_inf - erf_b3_0))
     // left: erf_b2_0 - erf_b2_-inf = erf(b1 / (2 sqrt(-b2)) - 1 = -erfc(b1 / (2 sqrt(-b2))
     // right: erf_b3_inf - erf_b3_0 = -1 - erf(b1 / (2 sqrt(-b3)) = erfc(b1 / (2 sqrt(-b2)) - 2
+    // the following identities apply:
+    // erf(-x) = -erf(x); erfc(-x) = erf(x) + 1
+    // erfcx(x) = e^(x^2) * erfc(x)
+    // left: e^(-b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) / (2 sqrt(-b2))
     double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert)
     {
         const double b0 = c->b0;
