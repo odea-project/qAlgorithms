@@ -2584,6 +2584,11 @@ namespace qAlgorithms
             // area = common_fac * (error_b2 - 1); replace erf in function with 1 - erfc
             double difference = -erfc(b1 / dsqrt_b2);
             area_L_2 = common_fac * difference;
+            // the below implementation is numerically unstable for small numbers, instead use the
+            // Scaled complementary error function erfcx(x) = e(x^2) * erfc(x)
+            double x = b1 / dsqrt_b2;
+            double difference_2 = -liberfc::erfcx(x) / exp(x * x);
+            // assert(abs(area_L_2 - difference_2 * common_fac) < 10e-10);
         }
         double F_b2_lim = b2_pos ? 0 : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2; // outer left limit for the integral
         // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
@@ -2617,6 +2622,13 @@ namespace qAlgorithms
             // area = common_fac * (-1 - eterm_b3); replace -erf in function with -1 + erfc
             double difference = erfc(b1 / dsqrt_b3) - 2;
             area_R_2 = common_fac * difference;
+
+            double z = b1 / dsqrt_b3;
+            double difference_2 = liberfc::erfcx(z) / exp(z * z) - 2;
+            // instead of just the difference, use erfcx to avoid underflow <- this does not work, either - we have too little precision
+
+            // assert(abs(area_R_2 - difference_2 * common_fac) < 10e-10);
+
             double diff_R = area_R - area_R_2;
             assert(diff_R < 1);
             assert(b3_pos xor (area_R < 0));
