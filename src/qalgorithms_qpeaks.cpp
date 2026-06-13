@@ -1,7 +1,7 @@
 #include "qalgorithms_qpeaks.h"
-#include "qalgorithms_utils.h"
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_read_file.h" // @todo remove coupling
+#include "qalgorithms_utils.h"
 
 #include "liberfc_reduced.h"
 
@@ -2209,8 +2209,7 @@ namespace qAlgorithms
         globalLogStruct.dataID += 1;
 
         // peaks are sorted here so they can be treated as const throughout the rest of the program
-        std::sort(peaks.begin(), peaks.end(), [](FeaturePeak lhs, FeaturePeak rhs)
-                  { return lhs.retentionTime < rhs.retentionTime; });
+        std::sort(peaks.begin(), peaks.end(), [](FeaturePeak lhs, FeaturePeak rhs) { return lhs.retentionTime < rhs.retentionTime; });
         return peaks;
     }
 
@@ -2258,8 +2257,7 @@ namespace qAlgorithms
         }
 
         // peaks are sorted here so they can be treated as const throughout the rest of the program
-        std::sort(res->begin(), res->end(), [](FeaturePeak lhs, FeaturePeak rhs)
-                  { return lhs.retentionTime < rhs.retentionTime; });
+        std::sort(res->begin(), res->end(), [](FeaturePeak lhs, FeaturePeak rhs) { return lhs.retentionTime < rhs.retentionTime; });
 
         return res->size();
     }
@@ -2523,49 +2521,49 @@ namespace qAlgorithms
 
     double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert)
     {
-    // base function: integral of e^(b0 + b1 x + b2 x^2) dx =
-    // [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ] / (2 sqrt(b2))   // source: wolfram alpha
-    // erfi(x) = i * erf(i * x) * -1
-    // under the condition b2 < 0: sqrt(b2) = i * sqrt(-b2), where sqrt(-b2) is a real number
-    // [(real part) * -1 * i * erf( i * (real) / (i * 2 * sqrt(-b2)) ) ] / (i * 2 * sqrt(-b2))
-    // i within and outside of the error function cancel each other out: i / i = 1
-    // erf(0) = 0 ; erf(-inf) = -1 ; erf(inf) = 1
-    // F(-inf) = [ (...) * -1 * erf( (b1 + 2 b2 * -inf) / (> 0) ) ] / (...)
-    // when evaluating F towards infinity, b2 or b3 always have a negative sign
-    // b2 * -inf = +inf ; b2 * +inf = -inf
-    // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * +1 ] / (2 sqrt(-b2))
-    // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * -1 ] / (2 sqrt(-b2))
-    // F(0)    = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
-    // if b2 or b3 are positive, erfi has to be used. The positive part of the function replaces F(+-inf)
-    // for reasons of numerical stability, the constant scaling factor    sqrt(pi) * e^(b0) / 2    is factored out.
-    // the final equation is composed as follows:
-    // A = constant_b0 * (F(0)_b2 - F(-inf)_b2 + F(inf)_b3 - F(0)_b3)
-    // for every peak half, F can be written as exp_b23 * erf_b23 / sqrt_b23, where only erf_b23 changes. As such:
-    // A = constant_b0 * (exp_b2 / sqrt_b2 * (erf_b2_0 - erf_b2_-inf) + exp_b3 / sqrt_b3 * (erf_b3_inf - erf_b3_0))
-    // apply erf(-x) = -erf(x); erfc(-x) = erf(x) + 1:
-    // left:  erf_b2_0 - erf_b2_-inf = -erf(b1 / (2 sqrt(-b2)) + 1 = erfc(b1 / (2 sqrt(-b2)))
-    // right: erf_b3_inf - erf_b3_0  = 1 + erf(b1 / (2 sqrt(-b3))  = erfc(-b1 / (2 sqrt(-b3)))
-    // A = constant_b0 * (
-    //      e^(-b1^2/(4 b2)) * erfc( b1 / (2 sqrt(-b2)) ) / (2 sqrt(-b2)) + 
-    //      e^(-b1^2/(4 b3)) * erfc(-b1 / (2 sqrt(-b3)) ) / (2 sqrt(-b3)) 
-    // )
-    // erfcx(x) = e^(x^2) * erfc(x); (b1 / (2 sqrt(-b2)))^2 = -b1^2 / (4 b2); (-b1 / (2 sqrt(-b2)))^2 = -b1^2 / (4 b2)
-    // A = constant_b0 * ( 
-    //      erfcx( b1 / (2 sqrt(-b2)) ) / (2 sqrt(-b2)) + 
-    //      erfcx(-b1 / (2 sqrt(-b3)) ) / (2 sqrt(-b3))
-    // )
-    // in implementation, sqrt(pi) / 2 is multiplied with each half individually so that the case
-    // of a positive coefficient is handled cleanly.
+        // base function: integral of e^(b0 + b1 x + b2 x^2) dx =
+        // [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ] / (2 sqrt(b2))   // source: wolfram alpha
+        // erfi(x) = i * erf(i * x) * -1
+        // under the condition b2 < 0: sqrt(b2) = i * sqrt(-b2), where sqrt(-b2) is a real number
+        // [(real part) * -1 * i * erf( i * (real) / (i * 2 * sqrt(-b2)) ) ] / (i * 2 * sqrt(-b2))
+        // i within and outside of the error function cancel each other out: i / i = 1
+        // erf(0) = 0 ; erf(-inf) = -1 ; erf(inf) = 1
+        // F(-inf) = [ (...) * -1 * erf( (b1 + 2 b2 * -inf) / (> 0) ) ] / (...)
+        // when evaluating F towards infinity, b2 or b3 always have a negative sign
+        // b2 * -inf = +inf ; b2 * +inf = -inf
+        // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * +1 ] / (2 sqrt(-b2))
+        // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * -1 ] / (2 sqrt(-b2))
+        // F(0)    = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
+        // if b2 or b3 are positive, erfi has to be used. The positive part of the function replaces F(+-inf)
+        // for reasons of numerical stability, the constant scaling factor    sqrt(pi) * e^(b0) / 2    is factored out.
+        // the final equation is composed as follows:
+        // A = constant_b0 * (F(0)_b2 - F(-inf)_b2 + F(inf)_b3 - F(0)_b3)
+        // for every peak half, F can be written as exp_b23 * erf_b23 / sqrt_b23, where only erf_b23 changes. As such:
+        // A = constant_b0 * (exp_b2 / sqrt_b2 * (erf_b2_0 - erf_b2_-inf) + exp_b3 / sqrt_b3 * (erf_b3_inf - erf_b3_0))
+        // apply erf(-x) = -erf(x); erfc(-x) = erf(x) + 1:
+        // left:  erf_b2_0 - erf_b2_-inf = -erf(b1 / (2 sqrt(-b2)) + 1 = erfc(b1 / (2 sqrt(-b2)))
+        // right: erf_b3_inf - erf_b3_0  = 1 + erf(b1 / (2 sqrt(-b3))  = erfc(-b1 / (2 sqrt(-b3)))
+        // A = constant_b0 * (
+        //      e^(-b1^2/(4 b2)) * erfc( b1 / (2 sqrt(-b2)) ) / (2 sqrt(-b2)) +
+        //      e^(-b1^2/(4 b3)) * erfc(-b1 / (2 sqrt(-b3)) ) / (2 sqrt(-b3))
+        // )
+        // erfcx(x) = e^(x^2) * erfc(x); (b1 / (2 sqrt(-b2)))^2 = -b1^2 / (4 b2); (-b1 / (2 sqrt(-b2)))^2 = -b1^2 / (4 b2)
+        // A = constant_b0 * (
+        //      erfcx( b1 / (2 sqrt(-b2)) ) / (2 sqrt(-b2)) +
+        //      erfcx(-b1 / (2 sqrt(-b3)) ) / (2 sqrt(-b3))
+        // )
+        // in implementation, sqrt(pi) / 2 is multiplied with each half individually so that the case
+        // of a positive coefficient is handled cleanly.
 
-    // if there is a valley point, the antiderivative evaluated at the valley is always zero. This
-    // is because erfi(b1 + 2 b2 x) resolves to erfi(b1 + 2 b2 * (-b1 / (2 b2))) == 0
-    // (the valley point is always at -b1 / (2 b2), refer to apex position calculation).
-    // The area of the half is then:
-    // A_L = e^(b0) * sqrt(pi) / 2 * e^(-b1^2/(4 b2)) * erfi(b1 / (2 sqrt(b2))  / (2 sqrt(b2))
-    // This suffers from the same algorithmic instability as the positive case.
-    // Here, we can use Dawson's integral D = 1/2 sqrt(pi) * e^(-x^2) * erfi(x)
-    // A_L = e^(b0) * D(b1 / (2 sqrt(b2)) / (2 sqrt(b2))
-    // The same transformation applied to b3.
+        // if there is a valley point, the antiderivative evaluated at the valley is always zero. This
+        // is because erfi(b1 + 2 b2 x) resolves to erfi(b1 + 2 b2 * (-b1 / (2 b2))) == 0
+        // (the valley point is always at -b1 / (2 b2), refer to apex position calculation).
+        // The area of the half is then:
+        // A_L = e^(b0) * sqrt(pi) / 2 * e^(-b1^2/(4 b2)) * erfi(b1 / (2 sqrt(b2))  / (2 sqrt(b2))
+        // This suffers from the same algorithmic instability as the positive case.
+        // Here, we can use Dawson's integral D = 1/2 sqrt(pi) * e^(-x^2) * erfi(x)
+        // A_L = e^(b0) * D(b1 / (2 sqrt(b2)) / (2 sqrt(b2))
+        // The same transformation applied to b3.
 
         const double b0 = c->b0;
         const double b1 = c->b1;
@@ -2586,8 +2584,8 @@ namespace qAlgorithms
         const double x = -b1 / (2 * (b2_pos ? b2 : b3));
 
         // note: this is not factored out into a separate function since + and - inf use different terms
-        double dsqrt_b2 = 2 * sqrt(abs(b2));
-        double dsqrt_b3 = 2 * sqrt(abs(b3));
+        double sqrt_b2 = sqrt(abs(b2));
+        double sqrt_b3 = sqrt(abs(b3));
 
         const double sqrt_pi_2 = 1.7724538509055158819 / 2; // sqrt(M_PI);
         double b0_exp = exp(b0);
@@ -2595,26 +2593,64 @@ namespace qAlgorithms
         double area_L = -1;
         if (b2_pos)
         {
-            area_L = liberfc::dawson(b1 / dsqrt_b2) / dsqrt_b2;
+            area_L = liberfc::dawson(b1 / sqrt_b2) / sqrt_b2;
         }
         else
         {
-            area_L = liberfc::erfcx(b1/dsqrt_b2) / dsqrt_b2 * sqrt_pi_2;
+            area_L = liberfc::erfcx(b1 / sqrt_b2) / sqrt_b2 * sqrt_pi_2;
         }
         assert(area_L > 0);
 
         double area_R = -1;
         if (b3_pos)
         {
-            area_R = liberfc::dawson(b1 / dsqrt_b3) / dsqrt_b3;
+            area_R = liberfc::dawson(b1 / sqrt_b3) / sqrt_b3;
         }
         else
         {
-            area_R = liberfc::erfcx(-b1/dsqrt_b3) / dsqrt_b3 * sqrt_pi_2;
+            area_R = liberfc::erfcx(-b1 / sqrt_b3) / sqrt_b3 * sqrt_pi_2;
         }
         assert(area_R > 0);
 
-        double area_F = b0_exp * (area_L + area_R);
+        double area_F = b0_exp * (area_L + area_R) * delta_x;
+
+        {
+            const double sqrt_pi = 1.7724538509055158819;
+            double dsqrt_b2 = sqrt_b2 / 2;
+            double dsqrt_b3 = sqrt_b3 / 2;
+
+            double eterm_b2 = exp(b0 - (b1 * b1) / (4 * b2));
+            double eterm_b3 = exp(b0 - (b1 * b1) / (4 * b3));
+
+            double F_b2_lim = b2_pos ? 0 : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2; // outer left limit for the integral
+            // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
+            double error_b2 = b2_pos
+                                  ? liberfc::erfi(b1 / dsqrt_b2)
+                                  : erf(b1 / dsqrt_b2);
+            double F_b2_zero = (sqrt_pi * eterm_b2 * error_b2) / dsqrt_b2;
+            double area_L_2 = F_b2_zero - F_b2_lim;
+
+            // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;
+            // is zero for a valley point for the same reasons as above
+            double F_b3_lim = b3_pos ? 0 : (sqrt_pi * eterm_b3 * -1) / dsqrt_b3; // outer right limit for the integral
+            double error_b3 = b3_pos
+                                  ? liberfc::erfi(b1 / dsqrt_b3)
+                                  : erf(b1 / dsqrt_b3);
+            double F_b3_zero = (sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3;
+            double area_R_2 = F_b3_lim - F_b3_zero;
+
+            // The above calculation produces negative values for the area if we use the
+            // error function after replacing b2 and b3 with their absolute values. This
+            // should not happen if b2 or b3 is already positive
+            // @todo make sure this does not affect the error calculation
+            assert(b2_pos xor (area_L_2 < 0));
+            assert(b3_pos xor (area_R_2 < 0));
+            area_L_2 = abs(area_L_2);
+            area_R_2 = abs(area_R_2);
+
+            double area_F_old = (area_L_2 + area_R_2) * delta_x;
+            assert(area_F_old == area_F);
+        }
 
         if (mse <= 0)
         {
@@ -2660,6 +2696,8 @@ namespace qAlgorithms
         // e^(b0 + b1 x + b2 x^2)/(2 b2) - (e^(b0 - b1^2/(4 b2)) sqrt(pi) b1 erfi((2 b2 x + b1)/(2 sqrt(b2))))/(4 b2^(3/2))
         // the part after the minus is just the antiderivative times b1 / (2 b2)
 
+        double dsqrt_b2 = sqrt_b2 / 2;
+        double dsqrt_b3 = sqrt_b3 / 2;
         double eterm_b2 = exp(-(b1 * b1) / (4 * b2));
         double eterm_b3 = exp(-(b1 * b1) / (4 * b3));
         double F_b2_lim = b2_pos ? 0 : eterm_b2 * 1 / dsqrt_b2; // outer left limit for the integral
@@ -2812,4 +2850,4 @@ namespace qAlgorithms
         assert(mse > 0);
         return mse;
     }
-}
+} // namespace qAlgorithms

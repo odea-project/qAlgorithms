@@ -56,7 +56,6 @@ qAlgorithms
 .Rhistory
 *.pdf
 .cache
-.clang-format
 .vscode
 *.mzML
 ./obj
