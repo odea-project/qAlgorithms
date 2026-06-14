@@ -1,3 +1,8 @@
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-format-attribute"
+#pragma clang diagnostic ignored "-Wformat-nonliteral"
+
 #include <cstdarg>
 #include <cstdio> // printing
 #include <cstdlib>
@@ -7,6 +12,10 @@
 #define _USE_MATH_DEFINES
 #include <cfloat> // placing this here instead of in every individual test
 #include <math.h>
+
+#ifndef _GLIBCXX_CFLOAT
+    #error "this is just here to suppress a warning"
+#endif
 
 using namespace qAlgorithms;
 

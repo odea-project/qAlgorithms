@@ -1,7 +1,10 @@
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
+
 #include "common_test_utils.hpp"
 #include "qalgorithms_utils.h"
 #define _USE_MATH_DEFINES
-#include "../../external/fastexp.h"
 #include "../../external/liberfc/liberfc_reduced.h"
 #include <cstdint>
 #include <math.h>

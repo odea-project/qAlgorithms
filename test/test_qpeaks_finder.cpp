@@ -1,3 +1,7 @@
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
+
 #include "math.h"
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_qpeaks.h"

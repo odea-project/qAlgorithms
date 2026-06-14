@@ -1,7 +1,10 @@
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
+
 #include "common_test_utils.hpp"
 #include "CDFlib/cdflib.hpp"
 #include "pugixml-1.14/src/pugixml.h"
-#include "qalgorithms_qpeaks.h"
 
 #include <math.h>
 #define _USE_MATH_DEFINES
