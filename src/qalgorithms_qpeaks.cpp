@@ -2535,22 +2535,22 @@ namespace qAlgorithms
         // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * -1 ] / (2 sqrt(-b2))
         // F(0)    = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * -1 * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
         // if b2 or b3 are positive, erfi has to be used. The positive part of the function replaces F(+-inf)
-        // for reasons of numerical stability, the constant scaling factor    sqrt(pi) * e^(b0) / 2    is factored out.
+        // for reasons of numerical stability, the constant scaling factor    b0_exp * sqrt(pi) / 2    is factored out.
         // the final equation is composed as follows:
-        // A = constant_b0 * (F(0)_b2 - F(-inf)_b2 + F(inf)_b3 - F(0)_b3)
+        // A = b0_exp * sqrt(pi) / 2 * (F(0)_b2 - F(-inf)_b2 + F(inf)_b3 - F(0)_b3)
         // for every peak half, F can be written as exp_b23 * erf_b23 / sqrt_b23, where only erf_b23 changes. As such:
-        // A = constant_b0 * (exp_b2 / sqrt_b2 * (erf_b2_0 - erf_b2_-inf) + exp_b3 / sqrt_b3 * (erf_b3_inf - erf_b3_0))
+        // A = b0_exp * sqrt(pi) / 2 * (exp_b2 / sqrt_b2 * (erf_b2_0 - erf_b2_-inf) + exp_b3 / sqrt_b3 * (erf_b3_inf - erf_b3_0))
         // apply erf(-x) = -erf(x); erfc(-x) = erf(x) + 1:
-        // left:  erf_b2_0 - erf_b2_-inf = -erf(b1 / (2 sqrt(-b2)) + 1 = erfc(b1 / (2 sqrt(-b2)))
-        // right: erf_b3_inf - erf_b3_0  = 1 + erf(b1 / (2 sqrt(-b3))  = erfc(-b1 / (2 sqrt(-b3)))
-        // A = constant_b0 * (
-        //      e^(-b1^2/(4 b2)) * erfc( b1 / (2 sqrt(-b2)) ) / (2 sqrt(-b2)) +
-        //      e^(-b1^2/(4 b3)) * erfc(-b1 / (2 sqrt(-b3)) ) / (2 sqrt(-b3))
+        // left:  erf_b2_0 - erf_b2_-inf =    -erf(b1 / (2 sqrt(-b2)) + 1 = erfc( b1 / sqrt(-b2))
+        // right: erf_b3_inf - erf_b3_0  = 1 + erf(b1 / (2 sqrt(-b3))     = erfc(-b1 / sqrt(-b3))
+        // A = b0_exp * sqrt(pi) / 2 * (
+        //      e^(-b1^2/(4 b2)) * erfc( b1 / (2 sqrt(-b2)) ) / sqrt(-b2) +
+        //      e^(-b1^2/(4 b3)) * erfc(-b1 / (2 sqrt(-b3)) ) / sqrt(-b3)
         // )
         // erfcx(x) = e^(x^2) * erfc(x); (b1 / (2 sqrt(-b2)))^2 = -b1^2 / (4 b2); (-b1 / (2 sqrt(-b2)))^2 = -b1^2 / (4 b2)
-        // A = constant_b0 * (
-        //      erfcx( b1 / (2 sqrt(-b2)) ) / (2 sqrt(-b2)) +
-        //      erfcx(-b1 / (2 sqrt(-b3)) ) / (2 sqrt(-b3))
+        // A = b0_exp * sqrt(pi) / 2 * (
+        //      erfcx( b1 / (2 sqrt(-b2)) ) / sqrt(-b2) +
+        //      erfcx(-b1 / (2 sqrt(-b3)) ) / sqrt(-b3)
         // )
         // in implementation, sqrt(pi) / 2 is multiplied with each half individually so that the case
         // of a positive coefficient is handled cleanly.
@@ -2559,11 +2559,12 @@ namespace qAlgorithms
         // is because erfi(b1 + 2 b2 x) resolves to erfi(b1 + 2 b2 * (-b1 / (2 b2))) == 0
         // (the valley point is always at -b1 / (2 b2), refer to apex position calculation).
         // The area of the half is then:
-        // A_L = e^(b0) * sqrt(pi) / 2 * e^(-b1^2/(4 b2)) * erfi(b1 / (2 sqrt(b2))  / (2 sqrt(b2))
+        // A_L = e^(b0) * sqrt(pi) / 2 * e^(-b1^2/(4 b2)) * erfi(b1 / (2 sqrt(b2)))  / sqrt(b2)
         // This suffers from the same algorithmic instability as the positive case.
-        // Here, we can use Dawson's integral D = 1/2 sqrt(pi) * e^(-x^2) * erfi(x)
-        // A_L = e^(b0) * D(b1 / (2 sqrt(b2)) / (2 sqrt(b2))
-        // The same transformation applied to b3.
+        // Here, we can use Dawson's integral D(x) = 1/2 sqrt(pi) * e^(-x^2) * erfi(x)
+        // A_L = e^(b0) * D(b1 / (2 sqrt(b2))) / sqrt(b2)
+        // The same transformation applied to b3. Depending on left / right valley position,
+        // we calculate the partial area as A_L - 0 or 0 - A_R
 
         const double b0 = c->b0;
         const double b1 = c->b1;
@@ -2593,34 +2594,36 @@ namespace qAlgorithms
         double area_L = -1;
         if (b2_pos)
         {
-            area_L = liberfc::dawson(b1 / sqrt_b2) / sqrt_b2;
+            area_L = liberfc::dawson(b1 / sqrt_b2 / 2) / sqrt_b2;
         }
         else
         {
-            area_L = liberfc::erfcx(b1 / sqrt_b2) / sqrt_b2 * sqrt_pi_2;
+            area_L = liberfc::erfcx(b1 / sqrt_b2 / 2) / sqrt_b2 * sqrt_pi_2;
         }
         assert(area_L > 0);
 
         double area_R = -1;
         if (b3_pos)
         {
-            area_R = liberfc::dawson(b1 / sqrt_b3) / sqrt_b3;
+            area_R = -liberfc::dawson(b1 / sqrt_b3 / 2) / sqrt_b3;
         }
         else
         {
-            area_R = liberfc::erfcx(-b1 / sqrt_b3) / sqrt_b3 * sqrt_pi_2;
+            area_R = liberfc::erfcx(-b1 / sqrt_b3 / 2) / sqrt_b3 * sqrt_pi_2;
         }
         assert(area_R > 0);
 
-        double area_F = b0_exp * (area_L + area_R) * delta_x;
+        area_L *= b0_exp;
+        area_R *= b0_exp;
+        double area_F = (area_L + area_R) * delta_x;
 
+        if (false)
         {
-            const double sqrt_pi = 1.7724538509055158819;
-            double dsqrt_b2 = sqrt_b2 / 2;
-            double dsqrt_b3 = sqrt_b3 / 2;
-
+            double dsqrt_b2 = 2 * sqrt(abs(b2));
+            double dsqrt_b3 = 2 * sqrt(abs(b3));
             double eterm_b2 = exp(b0 - (b1 * b1) / (4 * b2));
             double eterm_b3 = exp(b0 - (b1 * b1) / (4 * b3));
+            const double sqrt_pi = 1.7724538509055158819; // sqrt(M_PI);
 
             double F_b2_lim = b2_pos ? 0 : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2; // outer left limit for the integral
             // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
@@ -2628,7 +2631,25 @@ namespace qAlgorithms
                                   ? liberfc::erfi(b1 / dsqrt_b2)
                                   : erf(b1 / dsqrt_b2);
             double F_b2_zero = (sqrt_pi * eterm_b2 * error_b2) / dsqrt_b2;
-            double area_L_2 = F_b2_zero - F_b2_lim;
+            double area_L_3 = F_b2_zero - F_b2_lim;
+
+            double area_L_2 = 0;
+            if (b2_pos)
+            {
+                assert(false);
+            }
+            else
+            {
+                double common_fac = (sqrt_pi * eterm_b2) / dsqrt_b2;
+                // area = common_fac * (error_b2 - 1); replace erf in function with 1 - erfc
+                double difference = -erfc(b1 / dsqrt_b2);
+                area_L_2 = common_fac * difference;
+
+                double diff_L = area_L - area_L_2;
+                assert(diff_L < 1);
+                double diff_L_2 = abs(area_L_3 - area_L_2);
+                assert(diff_L_2 < 1);
+            }
 
             // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;
             // is zero for a valley point for the same reasons as above
@@ -2637,19 +2658,37 @@ namespace qAlgorithms
                                   ? liberfc::erfi(b1 / dsqrt_b3)
                                   : erf(b1 / dsqrt_b3);
             double F_b3_zero = (sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3;
-            double area_R_2 = F_b3_lim - F_b3_zero;
+            double area_R_3 = F_b3_lim - F_b3_zero;
+
+            double area_R_2 = 0;
+            if (b3_pos)
+            {
+                assert(false);
+            }
+            else
+            {
+                double common_fac = (sqrt_pi * eterm_b3) / dsqrt_b3;
+                // area = common_fac * (-1 - eterm_b3); replace -erf in function with -1 + erfc
+                double difference = erfc(b1 / dsqrt_b3) - 2;
+                area_R_2 = common_fac * difference;
+
+                double diff_R = area_R - area_R_2;
+                assert(diff_R < 1);
+                double diff_R_2 = abs(area_R_3 - area_R_2);
+                assert(diff_R_2 < 1);
+            }
 
             // The above calculation produces negative values for the area if we use the
             // error function after replacing b2 and b3 with their absolute values. This
             // should not happen if b2 or b3 is already positive
             // @todo make sure this does not affect the error calculation
-            assert(b2_pos xor (area_L_2 < 0));
-            assert(b3_pos xor (area_R_2 < 0));
-            area_L_2 = abs(area_L_2);
-            area_R_2 = abs(area_R_2);
+            assert(b2_pos xor (area_L < 0));
+            assert(b3_pos xor (area_R < 0));
+            area_L = abs(area_L);
+            area_R = abs(area_R);
 
-            double area_F_old = (area_L_2 + area_R_2) * delta_x;
-            assert(area_F_old == area_F);
+            double area_F_2 = area_L + area_R;
+            assert(area_F == area_F_2);
         }
 
         if (mse <= 0)
@@ -2676,106 +2715,107 @@ namespace qAlgorithms
         // for negative b2, the only change is that erf is used instead of erfi. Both
         // functions cannot be simplified further.
 
-        double J[4];
+        {
+            double J[4];
 
-        // b0:
-        // F(0) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
-        // F(0) is always evaluated for both halves, so we always need all derivatives:
-        // F(0) d b0; [ const * e^( b0 - b1^2/(4 b2) ) * const ] / const => F(0) d b0 = e^( b0 - b1^2/(4 b2) ) * const
-        // The derivative of exp(x) is x' exp(x), since the inner term only has a singular b0 in a sum
-        // the equation does not change and the derivative of F(x) by b0 is F(x).
-        // Following the chain rule, d F(x) / d b0 = A' / A = A / A = 1
-        J[0] = 1;
+            // b0:
+            // F(0) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
+            // F(0) is always evaluated for both halves, so we always need all derivatives:
+            // F(0) d b0; [ const * e^( b0 - b1^2/(4 b2) ) * const ] / const => F(0) d b0 = e^( b0 - b1^2/(4 b2) ) * const
+            // The derivative of exp(x) is x' exp(x), since the inner term only has a singular b0 in a sum
+            // the equation does not change and the derivative of F(x) by b0 is F(x).
+            // Following the chain rule, d F(x) / d b0 = A' / A = A / A = 1
+            J[0] = 1;
 
-        // b1:
-        // since d/dx f(x) + g(x) = f'(x) + g'(x), we differentiate the individual pieces of b1 and sum up.
-        // for + / - infinity:
-        // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2)) * (b1 / (2 b2))
-        // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b3) ) * -1 ] / (2 sqrt(-b3)) * (b1 / (2 b3))
-        // if a valley exists:
-        // e^(b0 + b1 x + b2 x^2)/(2 b2) - (e^(b0 - b1^2/(4 b2)) sqrt(pi) b1 erfi((2 b2 x + b1)/(2 sqrt(b2))))/(4 b2^(3/2))
-        // the part after the minus is just the antiderivative times b1 / (2 b2)
+            // b1:
+            // since d/dx f(x) + g(x) = f'(x) + g'(x), we differentiate the individual pieces of b1 and sum up.
+            // for + / - infinity:
+            // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2)) * (b1 / (2 b2))
+            // F(+inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b3) ) * -1 ] / (2 sqrt(-b3)) * (b1 / (2 b3))
+            // if a valley exists:
+            // e^(b0 + b1 x + b2 x^2)/(2 b2) - (e^(b0 - b1^2/(4 b2)) sqrt(pi) b1 erfi((2 b2 x + b1)/(2 sqrt(b2))))/(4 b2^(3/2))
+            // the part after the minus is just the antiderivative times b1 / (2 b2)
 
-        double dsqrt_b2 = sqrt_b2 / 2;
-        double dsqrt_b3 = sqrt_b3 / 2;
-        double eterm_b2 = exp(-(b1 * b1) / (4 * b2));
-        double eterm_b3 = exp(-(b1 * b1) / (4 * b3));
-        double F_b2_lim = b2_pos ? 0 : eterm_b2 * 1 / dsqrt_b2; // outer left limit for the integral
-        double error_b2 = b2_pos
-                              ? liberfc::erfi(b1 / dsqrt_b2)
-                              : erf(b1 / dsqrt_b2);
-        double F_b2_zero = eterm_b2 * error_b2 / dsqrt_b2;
+            double dsqrt_b2 = sqrt_b2 / 2;
+            double dsqrt_b3 = sqrt_b3 / 2;
+            double eterm_b2 = exp(-(b1 * b1) / (4 * b2));
+            double eterm_b3 = exp(-(b1 * b1) / (4 * b3));
+            double F_b2_lim = b2_pos ? 0 : eterm_b2 * 1 / dsqrt_b2; // outer left limit for the integral
+            double error_b2 = b2_pos
+                                  ? liberfc::erfi(b1 / dsqrt_b2)
+                                  : erf(b1 / dsqrt_b2);
+            double F_b2_zero = eterm_b2 * error_b2 / dsqrt_b2;
 
-        double F_b3_lim = b3_pos ? 0 : eterm_b3 * -1 / dsqrt_b3; // outer right limit for the integral
-        double error_b3 = b3_pos
-                              ? liberfc::erfi(b1 / dsqrt_b3)
-                              : erf(b1 / dsqrt_b3);
-        double F_b3_zero = eterm_b3 * error_b3 / dsqrt_b3;
+            double F_b3_lim = b3_pos ? 0 : eterm_b3 * -1 / dsqrt_b3; // outer right limit for the integral
+            double error_b3 = b3_pos
+                                  ? liberfc::erfi(b1 / dsqrt_b3)
+                                  : erf(b1 / dsqrt_b3);
+            double F_b3_zero = eterm_b3 * error_b3 / dsqrt_b3;
 
-        double diff_b1_lim_L = b2_pos
-                                   ? exp(b0 + b1 * x + b2 * x * x) / (2 * b2) - F_b2_lim * b1 / (2 * b2)
-                                   : F_b2_lim * (b1 / (2 * b2));
-        double diff_b1_lim_R = b3_pos
-                                   ? exp(b0 + b1 * x + b3 * x * x) / (2 * b3) - F_b3_lim * b1 / (2 * b3)
-                                   : F_b3_lim * (b1 / (2 * b3));
-        // for x0, follow the same scheme as above for positive b23
-        // e^(b0 - b1^2/(2 b2))/(2 b2) - (sqrt(pi) b1 e^(b0 - b1^2/(4 b2)) erf(b1/(2 sqrt(b2))))/(2 sqrt(b2) * 2 b2)
-        double diff_b1_zero_L = b2_pos
-                                    ? exp(b0) / (2 * b2) - F_b2_zero * b1 / (2 * b2)
-                                    : exp(b0 - b1 * b1 / (2 * b2)) / (2 * b2) - F_b2_zero * b1 / (2 * b2);
-        double diff_b1_zero_R = b3_pos
-                                    ? exp(b0) / (2 * b3) - F_b3_zero * b1 / (2 * b3)
-                                    : exp(b0 - b1 * b1 / (2 * b3)) / (2 * b3) - F_b3_zero * b1 / (2 * b3);
-        // area = zero_l - lim_l + lim_r - zero_r
-        double diff_b1 = diff_b1_zero_L - diff_b1_lim_L + diff_b1_lim_R - diff_b1_zero_R;
-        J[1] = diff_b1 / area_F;
+            double diff_b1_lim_L = b2_pos
+                                       ? exp(b0 + b1 * x + b2 * x * x) / (2 * b2) - F_b2_lim * b1 / (2 * b2)
+                                       : F_b2_lim * (b1 / (2 * b2));
+            double diff_b1_lim_R = b3_pos
+                                       ? exp(b0 + b1 * x + b3 * x * x) / (2 * b3) - F_b3_lim * b1 / (2 * b3)
+                                       : F_b3_lim * (b1 / (2 * b3));
+            // for x0, follow the same scheme as above for positive b23
+            // e^(b0 - b1^2/(2 b2))/(2 b2) - (sqrt(pi) b1 e^(b0 - b1^2/(4 b2)) erf(b1/(2 sqrt(b2))))/(2 sqrt(b2) * 2 b2)
+            double diff_b1_zero_L = b2_pos
+                                        ? exp(b0) / (2 * b2) - F_b2_zero * b1 / (2 * b2)
+                                        : exp(b0 - b1 * b1 / (2 * b2)) / (2 * b2) - F_b2_zero * b1 / (2 * b2);
+            double diff_b1_zero_R = b3_pos
+                                        ? exp(b0) / (2 * b3) - F_b3_zero * b1 / (2 * b3)
+                                        : exp(b0 - b1 * b1 / (2 * b3)) / (2 * b3) - F_b3_zero * b1 / (2 * b3);
+            // area = zero_l - lim_l + lim_r - zero_r
+            double diff_b1 = diff_b1_zero_L - diff_b1_lim_L + diff_b1_lim_R - diff_b1_zero_R;
+            J[1] = diff_b1 / area_F;
 
-        // b2 / b3:
-        // Since b2 and b3 apply to different halves of the regression, the derivative also only covers one half
-        // the actual calculations are still identical
-        // b2: left zero - left limit
-        // for -inf (* -1 for -inf): ( (b1^2 - 2 b2) sqrt(pi) e^(b0 - b1^2/(4 b2))) / (2 sqrt(b2) * 4 b2^2)
-        // for positive b2:
-        // { e^(b0 - b1^2/(4 x)) *
-        // [ sqrt(pi) (b1^2 - 2 b2) erfi((b1 + 2 x b2)/(2 sqrt(b2)))
-        //     - 2 sqrt(b2) e^((b1 + 2 x b2)^2/(4 b2)) (b1 - 2 x b2) ] }
-        // / (4 b2^2 * 2 sqrt(b2))
-        // the original area term is contained in the first part of the substraction when expanding:
-        // F_lim_b2 * (b1^2 - 2 b2) / (4 b2^2)
-        // - eterm_b2 * exp((b1 + 2x b2)^2 / 4 b2) * (b1 - 2 x b2) / (4 b2^2)
-        double diff_b2_lim = b2_pos
-                                 ? F_b2_lim * (b1 * b1 - 2 * b2) / (4 * b2 * b2) - eterm_b2 * exp((b1 + 2 * x * b2) * (b1 + 2 * x * b2) / 4 * b2) * (b1 - 2 * x * b2) / (4 * b2 * b2)
-                                 : (b1 * b1 - 2 * b2) * F_b2_lim / (4 * b2 * b2);
-        double diff_b3_lim = b3_pos
-                                 ? F_b3_lim * (b1 * b1 - 2 * b3) / (4 * b3 * b3) - eterm_b3 * exp((b1 + 2 * x * b3) * (b1 + 2 * x * b3) / 4 * b3) * (b1 - 2 * x * b3) / (4 * b3 * b3)
-                                 : (b1 * b1 - 2 * b3) * F_b3_lim / (4 * b3 * b3);
-        // at x = 0, follows the same principle as above
-        // (e^(b0 - b1^2/(2 b2)) (sqrt(pi) e^(b1^2/(4 b2)) (b1^2 - 2 b2) erf(b1/(2 sqrt(b2)))) / (4 b2^2 * 2 sqrt(b2))
-        // - (e^(b0 - b1^2/(2 b2)) 2 b1 sqrt(b2))) / (4 b2^2 * 2 sqrt(b2))
-        // e^(b0 - b1^2/(2 b2) * e^(b1^2/(4 b2)) = e^(b0 - b1^2/(4 b2), simplify:
-        // (e^(b0 - b1^2/(4 b2)) sqrt(pi) (b1^2 - 2 b2) erf(b1/(2 sqrt(b2))) / (4 b2^2 * 2 sqrt(b2)) = F_b2_zero * (b1^2 - 2 b2) / (4 b2^2)
-        // - (e^(b0 - b1^2/(2 b2)) b1) / (4 b2^2) // 4 b2^2 can be moved out of both terms
-        // if erfi is used, only the substractor changes to  exp(b0) * b1
-        double substr_b2 = b2_pos
-                               ? exp(b0) * b1
-                               : (exp(b0 - b1 * b1 / (2 * b2)) * b1);
-        double diff_b2_zero = (F_b2_zero * (b1 * b1 - 2 * b2) - substr_b2) / (4 * b2 * b2);
+            // b2 / b3:
+            // Since b2 and b3 apply to different halves of the regression, the derivative also only covers one half
+            // the actual calculations are still identical
+            // b2: left zero - left limit
+            // for -inf (* -1 for -inf): ( (b1^2 - 2 b2) sqrt(pi) e^(b0 - b1^2/(4 b2))) / (2 sqrt(b2) * 4 b2^2)
+            // for positive b2:
+            // { e^(b0 - b1^2/(4 x)) *
+            // [ sqrt(pi) (b1^2 - 2 b2) erfi((b1 + 2 x b2)/(2 sqrt(b2)))
+            //     - 2 sqrt(b2) e^((b1 + 2 x b2)^2/(4 b2)) (b1 - 2 x b2) ] }
+            // / (4 b2^2 * 2 sqrt(b2))
+            // the original area term is contained in the first part of the substraction when expanding:
+            // F_lim_b2 * (b1^2 - 2 b2) / (4 b2^2)
+            // - eterm_b2 * exp((b1 + 2x b2)^2 / 4 b2) * (b1 - 2 x b2) / (4 b2^2)
+            double diff_b2_lim = b2_pos
+                                     ? F_b2_lim * (b1 * b1 - 2 * b2) / (4 * b2 * b2) - eterm_b2 * exp((b1 + 2 * x * b2) * (b1 + 2 * x * b2) / 4 * b2) * (b1 - 2 * x * b2) / (4 * b2 * b2)
+                                     : (b1 * b1 - 2 * b2) * F_b2_lim / (4 * b2 * b2);
+            double diff_b3_lim = b3_pos
+                                     ? F_b3_lim * (b1 * b1 - 2 * b3) / (4 * b3 * b3) - eterm_b3 * exp((b1 + 2 * x * b3) * (b1 + 2 * x * b3) / 4 * b3) * (b1 - 2 * x * b3) / (4 * b3 * b3)
+                                     : (b1 * b1 - 2 * b3) * F_b3_lim / (4 * b3 * b3);
+            // at x = 0, follows the same principle as above
+            // (e^(b0 - b1^2/(2 b2)) (sqrt(pi) e^(b1^2/(4 b2)) (b1^2 - 2 b2) erf(b1/(2 sqrt(b2)))) / (4 b2^2 * 2 sqrt(b2))
+            // - (e^(b0 - b1^2/(2 b2)) 2 b1 sqrt(b2))) / (4 b2^2 * 2 sqrt(b2))
+            // e^(b0 - b1^2/(2 b2) * e^(b1^2/(4 b2)) = e^(b0 - b1^2/(4 b2), simplify:
+            // (e^(b0 - b1^2/(4 b2)) sqrt(pi) (b1^2 - 2 b2) erf(b1/(2 sqrt(b2))) / (4 b2^2 * 2 sqrt(b2)) = F_b2_zero * (b1^2 - 2 b2) / (4 b2^2)
+            // - (e^(b0 - b1^2/(2 b2)) b1) / (4 b2^2) // 4 b2^2 can be moved out of both terms
+            // if erfi is used, only the substractor changes to  exp(b0) * b1
+            double substr_b2 = b2_pos
+                                   ? exp(b0) * b1
+                                   : (exp(b0 - b1 * b1 / (2 * b2)) * b1);
+            double diff_b2_zero = (F_b2_zero * (b1 * b1 - 2 * b2) - substr_b2) / (4 * b2 * b2);
 
-        double substr_b3 = b3_pos
-                               ? exp(b0) * b1
-                               : (exp(b0 - b1 * b1 / (2 * b3)) * b1);
-        double diff_b3_zero = (F_b3_zero * (b1 * b1 - 2 * b3) - substr_b3) / (4 * b3 * b3);
+            double substr_b3 = b3_pos
+                                   ? exp(b0) * b1
+                                   : (exp(b0 - b1 * b1 / (2 * b3)) * b1);
+            double diff_b3_zero = (F_b3_zero * (b1 * b1 - 2 * b3) - substr_b3) / (4 * b3 * b3);
 
-        double diff_b2 = diff_b2_zero - diff_b2_lim;
-        double diff_b3 = diff_b3_lim - diff_b3_zero;
+            double diff_b2 = diff_b2_zero - diff_b2_lim;
+            double diff_b3 = diff_b3_lim - diff_b3_zero;
 
-        J[2] = diff_b2 / area_F;
-        J[3] = diff_b3 / area_F;
+            J[2] = diff_b2 / area_F;
+            J[3] = diff_b3 / area_F;
 
-        double u = matProductReg(J, c->scale);
-        assert(u > 0);
-        *uncert = sqrt(u * mse) * delta_x; // this is the uncertainty of the logarithmic area.
-
+            double u = matProductReg(J, c->scale);
+            assert(u > 0);
+            *uncert = sqrt(u * mse) * delta_x; // this is the uncertainty of the logarithmic area.
+        }
         return area_F * delta_x;
     }
 

@@ -1,6 +1,6 @@
-#include "qalgorithms_qpeaks.h"
-#include "qalgorithms_datatypes.h"
 #include "math.h"
+#include "qalgorithms_datatypes.h"
+#include "qalgorithms_qpeaks.h"
 #include "string"
 #include <cfloat>
 
@@ -41,7 +41,7 @@ void simulate_gauss(
     double apex, double height, double sdev,
     std::vector<float> *simulated)
 {
-    assert(!simulated->empty(), "wrong usage of test function\n",NULL);
+    assert(!simulated->empty(), "wrong usage of test function\n", NULL);
     assert(xvals->size() == simulated->size(), "wrong usage of test function\n", NULL);
 
     for (size_t i = 0; i < simulated->size(); i++)
@@ -213,7 +213,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
 
     simulate_EMG(x_start, x_step, apex, height, sdev, tau, &xvals, &yvals);
     x_start = xvals.front();
-    // float x_end = xvals.back();  
+    // float x_end = xvals.back();
     size_t length = xvals.size();
     in_out->jaccard = 0;
 
