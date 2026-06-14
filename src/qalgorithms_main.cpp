@@ -1,7 +1,7 @@
 // internal
-#include "qalgorithms_qpeaks.h"
-#include "qalgorithms_qbin.h"
 #include "qalgorithms_input_output.h"
+#include "qalgorithms_qbin.h"
+#include "qalgorithms_qpeaks.h"
 #include "qalgorithms_read_file.h"
 
 // other includes are avoided here to reduce header duplication

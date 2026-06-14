@@ -1,10 +1,10 @@
-#include <vector>
-#include <iostream>
-#include <fstream>    // write peaks to file @todo remove
-#include <filesystem> // printing absolute path in case read fails
-#include <string>
 #include <algorithm> // remove duplicates from task list
 #include <assert.h>
+#include <filesystem> // printing absolute path in case read fails
+#include <fstream>    // write peaks to file @todo remove
+#include <iostream>
+#include <string>
+#include <vector>
 
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_input_output.h"
@@ -484,8 +484,7 @@ namespace qAlgorithms
             fprintf(stderr, "Error: no valid files selected.\n");
             exit(1);
         }
-        std::sort(tasklist.begin(), tasklist.end(), [](const TaskEntry lhs, const TaskEntry rhs)
-                  { return lhs.filesize < rhs.filesize; });
+        std::sort(tasklist.begin(), tasklist.end(), [](const TaskEntry lhs, const TaskEntry rhs) { return lhs.filesize < rhs.filesize; });
         size_t prevsize = tasklist[0].filesize;
         for (size_t i = 1; i < tasknumber; i++)
         {
@@ -774,4 +773,4 @@ namespace qAlgorithms
     }
 
 #pragma endregion "print functions"
-}
+} // namespace qAlgorithms

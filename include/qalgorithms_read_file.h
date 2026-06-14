@@ -1,9 +1,9 @@
 #ifndef QALGORITHMS_READ_FILE_H
 #define QALGORITHMS_READ_FILE_H
 
-#include <vector>
-#include <string>
 #include "qalgorithms_datatypes.h"
+#include <string>
+#include <vector>
 
 #define PUGIXML_HEADER_ONLY
 #include "../external/pugixml-1.14/src/pugixml.h"
@@ -63,7 +63,7 @@ namespace qAlgorithms
     class XML_File
     {
         // @todo change this to a generalised XML document interface for mass spec data
-    private:
+      private:
         // std::vector<BinaryMetadata> spectra_binary_metadata;
         BinaryMetadata mtd_mz{}, mtd_intensity{};
 
@@ -79,7 +79,7 @@ namespace qAlgorithms
 
         Polarities get_polarity_mode();
 
-    public:
+      public:
         pugi::xml_node mzml_root_node;
 
         SourceFileType filetype = unknown_filetype;
@@ -106,6 +106,6 @@ namespace qAlgorithms
 
         void free_linknodes();
     };
-};
+}; // namespace qAlgorithms
 
 #endif // QALGORITHMS_READ_FILE_H

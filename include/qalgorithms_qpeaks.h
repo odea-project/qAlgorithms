@@ -225,6 +225,6 @@ namespace qAlgorithms
     // Note that no more than seven different values are needed per scale, even for a multidimensional approach.
     // A1 and A2 can be calculated from the initial values of A and B, which is why they are not included in the
     // precomputation.
-}
+} // namespace qAlgorithms
 
 #endif

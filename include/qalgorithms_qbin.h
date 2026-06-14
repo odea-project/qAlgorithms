@@ -47,7 +47,7 @@ namespace qAlgorithms
     // Bin Class
     class Bin
     {
-    public:
+      public:
         std::vector<const CentroidPeak *> pointsInBin;
         std::vector<float> DQSB;
 
@@ -122,6 +122,6 @@ namespace qAlgorithms
 
 #pragma endregion "Bin Container"
 
-}
+} // namespace qAlgorithms
 
 #endif

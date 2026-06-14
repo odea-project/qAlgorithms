@@ -1,11 +1,11 @@
 #include "qalgorithms_qbin.h"
 #include "qalgorithms_utils.h"
 
-#include <cassert>
-#include <vector>
-#include <numeric> // used for std::partial_sum during order space construction
-#include <math.h>
 #include <algorithm> // sorting
+#include <cassert>
+#include <math.h>
+#include <numeric> // used for std::partial_sum during order space construction
+#include <vector>
 
 namespace qAlgorithms
 {
@@ -171,8 +171,7 @@ namespace qAlgorithms
         }
 
         // calculate the DQSB as the silhouette score, considering only non-separated points
-        std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->mz < rhs->mz; });
+        std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs) { return lhs->mz < rhs->mz; });
 
         // setting start position to 0 at this point means that it can be reused, since it is incremented in makeDQSB
         size_t shared_idxStart = 0;
@@ -244,8 +243,7 @@ namespace qAlgorithms
             {
                 Bin processThis = bincontainer.sourceBins->at(j); // @todo do not allocate for every iteration here, also point to pointsInBin
 
-                std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                          { return lhs->mz < rhs->mz; });
+                std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs) { return lhs->mz < rhs->mz; });
                 auto activeOS = makeOrderSpace(&processThis);
                 auto cumError = makeCumError(&processThis.pointsInBin);
 
@@ -296,8 +294,7 @@ namespace qAlgorithms
         assert(bin->duplicateScan);
         assert(bin->medianMZ > 1);
         // std::sort(bin->pointsInbin->begin(), bin->pointsInbin->end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-        std::sort(bin->pointsInBin.begin(), bin->pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->number_MS1 < rhs->number_MS1; });
+        std::sort(bin->pointsInBin.begin(), bin->pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs) { return lhs->number_MS1 < rhs->number_MS1; });
         Bin returnBin;
         returnBin.pointsInBin.reserve(bin->pointsInBin.size());
 
@@ -497,8 +494,7 @@ namespace qAlgorithms
         assert(!pointsInBin.empty());
         // function is called on a bin sorted by mz
         const size_t binSize = pointsInBin.size();
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->number_MS1 < rhs->number_MS1; });
+        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs) { return lhs->number_MS1 < rhs->number_MS1; });
         std::vector<const CentroidPeak *>::iterator newstart = pointsInBin.begin();
         int lastpos = 0;
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
@@ -617,8 +613,7 @@ namespace qAlgorithms
                 scoreRegion.push_back((*notInBins)[i]);
             }
         }
-        std::sort(scoreRegion.begin(), scoreRegion.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->number_MS1 < rhs->number_MS1; });
+        std::sort(scoreRegion.begin(), scoreRegion.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs) { return lhs->number_MS1 < rhs->number_MS1; });
 
         // calculate minimum outer distance
         std::vector<float> minOuterDistances(this->pointsInBin.size());
@@ -682,8 +677,7 @@ namespace qAlgorithms
         size_t eicsize = pointsInBin.size();
         assert(eicsize > 4);
         // sorting should be done beforehand @todo
-        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->number_MS1 < rhs->number_MS1; });
+        std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs) { return lhs->number_MS1 < rhs->number_MS1; });
 
         // using the knowledge of where points should be interpolated, transfer centroids into
         // arrays with gaps for later processing
@@ -782,8 +776,7 @@ namespace qAlgorithms
         size_t eicsize = bin.size();
         assert(eicsize > 4);
         // sorting should be done beforehand @todo
-        std::sort(bin.begin(), bin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
-                  { return lhs->number_MS1 < rhs->number_MS1; });
+        std::sort(bin.begin(), bin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs) { return lhs->number_MS1 < rhs->number_MS1; });
 
         // using the knowledge of where points should be interpolated, transfer centroids into
         // arrays with gaps for later processing
@@ -1000,4 +993,4 @@ namespace qAlgorithms
         return (minOuterDist - meanInnerDist) / fmal(meanInnerDist, maxInVal, maxInVal);
     }
 #pragma endregion "Functions"
-}
+} // namespace qAlgorithms

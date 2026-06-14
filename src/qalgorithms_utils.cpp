@@ -1,8 +1,8 @@
 #include "qalgorithms_utils.h"
 #define _USE_MATH_DEFINES
-#include <math.h>
-#include <cassert>
 #include "cephes.h"
+#include <cassert>
+#include <math.h>
 
 #include <unordered_map>
 
@@ -449,4 +449,4 @@ namespace qAlgorithms
 
         return intersect / union_val;
     }
-}
+} // namespace qAlgorithms

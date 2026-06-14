@@ -1,10 +1,10 @@
 #ifndef QALGORITHMS_INPUT_OUTPUT
 #define QALGORITHMS_INPUT_OUTPUT
 
-#include <vector>
+#include "qalgorithms_datatypes.h"
 #include <filesystem>
 #include <string>
-#include "qalgorithms_datatypes.h"
+#include <vector>
 
 namespace qAlgorithms
 {
@@ -113,6 +113,6 @@ namespace qAlgorithms
     void printLogfile(std::filesystem::path pathLogfile); // @todo
 
 #pragma endregion "print functions"
-}
+} // namespace qAlgorithms
 
 #endif

@@ -1,6 +1,6 @@
+#include "common_test_utils.hpp"
 #include "CDFlib/cdflib.hpp"
 #include "pugixml-1.14/src/pugixml.h"
-#include "common_test_utils.hpp"
 #include "qalgorithms_qpeaks.h"
 
 #include <math.h>

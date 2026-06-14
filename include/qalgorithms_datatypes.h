@@ -147,6 +147,6 @@ namespace qAlgorithms
         float lowerRT = 0;
         float upperRT = 0; // @todo set these during feature construction
     };
-}
+} // namespace qAlgorithms
 
 #endif // QALGORITHMS_DATATYPE_PEAK_H

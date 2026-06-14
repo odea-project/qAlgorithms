@@ -1,10 +1,10 @@
-#include "qalgorithms_utils.h"
 #include "common_test_utils.hpp"
+#include "qalgorithms_utils.h"
 #define _USE_MATH_DEFINES
-#include <math.h>
-#include <cstdint>
 #include "../../external/fastexp.h"
 #include "../../external/liberfc/liberfc_reduced.h"
+#include <cstdint>
+#include <math.h>
 
 using namespace qAlgorithms;
 
