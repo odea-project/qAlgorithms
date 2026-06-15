@@ -187,6 +187,20 @@ developed componentisation strategy to group features produced with qPeaks. It u
 linear regressions to estimate shape similarity of features and group related features
 into components. 
 
+## Acknoledements
+While we minimize overall library usage, some functionality is only possible because of
+libraries written by others under permissive open-source licenses. In alphabetical order:
+* [Cephes](https://www.moshier.net/doubldoc.html), used for calculating the F statistic.
+* [libcerf](https://jugit.fz-juelich.de/mlz/libcerf), used for calculating the error functions.
+* [pugixml](https://pugixml.org/), used to read in mzML documents.
+* [simdutf](https://simdutf.github.io/simdutf/), used for fast, vectorised decoding of base64 in mzML.
+* [zlib](https://www.zlib.net/), for decompression of mzML binary data.
+  
+With the exception of zlib, we directly include the full or partial source code of used
+libraries (also called "vendoring"). This should reduce the potential for compilation
+failures to almost zero, because zlib is included on all systems we expect to be used
+for data analysis of spectra in any context.
+
 ## Development Roadmap
 
 For seeing concrete goals check out the [todo list](TODO.md). If you are interested in solving 
