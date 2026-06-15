@@ -1,4 +1,4 @@
-// header to export real-valued functions relevant to qAlgorithms from the liberfc source
+// header to export real-valued functions relevant to qAlgorithms from the libcerf source
 // code. This is done to avoid having required dependencies, especially since we currently
 // do not operate in the domain of complex numbers
 // code taken from https://jugit.fz-juelich.de/mlz/libcerf
@@ -6,13 +6,13 @@
 #ifndef LIBCERF_REAL_EXTERNAL
 #define LIBCERF_REAL_EXTERNAL
 
-namespace liberfc
+namespace libcerf
 {
     double erfi(double x);
 
     double dawson(double x);
 
     double erfcx(double x);
-}
+} // namespace libcerf
 
 #endif

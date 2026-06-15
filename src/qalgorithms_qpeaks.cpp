@@ -3,7 +3,7 @@
 #include "qalgorithms_read_file.h" // @todo remove coupling
 #include "qalgorithms_utils.h"
 
-#include "liberfc_reduced.h"
+#include "libcerf_reduced.h"
 
 #include <cassert>
 #include <cstdio>
@@ -1831,11 +1831,11 @@ namespace qAlgorithms
         // error calculation uses imaginary part if coefficient is > 0
         double err_L = (b2 < 0)
                            ? experfc(B1_2_SQRTB2, -1.0)    // 1 - erf(b1 / 2 / SQRTB2) // ordinary peak
-                           : liberfc::dawson(B1_2_SQRTB2); // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
+                           : libcerf::dawson(B1_2_SQRTB2); // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
         double err_R = (b3 < 0)
                            ? experfc(B1_2_SQRTB3, 1.0)      // 1 + erf(b1 / 2 / SQRTB3) // ordinary peak
-                           : liberfc::dawson(-B1_2_SQRTB3); // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
+                           : libcerf::dawson(-B1_2_SQRTB3); // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
         // calculate the Jacobian matrix terms
         double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
@@ -1887,12 +1887,12 @@ namespace qAlgorithms
             {
                 // valley point on the left side of the apex
                 // error = erfi(b1 / 2 / SQRTB2)
-                double err_L = liberfc::dawson(B1_2_SQRTB2);
+                double err_L = libcerf::dawson(B1_2_SQRTB2);
                 // check if the valley point is inside the window for the regression and consider it if necessary
                 if (-B1_2_B2 < -doubleScale)
                 {
                     // valley point is outside the window, use scale as limit
-                    err_L_covered = err_L - liberfc::erfi((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12;
+                    err_L_covered = err_L - libcerf::erfi((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12;
                 }
                 else
                 {
@@ -1923,11 +1923,11 @@ namespace qAlgorithms
             {
                 // valley point is on the right side of the apex
                 // error = - erfi(b1 / 2 / SQRTB3)
-                double err_R = liberfc::dawson(-B1_2_SQRTB3);
+                double err_R = libcerf::dawson(-B1_2_SQRTB3);
                 if (-B1_2_B3 > doubleScale)
                 {
                     // valley point is outside the window, use scale as limit
-                    err_R_covered = liberfc::erfi((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * EXP_B13 + err_R;
+                    err_R_covered = libcerf::erfi((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * EXP_B13 + err_R;
                 }
                 else
                 {
@@ -2563,7 +2563,7 @@ namespace qAlgorithms
         // This suffers from the same algorithmic instability as the positive case.
         // Here, we can use Dawson's integral D(x) = 1/2 sqrt(pi) * e^(-x^2) * erfi(x)
         // A_L = e^(b0) * D(b1 / (2 sqrt(b2))) / sqrt(b2)
-        // The same transformation applied to b3. Depending on left / right valley position,
+        // The same transformation applies to b3. Depending on left / right valley position,
         // we calculate the partial area as A_L - 0 or 0 - A_R
 
         const double b0 = c->b0;
@@ -2594,102 +2594,28 @@ namespace qAlgorithms
         double area_L = -1;
         if (b2_pos)
         {
-            area_L = liberfc::dawson(b1 / sqrt_b2 / 2) / sqrt_b2;
+            area_L = libcerf::dawson(b1 / sqrt_b2 / 2) / sqrt_b2;
         }
         else
         {
-            area_L = liberfc::erfcx(b1 / sqrt_b2 / 2) / sqrt_b2 * sqrt_pi_2;
+            area_L = libcerf::erfcx(b1 / sqrt_b2 / 2) / sqrt_b2 * sqrt_pi_2;
         }
         assert(area_L > 0);
 
         double area_R = -1;
         if (b3_pos)
         {
-            area_R = -liberfc::dawson(b1 / sqrt_b3 / 2) / sqrt_b3;
+            area_R = -libcerf::dawson(b1 / sqrt_b3 / 2) / sqrt_b3;
         }
         else
         {
-            area_R = liberfc::erfcx(-b1 / sqrt_b3 / 2) / sqrt_b3 * sqrt_pi_2;
+            area_R = libcerf::erfcx(-b1 / sqrt_b3 / 2) / sqrt_b3 * sqrt_pi_2;
         }
         assert(area_R > 0);
 
         area_L *= b0_exp;
         area_R *= b0_exp;
         double area_F = (area_L + area_R) * delta_x;
-
-        if (false)
-        {
-            double dsqrt_b2 = 2 * sqrt(abs(b2));
-            double dsqrt_b3 = 2 * sqrt(abs(b3));
-            double eterm_b2 = exp(b0 - (b1 * b1) / (4 * b2));
-            double eterm_b3 = exp(b0 - (b1 * b1) / (4 * b3));
-            const double sqrt_pi = 1.7724538509055158819; // sqrt(M_PI);
-
-            double F_b2_lim = b2_pos ? 0 : (sqrt_pi * eterm_b2 * 1) / dsqrt_b2; // outer left limit for the integral
-            // double F_b2_inf = (sqrt_pi * eterm_b2 * -1) / dsqrt_b2;
-            double error_b2 = b2_pos
-                                  ? liberfc::erfi(b1 / dsqrt_b2)
-                                  : erf(b1 / dsqrt_b2);
-            double F_b2_zero = (sqrt_pi * eterm_b2 * error_b2) / dsqrt_b2;
-            double area_L_3 = F_b2_zero - F_b2_lim;
-
-            double area_L_2 = 0;
-            if (b2_pos)
-            {
-                assert(false);
-            }
-            else
-            {
-                double common_fac = (sqrt_pi * eterm_b2) / dsqrt_b2;
-                // area = common_fac * (error_b2 - 1); replace erf in function with 1 - erfc
-                double difference = -erfc(b1 / dsqrt_b2);
-                area_L_2 = common_fac * difference;
-
-                double diff_L = area_L - area_L_2;
-                assert(diff_L < 1);
-                double diff_L_2 = abs(area_L_3 - area_L_2);
-                assert(diff_L_2 < 1);
-            }
-
-            // double F_b3_ninf = (sqrt_pi * eterm_b3 * 1) / dsqrt_b3;
-            // is zero for a valley point for the same reasons as above
-            double F_b3_lim = b3_pos ? 0 : (sqrt_pi * eterm_b3 * -1) / dsqrt_b3; // outer right limit for the integral
-            double error_b3 = b3_pos
-                                  ? liberfc::erfi(b1 / dsqrt_b3)
-                                  : erf(b1 / dsqrt_b3);
-            double F_b3_zero = (sqrt_pi * eterm_b3 * error_b3) / dsqrt_b3;
-            double area_R_3 = F_b3_lim - F_b3_zero;
-
-            double area_R_2 = 0;
-            if (b3_pos)
-            {
-                assert(false);
-            }
-            else
-            {
-                double common_fac = (sqrt_pi * eterm_b3) / dsqrt_b3;
-                // area = common_fac * (-1 - eterm_b3); replace -erf in function with -1 + erfc
-                double difference = erfc(b1 / dsqrt_b3) - 2;
-                area_R_2 = common_fac * difference;
-
-                double diff_R = area_R - area_R_2;
-                assert(diff_R < 1);
-                double diff_R_2 = abs(area_R_3 - area_R_2);
-                assert(diff_R_2 < 1);
-            }
-
-            // The above calculation produces negative values for the area if we use the
-            // error function after replacing b2 and b3 with their absolute values. This
-            // should not happen if b2 or b3 is already positive
-            // @todo make sure this does not affect the error calculation
-            assert(b2_pos xor (area_L < 0));
-            assert(b3_pos xor (area_R < 0));
-            area_L = abs(area_L);
-            area_R = abs(area_R);
-
-            double area_F_2 = area_L + area_R;
-            assert(area_F == area_F_2);
-        }
 
         if (mse <= 0)
         {
@@ -2719,12 +2645,8 @@ namespace qAlgorithms
             double J[4];
 
             // b0:
-            // F(0) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erf( b1 / (2 sqrt(-b2)) ) ] / (2 sqrt(-b2))
-            // F(0) is always evaluated for both halves, so we always need all derivatives:
-            // F(0) d b0; [ const * e^( b0 - b1^2/(4 b2) ) * const ] / const => F(0) d b0 = e^( b0 - b1^2/(4 b2) ) * const
-            // The derivative of exp(x) is x' exp(x), since the inner term only has a singular b0 in a sum
-            // the equation does not change and the derivative of F(x) by b0 is F(x).
-            // Following the chain rule, d F(x) / d b0 = A' / A = A / A = 1
+            // A = e^(b0) * c; log(A) = b0 + log(c)
+            // d F(x) / d b0 = 1
             J[0] = 1;
 
             // b1:
@@ -2742,13 +2664,13 @@ namespace qAlgorithms
             double eterm_b3 = exp(-(b1 * b1) / (4 * b3));
             double F_b2_lim = b2_pos ? 0 : eterm_b2 * 1 / dsqrt_b2; // outer left limit for the integral
             double error_b2 = b2_pos
-                                  ? liberfc::erfi(b1 / dsqrt_b2)
+                                  ? libcerf::erfi(b1 / dsqrt_b2)
                                   : erf(b1 / dsqrt_b2);
             double F_b2_zero = eterm_b2 * error_b2 / dsqrt_b2;
 
             double F_b3_lim = b3_pos ? 0 : eterm_b3 * -1 / dsqrt_b3; // outer right limit for the integral
             double error_b3 = b3_pos
-                                  ? liberfc::erfi(b1 / dsqrt_b3)
+                                  ? libcerf::erfi(b1 / dsqrt_b3)
                                   : erf(b1 / dsqrt_b3);
             double F_b3_zero = eterm_b3 * error_b3 / dsqrt_b3;
 

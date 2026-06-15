@@ -5,8 +5,8 @@ project(qAlgorithms VERSION 0.2 LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
-# set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_COMPILER "g++") # requires std::sqrt to be constexpr, either g++ or c++26 and later
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+# set(CMAKE_CXX_COMPILER "g++")
 
 # @todo add a variable to decide debug / optimised as command line argument 
 if (false)
@@ -70,7 +70,7 @@ set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")        # Directory containing 
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")   # Directory containing the Include Files
 
 # Set include directories
-include_directories(include "${EXTERNAL_DIR}/simdutf/" "${EXTERNAL_DIR}/cephes" "${EXTERNAL_DIR}/liberfc")  # @todo this is terrible practice. Lets not do it
+include_directories(include "${EXTERNAL_DIR}/simdutf/" "${EXTERNAL_DIR}/cephes" "${EXTERNAL_DIR}/libcerf")  # @todo this is terrible practice. Lets not do it
 
 # Source files
 # @todo we currently list external files manually. Thats not great. 
@@ -81,7 +81,7 @@ file(GLOB_RECURSE SOURCES
     # "${EXTERNAL_DIR}/CDFlib/cdflib.cpp"
     "${EXTERNAL_DIR}/simdutf/simdutf.cpp" 
     "${EXTERNAL_DIR}/cephes/cephes.cpp"
-    "${EXTERNAL_DIR}/liberfc/liberfc_reduced.cpp"
+    "${EXTERNAL_DIR}/libcerf/libcerf_reduced.cpp"
     "${EXTERNAL_DIR}/fastexp.h" 
     "${EXTERNAL_DIR}/exptables.h")
 
@@ -97,9 +97,10 @@ target_include_directories(qalgo_lib PUBLIC
 )
 
 # link against zlib on windows - requires explicit path under mingw for some reason
-if(WIN32)
-    set(ZLIB_INCLUDE_DIR "C:/msys64/ucrt64/include")
-    set(ZLIB_LIBRARY "C:/msys64/ucrt64/lib/libz.a")
+if(WIN32 AND (CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"))
+    set(ZLIB_ROOT "C:/msys64/ucrt64")
+    set(ZLIB_INCLUDE_DIR "${ZLIB_ROOT}/include")
+    set(ZLIB_LIBRARY     "${ZLIB_ROOT}/lib/libz.a")
     set(ZLIB_USE_STATIC_LIBS "ON")
 endif()
 find_package(ZLIB REQUIRED)

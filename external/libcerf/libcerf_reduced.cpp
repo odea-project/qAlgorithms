@@ -1,10 +1,10 @@
-#include "liberfc_reduced.h"
+#include "libcerf_reduced.h"
 #include "auto_cheb_imwofx.c"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-namespace liberfc
+namespace libcerf
 {
     const double spi2 = 0.88622692545275801364908374167057; // sqrt(pi)/2
 
@@ -35,8 +35,7 @@ namespace liberfc
     //! on architectures like MIPS that do not revert the byte order of simple types.
     inline double frexp2(double value, int *eptr)
     {
-        union
-        {
+        union {
             double v;
             struct
             {
@@ -418,7 +417,7 @@ namespace liberfc
         }
 
     } // erfcx
-}
+} // namespace libcerf
 
 /* Copyright:
  *   (C) 2012 Massachusetts Institute of Technology

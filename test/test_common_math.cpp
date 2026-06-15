@@ -5,7 +5,7 @@
 #include "common_test_utils.hpp"
 #include "qalgorithms_utils.h"
 #define _USE_MATH_DEFINES
-#include "../../external/liberfc/liberfc_reduced.h"
+#include "../../external/libcerf/libcerf_reduced.h"
 #include <cstdint>
 #include <math.h>
 
@@ -115,9 +115,9 @@ void test_erfs()
         double tolerance = 10e-12;
 
         assert(abs(1 - erf(x) / erfd) < tolerance, "reference erf value for x = %f differs", x);
-        assert(abs(1 - liberfc::erfi(x) / erfid) < tolerance, "reference erfi value for x = %f differs", x);
+        assert(abs(1 - libcerf::erfi(x) / erfid) < tolerance, "reference erfi value for x = %f differs", x);
         assert(abs(1 - erfc(x) / erfcd) < tolerance, "reference erfc value for x = %f differs", x);
-        assert(abs(1 - liberfc::erfcx(x) / erfcxd) < tolerance, "reference erfcx value for x = %f differs", x);
+        assert(abs(1 - libcerf::erfcx(x) / erfcxd) < tolerance, "reference erfcx value for x = %f differs", x);
     }
 }
 

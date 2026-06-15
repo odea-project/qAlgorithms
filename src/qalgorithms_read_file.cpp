@@ -1,7 +1,7 @@
 #include "qalgorithms_read_file.h"
 #include "qalgorithms_datatypes.h"
 
-#include "../external/pugixml-1.14/src/pugixml.h"
+#include "../external/pugixml/pugixml.h"
 #include "../external/simdutf/simdutf.h" // use a fast base64 decode function that makes proper use of SIMD
 
 // #include <filesystem>
