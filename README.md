@@ -199,7 +199,10 @@ libraries written by others under permissive open-source licenses. In alphabetic
 With the exception of zlib, we directly include the full or partial source code of used
 libraries (also called "vendoring"). This should reduce the potential for compilation
 failures to almost zero, because zlib is included on all systems we expect to be used
-for data analysis of spectra in any context.
+for data analysis of spectra in any context. The choice to use system libraries for
+zlib was made because compression and decompression are the only highly security-relevant 
+parts of this program and because from a performance perspective, faster libraries on a
+system may override the ZLIB environment variable.
 
 ## Development Roadmap
 

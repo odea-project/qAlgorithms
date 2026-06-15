@@ -2624,32 +2624,33 @@ namespace qAlgorithms
             return area_F;
         }
 
-        // ### uncertainty calculation here ###
-        // We cannot directly calculate the uncertainty from the exponential form (true peak area).
-        // Instead, since the coefficients apply to the logarithmic transform, we calculate the
-        // uncertainty of the logarithm of the area as defined above. log(a * b) = log(a) + log(b)
-        // does not apply here, since the area is defined as A = F_b2(0) - F_b2(-inf) + F_b3(inf) - F_b3(0)
-        // for the normal case and F(x) when a valley exists. Therefore, the derivative of log(A) is A' / A.
-        // the area is already known, for all other derivatives
-
-        // log(F) = log( [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ] / (2 sqrt(b2)) )
-        // = log(sqrt(pi)) + log(e^( b0 - b1^2/(4 b2) )) + log( erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ) - log(2 sqrt(b2)))
-        // = log(sqrt(pi)) + b0 - b1^2/(4 b2) + log( erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ) - log(2) - log(sqrt(b2))
-        // since we take the derivative afterwards, constant terms are ignored
-        // log(F(x)) = b0 - b1^2/(4 b2) + log( erfi( (b1 + 2 b2 x) / (2 sqrt(b2)) ) ) - log(sqrt(b2))
-
-        // for negative b2, the only change is that erf is used instead of erfi. Both
-        // functions cannot be simplified further.
-
         {
+            // We cannot directly calculate the uncertainty from the exponential form (true peak area).
+            // This is because the mse required for the uncertainty is only defined as relating to the
+            // coefficients in the log-transformed space.
+            // Instead, since the coefficients apply to the logarithmic transform, we calculate the
+            // uncertainty of the logarithm of the area as defined above.
+            //     A  = e^b0 *  (area_L + area_R) * deleta_x
+            // log(A) = b0 + log(area_L + area_R) + deleta_x
+            // The uncertainty is calculated using the Jacobian J, which contains the per-coefficient
+            // partial derivatives. delta_x is just scaling and never relevant to uncertainty.
+            // It is obvious that the derivative by b0 is 1.
             double J[4];
-
-            // b0:
-            // A = e^(b0) * c; log(A) = b0 + log(c)
-            // d F(x) / d b0 = 1
             J[0] = 1;
 
             // b1:
+            // The derivative of log(x) is x' / x. Apply the chain rule and we obtain:
+            // log(A)'_b1 = (area_L' + area_R') / (area_L + area_R)
+            // For negative b23, the area is calculated as:
+            // area_L  = erfcx(b1 / (2 sqrt(b2))) * sqrt(pi) / (2 sqrt(b2)); *-1 for b3
+            // area_L' = -H_(-2)(b1 / (2 sqrt(b2))) * 1/b2
+            // Where H_(-2) is the hermite polynomial evaluated at -2. The following transformation applies:
+            // H_(-2)(x) = 1/2 - sqrt(pi)/2 * x * e^(x^2) * erfc(x) = 1/2 - sqrt(pi)/2 * x * erfcx(x)
+            // replace H in the above equation:
+            // area_L' = 1/(2 b2) - sqrt(pi)/2 * b1 / (2 sqrt(b2) * erfcx(b1 / (2 sqrt(b2)) * 1/b2
+            // notice that we can extract the definition of the area from the derivative and obtain:
+            // area_L' = (area_L * b1 - 1) / (2 b2)
+
             // since d/dx f(x) + g(x) = f'(x) + g'(x), we differentiate the individual pieces of b1 and sum up.
             // for + / - infinity:
             // F(-inf) = [ sqrt(pi) * e^( b0 - b1^2/(4 b2) ) * +1 ] / (2 sqrt(-b2)) * (b1 / (2 b2))
