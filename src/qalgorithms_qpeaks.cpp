@@ -2570,6 +2570,7 @@ namespace qAlgorithms
         const double b1 = c->b1;
         const double b2 = c->b2;
         const double b3 = c->b3;
+        const double sqrt_pi_2 = 1.7724538509055158819 / 2; // sqrt(M_PI);
 
         bool b2_pos = b2 > 0;
         bool b3_pos = b3 > 0;
@@ -2578,17 +2579,8 @@ namespace qAlgorithms
         assert(!(b3_pos && b1 > 0));
         assert(delta_x > 0);
 
-        // only relevant if one of the coefficients is > 0: Calculate the valley position for a given
-        // peak. This is required during the calculation of the erfi term. Always choosing the valley
-        // will lead to distortion, but it should overall be lower than if the peak is always cut off
-        // at the end of the peak window.
-        const double x = -b1 / (2 * (b2_pos ? b2 : b3));
-
-        // note: this is not factored out into a separate function since + and - inf use different terms
         double sqrt_b2 = sqrt(abs(b2));
         double sqrt_b3 = sqrt(abs(b3));
-
-        const double sqrt_pi_2 = 1.7724538509055158819 / 2; // sqrt(M_PI);
         double b0_exp = exp(b0);
 
         double area_L = -1;
@@ -2650,6 +2642,50 @@ namespace qAlgorithms
             // area_L' = 1/(2 b2) - sqrt(pi)/2 * b1 / (2 sqrt(b2) * erfcx(b1 / (2 sqrt(b2)) * 1/b2
             // notice that we can extract the definition of the area from the derivative and obtain:
             // area_L' = (area_L * b1 - 1) / (2 b2)
+            // For b2 > 0, area_L = D(b1 / 2 sqrt(b2)) / sqrt(b2), where D is dawson's integral.
+            // D(a x)' = a - 2 a^2 x D(a x)
+            // area_L' = ( 1 / (2 sqrt(b2)) *  1 / sqrt(b2) ) - 2 ( 1 / (2 sqrt(b2)) )^2 * b1 * D(b1 / 2 sqrt(b2)) / sqrt(b2)
+            // area_L' = 1 / (2 b2) - 1 / (2 b2) * b1 * D(b1 / 2 sqrt(b2)) / sqrt(b2)
+            // area_L' = 1 / (2 b2) * (1 - b1 * area_L)
+            // For area_R with positive b3, the above applies without changes since the last 1 / sqrt(b2) changes
+            // to -1 / sqrt(b2) and this expression is the area again.
+            // This means that the derivative by b0 expressed as the scaled area is independent of positive / negative
+            // b2 / b3 coefficients, since the terms are identical:
+            // 1 / (2 b2) * (1 - b1 * area_L) == (area_L * b1 - 1) / (2 b2)
+            double area_L_db1 = (1 - b1 * area_L) / (2 * b2);
+            double area_R_db1 = (1 - b1 * area_R) / (2 * b3);
+            assert(area_L_db1 != 0);
+            assert(area_R_db1 != 0);
+            J[1] = (area_L_db1 + area_R_db1) / (area_L + area_R);
+
+            // for the partial derivative by b2 and b3 for negative coefficents, there is a dependence on the
+            // hermite polynomial H_(-2)(x) and H_(-1)(x):
+            // area_L' = b1 * H_(-2)( b1 / (2 sqrt(b2)) ) / (2 b2^2) - sqrt(b2) * H_(-1)( b1 / (2 sqrt(b2))) / (2 b2^2)
+            // multiply the second term with (2 sqrt(pi)) / (2 sqrt(pi)) and apply the identity of H_(-2):
+            // area_L' = b1 / (2 b2^2) * ( 1/2 - sqrt(pi)/2 * b1 / (2 sqrt(2)) * erfcx(b1 / (2 sqrt(2))) ) -
+            //           sqrt(b2) * sqrt(pi) / (4 b2^2) * erfcx( b1 / (2 sqrt(2)) )
+            // area_L' = b1 / (4 b2^2) - b1 / (2 b2^2) * sqrt(pi)/2 * b1 / (2 sqrt(2)) * erfcx(b1 / (2 sqrt(2)) ) -
+            //           sqrt(b2) * sqrt(pi) / (4 b2^2) * erfcx( b1 / (2 sqrt(2)) )
+            // the product erfcx(b1 / (2 sqrt(b2))) * sqrt(pi) / (2 sqrt b2) is area_L
+            // area_L' = b1 / (4 b2^2) -
+            //           b1 / (2 b2^2) * 1/2 * b1 * area_L -
+            //           sqrt(b2) * sqrt(pi) / (4 b2^2) * erfcx( b1 / (2 sqrt(2)) )
+            // multiply the last term with  (2 sqrt(b2)) / (2 sqrt(b2)) and apply the definition of the area
+            // area_L' = b1 / (4 b2^2) -
+            //           b1 / (2 b2^2) * 1/2 * b1 * area_L -
+            //           sqrt(b2) * 1 / (4 b2^2) * 2 * sqrt(b2) * area_L
+            // area_L' = b1 / (4 b2^2) -
+            //           b1^2 / (4 b2^2) * area_L -
+            //           2 b2 / (4 b2^2) * area_L
+            // area_L' = 1 / (4 b2^2) * (b1 - b1^2 * area_L - 2 b2 * area_L)
+            // area_L' = 1 / (4 b2^2) * (b1 - area_L * (b1^2 + 2 b2))
+
+            // For positive b2 or b3, the derivative by b2 is:
+            // b1^2 / (4 b2) * D(...) / sqrt(b2) - 1 / (2 b2) * D(...) / sqrt(b2) - b1 / (4 b2^2)
+            // D(...) / sqrt(b2) is the area; multiply area_L / (2 b2) with 2 b2 / 2 b2 for a common divisor
+            // area_L' = 1 / (4 b2^2) * (area_L * (b1^2 - 2 b2)) - b1)
+
+            // @todo probable sign flip for either of the two forms - both should be the same, as above
 
             // since d/dx f(x) + g(x) = f'(x) + g'(x), we differentiate the individual pieces of b1 and sum up.
             // for + / - infinity:
@@ -2675,24 +2711,6 @@ namespace qAlgorithms
                                   : erf(b1 / dsqrt_b3);
             double F_b3_zero = eterm_b3 * error_b3 / dsqrt_b3;
 
-            double diff_b1_lim_L = b2_pos
-                                       ? exp(b0 + b1 * x + b2 * x * x) / (2 * b2) - F_b2_lim * b1 / (2 * b2)
-                                       : F_b2_lim * (b1 / (2 * b2));
-            double diff_b1_lim_R = b3_pos
-                                       ? exp(b0 + b1 * x + b3 * x * x) / (2 * b3) - F_b3_lim * b1 / (2 * b3)
-                                       : F_b3_lim * (b1 / (2 * b3));
-            // for x0, follow the same scheme as above for positive b23
-            // e^(b0 - b1^2/(2 b2))/(2 b2) - (sqrt(pi) b1 e^(b0 - b1^2/(4 b2)) erf(b1/(2 sqrt(b2))))/(2 sqrt(b2) * 2 b2)
-            double diff_b1_zero_L = b2_pos
-                                        ? exp(b0) / (2 * b2) - F_b2_zero * b1 / (2 * b2)
-                                        : exp(b0 - b1 * b1 / (2 * b2)) / (2 * b2) - F_b2_zero * b1 / (2 * b2);
-            double diff_b1_zero_R = b3_pos
-                                        ? exp(b0) / (2 * b3) - F_b3_zero * b1 / (2 * b3)
-                                        : exp(b0 - b1 * b1 / (2 * b3)) / (2 * b3) - F_b3_zero * b1 / (2 * b3);
-            // area = zero_l - lim_l + lim_r - zero_r
-            double diff_b1 = diff_b1_zero_L - diff_b1_lim_L + diff_b1_lim_R - diff_b1_zero_R;
-            J[1] = diff_b1 / area_F;
-
             // b2 / b3:
             // Since b2 and b3 apply to different halves of the regression, the derivative also only covers one half
             // the actual calculations are still identical
@@ -2706,6 +2724,7 @@ namespace qAlgorithms
             // the original area term is contained in the first part of the substraction when expanding:
             // F_lim_b2 * (b1^2 - 2 b2) / (4 b2^2)
             // - eterm_b2 * exp((b1 + 2x b2)^2 / 4 b2) * (b1 - 2 x b2) / (4 b2^2)
+            const double x = -b1 / (2 * (b2_pos ? b2 : b3));
             double diff_b2_lim = b2_pos
                                      ? F_b2_lim * (b1 * b1 - 2 * b2) / (4 * b2 * b2) - eterm_b2 * exp((b1 + 2 * x * b2) * (b1 + 2 * x * b2) / 4 * b2) * (b1 - 2 * x * b2) / (4 * b2 * b2)
                                      : (b1 * b1 - 2 * b2) * F_b2_lim / (4 * b2 * b2);
