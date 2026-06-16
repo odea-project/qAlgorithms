@@ -1,15 +1,14 @@
-// qalgorithms_datatypes.h
 #ifndef QALGORITHMS_DATATYPE_PEAK_H
 #define QALGORITHMS_DATATYPE_PEAK_H
 
+#include <climits>
 #include <vector>
 #define _USE_MATH_DEFINES
 #include <math.h> // INFINITY and other number macros
 #include <qalgorithms_utils.h>
 
-/*  This file includes the structs used for data management in qAlgorithms.
-    Anything required by multiple parts of the full program should be listed here.
-*/
+// This file includes the structs used for data management in qAlgorithms.
+// All data structures required by multiple parts of the full program should be listed here.
 
 namespace qAlgorithms
 {
@@ -37,7 +36,7 @@ namespace qAlgorithms
         // float mse = 0;            // mean squared error
         float area = 0; // area of the peak (in evenly spaced x dimension, scaled later)
         float uncert_area = 0, uncert_position = 0, uncert_height = 0;
-        int numCompetitors = 0; // number of points that were discarded in favour of this regression
+        unsigned int numCompetitors = 0; // number of points that were discarded in favour of this regression
         float jaccard = 0;
         bool isValid = false; // flag to indicate if the regression is valid
     };
@@ -88,8 +87,8 @@ namespace qAlgorithms
 
     struct RT_Grouping // @todo remove this
     {
-        size_t originalIndex = -1;
-        size_t interpolatedIndex = -1;
+        size_t originalIndex = UINT_MAX;
+        size_t interpolatedIndex = UINT_MAX;
         float trueRT = -1;
         bool interpolated = true;
     };

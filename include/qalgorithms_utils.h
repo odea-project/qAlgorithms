@@ -1,6 +1,7 @@
 #ifndef QALGORITHMS_UTILS_H
 #define QALGORITHMS_UTILS_H
 
+#include <cstddef>
 #include <stddef.h>
 
 // ### functions in this file should never call malloc! ###
@@ -47,8 +48,8 @@ namespace qAlgorithms
      * @return                Is the complex model better than the simple model (y/n)?
      */
     bool F_test_regs(const double RSS_complex, const double RSS_simple,
-                     const double params_complex, const double params_simple,
-                     const double n, const double alpha);
+                     const size_t params_complex, const size_t params_simple,
+                     const size_t n, const double alpha);
 
     /**
      * @brief Computes the F-statistic / F-Value for comparing a full model against a null model
@@ -62,7 +63,7 @@ namespace qAlgorithms
      */
     double F_value(const double RSS_complex, const double RSS_simple,
                    const double params_complex, const double params_simple,
-                   const double n);
+                   const size_t n);
 
     /**
      * @brief Computes the critical F‐statistic for a given alpha and model parameter counts using the cdff function from cdflib

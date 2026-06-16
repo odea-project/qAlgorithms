@@ -266,17 +266,21 @@ namespace qAlgorithms
                     fprintf(stderr, "Error: no value to skip ahead specified.\n");
                     return args;
                 }
-                size_t skipNum = 0;
-                try
-                {
-                    skipNum = std::stoi(argv[i]);
-                }
-                catch (std::invalid_argument const &)
+
+                char *str = argv[i];
+                char **endptr = &str - 1; // the position one ahead of str is always defined and non-null
+                int skip = strtol(str, endptr, 10);
+                if (*endptr == str)
                 {
                     fprintf(stderr, "Error: you cannot skip ahead by \"%s\" entries.\n", argv[i]);
                     return args;
                 }
-                args.skipAhead = skipNum;
+                else if (skip < 0)
+                {
+                    fprintf(stderr, "Error: you cannot skip ahead a negative number of entries.\n");
+                }
+
+                args.skipAhead = (size_t)skip;
             }
             else
             {

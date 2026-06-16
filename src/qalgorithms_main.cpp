@@ -5,6 +5,8 @@
 #include "qalgorithms_read_file.h"
 
 // other includes are avoided here to reduce header duplication
+#include <cassert>
+#include <cstddef>
 #include <time.h>
 
 int main(int argc, char *argv[])
@@ -170,8 +172,8 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "Error: no centroids found despite valid indices");
                 continue;
             }
-
-            for (int cenID = 0; cenID < centroidCount; cenID++)
+            assert(centroidCount > 0);
+            for (size_t cenID = 0; cenID < (size_t)centroidCount; cenID++)
             {
                 size_t scanNumber = centroids->at(cenID).number_MS1;
                 size_t realRT_idx = rt_index.indexOfOriginalInInterpolated[scanNumber];
@@ -194,7 +196,7 @@ int main(int argc, char *argv[])
 
             // find lowest intensity among all centroids to use as baseline during componentisation
             float minCenArea = INFINITY;
-            for (int cenID = 1; cenID < centroidCount; cenID++)
+            for (size_t cenID = 1; cenID < (size_t)centroidCount; cenID++)
             {
                 float currentInt = centroids->at(cenID).area;
                 minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
@@ -280,7 +282,7 @@ int main(int argc, char *argv[])
             }
 
             continue;
-
+#if 0
             if (userArgs.printFeatCens)
             {
                 // printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData, // &retentionTimes, // @todo this is incomplete
@@ -303,6 +305,7 @@ int main(int argc, char *argv[])
             {
                 continue;
             }
+#endif
         }
         // @todo this function really needs to be shortened
         inputFile.free_linknodes();

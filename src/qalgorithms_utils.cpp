@@ -1,4 +1,5 @@
 #include "qalgorithms_utils.h"
+#include <cstddef>
 #define _USE_MATH_DEFINES
 #include "cephes.h"
 #include <cassert>
@@ -29,8 +30,8 @@ namespace qAlgorithms
     }
 
     bool F_test_regs(const double RSS_complex, const double RSS_simple,
-                     const double params_complex, const double params_simple,
-                     const double n, const double alpha)
+                     const size_t params_complex, const size_t params_simple,
+                     const size_t n, const double alpha)
     {
         const double fval = F_value(RSS_complex, RSS_simple, params_complex, params_simple, n);
         const double F_refval = F_stat(alpha, params_complex, params_simple, n);
@@ -40,9 +41,9 @@ namespace qAlgorithms
 
     size_t hashm(int a, int b)
     {
-        size_t a2 = a;
+        size_t a2 = (size_t)a;
         a2 = a2 << __INT_WIDTH__;
-        return a2 | b;
+        return a2 | (size_t)b;
     }
     // this global hashmap is used to avoid recalculating the f value every time - better, thread-safe solution possible? @todo
     std::unordered_map<size_t, double> global_fhash_5perc;
@@ -56,7 +57,7 @@ namespace qAlgorithms
         int dfn_int = params_complex - params_simple;
         int dfd_int = numPoints - params_complex;
         size_t key = hashm(dfn_int, dfd_int);
-        if (alpha == 0.05) // @todo generalise for all alpha
+        (alpha = 0.05); // @todo generalise for all alpha
         {
             double Fhash = global_fhash_5perc[key];
             if (Fhash != 0) // this serves as a check for the key existing
@@ -88,7 +89,7 @@ namespace qAlgorithms
 
     double F_value(const double RSS_complex, const double RSS_simple,
                    const double params_complex, const double params_simple,
-                   const double n)
+                   const size_t n)
     {
         // Calculate F value of two models by their residual sum of squares (RSS) and number of regression
         // parameters (params). H0 is the model being compared against. n is the number of real points
@@ -98,7 +99,7 @@ namespace qAlgorithms
         assert(RSS_simple > 0);
         assert(n > 1);
         double RSS_ratio = (RSS_simple - RSS_complex) / RSS_complex;
-        double params_ratio = (n - params_complex) / (params_complex - params_simple);
+        double params_ratio = ((double)n - params_complex) / (params_complex - params_simple);
         return RSS_ratio * params_ratio;
     }
 
@@ -206,8 +207,6 @@ namespace qAlgorithms
                        double *x1, double *x2)
     {
         // reference: https://www.av8n.com/physics/quadratic-formula.htm
-        assert(a != 0), assert(b != 0), assert(c != 0);
-
         double sign = b <= 0 ? -1 : 1;
         double root = b * b - 4 * a * c;
         bool invalid = root <= 0;

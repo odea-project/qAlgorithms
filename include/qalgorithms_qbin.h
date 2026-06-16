@@ -1,6 +1,7 @@
 #ifndef _QALGORITHMS_QBIN_INCLUDED
 #define _QALGORITHMS_QBIN_INCLUDED
 
+#include <climits>
 #include <vector>
 
 #include "qalgorithms_datatypes.h"
@@ -53,8 +54,8 @@ namespace qAlgorithms
 
         float mzMin = -1;
         float mzMax = -1;
-        unsigned int scanMin = -1;
-        unsigned int scanMax = -1;
+        unsigned int scanMin = UINT_MAX;
+        unsigned int scanMax = 0;
         float medianMZ = -1; // only used for removing duplicates
 
         bool unchanged = false;     // if this is true after every test has run once, the bin is viable

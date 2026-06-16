@@ -6,6 +6,9 @@
 #include "libcerf_reduced.h"
 
 #include <cassert>
+#include <climits>
+#include <cmath>
+#include <cstddef>
 #include <cstdio>
 #define _USE_MATH_DEFINES // relevant for windows to have math constants
 #include <math.h>
@@ -289,9 +292,9 @@ namespace qAlgorithms
         const float *intensities,
         const unsigned int *const df_cum);
 
-    int pruneRegsByApex(const float *intensities,
-                        const unsigned int *const df_cum,
-                        std::vector<RegressionGauss> *validRegressions);
+    // int pruneRegsByApex(const float *intensities,
+    //                     const unsigned int *const df_cum,
+    //                     std::vector<RegressionGauss> *validRegressions);
 
     double calcMSE_exp(const RegCoeffs *coeff,
                        const float *observed,
@@ -355,7 +358,7 @@ namespace qAlgorithms
 
         resolveScaleConflicts(&validRegsTmp, intensities, degreesOfFreedom_cum);
 
-        /*int apexCount =*/pruneRegsByApex(intensities, degreesOfFreedom_cum, &validRegsTmp);
+        // /*int apexCount =*/pruneRegsByApex(intensities, degreesOfFreedom_cum, &validRegsTmp);
 
         // temp storage vector, eventually delete everything below this comment @todo
         std::vector<RegressionGauss> validRegsTmp2;
@@ -393,6 +396,7 @@ namespace qAlgorithms
         return;
     }
 
+#if 0
     int pruneRegsByApex(const float *intensities,
                         const unsigned int *const df_cum,
                         std::vector<RegressionGauss> *validRegressions)
@@ -454,6 +458,7 @@ namespace qAlgorithms
 
         return 0;
     }
+#endif
 
     int pruneConflictingRegs(
         std::vector<RegressionGauss> *validRegressions,
@@ -535,7 +540,7 @@ namespace qAlgorithms
                 compReg->numCompetitors += reg->numCompetitors + 1;
                 reg->isValid = false;
             }
-            assert(compReg->numCompetitors < int(validRegressions->size())); // at most better than all other regressions
+            assert(compReg->numCompetitors < validRegressions->size()); // at most better than all other regressions
             eliminations += 1;
         }
 
@@ -755,7 +760,7 @@ namespace qAlgorithms
                 if (idx == -1)
                     break; // no scale to compare with exists
 
-                startIdx = idx + 1; // necessary since otherwise the regression will be reset to itself
+                startIdx = size_t(idx + 1); // necessary since otherwise the regression will be reset to itself
                 upperReg = validRegressions->data() + idx;
                 assert(upperReg->isValid);
 
@@ -802,8 +807,8 @@ namespace qAlgorithms
                     lowerReg->isValid = false;
                     upperReg->numCompetitors += lowerReg->numCompetitors + 1;
                 }
-                assert(lowerReg->numCompetitors < int(validRegressions->size()));
-                assert(upperReg->numCompetitors < int(validRegressions->size()));
+                assert(lowerReg->numCompetitors < validRegressions->size());
+                assert(upperReg->numCompetitors < validRegressions->size());
             }
             else // this branch was never taken for a test dataset!
             {
@@ -999,7 +1004,7 @@ namespace qAlgorithms
         unsigned int bestRegIdx = 0;
 
         // identify left (smallest) and right (largest) limit of the grouped regression windows
-        size_t left_limit = -1;
+        size_t left_limit = UINT_MAX;
         size_t right_limit = 0;
         for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
@@ -1269,12 +1274,11 @@ namespace qAlgorithms
 
         // double b0_old = coeff->b0;
 
-        int start = int(range->startIdx);
-        assert(0 <= start);
-        int end = int(range->endIdx) + 1;
+        size_t start = range->startIdx;
+        size_t end = range->endIdx + 1;
         assert(start < end);
         double x0 = double(coeff->x0);
-        for (int i = start; i < end; i++)
+        for (size_t i = start; i < end; i++)
         {
             double x = double(i) - x0;
             predicted->at(i) = regExp_fac(coeff, x);
@@ -1286,7 +1290,7 @@ namespace qAlgorithms
         double b0_exp = exp(coeff->b0);
 
         // Regression correction is only calculated from the range in which the regression is relevant initially.
-        for (int i = start; i < end; i++)
+        for (size_t i = start; i < end; i++)
         {
             double pred = predicted->at(i) * b0_exp;
             sum_predictSq += pred * pred;
@@ -1300,7 +1304,7 @@ namespace qAlgorithms
 
         // adjust the now incorrect values for predict. Remember that the previous prediciton was incomplete!
         double factor = exp(coeff->b0);
-        for (int i = start; i < end; i++)
+        for (size_t i = start; i < end; i++)
         {
             predicted->at(i) *= factor;
         }
@@ -1562,7 +1566,9 @@ namespace qAlgorithms
         double sum_weight = 0;
         for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
         {
-            int interpolated = (*values)[j] == 0 ? 0 : 1; // this is used instead of a continue so this can be vectorised. Skips a loop if value was interpolated
+            // multiplication with one or zero is used instead of a continue so this can be vectorised.
+            // @todo use another method of omitting interpolations
+            unsigned int interpolated = (*values)[j] == 0 ? 0 : 1;
             mean_weights += (*weight)[j] * interpolated;
             sum_weighted_x += (*values)[j] * (*weight)[j] * interpolated;
             sum_weight += (*weight)[j] * interpolated;
@@ -1577,7 +1583,7 @@ namespace qAlgorithms
         for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
         {
             double difference = (*values)[j] - weighted_mean;
-            double interpolated = (*values)[j] == 0 ? 0 : 1; // see above, add 0 if value is not real
+            double interpolated = (*values)[j] == 0 ? 0 : 1; // @todo see above, add 0 if value is not real
             sum_Qxxw += interpolated * difference * difference * (*weight)[j];
         }
         float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
@@ -1652,7 +1658,8 @@ namespace qAlgorithms
             peak.coefficients = coeff;
             peak.mse_base = -1; // regression->mse;
 
-            peak.interpolationCount = rangeLen(&regression->regSpan) - regression->df - 4; // -4 since the degrees of freedom are reduced by 1 per coefficient
+            size_t dfLoss = (size_t)regression->df + 4; // +4 since the degrees of freedom are reduced by 1 per coefficient
+            peak.interpolationCount = rangeLen(&regression->regSpan) - dfLoss;
             peak.competitorCount = regression->numCompetitors;
 
             peaks->push_back(peak);
@@ -1784,36 +1791,6 @@ namespace qAlgorithms
         double abs3 = abs(coeffs->b3);
         double tValue = max(abs2, abs3);
         return tValue / divisor > T_VALUES[df_sum] * divisor; // statistical significance of the quadratic term
-    }
-
-    bool isValidPeakHeight(
-        const RegressionGauss *mutateReg,
-        const double valley_position,
-        const size_t df_sum,
-        const double apexToEdge,
-        double mse)
-    {
-        // check if the peak height is significantly greater than edge signal - deprecated!
-        double apex = mutateReg->apex_position;
-        assert(apex != 0);
-        const bool apexLeft = apex < 0;
-        // determine left or right limit, based on apex position
-        const double scale_d = double(mutateReg->coeffs.scale);
-        const double altValley = scale_d * (apexLeft ? -1 : 1);
-        const double valley = valley_position == 0 ? altValley : valley_position;
-        // construct matrix
-        const double j1 = apex - valley;
-        const double j23 = apex * apex - valley * valley;
-        const double j2 = apexLeft ? j23 : 0;
-        const double j3 = apexLeft ? 0 : j23;
-        const double jacobianHeight[4]{0, j1, j2, j3};
-
-        // float uncertainty_apexToEdge = calcUncertainty(jacobianHeight, mutateReg->coeffs.scale, mutateReg->mse);
-        double uncertainty_apexToEdge = sqrt(matProductReg(jacobianHeight, mutateReg->coeffs.scale) * mse);
-
-        // @todo why -2? Just to account for position?
-        bool peakHeightSignificant = (apexToEdge - 2) > T_VALUES[df_sum] * (apexToEdge * uncertainty_apexToEdge);
-        return peakHeightSignificant;
     }
 
     void calcPeakAreaUncert(RegressionGauss *mutateReg, double mse) // @todo only take coeffs as input, do not add shadow dependency on multiplication with e^b0
@@ -2060,7 +2037,7 @@ namespace qAlgorithms
         size_t scanCount = retentionTimes->size();
         std::vector<RT_Grouping> totalRTs;
         totalRTs.reserve(scanCount * 2);
-        std::vector<size_t> idxToGrouping(scanCount, -1);
+        std::vector<size_t> idxToGrouping(scanCount, UINT_MAX);
 
         float critDiff = expectedDiff * 1.5; // if the difference is 1.5 times greater than the critDiff, there should be at least one interpolation
 
@@ -2654,8 +2631,8 @@ namespace qAlgorithms
             // 1 / (2 b2) * (1 - b1 * area_L) == (area_L * b1 - 1) / (2 b2)
             double area_L_db1 = (1 - b1 * area_L) / (2 * b2);
             double area_R_db1 = (1 - b1 * area_R) / (2 * b3);
-            assert(area_L_db1 != 0);
-            assert(area_R_db1 != 0);
+            assert(area_L_db1 != NAN);
+            assert(area_R_db1 != NAN);
             J[1] = (area_L_db1 + area_R_db1) / (area_L + area_R);
 
             // for the partial derivative by b2 and b3 for negative coefficents, there is a dependence on the
@@ -2738,6 +2715,7 @@ namespace qAlgorithms
             // (e^(b0 - b1^2/(4 b2)) sqrt(pi) (b1^2 - 2 b2) erf(b1/(2 sqrt(b2))) / (4 b2^2 * 2 sqrt(b2)) = F_b2_zero * (b1^2 - 2 b2) / (4 b2^2)
             // - (e^(b0 - b1^2/(2 b2)) b1) / (4 b2^2) // 4 b2^2 can be moved out of both terms
             // if erfi is used, only the substractor changes to  exp(b0) * b1
+
             double substr_b2 = b2_pos
                                    ? exp(b0) * b1
                                    : (exp(b0 - b1 * b1 / (2 * b2)) * b1);

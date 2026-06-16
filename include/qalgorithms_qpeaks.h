@@ -134,13 +134,6 @@ namespace qAlgorithms
 
     bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
 
-    bool isValidPeakHeight(
-        const RegressionGauss *mutateReg,
-        const double valley_position,
-        const size_t df_sum,
-        const double apexToEdge,
-        double mse);
-
     bool isValidPeakArea(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
 
     struct MeanVar

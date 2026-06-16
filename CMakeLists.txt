@@ -27,6 +27,7 @@ add_compile_options(
     -march=native              # Optimize the code for the architecture of the current build machine, implies highest supported AVX
     -fstrict-flex-arrays=3     # Size of arrays at the end of a struct must be known at compile time
     -D_GLIBCXX_ASSERTIONS      # Activates assertions for the Standard C++ Library for debugging @todo remove in release
+    -ftrapv                    # trap when a float value overflows
 )
 
 # Enabled warnings
@@ -50,7 +51,25 @@ add_compile_options(
     -Wchanges-meaning          # @todo what does this do exactly?
     -Wstrict-overflow=4        # Warns about cases where the compiler optimizes based on the assumption that signed overflow does not occur
     -fdiagnostics-color=always # Enables colored output for diagnostics
+    -Wsign-conversion          # conversion between signed and unsigned types
+    # -Wfloat-equal              # float == float emits a warning @todo had to be omitted due to noise from used libraries
+    -Wmissing-braces           # list initialisation with incorrect braces
+    -Wredundant-decls          # warns about redundant declarations of the same entity
+    -Warray-bounds=2           # compiler checks array bounds where possible
+    -Wunreachable-code         # unreachable branches in code
+    -Wenum-compare             # only compare enums of different types
 )
+
+# narrowing float conversion warning is different between clang and gcc
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wimplicit-float-conversion)
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    add_compile_options(-Wfloat-conversion)
+elseif(MSVC)
+    message(STATUS "MSVC does not support a warning for float -> double conversions")
+else()
+    message(STATUS "Unknown compiler (${CMAKE_CXX_COMPILER_ID}): not adding float -> double conversion warning")
+endif()
 
 # flags for static compile 
 # set(BUILD_SHARED_LIBS OFF)

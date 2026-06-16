@@ -6,6 +6,7 @@
 
 // #include <filesystem>
 #include <cassert>
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <zlib.h>
@@ -19,7 +20,7 @@ namespace qAlgorithms
         const size_t fsize = sizeof(float);
         const size_t dsize = sizeof(double);
         assert(bytes->size() % (isDouble ? dsize : fsize) == 0);
-        int lengthDecoded = bytes->size() / (isDouble ? dsize : fsize);
+        size_t lengthDecoded = bytes->size() / (isDouble ? dsize : fsize);
 
         result->reserve(lengthDecoded);
 
@@ -30,7 +31,7 @@ namespace qAlgorithms
         if (isDouble)
         {
             const double *dbl = (const double *)bytes->data();
-            for (int i = 0; i < lengthDecoded; ++i)
+            for (size_t i = 0; i < lengthDecoded; i++)
             {
                 result->push_back((float)dbl[i]); // result must be cast to float individually
             }
@@ -40,7 +41,7 @@ namespace qAlgorithms
             // encountered one relevant file "in the wild", but this is still rare enough to warrant a warning
             // @todo replace with memcpy
             const float *flt = (const float *)bytes->data();
-            for (int i = 0; i < lengthDecoded; ++i)
+            for (size_t i = 0; i < lengthDecoded; i++)
             {
                 result->push_back(flt[i]);
             }
@@ -119,7 +120,7 @@ namespace qAlgorithms
         pugi::xml_node spec_list = xps_run.node().child("spectrumList");
         assert(spec_list);
 
-        number_spectra = spec_list.attribute("count").as_int();
+        number_spectra = spec_list.attribute("count").as_uint();
 
         if (number_spectra > 0)
         {
@@ -247,7 +248,7 @@ namespace qAlgorithms
 
         pugi::xml_node node_binary_list = spectrum_node.child("binaryDataArrayList");
 
-        unsigned int number_traces = spectrum_node.attribute("defaultArrayLength").as_int();
+        unsigned int number_traces = spectrum_node.attribute("defaultArrayLength").as_uint();
 
         auto dataArray = node_binary_list.children("binaryDataArray").begin();
         assert(dataArray != node_binary_list.children("binaryDataArray").end());
