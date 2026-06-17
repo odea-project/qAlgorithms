@@ -4,7 +4,7 @@
 
 #include "common_test_utils.hpp"
 #include "CDFlib/cdflib.hpp"
-#include "pugixml/pugixml.h"
+#include "pugixml/pugixml.hpp"
 
 #include <math.h>
 #define _USE_MATH_DEFINES

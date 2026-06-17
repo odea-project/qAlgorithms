@@ -7,7 +7,7 @@
 #include "qalgorithms_qpeaks.h"
 
 #include "CDFlib/cdflib.hpp"
-#include "pugixml/pugixml.h"
+#include "pugixml/pugixml.hpp"
 #include "shared/common_test_utils.hpp"
 
 #include <cstdio> // printing

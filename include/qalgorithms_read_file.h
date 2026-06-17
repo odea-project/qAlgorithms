@@ -6,7 +6,7 @@
 #include <vector>
 
 #define PUGIXML_HEADER_ONLY
-#include "../external/pugixml/pugixml.h"
+#include "../external/pugixml/pugixml.hpp"
 
 namespace qAlgorithms
 {
