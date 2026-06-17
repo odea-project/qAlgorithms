@@ -73,6 +73,8 @@ in the centroid dimension. Problem: m/z variation
 * Test for the effect of non-equidistance
 * Do a non-linear refit for the final features / components
 * Instead of doing a 2D-2D fit, immediately employ a three-dimensional model and fit a somehow selected region with local maximum nonlinearly
+* Consider using a simplified filesystem library (maybe https://github.com/BraedonWooding/cpath/tree/master ?) to be C++11 compatible.
+  In that case also consider https://softwarefreedom.org/resources/2007/gpl-non-gpl-collaboration.html for potential changes
 
 ## Interface to high-level languages
 * Expose core functions to R, python, java, julia (?), C# (?), Matlab <- this is relevant because many companies only allow matlab

@@ -2615,6 +2615,7 @@ namespace qAlgorithms
             // area_L' = -H_(-2)(b1 / (2 sqrt(b2))) * 1/b2
             // Where H_(-2) is the hermite polynomial evaluated at -2. The following transformation applies:
             // H_(-2)(x) = 1/2 - sqrt(pi)/2 * x * e^(x^2) * erfc(x) = 1/2 - sqrt(pi)/2 * x * erfcx(x)
+            // (see https://math.stackexchange.com/questions/2238662/do-hermite-polynomials-exist-for-negative-integers)
             // replace H in the above equation:
             // area_L' = 1/(2 b2) - sqrt(pi)/2 * b1 / (2 sqrt(b2) * erfcx(b1 / (2 sqrt(b2)) * 1/b2
             // notice that we can extract the definition of the area from the derivative and obtain:
