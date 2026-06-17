@@ -111,18 +111,6 @@ namespace qAlgorithms
                    const Range_i *range);
 
     /**
-     * @brief Fast calculation of exp(-x^2) * erfc(x) * sqrt(pi)/2.
-     * @details This function uses an empirical approximation : exp(-x^2)
-     * * erfc(x) * sqrt(pi)/2 ~ exp(-x^2) * sqrt(pi)/2 +- a * x * exp(-b * x^2).
-     * The +- depends if exp(-x^2) * (1+-erf(x)) is used.
-     *
-     * @param x
-     * @param sign : 1.0 or -1.0
-     * @return double
-     */
-    double experfc(double x, double sign = -1.0);
-
-    /**
      * @brief returns the critical value for binning using the order spaces
      * @details hard-coded, empirically determined values for alpha = 0.05
      * @param n number of points in the tested distribution

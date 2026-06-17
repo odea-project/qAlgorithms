@@ -238,14 +238,6 @@ namespace qAlgorithms
         return RSS;
     }
 
-    double experfc(double x, double sign) // @todo get rid of this function
-    {
-        constexpr double a = 0.978795604954049; // empirically determined
-        constexpr double b = 1.25731022692317;  // empirically determined
-        double t = -x * x;
-        return SQRTPI_2 * exp(t) + sign * a * x * exp(t * b);
-    }
-
     // critical order space of two normally distributed populations
     double binningCritVal(const int n, const double stdDev)
     {

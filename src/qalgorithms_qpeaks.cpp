@@ -87,7 +87,7 @@ namespace qAlgorithms
             // we could also use a strategy such as taking the distance closest to the apex.
             // check if the chosen delta_x is acceptable @todo
             size_t leftOfApex = size_t(apex);
-            double delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
+            float delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
 
             // control against all distances in the peak, test if they are equidistant enough
             double delta_min = delta_x;
@@ -105,7 +105,7 @@ namespace qAlgorithms
             printf(" | mean: %f\n", delta_mean);
 
             // position is determined relative to the point left of the apex
-            double apexFraction = delta_x * (apex - trunc(apex));
+            float apexFraction = delta_x * float(apex - trunc(apex));
             peak.position = x_values[leftOfApex] + apexFraction;
             peak.uncert_position = regression->uncert_position * delta_x;
 
@@ -114,15 +114,15 @@ namespace qAlgorithms
             peak.limit_R = x_values[regression->regSpan.endIdx];
 
             // peak height = regression at apex position before transformation
-            peak.height = exp(regAt(&coeff, apex_raw));
+            peak.height = (float)exp(regAt(&coeff, apex_raw));
             peak.uncert_height = regression->uncert_height * peak.height;
 
             peak.area = regression->area * delta_x;
-            peak.uncert_area = regression->uncert_area * exp(coeff.b0) * delta_x;
+            peak.uncert_area = regression->uncert_area * (float)exp(coeff.b0) * delta_x;
 
             // the empirical peak width is generally estimated at half maximum. Our peak
             // model only has a standard deviation for the apex peak
-            peak.fwhm = fullWidthHalfMax(&coeff, peak.height, delta_x);
+            peak.fwhm = (float)fullWidthHalfMax(&coeff, peak.height, delta_x);
 
             peak.dqs = 1 - erf(regression->uncert_area / regression->area);
             peak.jaccard = regression->jaccard;
@@ -1089,7 +1089,7 @@ namespace qAlgorithms
 
                 if (exponentialMSE[j] == 0.0)
                 {
-                    exponentialMSE[j] = calcMSE_exp(
+                    exponentialMSE[j] = (float)calcMSE_exp(
                         &secondReg->coeffs,
                         intensities,
                         &secondReg->regSpan,
@@ -1113,7 +1113,7 @@ namespace qAlgorithms
 
             if (exponentialMSE[i] == 0.0)
             { // calculate the mse of the current peak
-                exponentialMSE[i] = calcMSE_exp(
+                exponentialMSE[i] = (float)calcMSE_exp(
                     &activeReg->coeffs,
                     intensities,
                     &activeReg->regSpan,
@@ -1281,7 +1281,7 @@ namespace qAlgorithms
         for (size_t i = start; i < end; i++)
         {
             double x = double(i) - x0;
-            predicted->at(i) = regExp_fac(coeff, x);
+            predicted->at(i) = (float)regExp_fac(coeff, x);
             assert(predicted->at(i) > 0);
         }
 
@@ -1303,7 +1303,7 @@ namespace qAlgorithms
         // assert(abs(coeff->b0 - b0_old) < 0.001);
 
         // adjust the now incorrect values for predict. Remember that the previous prediciton was incomplete!
-        double factor = exp(coeff->b0);
+        float factor = (float)exp(coeff->b0);
         for (size_t i = start; i < end; i++)
         {
             predicted->at(i) *= factor;
@@ -1443,7 +1443,7 @@ namespace qAlgorithms
           signal-to-noise ratio checkups.
           @todo this is not a relevant test
         */
-        float apexToEdge = apexToEdgeRatio(mutateReg, intensities);
+        double apexToEdge = apexToEdgeRatio(mutateReg, intensities);
         if (apexToEdge < 2)
         {
             failstates += 1;
@@ -1490,9 +1490,9 @@ namespace qAlgorithms
 
         // uncertainty calculation and t-tests against peak properties
 
-        double uncert_position = peakPositionUncert(coeffs, mse_log);
+        float uncert_position = (float)peakPositionUncert(coeffs, mse_log);
         mutateReg->uncert_position = uncert_position;
-        double uncert_height = peakHeightUncert(coeffs, mse_log);
+        float uncert_height = (float)peakHeightUncert(coeffs, mse_log);
         mutateReg->uncert_height = uncert_height;
 
         // Height Significance Test:
@@ -1515,7 +1515,7 @@ namespace qAlgorithms
         calcPeakAreaUncert(mutateReg, mse_log);
         double uncertainty = -1;
 
-        mutateReg->area = peakArea(coeffs, 1, mse_log, &uncertainty);
+        mutateReg->area = (float)peakArea(coeffs, 1, mse_log, &uncertainty);
 
         if (mutateReg->area / mutateReg->uncert_area <= T_VALUES[df_sum])
         {
@@ -1543,7 +1543,7 @@ namespace qAlgorithms
         assert(mutateReg->apex_position > 1); // @todo this should be superfluous
         assert(mutateReg->apex_position < length - 1);
         assert(predict->size() == length);
-        mutateReg->jaccard = calcJaccardIdx(intensities, predict->data(), length);
+        mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict->data(), length);
 
         failbook.push_back(failstates);
         if (failstates != 0)
@@ -1586,7 +1586,7 @@ namespace qAlgorithms
             double interpolated = (*values)[j] == 0 ? 0 : 1; // @todo see above, add 0 if value is not real
             sum_Qxxw += interpolated * difference * difference * (*weight)[j];
         }
-        float uncertaintiy = std::sqrt(sum_Qxxw / sum_weight / realPoints);
+        double uncertaintiy = sqrt(sum_Qxxw / sum_weight / (double)realPoints);
         return {float(weighted_mean), float(uncertaintiy)};
     };
 
@@ -1610,7 +1610,7 @@ namespace qAlgorithms
             // add height
             RegCoeffs coeff = regression->coeffs;
             // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
-            peak.height = exp(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
+            peak.height = (float)exp(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
             peak.heightUncertainty = regression->uncert_height * peak.height;
 
             // calculate the apex position in RT
@@ -1639,8 +1639,8 @@ namespace qAlgorithms
             peak.retentionTime = rt_apex;
             peak.RT_Uncertainty = regression->uncert_position * delta_rt;
 
-            // add area
-            float exp_b0 = exp(coeff.b0); // exp(b0)
+            // add area @todo decide where b0 and delta_x should influence the area
+            float exp_b0 = (float)exp(coeff.b0);
             peak.area = regression->area * exp_b0 * delta_rt;
             peak.areaUncertainty = regression->uncert_area * exp_b0 * delta_rt;
 
@@ -1807,11 +1807,11 @@ namespace qAlgorithms
 
         // error calculation uses imaginary part if coefficient is > 0
         double err_L = (b2 < 0)
-                           ? experfc(B1_2_SQRTB2, -1.0)    // 1 - erf(b1 / 2 / SQRTB2) // ordinary peak
+                           ? libcerf::erfcx(B1_2_SQRTB2)   // 1 - erf(b1 / 2 / SQRTB2) // ordinary peak
                            : libcerf::dawson(B1_2_SQRTB2); // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
 
         double err_R = (b3 < 0)
-                           ? experfc(B1_2_SQRTB3, 1.0)      // 1 + erf(b1 / 2 / SQRTB3) // ordinary peak
+                           ? libcerf::erfcx(B1_2_SQRTB3)    // 1 + erf(b1 / 2 / SQRTB3) // ordinary peak
                            : libcerf::dawson(-B1_2_SQRTB3); // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
 
         // calculate the Jacobian matrix terms
@@ -1831,10 +1831,10 @@ namespace qAlgorithms
         J[3] = -B1_2_B3 * (J_2_R + J_1_R / b1);
 
         // at this point the area is without exp(b0), i.e., to get the real area multiply with exp(b0) later. This is done to avoid exp function at this point
-        mutateReg->area = J[0];
+        mutateReg->area = (float)J[0];
         // mutateReg->uncert_area = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
         double uncertainty = sqrt(matProductReg(J, mutateReg->coeffs.scale) * mse);
-        mutateReg->uncert_area = uncertainty;
+        mutateReg->uncert_area = (float)uncertainty;
 
         return;
     }
@@ -1882,7 +1882,7 @@ namespace qAlgorithms
             {
                 // no valley point
                 // error = 1 - erf(b1 / 2 / SQRTB2)
-                double err_L = experfc(B1_2_SQRTB2, -1.0);
+                double err_L = libcerf::erfcx(B1_2_SQRTB2);
                 // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
                 // erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
                 err_L_covered = erf((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12;
@@ -1917,7 +1917,7 @@ namespace qAlgorithms
             {
                 // no valley point
                 // error = 1 + erf(b1 / 2 / SQRTB3)
-                double err_R = experfc(B1_2_SQRTB3, 1.0);
+                double err_R = libcerf::erfcx(B1_2_SQRTB3);
                 // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
                 // err_R - 1 - erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
                 err_R_covered = err_R - SQRTPI_2 * EXP_B13 - erf((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13;
@@ -1989,7 +1989,7 @@ namespace qAlgorithms
 
         // mutateReg->uncert_position = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
         double uncertainty = matProductReg(J, mutateReg->coeffs.scale);
-        mutateReg->uncert_position = sqrt(uncertainty * mse);
+        mutateReg->uncert_position = (float)sqrt(uncertainty * mse);
         return;
     }
 
@@ -2028,7 +2028,7 @@ namespace qAlgorithms
         assert(!diffs.empty());
 
         // @todo this should be the mode, not the median
-        float expectedDiff = medianVec(&diffs);
+        float expectedDiff = (float)medianVec(&diffs);
         // if this is not given, there are severe distortions at some point in the data. We accept one non-compliance,
         // at the first scan in the spectrum only, which is generally one of the first recorded scans
         // incorrectness here could be due to a vendor-specific instrument checkup procedure, which has been observed once at least
@@ -2039,7 +2039,7 @@ namespace qAlgorithms
         totalRTs.reserve(scanCount * 2);
         std::vector<size_t> idxToGrouping(scanCount, UINT_MAX);
 
-        float critDiff = expectedDiff * 1.5; // if the difference is 1.5 times greater than the critDiff, there should be at least one interpolation
+        float critDiff = (expectedDiff * 3) / 2; // if the difference is 1.5 times greater than the critDiff, there should be at least one interpolation
 
         for (size_t i = 0; i < diffs.size(); i++)
         {
@@ -2610,8 +2610,8 @@ namespace qAlgorithms
             // b1:
             // The derivative of log(x) is x' / x. Apply the chain rule and we obtain:
             // log(A)'_b1 = (area_L' + area_R') / (area_L + area_R)
-            // For negative b23, the area is calculated as:
-            // area_L  = erfcx(b1 / (2 sqrt(b2))) * sqrt(pi) / (2 sqrt(b2)); *-1 for b3
+            // For negative b2, the area is calculated as:
+            // area_L  = erfcx(b1 / (2 sqrt(b2))) * sqrt(pi) / (2 sqrt(b2))
             // area_L' = -H_(-2)(b1 / (2 sqrt(b2))) * 1/b2
             // Where H_(-2) is the hermite polynomial evaluated at -2. The following transformation applies:
             // H_(-2)(x) = 1/2 - sqrt(pi)/2 * x * e^(x^2) * erfc(x) = 1/2 - sqrt(pi)/2 * x * erfcx(x)
@@ -2621,16 +2621,30 @@ namespace qAlgorithms
             // area_L' = (area_L * b1 - 1) / (2 b2)
             // For b2 > 0, area_L = D(b1 / 2 sqrt(b2)) / sqrt(b2), where D is dawson's integral.
             // D(a x)' = a - 2 a^2 x D(a x)
-            // area_L' = ( 1 / (2 sqrt(b2)) *  1 / sqrt(b2) ) - 2 ( 1 / (2 sqrt(b2)) )^2 * b1 * D(b1 / 2 sqrt(b2)) / sqrt(b2)
-            // area_L' = 1 / (2 b2) - 1 / (2 b2) * b1 * D(b1 / 2 sqrt(b2)) / sqrt(b2)
+            // area_L' = 1 / (2 sqrt(b2)) * 1 / sqrt(b2) -
+            //           2 ( 1 / (2 sqrt(b2)) )^2 *
+            //           b1 * D(b1 / 2 sqrt(b2)) / sqrt(b2)
+            // area_L' = 1 / (2 b2) -
+            //           1 / (2 b2) *
+            //           b1 * D(b1 / 2 sqrt(b2)) / sqrt(b2)
+            // factor out the area itself and  1 / (2 b2):
             // area_L' = 1 / (2 b2) * (1 - b1 * area_L)
-            // For area_R with positive b3, the above applies without changes since the last 1 / sqrt(b2) changes
-            // to -1 / sqrt(b2) and this expression is the area again.
-            // This means that the derivative by b0 expressed as the scaled area is independent of positive / negative
-            // b2 / b3 coefficients, since the terms are identical:
-            // 1 / (2 b2) * (1 - b1 * area_L) == (area_L * b1 - 1) / (2 b2)
+            // We see that the first derivative of area_L is a scaling of itself that is fully
+            // independent of the sign of b2.
+
+            // If we work with b3, we use erfcx(-x). This is equivalent to substituting b1 with -b1 and multiplying with -1
+            // Consequently, we can back-substitute b1 = -b1 into the final result:
+            // area_R' = 1 / (2 b3) * (1 + b1 * area_R) * -1
+            // For positive values of b3, divide the full term by  -1 / sqrt(b3)  instead of +1:
+            // area_R' = 1 / (2 sqrt(b3)) *  -1 / sqrt(b3) -
+            //           2 ( 1 / (2 sqrt(b3)) )^2 * b1 *
+            //           -D(b1 / 2 sqrt(b3)) / sqrt(b3)
+            // area_R' =  -1 / (2 b3) - 1 / (2 b3) * b1 * area_R
+            // area_R' =  -1 / (2 b3) * (1 + b1 * area_R)
+            // Here, too, the two terms converge to the same scaling of the initial area
+
             double area_L_db1 = (1 - b1 * area_L) / (2 * b2);
-            double area_R_db1 = (1 - b1 * area_R) / (2 * b3);
+            double area_R_db1 = -(1 + b1 * area_R) / (2 * b3);
             assert(area_L_db1 != NAN);
             assert(area_R_db1 != NAN);
             J[1] = (area_L_db1 + area_R_db1) / (area_L + area_R);
