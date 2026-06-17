@@ -104,6 +104,16 @@ B &  D & E &  F \cr
 B & -D & F &  E
 \end{bmatrix}
 ```
+An important note regarding both the algorithm used to construct this compact matrix inverse and the general
+numerical properties of the algorithm is that the maximum scale for which an inverse is calculated is **$215$**.
+This has the reason that starting at $216$, the algorithm suffers from float underflow and leads to wrong
+parameter estimates. Secondly, the values at 215 are doubles smaller than $10e-10$. In these orders of
+magnitude, results of the peak fitting are already subject to potentially significant rounding error.
+For this reason, data with peaks that are expected to contain more than $215$ (and realistically, fewer
+than that), must be either subsampled or fit using a different algorithm. If we were to use long doubles
+or infinite precision math, the maxscale could be increased, at questionable benefit. The maxscale is a
+compile-time variable defined over the macro "QALGORITHMS_MAXSCALE_PRECOMPILED". For the actual computation
+of precalculated inverses, refer to the small subprogram "qalgorithms_matinverse.c".
 
 ### Stage 1: Data Transform
 Initially, the y-axis is log-transformed using the natural logarithm. This is so
