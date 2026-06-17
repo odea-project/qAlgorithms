@@ -44,15 +44,12 @@ add_compile_options(
     -Wcast-align               # Warns about pointer casts that may misalign data
     -Wunused                   # Warns about unused variables or functions
     -Wduplicated-cond          # Warns if both arguments of conditional statement are the same (int a = (bool) ? 1 : 1)
-    -Wduplicated-branches      # Warn when an if-else has identical branches. This warning also warns for conditional operators
     -Wlogical-op               # Warns about suspicious logical operations like (a < 0 && a < 0)
     -Wnull-dereference         # Warns about dereferencing null pointers
     -Wuseless-cast             # Warns casting expression to its own type
     -Wchanges-meaning          # @todo what does this do exactly?
     -Wstrict-overflow=4        # Warns about cases where the compiler optimizes based on the assumption that signed overflow does not occur
     -fdiagnostics-color=always # Enables colored output for diagnostics
-    -Wsign-conversion          # conversion between signed and unsigned types
-    # -Wfloat-equal              # float == float emits a warning @todo had to be omitted due to noise from used libraries
     -Wmissing-braces           # list initialisation with incorrect braces
     -Wredundant-decls          # warns about redundant declarations of the same entity
     -Warray-bounds=2           # compiler checks array bounds where possible
@@ -87,6 +84,14 @@ set(TESTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test")        # Directory containing 
 set(EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external") # Directory containing external headers/libs
 set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")        # Directory containing the Source Files
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")   # Directory containing the Include Files
+
+# set some warnings only inside the actual qalgo part of the code due to noise from libraries
+set_source_files_properties(${SOURCE_DIR} PROPERTIES COMPILE_FLAGS 
+    "-Wfloat-equal -Wsign-conversion -Wduplicated-branches"          
+    # float == float emits a warning
+    # conversion between signed and unsigned types
+    # Warn when an if-else has identical branches. This warning also warns for conditional operators. Included here since the simdutf library is misdiagnosed by this a lot
+)
 
 # Set include directories
 include_directories(include "${EXTERNAL_DIR}/simdutf/" "${EXTERNAL_DIR}/cephes" "${EXTERNAL_DIR}/libcerf")  # @todo this is terrible practice. Lets not do it
