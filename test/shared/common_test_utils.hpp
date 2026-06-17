@@ -19,6 +19,8 @@
 
 using namespace qAlgorithms;
 
+bool flt_equal(double a, double b, double tol);
+
 inline void qassert(bool condition, size_t line, const char *message)
 {
     if (condition)

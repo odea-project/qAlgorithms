@@ -1,3 +1,4 @@
+#include <cmath>
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
@@ -12,9 +13,9 @@
 
 using namespace qAlgorithms;
 
-double peakVal_gauss(double x, double apex, double height, double sdev)
+float peakVal_gauss(double x, double apex, double height, double sdev)
 {
-    return height * exp(-(x - apex) * (x - apex) / (2 * sdev * sdev));
+    return float(height * exp(-(x - apex) * (x - apex) / (2 * sdev * sdev)));
 }
 
 double area_gauss(double height, double sdev)
@@ -74,7 +75,7 @@ double peakVal_EMG(double x, double apex, double height, double sdev, double tau
     double y = a * exp(z * z) * erfc(z);
     if (!(y < INFINITY))
         return -1;
-    return y;
+    return (float)y;
 }
 
 double fwhm_EMG(double sdev, double tau)
@@ -121,18 +122,18 @@ double fwhm_EMG(double sdev, double tau)
 }
 
 void simulate_EMG(
-    double x_start, double x_step,
+    float x_start, float x_step,
     double apex, double height, double sdev, double tau,
     std::vector<float> *xvals, std::vector<float> *yvals)
 {
     assert(yvals->empty(), "wrong usage of test function\n", NULL);
     assert(xvals->empty(), "wrong usage of test function\n", NULL);
 
-    double x = x_start;
+    float x = x_start;
     bool peakDone = false;
     for (size_t i = 0; i < 1000000; i++)
     {
-        double y = peakVal_EMG(x, apex, height, sdev, tau);
+        float y = (float)peakVal_EMG(x, apex, height, sdev, tau);
         if (y > 0.01)
         {
             yvals->push_back(y);
@@ -149,7 +150,7 @@ void control_sim_gauss()
 {
     // generate data using a standard gaussian on an equidistant x axis
     float x_start = 100;
-    float x_step = 1.1;
+    float x_step = 1;
     float apex = 115;
     size_t length = 30;
     double sdev = 2.5;
@@ -180,14 +181,14 @@ void control_sim_gauss()
     float fwhm_p = reg.fwhm;
     float area_p = reg.area; // wrong result
 
-    float area_e = area_empiric(&xvals, &yvals);
+    float area_e = (float)area_empiric(&xvals, &yvals);
     // RegCoeffs c = reg.coeffs;
     // float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step);
 
-    assert(abs(apex - apex_p) < FLT_EPSILON, "inaccurate position\n", NULL);
-    assert(abs(height - height_p) < reg.uncert_height, "inaccurate height\n", NULL);
-    assert(abs(fwhm - fwhm_p) < 10e-4, "inaccurate width\n", NULL);
-    assert(abs(area - area_p) < 0.01, "inaccurate area (%f vs. %f), empiric %f\n", area, area_p, area_e);
+    assert(flt_equal(apex, apex_p, FLT_EPSILON), "inaccurate position\n", NULL);
+    assert(flt_equal(height, height_p, reg.uncert_height), "inaccurate height\n", NULL);
+    assert(flt_equal(fwhm, fwhm_p, 10e-4), "inaccurate width\n", NULL);
+    assert(flt_equal(area, area_p, 0.01), "inaccurate area (%f vs. %f), empiric %f\n", area, area_p, area_e);
 }
 
 struct ErrorEMG
@@ -208,9 +209,9 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     // generate data using an exponentially modified gaussian on an equidistant x axis
 
     float apex = in_out->r_apex;
-    double sdev = in_out->r_sdev;
-    double height = in_out->r_height;
-    double tau = in_out->r_tau;
+    float sdev = in_out->r_sdev;
+    float height = in_out->r_height;
+    float tau = in_out->r_tau;
 
     std::vector<float> xvals;
     std::vector<float> yvals;
@@ -257,13 +258,13 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     xvals.clear();
     yvals.clear();
     simulate_EMG(x_start, x_step / 500, apex, height, sdev, tau, &xvals, &yvals);
-    double fwhm_e = fwhm_empiric(&xvals, &yvals);
-    double area_e = area_empiric(&xvals, &yvals);
-    double apex_e = position_empiric(&xvals, &yvals);
-    double height_e = *maxVal(yvals.data(), yvals.size());
+    float fwhm_e = (float)fwhm_empiric(&xvals, &yvals);
+    float area_e = (float)area_empiric(&xvals, &yvals);
+    float apex_e = (float)position_empiric(&xvals, &yvals);
+    float height_e = *maxVal(yvals.data(), yvals.size());
 
     in_out->r_height = height_e;
-    in_out->r_apex = apex_e;
+    in_out->r_apex = (float)apex_e;
 
     // assert(ret.size() != 0, "Peak not found\n");
     // this check is removed since some configurations of parameters result in no peaks
@@ -286,7 +287,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
 
     in_out->negativeB23 = (c.b2 < 0) && (c.b3 < 0);
 
-    float area_c = peakArea(&c, x_step, 0, nullptr);
+    float area_c = (float)peakArea(&c, x_step, 0, nullptr);
 
     // empiric estimation of peak parameters
 
@@ -321,9 +322,9 @@ void survey_EMG()
 
     for (size_t i = 0; i < 5; i++)
     {
-        for (float sd = 0.7; sd < 3.1; sd += 0.1)
+        for (float sd = (float)0.7; sd < (float)3.1; sd += (float)0.1)
         {
-            for (float tau = 0.1; tau < 2.1; tau += 0.1)
+            for (float tau = (float)0.1; tau < (float)2.1; tau += (float)0.1)
             {
                 test.r_height = heights[i];
                 test.r_sdev = sd;
@@ -360,12 +361,12 @@ int simulate_profile(
     double x = -double(coeff->x0);
     for (size_t i = 0; i < coeff->x0; i++)
     {
-        simulated->at(i) = exp(regAt(coeff, x));
+        simulated->at(i) = (float)exp(regAt(coeff, x));
         x += 1;
     }
     for (size_t i = coeff->x0; i < simulated->size(); i++)
     {
-        simulated->at(i) = exp(regAt(coeff, x));
+        simulated->at(i) = (float)exp(regAt(coeff, x));
         x += 1;
     }
     simulated_log->clear();
@@ -409,21 +410,22 @@ int simulate_stepwise(
     const RegCoeffs *coeff,
     std::vector<float> *xvec,
     std::vector<float> *simulated,
-    double delta_x)
+    float delta_x)
 {
     verify(coeff->x0 > 1);
 
-    double x = -delta_x * coeff->x0;
+    delta_x /= 20;
+    float x = -delta_x * coeff->x0;
     for (size_t i = 0; i < coeff->x0; i++)
     {
         xvec->push_back(x);
-        simulated->at(i) = exp(regAt(coeff, x));
+        simulated->at(i) = (float)exp(regAt(coeff, x));
         x += delta_x;
     }
     for (size_t i = coeff->x0; i < simulated->size(); i++)
     {
         xvec->push_back(x);
-        simulated->at(i) = exp(regAt(coeff, x));
+        simulated->at(i) = (float)exp(regAt(coeff, x));
         x += delta_x;
     }
     return 0;
@@ -444,7 +446,7 @@ void test_areaPrediction()
     y.resize(1000);
 
     float x_step = 1;
-    simulate_stepwise(&coeff, &x, &y, x_step * 0.05); // note: the sampling rate is not equal to the stride of x
+    simulate_stepwise(&coeff, &x, &y, x_step); // note: the sampling rate is not equal to the stride of x
     double area_e = area_empiric(&x, &y);
     double area_t = peakArea(&coeff, x_step, 0, nullptr);
 
@@ -453,7 +455,7 @@ void test_areaPrediction()
     // also check for positive cases
     coeff.b2 = 0.012;
     x.clear();
-    simulate_stepwise(&coeff, &x, &y, x_step * 0.05);
+    simulate_stepwise(&coeff, &x, &y, x_step);
     // remove values of y before the valley point to have equivalent areas
     double valley = -coeff.b1 / (2 * coeff.b2);
     size_t idx = 0;
@@ -473,7 +475,7 @@ void test_areaPrediction()
     coeff.b2 = -0.34;
     coeff.b3 = 0.021;
     x.clear();
-    simulate_stepwise(&coeff, &x, &y, x_step * 0.05);
+    simulate_stepwise(&coeff, &x, &y, x_step);
     valley = -coeff.b1 / (2 * coeff.b3);
     idx = 999;
     while (x[idx] > valley)
@@ -491,7 +493,7 @@ void test_areaPrediction()
     double mse = 0.03;
     coeff.b3 = -0.21;
     x.clear();
-    simulate_stepwise(&coeff, &x, &y, x_step * 0.05);
+    simulate_stepwise(&coeff, &x, &y, x_step);
     area_e = area_empiric(&x, &y);
     area_t = peakArea(&coeff, x_step, mse, &uncert);
     assert(area_t > uncert, "Too high uncertainty\n", NULL);

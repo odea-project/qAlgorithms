@@ -29,7 +29,7 @@ float ran0(long *idum)
     *idum = IA * (*idum - k * IQ) - IR * k;
     if (*idum < 0)
         *idum += IM;
-    ans = AM * (*idum);
+    ans = (float)AM * (*idum);
     *idum ^= MASK;
     return ans;
 }
@@ -72,6 +72,12 @@ double roundTo_d(double x, size_t digits)
     int rounded = int(x * pow + 0.5 * sign); // @todo this does not incorporate the even-odd switch for a remainder of 1/2, but does that matter here?
 
     return (double(rounded) / pow);
+}
+
+bool flt_equal(double a, double b, double tol)
+{
+    // compare a and b, return equal if both within tolerance
+    return abs(abs(a) - abs(b)) < tol;
 }
 
 /*
@@ -227,7 +233,7 @@ void print_regFit(const RegCoeffs *coeff, const std::vector<float> *x, const flo
     for (size_t i = 0; i < x->size(); i++)
     {
         float xval = (x->at(i) - x0) / delta_x;
-        float y = regExpAt__(coeff, xval);
+        double y = regExpAt__(coeff, xval);
         printf("%f,", y);
     }
     printf("\n");
