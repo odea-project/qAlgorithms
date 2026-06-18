@@ -2651,26 +2651,37 @@ namespace qAlgorithms
             J[1] = (area_L_db1 + area_R_db1) / (area_L + area_R);
 
             // for the partial derivative by b2 and b3 for negative coefficents, there is a dependence on the
-            // hermite polynomial H_(-2)(x) and H_(-1)(x):
-            // area_L' = b1 * H_(-2)( b1 / (2 sqrt(b2)) ) / (2 b2^2) - sqrt(b2) * H_(-1)( b1 / (2 sqrt(b2))) / (2 b2^2)
-            // multiply the second term with (2 sqrt(pi)) / (2 sqrt(pi)) and apply the identity of H_(-2):
-            // area_L' = b1 / (2 b2^2) * ( 1/2 - sqrt(pi)/2 * b1 / (2 sqrt(2)) * erfcx(b1 / (2 sqrt(2))) ) -
-            //           sqrt(b2) * sqrt(pi) / (4 b2^2) * erfcx( b1 / (2 sqrt(2)) )
-            // area_L' = b1 / (4 b2^2) - b1 / (2 b2^2) * sqrt(pi)/2 * b1 / (2 sqrt(2)) * erfcx(b1 / (2 sqrt(2)) ) -
-            //           sqrt(b2) * sqrt(pi) / (4 b2^2) * erfcx( b1 / (2 sqrt(2)) )
-            // the product erfcx(b1 / (2 sqrt(b2))) * sqrt(pi) / (2 sqrt b2) is area_L
+            // hermite polynomials H_(-2)(x) and H_(-1)(x):
+            // area_L  = erfcx(a / (2 sqrt(x))) / sqrt(x) * sqrt(pi)/2 ; get first derivative with wolfram alpha
+            // area_L' = ( a H_(-2)(a/(2 sqrt(x))) ) / (2 x^2) - ( H_(-1)(a/(2 sqrt(x))) ) / (2 x^(3/2))
+            // area_L' = b1 * H_(-2)( b1 / (2 sqrt(b2)) ) / (2 b2^2) -
+            //           H_(-1)( b1 / (2 sqrt(b2)) ) / (2 b2 * sqrt(b2))
+            // multiply the second term with (2 sqrt(pi)) / (2 sqrt(pi)) to convert H_(-1)(x) to erfcx(x) * sqrt(pi)/2
+            // area_L' = b1 * H_(-2)( b1 / (2 sqrt(b2)) ) / (2 b2^2) -
+            //           erfcx( b1 / (2 sqrt(b2)) ) / (2 b2 * sqrt(b2)) * sqrt(pi)/2
+            // simplyfy by applying the definition of the area to the second term
+            // area_L' = b1 / (2 b2^2) * H_(-2)( b1 / (2 sqrt(b2)) ) -
+            //           area_L / (2 b2)
+            // apply the identity of H_(-2)(x) with x = b1 / (2 sqrt(b2)), see above
+            // area_L' = b1 / (2 b2^2) * ( 1/2 - sqrt(pi)/2 * b1 / (2 sqrt(b2)) * erfcx(b1 / (2 sqrt(b2))) ) -
+            //           area_L / (2 b2)
             // area_L' = b1 / (4 b2^2) -
-            //           b1 / (2 b2^2) * 1/2 * b1 * area_L -
-            //           sqrt(b2) * sqrt(pi) / (4 b2^2) * erfcx( b1 / (2 sqrt(2)) )
-            // multiply the last term with  (2 sqrt(b2)) / (2 sqrt(b2)) and apply the definition of the area
+            //           b1 / (2 b2^2) * sqrt(pi)/2 * b1 / (2 sqrt(b2)) * erfcx(b1 / (2 sqrt(b2))) -
+            //           area_L / (2 b2)
+            // extract the area from the second term
             // area_L' = b1 / (4 b2^2) -
-            //           b1 / (2 b2^2) * 1/2 * b1 * area_L -
-            //           sqrt(b2) * 1 / (4 b2^2) * 2 * sqrt(b2) * area_L
+            //           b1 / (2 b2^2) * b1 / 2 * area_L -
+            //           area_L / (2 b2)
             // area_L' = b1 / (4 b2^2) -
             //           b1^2 / (4 b2^2) * area_L -
-            //           2 b2 / (4 b2^2) * area_L
-            // area_L' = 1 / (4 b2^2) * (b1 - b1^2 * area_L - 2 b2 * area_L)
-            // area_L' = 1 / (4 b2^2) * (b1 - area_L * (b1^2 + 2 b2))
+            //           area_L / (2 b2) * (2 b2) / (2 b2)
+            // area_L' = b1 / (4 b2^2) -
+            //           area_L * b1^2 / (4 b2^2) -
+            //           area_L * (2 b2) / (4 b2^2)
+            // area_L' = ( b1 - area_L * b1^2 - area_L * (2 b2) ) / (4 b2^2)
+            // area_L' = ( b1 - area_L * (b1^2 + 2 b2) ) / (4 b2^2)
+
+            //
 
             // For positive b2 or b3, the derivative by b2 is:
             // b1^2 / (4 b2) * D(...) / sqrt(b2) - 1 / (2 b2) * D(...) / sqrt(b2) - b1 / (4 b2^2)
