@@ -37,31 +37,38 @@ add_compile_options(
     -Wpedantic                 # Warns if not standard compliant
     -Wuninitialized            # Warns about uninitialized variables
     -Wformat=2                 # Check calls to printf and scanf, etc., to make sure that the arguments have types appropriate to the format string
-    -Wformat-truncation=1      # Warns about potential truncation of output in snprintf etc. @todo refactor so that =2 does not produce so many warnings
+    -Wformat-truncation      # Warns about potential truncation of output in snprintf etc.
     -Wimplicit-fallthrough     # Warns on missing break in switch case block
     -Wshadow                   # Warns when variable with same name as already declared variable is declared in lower scope
     -Wnon-virtual-dtor         # Warns if a class has a non-virtual destructor
     -Wcast-align               # Warns about pointer casts that may misalign data
     -Wunused                   # Warns about unused variables or functions
-    -Wduplicated-cond          # Warns if both arguments of conditional statement are the same (int a = (bool) ? 1 : 1)
-    -Wlogical-op               # Warns about suspicious logical operations like (a < 0 && a < 0)
     -Wnull-dereference         # Warns about dereferencing null pointers
-    -Wuseless-cast             # Warns casting expression to its own type
-    -Wchanges-meaning          # @todo what does this do exactly?
     -Wstrict-overflow=4        # Warns about cases where the compiler optimizes based on the assumption that signed overflow does not occur
     -fdiagnostics-color=always # Enables colored output for diagnostics
     -Wmissing-braces           # list initialisation with incorrect braces
     -Wredundant-decls          # warns about redundant declarations of the same entity
-    -Warray-bounds=2           # compiler checks array bounds where possible
+    -Warray-bounds           # compiler checks array bounds where possible
     -Wunreachable-code         # unreachable branches in code
     -Wenum-compare             # only compare enums of different types
+    -Wpointer-arith
+    -Waddress-of-packed-member
 )
 
 # narrowing float conversion warning is different between clang and gcc
+message(STATUS "Compiling with ${CMAKE_CXX_COMPILER_ID}")
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wimplicit-float-conversion)
+    message(STATUS "Clang used")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    add_compile_options(-Wfloat-conversion)
+    add_compile_options(
+        -Wfloat-conversion
+        -Wvector-operation-performance
+        -Wduplicated-cond          # Warns if both arguments of conditional statement are the same (int a = (bool) ? 1 : 1)
+        -Wlogical-op               # Warns about suspicious logical operations like (a < 0 && a < 0)
+        -Wuseless-cast             # Warns casting expression to its own type
+        -Wchanges-meaning          # @todo what does this do exactly?
+        )
 elseif(MSVC)
     message(STATUS "MSVC does not support a warning for float -> double conversions")
 else()
@@ -92,6 +99,8 @@ set_source_files_properties(${SOURCE_DIR} PROPERTIES COMPILE_FLAGS
     # conversion between signed and unsigned types
     # Warn when an if-else has identical branches. This warning also warns for conditional operators. Included here since the simdutf library is misdiagnosed by this a lot
 )
+set_source_files_properties(${TESTS_DIR} PROPERTIES COMPILE_FLAGS 
+    "-Wfloat-equal -Wsign-conversion -Wduplicated-branches")
 
 # Set include directories
 include_directories(include "${EXTERNAL_DIR}/simdutf/" "${EXTERNAL_DIR}/cephes" "${EXTERNAL_DIR}/libcerf")  # @todo this is terrible practice. Lets not do it

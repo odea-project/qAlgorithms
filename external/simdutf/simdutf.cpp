@@ -1,3 +1,7 @@
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused"
+#pragma clang diagnostic ignored "-Wcast-align"
 /* auto-generated on 2025-06-26 23:03:07 -0400. Do not edit! */
 /* begin file src\simdutf.cpp */
 #include "simdutf.h"
@@ -20273,4 +20277,5 @@ const char16_t *implementation::find(const char16_t *start, const char16_t *end,
 #endif
 
 SIMDUTF_POP_DISABLE_WARNINGS
+#pragma clang diagnostic pop
 /* end file src\simdutf.cpp */
