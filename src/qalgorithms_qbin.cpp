@@ -174,11 +174,11 @@ namespace qAlgorithms
         std::sort(activeBins.notInBins.begin(), activeBins.notInBins.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs) { return lhs->mz < rhs->mz; });
 
         // setting start position to 0 at this point means that it can be reused, since it is incremented in makeDQSB
-        size_t shared_idxStart = 0;
-        for (size_t i = 0; i < activeBins.finalBins.size(); i++)
-        {
-            shared_idxStart = activeBins.finalBins[i].makeDQSB(&activeBins.notInBins, shared_idxStart);
-        }
+        // size_t shared_idxStart = 0;
+        // for (size_t i = 0; i < activeBins.finalBins.size(); i++)
+        // {
+        //     shared_idxStart = activeBins.finalBins[i].makeDQSB(&activeBins.notInBins, shared_idxStart);
+        // }
 
         // @todo add bin merger for halved bins here ; this ight be a bad idea, find way to prove it
 
@@ -367,10 +367,10 @@ namespace qAlgorithms
         }
         assert(res.pointsInBin.size() > 4);
 
-        res.mzMin = res.pointsInBin.front()->mz;
-        res.mzMax = res.pointsInBin.back()->mz;
+        res.mzMin = (float)res.pointsInBin.front()->mz;
+        res.mzMax = (float)res.pointsInBin.back()->mz;
         res.unchanged = true;
-        res.medianMZ = res.pointsInBin[res.pointsInBin.size() / 2]->mz;
+        res.medianMZ = (float)res.pointsInBin[res.pointsInBin.size() / 2]->mz;
 
         return res;
     }
@@ -555,6 +555,7 @@ namespace qAlgorithms
         }
     }
 
+#if false
     size_t Bin::makeDQSB(const std::vector<const CentroidPeak *> *notInBins, size_t idx_lowerLimit)
     {
         // assume that bins are separated well enough that any gap of this size is close to perfect
@@ -672,6 +673,7 @@ namespace qAlgorithms
         }
         return idx_lowerLimit;
     }
+#endif
 
     EIC Bin::createEIC(const RT_Converter *convertRT)
     {
@@ -731,7 +733,7 @@ namespace qAlgorithms
             tmp_rt[access] = point->RT;
 
             tmp_scanNumbers[access] = point->number_MS1;
-            tmp_mz[access] = point->mz;
+            tmp_mz[access] = (float)point->mz;
             assert(point->mz > 0);
             tmp_mzUncert[access] = point->mzUncertainty;
             tmp_ints_area[access] = point->area;
@@ -805,7 +807,7 @@ namespace qAlgorithms
             assert(access != prevaccess);
 
             tmp_scanNumbers[access] = point->number_MS1;
-            tmp_mz[access] = point->mz;
+            tmp_mz[access] = (float)point->mz;
             tmp_mzUncert[access] = point->mzUncertainty;
             tmp_ints_area[access] = point->area;
             tmp_ints_height[access] = point->height;
@@ -927,11 +929,11 @@ namespace qAlgorithms
                 // b = (y2 / y1)^(1 / gap)
 
                 float a = firstVal;
-                float b = std::pow(lastVal / firstVal, 1.0 / float(gapsize + 1));
+                float b = (float)pow(lastVal / firstVal, 1.0 / float(gapsize + 1));
                 for (size_t pos = startPos + 1; pos < i; pos++)
                 {
                     int x = pos - startPos;
-                    areas->at(pos) = a * std::pow(b, x);
+                    areas->at(pos) = a * (float)pow(b, x);
                 }
                 openBlock = false;
                 firstVal = areas->at(i);
@@ -962,7 +964,7 @@ namespace qAlgorithms
             const auto cen = (*pointsInBin)[i];
             size_t scanRegionStart = cen->number_MS1 < expandedDist + 1 ? 0 : cen->number_MS1 - expandedDist - 1;
             size_t scanRegionEnd = cen->number_MS1 + expandedDist + 1;
-            float accum = 0;
+            double accum = 0;
             for (; (*pointsInBin)[position]->number_MS1 < scanRegionStart; position++) // increase position until a relevant point is found
                 ;
             size_t readPos = position;
@@ -975,7 +977,7 @@ namespace qAlgorithms
                     break;
                 }
             }
-            output[i] = accum / float(readPos - position - 1); // -1 since the distance of an element to itself is not factored in
+            output[i] = (float)accum / float(readPos - position - 1); // -1 since the distance of an element to itself is not factored in
         }
         return output;
     }
@@ -989,7 +991,7 @@ namespace qAlgorithms
         }
 
         // dqs = (minOuterDist - meanInnerDist) * (1 / (1 + meanInnerDist)) / maxInVal
-        return (minOuterDist - meanInnerDist) / fmal(meanInnerDist, maxInVal, maxInVal);
+        return (minOuterDist - meanInnerDist) / (float)fmal(meanInnerDist, maxInVal, maxInVal);
     }
 #pragma endregion "Functions"
 } // namespace qAlgorithms

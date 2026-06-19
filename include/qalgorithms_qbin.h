@@ -69,7 +69,8 @@ namespace qAlgorithms
         void subsetScan(std::vector<Bin> *bincontainer, std::vector<const CentroidPeak *> *notInBins);
 
         // returns the start index of where in the sorted not-binned points the minimum start position is
-        size_t makeDQSB(const std::vector<const CentroidPeak *> *notInBins, size_t idx_lowerLimit);
+        // this function is too complicated and has been removed
+        // size_t makeDQSB(const std::vector<const CentroidPeak *> *notInBins, size_t idx_lowerLimit);
 
         EIC createEIC(const RT_Converter *convertRT);
     };
