@@ -5195,6 +5195,7 @@ template <typename T> struct simd16x32 {
   }
 }; // struct simd16x32<T>
 
+#pragma GCC diagnostic ignored "-Wunused-function"
 simd16<uint16_t> min(const simd16<uint16_t> a, simd16<uint16_t> b) {
   return _mm256_min_epu16(a.value, b.value);
 }
@@ -14815,6 +14816,7 @@ compress_decode_base64(char *dst, const chartype *src, size_t srclen,
   }
   if ((bufferptr - buffer_start) % 64 != 0) {
     while (buffer_start + 4 < bufferptr) {
+      #pragma GCC diagnostic ignored "-Wpedantic"
       uint32_t triple = ((uint32_t(uint8_t(buffer_start[0])) << 3 * 6) +
                          (uint32_t(uint8_t(buffer_start[1])) << 2 * 6) +
                          (uint32_t(uint8_t(buffer_start[2])) << 1 * 6) +
@@ -14829,6 +14831,7 @@ compress_decode_base64(char *dst, const chartype *src, size_t srclen,
       buffer_start += 4;
     }
     if (buffer_start + 4 <= bufferptr) {
+      #pragma GCC diagnostic ignored "-Wpedantic"
       uint32_t triple = ((uint32_t(uint8_t(buffer_start[0])) << 3 * 6) +
                          (uint32_t(uint8_t(buffer_start[1])) << 2 * 6) +
                          (uint32_t(uint8_t(buffer_start[2])) << 1 * 6) +
@@ -20277,5 +20280,6 @@ const char16_t *implementation::find(const char16_t *start, const char16_t *end,
 #endif
 
 SIMDUTF_POP_DISABLE_WARNINGS
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic pop
 /* end file src\simdutf.cpp */

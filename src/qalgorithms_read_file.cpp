@@ -310,11 +310,11 @@ namespace qAlgorithms
         }
     };
 
-    double extract_scan_RT(const pugi::xml_node &spec)
+    float extract_scan_RT(const pugi::xml_node &spec)
     {
         pugi::xml_node rt_node = spec.child("scanList").child("scan").find_child_by_attribute("cvParam", "name", "scan start time");
 
-        double rt_val = rt_node.attribute("value").as_double();
+        float rt_val = rt_node.attribute("value").as_float();
         const char *rt_unit = rt_node.attribute("unitName").as_string();
         bool unit_secs = strcmp(rt_unit, "second") == 0; // strcmp returns 0 for equal strings
         if (!unit_secs)
@@ -336,7 +336,7 @@ namespace qAlgorithms
         {
             size_t idx = indices->at(i);
             pugi::xml_node spec = (*linknodes)[idx];
-            double RT = extract_scan_RT(spec);
+            float RT = extract_scan_RT(spec);
             retention_times.push_back(RT);
         }
 
