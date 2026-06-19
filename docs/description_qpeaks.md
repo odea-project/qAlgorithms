@@ -109,11 +109,11 @@ numerical properties of the algorithm is that the maximum scale for which an inv
 This has the reason that starting at $216$, the algorithm suffers from float underflow and leads to wrong
 parameter estimates. Secondly, the values at 215 are doubles smaller than $10e-10$. In these orders of
 magnitude, results of the peak fitting are already subject to potentially significant rounding error.
-For this reason, data with peaks that are expected to contain more than $215$ (and realistically, fewer
+For this reason, data with peaks that are expected to contain more than $431$ observations (and realistically, fewer
 than that), must be either subsampled or fit using a different algorithm. If we were to use long doubles
 or infinite precision math, the maxscale could be increased, at questionable benefit. The maxscale is a
 compile-time variable defined over the macro "QALGORITHMS_MAXSCALE_PRECOMPILED". For the actual computation
-of precalculated inverses, refer to the small subprogram "qalgorithms_matinverse.c".
+of precalculated inverses, refer to the small subprogram ["qalgorithms_matinverse.c"](../external/qalgorithms_matinverse.c).
 
 ### Stage 1: Data Transform
 Initially, the y-axis is log-transformed using the natural logarithm. This is so

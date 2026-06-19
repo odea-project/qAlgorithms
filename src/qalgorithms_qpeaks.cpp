@@ -2582,15 +2582,13 @@ namespace qAlgorithms
         }
         assert(area_R > 0);
 
-        area_L *= b0_exp;
-        area_R *= b0_exp;
-        double area_F = (area_L + area_R) * delta_x;
+        double area_F = (area_L + area_R) * b0_exp;
 
         if (mse <= 0)
         {
             // it should be possible to calculate the area without supplying a mse
             assert(uncert == nullptr);
-            return area_F;
+            return area_F * delta_x;
         }
 
         {
@@ -2722,8 +2720,12 @@ namespace qAlgorithms
 
             double u = matProductReg(J, c->scale);
             assert(u > 0);
-            *uncert = sqrt(u * mse) * delta_x; // this is the uncertainty of the logarithmic area.
+            *uncert = sqrt(u * mse); // this is the uncertainty of the logarithmic area.
         }
+
+        // scale by delta_x, the assumed difference between two neighbouring points in x.
+        // this is done explicitly in this function since it is assumed when using the precalculated inverse.
+        *uncert *= delta_x;
         return area_F * delta_x;
     }
 
