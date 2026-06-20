@@ -81,7 +81,7 @@ namespace qAlgorithms
     /// @return used correction factor
     double correctB0(const float *const intensities,
                      const Range_i *r,
-                     std::vector<float> *predicted,
+                     float *predicted,
                      RegCoeffs *coeff);
 
     enum invalid
@@ -117,8 +117,9 @@ namespace qAlgorithms
 
     // ### Feature-specific Code ### //
 
-    std::vector<FeaturePeak> findFeatures(std::vector<EIC> &data,
-                                          const RT_Converter *convertRT);
+    int findFeatures(const std::vector<EIC> *EICs,
+                     const std::vector<float> *convertRT, // correct RT corresponding to every scan number
+                     std::vector<FeaturePeak> *res);
 
     // ### Retention Time Conversion @todo remove ### //
 

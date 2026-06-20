@@ -22,7 +22,7 @@ namespace qAlgorithms
         assert(bytes->size() % (isDouble ? dsize : fsize) == 0);
         size_t lengthDecoded = bytes->size() / (isDouble ? dsize : fsize);
 
-        result->reserve(lengthDecoded);
+        result->resize(lengthDecoded);
 
 // for only this block, ignore the alignment change. It is intended behavouir.
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
@@ -33,7 +33,7 @@ namespace qAlgorithms
             const double *dbl = (const double *)bytes->data();
             for (size_t i = 0; i < lengthDecoded; i++)
             {
-                result->push_back((float)dbl[i]); // result must be cast to float individually
+                result->at(i) = (float)dbl[i]; // result must be cast to float individually
             }
         }
         else
@@ -43,7 +43,7 @@ namespace qAlgorithms
             const float *flt = (const float *)bytes->data();
             for (size_t i = 0; i < lengthDecoded; i++)
             {
-                result->push_back(flt[i]);
+                result->at(i) = flt[i];
             }
         }
 #pragma clang diagnostic pop
@@ -325,22 +325,20 @@ namespace qAlgorithms
         return unit_secs ? rt_val : rt_val * 60;
     };
 
-    std::vector<float> XML_File::get_spectra_RT(const std::vector<unsigned int> *indices)
+    void XML_File::get_spectra_RT(const std::vector<unsigned int> *indices, std::vector<float> *const RTs)
     {
-        assert(indices->size() > 0);
+        const size_t idxSize = indices->size();
         assert(!this->defective);
 
-        std::vector<float> retention_times;
+        RTs->resize(idxSize);
 
-        for (size_t i = 0; i < indices->size(); ++i)
+        for (size_t i = 0; i < idxSize; ++i)
         {
             size_t idx = indices->at(i);
             pugi::xml_node spec = (*linknodes)[idx];
             float RT = extract_scan_RT(spec);
-            retention_times.push_back(RT);
+            RTs->at(i) = RT;
         }
-
-        return retention_times; // 4800869
     };
 
     Polarities XML_File::get_polarity_mode()

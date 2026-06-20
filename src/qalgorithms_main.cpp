@@ -160,15 +160,9 @@ int main(int argc, char *argv[])
             {
                 printf("    Processing %s peaks\n", polarity ? "positive" : "negative");
             }
-
-            std::vector<float> retentionTimes = inputFile.get_spectra_RT(&selectedIndices);
+            std::vector<float> retentionTimes;
+            inputFile.get_spectra_RT(&selectedIndices, &retentionTimes);
             RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
-            // for (size_t rtTest = 0; rtTest < rt_index.indexOfOriginalInInterpolated.size(); rtTest++)
-            // {
-            //     assert(rt_index.indexOfOriginalInInterpolated[rtTest] <= inputFile.number_spectra);
-            // }
-
-            // exit(1);
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
             int centroidCount = findCentroids(inputFile,
@@ -267,7 +261,8 @@ int main(int argc, char *argv[])
             timeStart = clock();
             // every subvector of peaks corresponds to the bin ID
 
-            auto features = findFeatures(binnedData, &rt_index);
+            std::vector<FeaturePeak> features;
+            findFeatures(&binnedData, &retentionTimes, &features);
 
             if (features.size() == 0)
             {

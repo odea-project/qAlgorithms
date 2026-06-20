@@ -260,7 +260,7 @@ namespace qAlgorithms
                 presumed to be better when using the transformed coefficients in terms of applicability of the results.
                 This function also modifies the "predict" vector supplied as its argument!
             */
-            correctB0(intensities, &range, &predict, &reg.coeffs);
+            correctB0(intensities, &range, predict.data(), &reg.coeffs);
 
             failpoint = calcRegressionProperties(
                 intensities,
@@ -1167,11 +1167,16 @@ namespace qAlgorithms
         assert(length > 4);
         maxscale = min(maxscale, (length - 1) / 2);
 
-        size_t totalRegs = 0;
-        for (size_t scale = GLOBAL_MINSCALE; scale <= maxscale; scale++)
-        {
-            totalRegs += length - 2 * scale;
-        }
+        // for every checked scale, there are length - 2 scale regressions performed
+        // totalRegs = sum_i from minscale to maxscale (length - 2 * scale_i)
+        // scalediff = maxscale - minscale + 1
+        // totalRegs = scalediff * length - 2 * (2 + 3 + 4 + ... + maxscale)
+        // the last bit is the (triangle number of maxscale) - (miscale - 1)
+        // totalRegs = scalediff * length - 2 * (maxscale * (maxscale + 1) / 2 - minscale + 1)
+        // totalRegs = scalediff * length - maxscale * (maxscale + 1) + 2 * minscale - 2)
+        const size_t totalRegs = (maxscale - GLOBAL_MINSCALE + 1) * length -
+                                 maxscale * (maxscale + 1) +
+                                 2 * GLOBAL_MINSCALE - 2;
         coeffs->resize(totalRegs);
 
         // the first and last MINSCALE elements of the data do not need to be checked for x0, since they are invalid by definition
@@ -1254,7 +1259,7 @@ namespace qAlgorithms
 
     double correctB0(const float *const intensities,
                      const Range_i *range,
-                     std::vector<float> *predicted,
+                     float *predicted,
                      RegCoeffs *coeff) // @todo also correct the error matrix, assess degree of correction applied
     {
         // problem: after the log transform, regression residuals are not directly transferable to
@@ -1279,15 +1284,14 @@ namespace qAlgorithms
 
         // double b0_old = coeff->b0;
 
-        size_t start = range->startIdx;
-        size_t end = range->endIdx + 1;
+        const size_t start = range->startIdx;
+        const size_t end = range->endIdx + 1;
         assert(start < end);
         double x0 = double(coeff->x0);
         for (size_t i = start; i < end; i++)
         {
             double x = double(i) - x0;
-            predicted->at(i) = (float)regExp_fac(coeff, x);
-            assert(predicted->at(i) > 0);
+            predicted[i] = (float)regExp_fac(coeff, x);
         }
 
         double sum_predictSq = 0;
@@ -1297,7 +1301,7 @@ namespace qAlgorithms
         // Regression correction is only calculated from the range in which the regression is relevant initially.
         for (size_t i = start; i < end; i++)
         {
-            double pred = predicted->at(i) * b0_exp;
+            double pred = predicted[i] * b0_exp;
             sum_predictSq += pred * pred;
             sum_predictReal += pred * intensities[i];
         }
@@ -1311,7 +1315,7 @@ namespace qAlgorithms
         float factor = (float)exp(coeff->b0);
         for (size_t i = start; i < end; i++)
         {
-            predicted->at(i) *= factor;
+            predicted[i] *= factor;
         }
 
         return factor;
@@ -1678,9 +1682,10 @@ namespace qAlgorithms
         const double idxCenter = mutateReg->coeffs.x0;
         double x = double(mutateReg->regSpan.startIdx) - idxCenter;
         double RSS = 0.0;
-        for (size_t i = mutateReg->regSpan.startIdx; i < mutateReg->regSpan.endIdx + 1; i++)
+        const size_t start = mutateReg->regSpan.startIdx;
+        const size_t end = mutateReg->regSpan.endIdx + 1;
+        for (size_t i = start; i < end; i++)
         {
-            // double new_x = double(i) - idxCenter;
             double pred = regAt(&mutateReg->coeffs, x);
             double difference = observed->at(i) - pred;
             x += 1.0;
@@ -1998,8 +2003,9 @@ namespace qAlgorithms
         // It is assumed that the RT vector is sorted.
 
         assert(!retentionTimes->empty());
-        std::vector<float> diffs(retentionTimes->size() - 1, 0);
-        for (size_t i = 0; i < diffs.size(); i++)
+        const size_t scanCount = retentionTimes->size();
+        std::vector<float> diffs(scanCount - 1, 0);
+        for (size_t i = 0; i < scanCount - 1; i++)
         {
             diffs[i] = retentionTimes->at(i + 1) - retentionTimes->at(i);
         }
@@ -2012,7 +2018,6 @@ namespace qAlgorithms
         // incorrectness here could be due to a vendor-specific instrument checkup procedure, which has been observed once at least
         // assert(tmpDiffs[1] > expectedDiff / 2);
 
-        size_t scanCount = retentionTimes->size();
         std::vector<RT_Grouping> totalRTs;
         totalRTs.reserve(scanCount * 2);
         std::vector<size_t> idxToGrouping(scanCount, UINT_MAX);
@@ -2028,7 +2033,7 @@ namespace qAlgorithms
             if (diffs[i] > critDiff + FLT_EPSILON) // this is necessary since for truly equidistant data, critDiff can be greater than diff even if they should be identical
             {
                 // interpolate at least one point
-                size_t numInterpolations = size_t(diffs[i] / expectedDiff + 0.5 - FLT_EPSILON); // + 0.5 since value is truncated (round up), see above for epsilon
+                const size_t numInterpolations = size_t(diffs[i] / expectedDiff + 0.5 - FLT_EPSILON); // + 0.5 since value is truncated (round up), see above for epsilon
                 assert(numInterpolations != 0);
 
                 float RTstep = diffs[i] / (numInterpolations);
@@ -2036,7 +2041,7 @@ namespace qAlgorithms
                 {
                     interpScan = totalRTs.size();
                     float newRT = (*retentionTimes)[i] + RTstep * j;
-                    totalRTs.push_back({size_t(-1), interpScan, newRT, true});
+                    totalRTs.push_back({UINT64_MAX, interpScan, newRT, true});
                 }
             }
         }
@@ -2077,98 +2082,6 @@ namespace qAlgorithms
         currentPeak->DQSB = -1; // @todo
     }
 
-    std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs, // @todo rework this to also utilise qpeaks_find()
-                                          const RT_Converter *convertRT)
-    {
-        // reset the logger, not the upcount
-        resetLogger(&globalLogStruct);
-        globalLogStruct.features = true;
-        globalLogStruct.checkedRegionCount = EICs.size();
-
-        // @todo this is not a universal limit and only chosen for computational speed at the moment
-        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
-        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
-        assert(GLOBAL_MAXSCALE_FEATURES <= QALGORITHMS_MAXSCALE_PRECOMPILED);
-
-        std::vector<FeaturePeak> peaks;    // return vector for feature list
-        peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
-        std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
-
-        std::vector<RegressionGauss> validRegressions;
-        validRegressions.reserve(512);
-
-        std::vector<float> logIntensity;
-
-        for (size_t i = 0; i < EICs.size(); ++i)
-        {
-            auto currentEIC = EICs[i];
-            if (currentEIC.scanNumbers.size() < 5)
-            {
-                continue; // skip due to lack of data, i.e., degrees of freedom will be zero
-            }
-
-            validRegressions.clear();
-            size_t length = currentEIC.df.size();
-            assert(length > 4); // data must contain at least five points
-
-            logIntensity.resize(length);
-            logIntensity.clear();
-
-            size_t maxscale = min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2);
-
-            runningRegression(
-                currentEIC.ints_area.data(),
-                &logIntensity,
-                currentEIC.df.data(),
-                currentEIC.ints_area.size(),
-                maxscale,
-                &validRegressions);
-
-            if (!validRegressions.empty())
-            {
-                createFeaturePeaks(&tmpPeaks, &validRegressions, convertRT, &currentEIC.RT);
-
-                for (auto peak : tmpPeaks)
-                {
-                    assert(peak.retentionTime > currentEIC.RT.front());
-                    assert(peak.retentionTime < currentEIC.RT.back());
-                }
-            }
-            // @todo extract the peak construction here and possibly extract findFeatures into a generic function
-
-            if (tmpPeaks.empty())
-            {
-                continue;
-            }
-            for (size_t j = 0; j < tmpPeaks.size(); j++)
-            {
-                FeaturePeak currentPeak = tmpPeaks[j];
-
-                // the correct limits in the non-interpolated EIC need to be determined. They are already included
-                // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
-                // use the index df[limit] - 1 into the original, non-interpolated vector
-
-                currentPeak.idxBin = i;
-
-                fillPeakVals(&currentEIC, &currentPeak);
-                assert(currentPeak.scanPeakEnd < convertRT->groups.size());
-
-                peaks.push_back(currentPeak);
-            }
-
-            tmpPeaks.clear();
-        }
-
-        // advance logger by one dataset
-        globalLogStruct.totalPeakCount = peaks.size();
-        loggerPrint(&globalLogStruct);
-        globalLogStruct.dataID += 1;
-
-        // peaks are sorted here so they can be treated as const throughout the rest of the program
-        std::sort(peaks.begin(), peaks.end(), [](FeaturePeak lhs, FeaturePeak rhs) { return lhs.retentionTime < rhs.retentionTime; });
-        return peaks;
-    }
-
     FeaturePeak peakToFeat(const PeakFit *peak)
     {
         FeaturePeak ret;
@@ -2187,9 +2100,9 @@ namespace qAlgorithms
         return ret;
     }
 
-    int findFeatures_new(const std::vector<EIC> *EICs,
-                         const std::vector<float> *convertRT, // correct RT corresponding to every scan number
-                         std::vector<FeaturePeak> *res)
+    int findFeatures(const std::vector<EIC> *EICs,
+                     const std::vector<float> *convertRT, // correct RT corresponding to every scan number
+                     std::vector<FeaturePeak> *res)
     {
         std::vector<PeakFit> peaks;
 
