@@ -759,7 +759,7 @@ namespace qAlgorithms
             tmp_ints_area,
             tmp_ints_height,
             tmp_df,
-            DQSB,
+            // DQSB,
             tmp_DQSC,
             tmp_cenID,
             tmp_interpScans,
@@ -813,7 +813,7 @@ namespace qAlgorithms
             tmp_ints_area[access] = point->area;
             tmp_ints_height[access] = point->height;
             tmp_DQSC[access] = point->DQSC;
-            tmp_DQSB[access] = sourceBin->DQSB[i];
+            // tmp_DQSB[access] = sourceBin->DQSB[i];
             tmp_cenID[access] = point->ID;
         }
 
@@ -837,7 +837,7 @@ namespace qAlgorithms
             tmp_ints_area,
             tmp_ints_height,
             tmp_df,
-            tmp_DQSB,
+            // tmp_DQSB,
             tmp_DQSC,
             tmp_cenID,
             tmp_interpScans};

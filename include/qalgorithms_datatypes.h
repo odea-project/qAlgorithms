@@ -100,7 +100,7 @@ namespace qAlgorithms
         std::vector<size_t> indexOfOriginalInInterpolated = {0};
     };
 
-    struct EIC // Extracted Ion Chromatogram
+    struct EIC // Extracted Ion Chromatogram @todo fidn a better representation that does not involve this many allocations
     {
         std::vector<unsigned int> scanNumbers = {0};
         std::vector<float> mz = {0};
@@ -108,7 +108,7 @@ namespace qAlgorithms
         std::vector<float> ints_area{0};
         std::vector<float> ints_height{0};
         std::vector<unsigned int> df{0}; // this is required for dealing with interpolations, but should be moved into qPeaks eventually @todo
-        std::vector<float> DQSB{0};
+        // std::vector<float> DQSB{0};
         std::vector<float> DQSC{0};
         std::vector<unsigned int> cenID{0};
         std::vector<unsigned int> interpolatedScans{0};

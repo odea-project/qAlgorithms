@@ -50,7 +50,7 @@ namespace qAlgorithms
     {
       public:
         std::vector<const CentroidPeak *> pointsInBin;
-        std::vector<float> DQSB;
+        // std::vector<float> DQSB;
 
         float mzMin = -1;
         float mzMax = -1;

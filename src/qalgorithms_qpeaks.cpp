@@ -385,16 +385,16 @@ namespace qAlgorithms
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(validRegressions, intensities);
 
-        if (validRegsTmp2.size() != validRegressions->size())
-        {
-            for (size_t i = 0; i < length; i++)
-            {
-                printf("%f, ", intensities[i]);
-            }
-            printf("\n");
+        // if (validRegsTmp2.size() != validRegressions->size())
+        // {
+        //     for (size_t i = 0; i < length; i++)
+        //     {
+        //         printf("%f, ", intensities[i]);
+        //     }
+        //     printf("\n");
 
-            // exit(1);
-        }
+        //     // exit(1);
+        // }
 
         // assert(validRegressions->size() == apexCount);
         // assert(validRegsTmp2.size() == validRegressions->size());
@@ -1480,10 +1480,11 @@ namespace qAlgorithms
             // return f_test_fail; // H0 holds, the two distributions are not noticeably different
         }
 
-        if (!isValidQuadraticTerm(coeffs, mse_log, df_sum)) // @todo by definition, this tests the same property as the F-test - remove?
+        // @todo this test might not be useful in any context, discuss final removal
+        if (!isValidQuadraticTerm(coeffs, mse_log, df_sum))
         {
-            assert(failstates > 1);
-            failstates += 4;
+            // assert(failstates > 1);
+            // failstates += 4;
             // return invalid_quadratic; // statistical insignificance of the quadratic term
         }
         if (!isValidPeakArea(coeffs, mse_log, df_sum)) // mse used in the "calcUncertainty" function call
@@ -2071,8 +2072,9 @@ namespace qAlgorithms
         currentPeak->mzUncertainty = tmp.var;
         currentPeak->DQSC = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSC, regSpan)
                                 .mean;
-        currentPeak->DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB, regSpan)
-                                .mean;
+        // currentPeak->DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB, regSpan)
+        //                         .mean;
+        currentPeak->DQSB = -1; // @todo
     }
 
     std::vector<FeaturePeak> findFeatures(std::vector<EIC> &EICs, // @todo rework this to also utilise qpeaks_find()
