@@ -410,6 +410,7 @@ namespace qAlgorithms
         for (size_t i = 1; i < bin->size(); i++)
         {
             cumError.push_back(bin->at(i)->mzUncertainty + cumError[i - 1]);
+            assert(cumError[i] > cumError[i - 1]);
         }
         return cumError;
     }

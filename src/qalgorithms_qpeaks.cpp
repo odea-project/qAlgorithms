@@ -1387,7 +1387,6 @@ namespace qAlgorithms
     }
 
     double calcPeakHeightUncert(RegressionGauss *mutateReg, double mse);
-    void calcUncertaintyPos(RegressionGauss *mutateReg, double mse);
     void calcPeakAreaUncert(RegressionGauss *mutateReg, double mse);
 
     double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
@@ -1542,7 +1541,6 @@ namespace qAlgorithms
             // return invalid_chisq; // statistical insignificance of the chi-square value
         }
 
-        calcUncertaintyPos(mutateReg, mse_log);
         mutateReg->df = df_sum;
         mutateReg->apex_position += coeffs->x0;
         assert(mutateReg->apex_position > 1); // @todo this should be superfluous
@@ -1971,32 +1969,6 @@ namespace qAlgorithms
         return J_is_significant;
     }
 #pragma endregion isValidPeakArea
-
-    void calcUncertaintyPos(RegressionGauss *mutateReg, double mse) // @todo make this mse independent first
-    {
-        const double b1 = mutateReg->coeffs.b1;
-        const double b2 = mutateReg->coeffs.b2;
-        const double b3 = mutateReg->coeffs.b3;
-        const double apex = mutateReg->apex_position;
-        double J[4] = {0}; // Jacobian matrix
-
-        J[1] = apex / b1;
-        if (mutateReg->apex_position < 0)
-        {
-            J[2] = -apex / b2;
-            // J[3] = 0;
-        }
-        else
-        {
-            // J[2] = 0;
-            J[3] = -apex / b3;
-        }
-
-        // mutateReg->uncert_position = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
-        double uncertainty = matProductReg(J, mutateReg->coeffs.scale);
-        mutateReg->uncert_position = (float)sqrt(uncertainty * mse);
-        return;
-    }
 
 #pragma region "Feature Detection"
 
