@@ -37,7 +37,7 @@ namespace qAlgorithms
     int qpeaks_find(
         const float *y_values,
         const float *x_values,
-        const unsigned int *degreesOfFreedom_cum,
+        const unsigned int *DF_cum,
         const size_t length,
         size_t maxscale,
         std::vector<PeakFit> *result);
@@ -45,6 +45,7 @@ namespace qAlgorithms
     class XML_File; // forward declaration so at least the header does not couple with read_file
     int findCentroids(XML_File &data,
                       const std::vector<unsigned int> *selectedIndices,
+                      const std::vector<float> *retentionTimes,
                       std::vector<CentroidPeak> *centroids);
 
     /// @param intensity_log logarithmy of the intensity values. This is the y axis of the fit. The x axis is required to be equidistant.

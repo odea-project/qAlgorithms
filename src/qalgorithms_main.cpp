@@ -163,22 +163,30 @@ int main(int argc, char *argv[])
 
             std::vector<float> retentionTimes = inputFile.get_spectra_RT(&selectedIndices);
             RT_Converter rt_index = interpolateScanNumbers(&retentionTimes);
+            // for (size_t rtTest = 0; rtTest < rt_index.indexOfOriginalInInterpolated.size(); rtTest++)
+            // {
+            //     assert(rt_index.indexOfOriginalInInterpolated[rtTest] <= inputFile.number_spectra);
+            // }
+
+            // exit(1);
 
             std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-            int centroidCount = findCentroids(inputFile, &selectedIndices, centroids); // it is guaranteed that only profile mode data is used
+            int centroidCount = findCentroids(inputFile,
+                                              &selectedIndices,
+                                              &retentionTimes,
+                                              centroids); // it is guaranteed that only profile mode data is used
 
             if (centroidCount == 0)
             {
                 fprintf(stderr, "Error: no centroids found despite valid indices");
                 continue;
             }
-            assert(centroidCount > 0);
-            for (size_t cenID = 0; cenID < (size_t)centroidCount; cenID++)
-            {
-                size_t scanNumber = centroids->at(cenID).number_MS1;
-                size_t realRT_idx = rt_index.indexOfOriginalInInterpolated[scanNumber];
-                centroids->at(cenID).RT = rt_index.groups[realRT_idx].trueRT;
-            }
+            // for (size_t cenID = 0; cenID < (size_t)centroidCount; cenID++)
+            // {
+            //     size_t scanNumber = centroids->at(cenID).number_MS1;
+            //     size_t realRT_idx = rt_index.indexOfOriginalInInterpolated[scanNumber];
+            //     centroids->at(cenID).RT = rt_index.groups[realRT_idx].trueRT;
+            // }
 
             filename = filename + (polarity ? "_positive" : "_negative");
 

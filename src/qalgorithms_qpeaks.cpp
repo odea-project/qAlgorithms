@@ -9,6 +9,7 @@
 #include <climits>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #define _USE_MATH_DEFINES // relevant for windows to have math constants
 #include <math.h>
@@ -90,6 +91,9 @@ namespace qAlgorithms
             float delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
 
             // control against all distances in the peak, test if they are equidistant enough
+            // the test below shows that delta x must be considered on a per-peak basis
+
+#if 0
             double delta_min = delta_x;
             double delta_max = delta_x;
             double delta_mean = 0;
@@ -103,6 +107,7 @@ namespace qAlgorithms
             }
             delta_mean /= rangeLen(&regression->regSpan) - 1;
             printf(" | mean: %f\n", delta_mean);
+#endif
 
             // position is determined relative to the point left of the apex
             float apexFraction = delta_x * float(apex - trunc(apex));
@@ -137,7 +142,7 @@ namespace qAlgorithms
         // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
         const float *y_values,
         const float *x_values,
-        const unsigned int *degreesOfFreedom_cum,
+        const unsigned int *DF_cum,
         const size_t length,
         size_t maxscale,
         std::vector<PeakFit> *result)
@@ -195,7 +200,7 @@ namespace qAlgorithms
         runningRegression(
             y_values,
             &y_log,
-            degreesOfFreedom_cum,
+            DF_cum,
             length,
             maxscale,
             &validRegressions);
@@ -2256,7 +2261,7 @@ namespace qAlgorithms
         const std::vector<float> *spectrum_int,
         ProfileBlock *block);
 
-    CentroidPeak peakToCen(const PeakFit *peak, size_t id, size_t specNum)
+    CentroidPeak peakToCen(const PeakFit *peak, const std::vector<float> *retentionTimes, size_t id, size_t specNum)
     {
         CentroidPeak cen = {0};
 
@@ -2269,6 +2274,7 @@ namespace qAlgorithms
         cen.mz = peak->position;
         cen.mzUncertainty = peak->uncert_position;
         cen.number_MS1 = specNum;
+        cen.RT = retentionTimes->at(specNum);
         cen.scale = peak->coeffs.scale;
         cen.width = peak->fwhm;
 
@@ -2277,6 +2283,7 @@ namespace qAlgorithms
 
     int findCentroids(XML_File &data, // @todo move this into the xml file specific part of qAlgorithms
                       const std::vector<unsigned int> *selectedIndices,
+                      const std::vector<float> *retentionTimes,
                       std::vector<CentroidPeak> *centroids)
     {
         const size_t countSelected = selectedIndices->size();
@@ -2286,16 +2293,41 @@ namespace qAlgorithms
         std::vector<float> spectrum_int;
         spectrum_int.reserve(1000);
 
-        size_t scanNum = 0;
         std::vector<PeakFit> ret; // @todo add tracking stuff for retaining spectrum / startpoint information
         ProfileBlock block = {nullptr, nullptr, 0, 0};
+
+        // note: The spectrum ID refers to the mzML file and also contains MS2 spectra / unwanted polarities.
+        // For the correct working of the algorithm, it is important that the specNum is used to describe
+        // ordering of centroids. A somewhat unintuitive design decision made here is setting the spectrum
+        // counter to overflow into 0 on the first loop iteration. The loop increments specNum whenever
+        // a new spectrum is taken from data, but on the first iteration no spectra have been assigned
+        // to a block. Since this means a new spectrum has to be fetched, the index will increment by
+        // one and overflow into 0 - the correct index. This design choice was made to avoid having two
+        // checks for end-of-block in the while loop so that the other loop assigning peaks to centroids
+        // is only traversed before the spectrum changes.
         size_t ID_spectrum = selectedIndices->front();
-        while (scanNum < countSelected + 1) // this is because the scan number is incremented after obtaining the spectrum
+        size_t specNum = UINT64_MAX;
+        assert(specNum + 1 == 0);
+
+        bool endOfSPectrumReached = true;
+        while (true) // this is because the scan number is incremented after obtaining the spectrum
         {
-            bool endOfSPectrumReached = getNextProfileRegion(&spectrum_mz, &spectrum_int, &block);
             if (endOfSPectrumReached)
             {
-                if (scanNum >= countSelected)
+                // only write centroids every spectrum change since a minority of blocks has centroids
+                // and because placing it here makes the increment of specnum the last operation before
+                // switching spectra.
+                for (size_t i = 0; i < ret.size(); i++)
+                {
+                    PeakFit *peak = ret.data() + i;
+                    size_t id = centroids->size();
+                    centroids->push_back(peakToCen(peak, retentionTimes, id, specNum));
+                }
+                ret.clear();
+
+                specNum += 1;
+
+                if (specNum >= countSelected)
                 {
                     break;
                 }
@@ -2303,33 +2335,26 @@ namespace qAlgorithms
                 spectrum_mz.clear();
                 spectrum_int.clear();
 
-                ID_spectrum = selectedIndices->at(scanNum);
+                ID_spectrum = selectedIndices->at(specNum);
                 data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
-
-                scanNum += 1;
             }
-            // at this point, the block contains one continuus region of points in the source spectrum
+            endOfSPectrumReached = getNextProfileRegion(&spectrum_mz, &spectrum_int, &block);
+            // at this point, the block contains one continuous region of points in the source spectrum
             // @todo find a better way of determining the smallest possible upper scale
-            static const size_t maxscale_centroid = 10;
-            qpeaks_find(block.intensity, block.mz, nullptr, block.length, maxscale_centroid, &ret);
-
-            for (size_t i = 0; i < ret.size(); i++)
-            {
-                PeakFit *p = ret.data() + i;
-                size_t id = centroids->size();
-                centroids->push_back(peakToCen(p, id, ID_spectrum));
-            }
-            ret.clear();
+            static const size_t maxscale = 10;
+            qpeaks_find(block.intensity, block.mz, nullptr, block.length, maxscale, &ret);
         }
-
-        FILE *F = fopen("./faildump.txt", "w");
-        for (size_t i = 0; i < failbook.size(); i++)
+        volatile bool dumpData = false;
+        if (dumpData)
         {
-            fprintf(F, "%d,", failbook[i]);
+            FILE *F = fopen("./faildump.txt", "w");
+            for (size_t i = 0; i < failbook.size(); i++)
+            {
+                fprintf(F, "%d,", failbook[i]);
+            }
+            fclose(F);
         }
-        fclose(F);
-
-        return centroids->size(); // @todo rework centroids to be multiple separate arrays
+        return centroids->size();
     }
 
     bool getNextProfileRegion(
