@@ -75,28 +75,18 @@ namespace qAlgorithms
 
 #pragma region "command line arguments"
 
-    UserInputSettings
-    passCliArgs(int argc, char *argv[])
+    UserInputSettings passCliArgs(int argc, char *argv[])
     {
-        volatile bool debug = false;
-        // this function processes all cli arguments supplied by the user
-
-        // return this struct
         UserInputSettings args;
         assert(args.inputPaths.empty());
         assert(args.outputPath.empty());
 
+        volatile bool debug = false;
         if (argc == 1 && !debug)
         {
-            // run in interactive mode
             args = interactiveMode();
         }
-        else if (debug)
-        {
-            argc = 0;
-            // args.inputPaths.push_back("C:/Users/unisys/Documents/Studium/Messdaten/Wasser2_neg.mzML");
-            args.inputPaths.push_back("/home/terry/Work/Messdaten/LC_orbitrap_kali/");
-        }
+
         for (int i = 1; i < argc; i++)
         {
             std::string argument = argv[i];
@@ -191,39 +181,32 @@ namespace qAlgorithms
             else if ((argument == "-pc") || (argument == "-printcentroids"))
             {
                 args.printCentroids = true;
-                args.term = std::max(args.term, centroids); // @todo rework this to be less hacky
             }
             else if ((argument == "-pb") || (argument == "-printbins"))
             {
                 args.printBins = true;
-                args.term = std::max(args.term, binning);
             }
             else if ((argument == "-pf") || (argument == "-printfeatures"))
             {
                 args.printFeatures = true;
-                args.term = std::max(args.term, features);
             }
             else if ((argument == "-sp") || (argument == "-subprofile"))
             {
                 args.printSubProfile = true;
-                args.term = std::max(args.term, features);
             }
             else if ((argument == "-ppf") || (argument == "-printcomponentsF"))
             {
                 args.printComponentRegs = true;
                 args.printFeatures = true;
-                args.term = std::max(args.term, components);
             }
             else if ((argument == "-ppb") || (argument == "-printcomponentsB"))
             {
                 args.printComponentRegs = true;
                 args.printComponentBins = true;
-                args.term = std::max(args.term, components);
             }
             else if ((argument == "-px") || (argument == "-printfeatcen"))
             {
                 args.printFeatCens = true;
-                args.term = std::max(args.term, features);
             }
             else if ((argument == "-pa") || (argument == "-printall"))
             {
@@ -234,24 +217,10 @@ namespace qAlgorithms
                 args.printFeatCens = true;
                 args.printComponentRegs = true;
                 args.printComponentBins = true;
-                args.term = never_override;
-            }
-            else if (argument == "fullLoop")
-            {
-                args.term = never_override;
             }
             else if (argument == "-log")
             {
                 args.doLogging = true;
-                // @todo is this functionality necessary?
-                // if (i + 1 != argc)
-                // {
-                //     std::string logName = argv[i + 1];
-                //     if (logName[0] != '-')
-                //     {
-                //         logfileName = logName;
-                //     }
-                // }
             }
             else if (argument == "-skip-error")
             {
@@ -288,7 +257,6 @@ namespace qAlgorithms
                 exit(1);
             }
         } // end of reading in command line arguments
-        // assert(!args.outputPath.empty());
         assert(!args.inputPaths.empty());
         assert(!args.inputPaths[0].empty());
         return args;
@@ -410,8 +378,30 @@ namespace qAlgorithms
             fprintf(stderr, "Warning: -verbose overrides -silent.\n");
             args.silent = false;
         }
-        if (!((args.printCentroids || args.printBins) ||
-              (args.printFeatures || args.printFeatCens)) &&
+
+        // set termination point here so that the program will only process data when necessary
+        if (args.printComponentRegs || args.printComponentBins)
+        {
+            args.term = TerminateAfter::components;
+        }
+        else if (args.printFeatures || args.printFeatCens || args.printSubProfile)
+        {
+            args.term = TerminateAfter::features;
+        }
+        else if (args.printBins)
+        {
+            args.term = TerminateAfter::binning;
+        }
+        else if (args.printCentroids)
+        {
+            args.term = TerminateAfter::centroids;
+        }
+        else
+        {
+            args.term = TerminateAfter::never;
+        }
+
+        if (args.term == TerminateAfter::never &&
             !(args.outputPath.empty()))
         {
             fprintf(stderr, "Warning: no output files will be written.\n");
