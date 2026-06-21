@@ -2100,6 +2100,98 @@ namespace qAlgorithms
         return ret;
     }
 
+    std::vector<FeaturePeak> findFeatures_old(std::vector<EIC> &EICs, // @todo rework this to also utilise qpeaks_find()
+                                              const RT_Converter *convertRT)
+    {
+        // reset the logger, not the upcount
+        resetLogger(&globalLogStruct);
+        globalLogStruct.features = true;
+        globalLogStruct.checkedRegionCount = EICs.size();
+
+        // @todo this is not a universal limit and only chosen for computational speed at the moment
+        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
+        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
+        assert(GLOBAL_MAXSCALE_FEATURES <= QALGORITHMS_MAXSCALE_PRECOMPILED);
+
+        std::vector<FeaturePeak> peaks;    // return vector for feature list
+        peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
+        std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
+
+        std::vector<RegressionGauss> validRegressions;
+        validRegressions.reserve(512);
+
+        std::vector<float> logIntensity;
+
+        for (size_t i = 0; i < EICs.size(); ++i)
+        {
+            auto currentEIC = EICs[i];
+            if (currentEIC.scanNumbers.size() < 5)
+            {
+                continue; // skip due to lack of data, i.e., degrees of freedom will be zero
+            }
+
+            validRegressions.clear();
+            size_t length = currentEIC.df.size();
+            assert(length > 4); // data must contain at least five points
+
+            logIntensity.resize(length);
+            logIntensity.clear();
+
+            size_t maxscale = min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2);
+
+            runningRegression(
+                currentEIC.ints_area.data(),
+                &logIntensity,
+                currentEIC.df.data(),
+                currentEIC.ints_area.size(),
+                maxscale,
+                &validRegressions);
+
+            if (!validRegressions.empty())
+            {
+                createFeaturePeaks(&tmpPeaks, &validRegressions, convertRT, &currentEIC.RT);
+
+                for (auto peak : tmpPeaks)
+                {
+                    assert(peak.retentionTime > currentEIC.RT.front());
+                    assert(peak.retentionTime < currentEIC.RT.back());
+                }
+            }
+            // @todo extract the peak construction here and possibly extract findFeatures into a generic function
+
+            if (tmpPeaks.empty())
+            {
+                continue;
+            }
+            for (size_t j = 0; j < tmpPeaks.size(); j++)
+            {
+                FeaturePeak currentPeak = tmpPeaks[j];
+
+                // the correct limits in the non-interpolated EIC need to be determined. They are already included
+                // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
+                // use the index df[limit] - 1 into the original, non-interpolated vector
+
+                currentPeak.idxBin = i;
+
+                fillPeakVals(&currentEIC, &currentPeak);
+                assert(currentPeak.scanPeakEnd < convertRT->groups.size());
+
+                peaks.push_back(currentPeak);
+            }
+
+            tmpPeaks.clear();
+        }
+
+        // advance logger by one dataset
+        globalLogStruct.totalPeakCount = peaks.size();
+        loggerPrint(&globalLogStruct);
+        globalLogStruct.dataID += 1;
+
+        // peaks are sorted here so they can be treated as const throughout the rest of the program
+        std::sort(peaks.begin(), peaks.end(), [](FeaturePeak lhs, FeaturePeak rhs) { return lhs.retentionTime < rhs.retentionTime; });
+        return peaks;
+    }
+
     int findFeatures(const std::vector<EIC> *EICs,
                      const std::vector<float> *convertRT, // correct RT corresponding to every scan number
                      std::vector<FeaturePeak> *res)

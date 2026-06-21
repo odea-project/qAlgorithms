@@ -261,8 +261,8 @@ int main(int argc, char *argv[])
             timeStart = clock();
             // every subvector of peaks corresponds to the bin ID
 
-            std::vector<FeaturePeak> features;
-            findFeatures(&binnedData, &retentionTimes, &features);
+            std::vector<FeaturePeak> features = findFeatures_old(binnedData, &rt_index);
+            // findFeatures(&binnedData, &retentionTimes, &features);
 
             if (features.size() == 0)
             {

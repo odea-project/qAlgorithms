@@ -125,6 +125,8 @@ namespace qAlgorithms
 
     RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes);
 
+    std::vector<FeaturePeak> findFeatures_old(std::vector<EIC> &EICs, const RT_Converter *convertRT);
+
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
