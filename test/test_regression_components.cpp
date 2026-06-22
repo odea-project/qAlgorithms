@@ -1,4 +1,5 @@
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
 
