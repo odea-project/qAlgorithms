@@ -743,18 +743,15 @@ namespace qAlgorithms
             const FeaturePeak peak = peaktable->at(i);
             unsigned long binID = peak.idxBin;
             assert(binID < originalBins->size());
-            const std::vector<unsigned int> *scanNums = &(originalBins->at(binID).scanNumbers);
-            assert(peak.idxBinStart < peak.idxBinEnd);
-            assert(peak.idxBinEnd < scanNums->size());
-            float RT_start = convertRT->at(scanNums->at(peak.idxBinStart));
-            float RT_end = convertRT->at(scanNums->at(peak.idxBinEnd));
+            float RT_start = 0;
+            float RT_end = 0;
 
             char buffer[256];
-            snprintf(buffer, 256, "%d,%d,%lu,%d,%d,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%lu,%d,%d,%0.5f,%0.5f,%0.5f,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                     peak.componentID, counter, binID, peak.idxBinStart, peak.idxBinEnd, peak.mz, peak.mzUncertainty,
+            snprintf(buffer, 256, "%d,%lu,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%lu,%0.5f,%0.5f,%0.5f,%0.6f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                     counter, binID, peak.mz, peak.mzUncertainty,
                      peak.retentionTime, peak.RT_Uncertainty, RT_start, RT_end,
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, (unsigned long)peak.coefficients.scale,
-                     peak.interpolationCount, peak.competitorCount, peak.DQSC, peak.DQSB, peak.DQSF,
+                     peak.DQSC, peak.DQSB, peak.DQSF,
                      // properties relevant for componentisation, remove this later
                      peak.mse_base, peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
             output << buffer;

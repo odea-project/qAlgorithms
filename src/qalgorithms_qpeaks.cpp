@@ -1535,20 +1535,7 @@ namespace qAlgorithms
 
             // calculate the apex position in RT
             size_t idx_leftOfApex = (size_t)regression->apex_position;
-            size_t idx_leftOfApex_absolute = convertRT->groups[idx_leftOfApex].interpolatedIndex;
-
-            assert(idx_leftOfApex != 0); // at least two points to the left if apex is > 1
-            size_t idx_rightOfApex_absolute = idx_leftOfApex_absolute + 1;
-
-            if (idx_rightOfApex_absolute > convertRT->groups.size() - 1)
-            {
-                continue;
-            }
-
-            assert(idx_rightOfApex_absolute < convertRT->groups.size() - 1); // at least two points to the right
-            // float rt_leftOfApex = convertRT->groups[idx_leftOfApex_absolute].trueRT;
             float rt_leftOfApex_true = RTs->at(idx_leftOfApex);
-            // float rt_rightOfApex = convertRT->groups[idx_rightOfApex_absolute].trueRT;
             float rt_rightOfApex_true = RTs->at(idx_leftOfApex + 1);
             assert(rt_leftOfApex_true < rt_rightOfApex_true);
             float delta_rt = rt_rightOfApex_true - rt_leftOfApex_true;
@@ -1571,16 +1558,8 @@ namespace qAlgorithms
             peak.idxPeakStart = regression->regSpan.startIdx;
             peak.idxPeakEnd = regression->regSpan.endIdx;
             peak.idxCenter_offset = coeff.x0 - regression->regSpan.startIdx;
-            assert(peak.idxPeakEnd > peak.idxPeakStart);
-            assert(peak.idxPeakEnd > peak.idxCenter_offset);
-            assert(peak.idxPeakEnd - peak.idxPeakStart >= 4); // at least five points
-
             peak.coefficients = coeff;
             peak.mse_base = -1; // regression->mse;
-
-            size_t dfLoss = (size_t)regression->df + 4; // +4 since the degrees of freedom are reduced by 1 per coefficient
-            peak.interpolationCount = rangeLen(&regression->regSpan) - dfLoss;
-            peak.competitorCount = regression->numCompetitors;
 
             peaks->push_back(peak);
         }
@@ -2008,9 +1987,6 @@ namespace qAlgorithms
 
     void fillPeakVals(const EIC *eic, FeaturePeak *currentPeak)
     {
-        currentPeak->scanPeakStart = eic->scanNumbers.front();
-        currentPeak->scanPeakEnd = eic->scanNumbers.back();
-
         // the correct limits in the non-interpolated EIC need to be determined. They are already included
         // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
         // use the index df[limit] - 1 into the original, non-interpolated vector
@@ -2019,9 +1995,6 @@ namespace qAlgorithms
         limit_L = min(limit_L, limit_L - 1); // uint underflows, so no issues.
         size_t limit_R = eic->df[currentPeak->idxPeakEnd] - 1;
         assert(limit_L < limit_R);
-
-        currentPeak->idxBinStart = limit_L;
-        currentPeak->idxBinEnd = limit_R;
 
         Range_i regSpan = {limit_L, limit_R};
 
@@ -2041,8 +2014,6 @@ namespace qAlgorithms
         ret.area = peak->area;
         ret.areaUncertainty = peak->uncert_area;
         ret.coefficients = peak->coeffs;
-        ret.competitorCount = 0; // @todo
-        ret.componentID = 0;
         ret.DQSB = -1; // set during fillPeakVals
         ret.DQSF = peak->dqs;
         ret.height = peak->height;
@@ -2098,18 +2069,6 @@ namespace qAlgorithms
             if (!validRegressions.empty())
             {
                 createFeaturePeaks(&tmpPeaks, &validRegressions, convertRT, &currentEIC.RT);
-
-                for (auto peak : tmpPeaks)
-                {
-                    assert(peak.retentionTime > currentEIC.RT.front());
-                    assert(peak.retentionTime < currentEIC.RT.back());
-                }
-            }
-            // @todo extract the peak construction here and possibly extract findFeatures into a generic function
-
-            if (tmpPeaks.empty())
-            {
-                continue;
             }
             for (size_t j = 0; j < tmpPeaks.size(); j++)
             {
@@ -2122,7 +2081,6 @@ namespace qAlgorithms
                 currentPeak.idxBin = i;
 
                 fillPeakVals(&currentEIC, &currentPeak);
-                assert(currentPeak.scanPeakEnd < convertRT->groups.size());
 
                 peaks.push_back(currentPeak);
             }
