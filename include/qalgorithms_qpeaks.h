@@ -113,8 +113,6 @@ namespace qAlgorithms
         const size_t length,
         RegressionGauss *mutateReg);
 
-    invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
-
     // ### Feature-specific Code ### //
 
     int findFeatures(const std::vector<EIC> *EICs,
@@ -140,16 +138,6 @@ namespace qAlgorithms
 
     bool isValidPeakArea(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
 
-    struct MeanVar
-    {
-        float mean;
-        float var;
-    };
-
-    MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
-                                        const std::vector<float> *values,
-                                        const Range_i regSpan);
-
     // utility functions for calculating regression values
     double regAt(const RegCoeffs *coeff, const double x);
 
@@ -166,7 +154,6 @@ namespace qAlgorithms
 
     double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert);
 
-    // ### pre-calculate the regression matrix ### //
 #define GLOBAL_MINSCALE 2
 
 #include "../external/qalgorithms_matinverse.h"

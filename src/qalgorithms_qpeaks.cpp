@@ -19,49 +19,6 @@
 
 namespace qAlgorithms
 {
-    struct LoggingParams
-    {
-        bool features = false;
-        int dataID = 0;
-        int checkedRegionCount = 0;
-        int totalPeakCount = 0;
-        int failData[invalid::invalid_chisq + 1] = {0};
-    };
-
-    void loggerPrint(LoggingParams *log)
-    {
-        // print log to hardcoded logfile path. Example output:
-        // C, 1000000, 150000, 1234567, 1234567, 1234567, 1234567, 1234567, 1234567, 1234567, 1234567, 1234567, 1234567 \n
-        // -> 300 chars space will be more than sufficient
-
-        // header: type, regions, peaks, passed, no_apex, invalid_apex, no_df, invalid_apexToEdge, f_test_fail, invalid_quadratic, invalid_area, invalid_height, invalid_chisq
-        char buffer[300];
-        sprintf(buffer, "%c, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n",
-                log->features ? 'F' : 'C', log->checkedRegionCount, log->totalPeakCount, log->failData[invalid::ok],
-                log->failData[invalid::no_apex], log->failData[invalid::invalid_apex], log->failData[invalid::no_df],
-                log->failData[invalid::invalid_apexToEdge], log->failData[invalid::f_test_fail], log->failData[invalid::invalid_quadratic],
-                log->failData[invalid::invalid_area], log->failData[invalid::invalid_height], log->failData[invalid::invalid_chisq]);
-
-        FILE *file = fopen("./logdata.csv", "a");
-        assert(file);
-        fprintf(file, "%s", buffer);
-        fclose(file);
-    }
-
-    void resetLogger(LoggingParams *log)
-    {
-        log->checkedRegionCount = 0;
-        log->totalPeakCount = 0;
-
-        size_t len = invalid::invalid_chisq + 1;
-        for (size_t i = 0; i < len; i++)
-        {
-            log->failData[i] = 0;
-        }
-    }
-
-    LoggingParams globalLogStruct;
-
     void retransformPeaks(
         const std::vector<RegressionGauss> *peaks,
         const float *x_values,
@@ -215,8 +172,7 @@ namespace qAlgorithms
 
 #pragma region "running regression"
 
-    volatile bool debug = false;
-    std::vector<invalid> failCodes; // @todo: make a logging function / struct thing that can be used to check failure points later
+    invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
 
     int validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
         const float *intensities,
@@ -234,17 +190,12 @@ namespace qAlgorithms
             // sets the range and checks for validity @todo not applicable for dual peak systems
             invalid failpoint = validRegWidth(&(coefficients->at(i)), &range);
             if (failpoint != ok)
-            {
-                globalLogStruct.failData[failpoint] += 1;
                 continue;
-            }
 
             size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, &range);
             if (df_sum < 5)
-            {
-                globalLogStruct.failData[invalid::no_df] += 1;
                 continue;
-            }
+
             df_sum -= 4; // four coefficients, adjust for components
 
             RegressionGauss reg;
@@ -269,8 +220,6 @@ namespace qAlgorithms
                 df_sum,
                 length,
                 &reg);
-            failCodes.push_back(failpoint);
-            globalLogStruct.failData[failpoint] += 1;
 
             validCount += failpoint == ok ? 1 : 0;
             if (failpoint == ok)
@@ -279,8 +228,6 @@ namespace qAlgorithms
             }
         }
         assert(validCount == validRegressions->size());
-
-        failCodes.push_back(invalid::none);
 
         return validCount;
     }
@@ -1563,41 +1510,6 @@ namespace qAlgorithms
 
 #pragma region "create peaks"
 
-    MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
-                                        const std::vector<float> *values,
-                                        const Range_i regSpan)
-    {
-        // weighted mean using intensity as weighting factor and left_limit right_limit as range
-        size_t realPoints = 0;
-        double mean_weights = 0;
-        double sum_weighted_x = 0; // sum of values * weight
-        double sum_weight = 0;
-        for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
-        {
-            // multiplication with one or zero is used instead of a continue so this can be vectorised.
-            // @todo use another method of omitting interpolations
-            unsigned int interpolated = (*values)[j] == 0 ? 0 : 1;
-            mean_weights += (*weight)[j] * interpolated;
-            sum_weighted_x += (*values)[j] * (*weight)[j] * interpolated;
-            sum_weight += (*weight)[j] * interpolated;
-            realPoints += 1 * interpolated; // interpolated points do not count!
-        }
-        mean_weights /= realPoints;
-        sum_weighted_x /= mean_weights;
-        sum_weight /= mean_weights;
-
-        double weighted_mean = sum_weighted_x / sum_weight;
-        double sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
-        for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
-        {
-            double difference = (*values)[j] - weighted_mean;
-            double interpolated = (*values)[j] == 0 ? 0 : 1; // @todo see above, add 0 if value is not real
-            sum_Qxxw += interpolated * difference * difference * (*weight)[j];
-        }
-        double uncertaintiy = sqrt(sum_Qxxw / sum_weight / (double)realPoints);
-        return {float(weighted_mean), float(uncertaintiy)};
-    };
-
     void createFeaturePeaks(
         std::vector<FeaturePeak> *peaks,
         const std::vector<RegressionGauss> *validRegressionsVec,
@@ -2053,6 +1965,47 @@ namespace qAlgorithms
         return {totalRTs, idxToGrouping};
     }
 
+    struct MeanVar
+    {
+        float mean;
+        float var;
+    };
+
+    MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
+                                        const std::vector<float> *values,
+                                        const Range_i regSpan)
+    {
+        // weighted mean using intensity as weighting factor and left_limit right_limit as range
+        size_t realPoints = 0;
+        double mean_weights = 0;
+        double sum_weighted_x = 0; // sum of values * weight
+        double sum_weight = 0;
+        for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
+        {
+            // multiplication with one or zero is used instead of a continue so this can be vectorised.
+            // @todo use another method of omitting interpolations
+            unsigned int interpolated = (*values)[j] == 0 ? 0 : 1;
+            mean_weights += (*weight)[j] * interpolated;
+            sum_weighted_x += (*values)[j] * (*weight)[j] * interpolated;
+            sum_weight += (*weight)[j] * interpolated;
+            realPoints += 1 * interpolated; // interpolated points do not count!
+        }
+        mean_weights /= realPoints;
+        sum_weighted_x /= mean_weights;
+        sum_weight /= mean_weights;
+
+        double weighted_mean = sum_weighted_x / sum_weight;
+        double sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
+        for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
+        {
+            double difference = (*values)[j] - weighted_mean;
+            double interpolated = (*values)[j] == 0 ? 0 : 1; // @todo see above, add 0 if value is not real
+            sum_Qxxw += interpolated * difference * difference * (*weight)[j];
+        }
+        double uncertaintiy = sqrt(sum_Qxxw / sum_weight / (double)realPoints);
+        return {float(weighted_mean), float(uncertaintiy)};
+    };
+
     void fillPeakVals(const EIC *eic, FeaturePeak *currentPeak)
     {
         currentPeak->scanPeakStart = eic->scanNumbers.front();
@@ -2103,11 +2056,6 @@ namespace qAlgorithms
     std::vector<FeaturePeak> findFeatures_old(std::vector<EIC> &EICs, // @todo rework this to also utilise qpeaks_find()
                                               const RT_Converter *convertRT)
     {
-        // reset the logger, not the upcount
-        resetLogger(&globalLogStruct);
-        globalLogStruct.features = true;
-        globalLogStruct.checkedRegionCount = EICs.size();
-
         // @todo this is not a universal limit and only chosen for computational speed at the moment
         // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
         static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
@@ -2181,11 +2129,6 @@ namespace qAlgorithms
 
             tmpPeaks.clear();
         }
-
-        // advance logger by one dataset
-        globalLogStruct.totalPeakCount = peaks.size();
-        loggerPrint(&globalLogStruct);
-        globalLogStruct.dataID += 1;
 
         // peaks are sorted here so they can be treated as const throughout the rest of the program
         std::sort(peaks.begin(), peaks.end(), [](FeaturePeak lhs, FeaturePeak rhs) { return lhs.retentionTime < rhs.retentionTime; });
