@@ -1508,64 +1508,6 @@ namespace qAlgorithms
         return ok;
     }
 
-#pragma region "create peaks"
-
-    void createFeaturePeaks(
-        std::vector<FeaturePeak> *peaks,
-        const std::vector<RegressionGauss> *validRegressionsVec,
-        const RT_Converter *convertRT,
-        const std::vector<float> *RTs) // @todo this should be handled correctly through the converter
-    {
-        assert(!validRegressionsVec->empty());
-        assert(peaks->empty());
-
-        for (size_t i = 0; i < validRegressionsVec->size(); i++)
-        {
-            const RegressionGauss *regression = validRegressionsVec->data() + i;
-            assert(regression->isValid);
-            size_t maxIdx = convertRT->groups.back().interpolatedIndex;
-            assert(regression->regSpan.endIdx <= maxIdx);
-
-            FeaturePeak peak;
-            // add height
-            RegCoeffs coeff = regression->coeffs;
-            // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
-            peak.height = (float)exp(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
-            peak.heightUncertainty = regression->uncert_height * peak.height;
-
-            // calculate the apex position in RT
-            size_t idx_leftOfApex = (size_t)regression->apex_position;
-            float rt_leftOfApex_true = RTs->at(idx_leftOfApex);
-            float rt_rightOfApex_true = RTs->at(idx_leftOfApex + 1);
-            assert(rt_leftOfApex_true < rt_rightOfApex_true);
-            float delta_rt = rt_rightOfApex_true - rt_leftOfApex_true;
-            float rt_fraction = (regression->apex_position - floor(regression->apex_position));
-            assert(rt_fraction >= 0);
-            assert(rt_fraction < 1);
-            float rt_apex = rt_leftOfApex_true + delta_rt * rt_fraction;
-            peak.retentionTime = rt_apex;
-            peak.RT_Uncertainty = regression->uncert_position * delta_rt;
-
-            // add area @todo decide where b0 and delta_x should influence the area
-            float exp_b0 = (float)exp(coeff.b0);
-            peak.area = regression->area * exp_b0 * delta_rt;
-            peak.areaUncertainty = regression->uncert_area * exp_b0 * delta_rt;
-
-            // mz, mzUncertainty, mean DQSC and meanDQSF are all calculated in after this function is called in measurement_data
-            peak.DQSF = 1 - erf(regression->uncert_area / regression->area);
-
-            assert(regression->regSpan.endIdx - coeff.x0 > 1);
-            peak.idxPeakStart = regression->regSpan.startIdx;
-            peak.idxPeakEnd = regression->regSpan.endIdx;
-            peak.idxCenter_offset = coeff.x0 - regression->regSpan.startIdx;
-            peak.coefficients = coeff;
-            peak.mse_base = -1; // regression->mse;
-
-            peaks->push_back(peak);
-        }
-    }
-#pragma endregion "create peaks"
-
 #pragma region calcSSE
 
     double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *observed)
@@ -1944,15 +1886,10 @@ namespace qAlgorithms
         return {totalRTs, idxToGrouping};
     }
 
-    struct MeanVar
-    {
-        float mean;
-        float var;
-    };
-
-    MeanVar weightedMeanAndVariance_EIC(const std::vector<float> *weight,
-                                        const std::vector<float> *values,
-                                        const Range_i regSpan)
+    float weightedMeanAndVariance_EIC(const std::vector<float> *weight,
+                                      const std::vector<float> *values,
+                                      const Range_i regSpan,
+                                      float *variance)
     {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
         size_t realPoints = 0;
@@ -1981,8 +1918,11 @@ namespace qAlgorithms
             double interpolated = (*values)[j] == 0 ? 0 : 1; // @todo see above, add 0 if value is not real
             sum_Qxxw += interpolated * difference * difference * (*weight)[j];
         }
-        double uncertaintiy = sqrt(sum_Qxxw / sum_weight / (double)realPoints);
-        return {float(weighted_mean), float(uncertaintiy)};
+        if (variance != nullptr)
+        {
+            *variance = sqrt(sum_Qxxw / sum_weight / (double)realPoints);
+        }
+        return float(weighted_mean);
     };
 
     void fillPeakVals(const EIC *eic, FeaturePeak *currentPeak)
@@ -1998,30 +1938,14 @@ namespace qAlgorithms
 
         Range_i regSpan = {limit_L, limit_R};
 
-        auto tmp = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->mz, regSpan);
-        currentPeak->mz = tmp.mean;
-        currentPeak->mzUncertainty = tmp.var;
-        currentPeak->DQSC = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSC, regSpan)
-                                .mean;
+        float variance = 0;
+        currentPeak->mz = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->mz, regSpan, &variance);
+        currentPeak->mzUncertainty = variance;
+        currentPeak->DQSC = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSC, regSpan, nullptr);
+
         // currentPeak->DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB, regSpan)
         //                         .mean;
         currentPeak->DQSB = -1; // @todo
-    }
-
-    FeaturePeak peakToFeat(const PeakFit *peak)
-    {
-        FeaturePeak ret;
-        ret.area = peak->area;
-        ret.areaUncertainty = peak->uncert_area;
-        ret.coefficients = peak->coeffs;
-        ret.DQSB = -1; // set during fillPeakVals
-        ret.DQSF = peak->dqs;
-        ret.height = peak->height;
-        ret.heightUncertainty = peak->uncert_height;
-        ret.retentionTime = peak->position;
-        ret.RT_Uncertainty = peak->uncert_position;
-
-        return ret;
     }
 
     std::vector<FeaturePeak> findFeatures_old(std::vector<EIC> &EICs, // @todo rework this to also utilise qpeaks_find()
@@ -2066,10 +1990,56 @@ namespace qAlgorithms
                 maxscale,
                 &validRegressions);
 
-            if (!validRegressions.empty())
+            if (validRegressions.empty())
+                continue;
+
+            assert(!validRegressions.empty());
+            assert(tmpPeaks.empty());
+
+            for (size_t peakidx = 0; peakidx < validRegressions.size(); peakidx++)
             {
-                createFeaturePeaks(&tmpPeaks, &validRegressions, convertRT, &currentEIC.RT);
+                const RegressionGauss *regression = validRegressions.data() + peakidx;
+                assert(regression->isValid);
+                size_t maxIdx = convertRT->groups.back().interpolatedIndex;
+                assert(regression->regSpan.endIdx <= maxIdx);
+
+                FeaturePeak peak;
+                // add height
+                RegCoeffs coeff = regression->coeffs;
+                // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
+                peak.height = (float)exp(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
+                peak.heightUncertainty = regression->uncert_height * peak.height;
+
+                // calculate the apex position in RT
+                size_t idx_leftOfApex = (size_t)regression->apex_position;
+                float rt_leftOfApex_true = currentEIC.RT.at(idx_leftOfApex);
+                float rt_rightOfApex_true = currentEIC.RT.at(idx_leftOfApex + 1);
+                assert(rt_leftOfApex_true < rt_rightOfApex_true);
+                float delta_rt = rt_rightOfApex_true - rt_leftOfApex_true;
+                float rt_fraction = (regression->apex_position - floor(regression->apex_position));
+                assert(rt_fraction >= 0);
+                assert(rt_fraction < 1);
+                float rt_apex = rt_leftOfApex_true + delta_rt * rt_fraction;
+                peak.retentionTime = rt_apex;
+                peak.RT_Uncertainty = regression->uncert_position * delta_rt;
+
+                // add area @todo decide where b0 and delta_x should influence the area
+                float exp_b0 = (float)exp(coeff.b0);
+                peak.area = regression->area * exp_b0 * delta_rt;
+                peak.areaUncertainty = regression->uncert_area * exp_b0 * delta_rt;
+
+                // mz, mzUncertainty, mean DQSC and meanDQSF are all calculated in after this function is called in measurement_data
+                peak.DQSF = 1 - erf(regression->uncert_area / regression->area);
+
+                assert(regression->regSpan.endIdx - coeff.x0 > 1);
+                peak.idxPeakStart = regression->regSpan.startIdx;
+                peak.idxPeakEnd = regression->regSpan.endIdx;
+                peak.idxCenter_offset = coeff.x0 - regression->regSpan.startIdx;
+                peak.coefficients = coeff;
+
+                tmpPeaks.push_back(peak);
             }
+
             for (size_t j = 0; j < tmpPeaks.size(); j++)
             {
                 FeaturePeak currentPeak = tmpPeaks[j];
@@ -2093,6 +2063,41 @@ namespace qAlgorithms
         return peaks;
     }
 
+    FeaturePeak peakToFeat(const PeakFit *peak)
+    {
+        // RegCoeffs coefficients{0};
+        // float height = 0;
+        // float area = 0;
+        // // float width;
+        // float heightUncertainty = 0;
+        // float areaUncertainty = 0;
+        // float DQSF = 0, DQSB = 0, DQSC = 0;
+        // float retentionTime = 0;
+        // float mz = 0;
+        // float RT_Uncertainty = 0;
+        // float mzUncertainty = 0;
+        // unsigned int idxBin = 0;
+        // // these refer to the EIC
+        // unsigned int idxPeakStart = 0, idxPeakEnd = 0, idxCenter_offset = 0;
+        // float lowerRT = 0;
+        // float upperRT = 0;
+
+        FeaturePeak ret;
+        ret.coefficients = peak->coeffs;
+        ret.height = peak->height;
+        ret.area = peak->area;
+        ret.heightUncertainty = peak->uncert_height;
+        ret.areaUncertainty = peak->uncert_area;
+        ret.DQSC = 0;
+        ret.DQSB = -1; // @todo temporarily removed
+        ret.DQSF = peak->dqs;
+
+        ret.retentionTime = peak->position;
+        ret.RT_Uncertainty = peak->uncert_position;
+
+        return ret;
+    }
+
     int findFeatures(const std::vector<EIC> *EICs,
                      const std::vector<float> *convertRT, // correct RT corresponding to every scan number
                      std::vector<FeaturePeak> *res)
@@ -2107,11 +2112,21 @@ namespace qAlgorithms
             const EIC *bin = EICs->data() + eic;
             const float *rt = convertRT->data() + bin->scanNumbers[0];
             size_t binLen = bin->df.size();
-            qpeaks_find(bin->ints_area.data(), rt, bin->df.data(), binLen, 40, &peaks); // @todo dynamic maxscale
+            qpeaks_find(bin->ints_area.data(),
+                        rt,
+                        bin->df.data(),
+                        binLen, 40, // @todo dynamic maxscale
+                        &peaks);
             for (size_t peak = 0; peak < peaks.size(); peak++)
             {
                 FeaturePeak feat = peakToFeat(&peaks[peak]);
                 fillPeakVals(bin, &feat); // set mz, its uncertainty and DQSC / DQSB
+
+                Range_i range = {peaks[peak].limit_L, peaks[peak].limit_R};
+                float variance = 0;
+                feat.mz = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->mz, , &variance);
+                feat.mzUncertainty = variance;
+                feat.DQSC = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->DQSC, regSpan, nullptr);
 
                 res->push_back(feat);
             }

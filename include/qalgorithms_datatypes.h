@@ -134,7 +134,6 @@ namespace qAlgorithms
         unsigned int idxBin = 0;
         // these refer to the EIC
         unsigned int idxPeakStart = 0, idxPeakEnd = 0, idxCenter_offset = 0;
-        float mse_base = 0;
         float lowerRT = 0;
         float upperRT = 0; // @todo set these during feature construction
     };
