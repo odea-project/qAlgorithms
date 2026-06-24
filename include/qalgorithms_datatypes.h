@@ -2,6 +2,7 @@
 #define QALGORITHMS_DATATYPE_PEAK_H
 
 #include <climits>
+#include <cstddef>
 #include <vector>
 #define _USE_MATH_DEFINES
 #include <math.h> // INFINITY and other number macros
@@ -45,6 +46,9 @@ namespace qAlgorithms
     struct PeakFit
     {
         RegCoeffs coeffs = {0};
+        Range_i range;
+        size_t startIdx;
+        size_t length;
         float position = 0;
         float uncert_position = 0;
         float limit_L = 0;

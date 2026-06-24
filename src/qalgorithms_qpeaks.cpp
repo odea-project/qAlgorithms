@@ -75,6 +75,11 @@ namespace qAlgorithms
             peak.limit_L = x_values[regression->regSpan.startIdx];
             peak.limit_R = x_values[regression->regSpan.endIdx];
 
+            // @todo remove
+            peak.range = regression->regSpan;
+            peak.startIdx = regression->regSpan.startIdx;
+            peak.length = rangeLen(&regression->regSpan);
+
             // peak height = regression at apex position before transformation
             peak.height = (float)exp(regAt(&coeff, apex_raw));
             peak.uncert_height = regression->uncert_height * peak.height;
@@ -2122,9 +2127,9 @@ namespace qAlgorithms
                 FeaturePeak feat = peakToFeat(&peaks[peak]);
                 fillPeakVals(bin, &feat); // set mz, its uncertainty and DQSC / DQSB
 
-                Range_i range = {peaks[peak].limit_L, peaks[peak].limit_R};
+                Range_i regSpan = peaks[peak].range;
                 float variance = 0;
-                feat.mz = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->mz, , &variance);
+                feat.mz = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->mz, regSpan, &variance);
                 feat.mzUncertainty = variance;
                 feat.DQSC = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->DQSC, regSpan, nullptr);
 
