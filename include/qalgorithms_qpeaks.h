@@ -119,10 +119,6 @@ namespace qAlgorithms
                      const std::vector<float> *convertRT, // correct RT corresponding to every scan number
                      std::vector<FeaturePeak> *res);
 
-    // ### Retention Time Conversion @todo remove ### //
-
-    RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes);
-
     // take a jacobian matrix as input and return the transpose at scale
     double matProductReg(const double J[4], const size_t scale);
 

@@ -1833,64 +1833,6 @@ namespace qAlgorithms
         }
     }
 
-    RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes)
-    {
-        // This function interpolates the existing RTs of MS1 spectra and produces a vector that contains,
-        // for the index of every real MS1 spectrum, the scan number with interpolations for that spectrum.
-        // Since we work with an integer scale, interpolations are rounded at 0.5.
-        // It is assumed that the RT vector is sorted.
-
-        assert(!retentionTimes->empty());
-        const size_t scanCount = retentionTimes->size();
-        std::vector<float> diffs(scanCount - 1, 0);
-        for (size_t i = 0; i < scanCount - 1; i++)
-        {
-            diffs[i] = retentionTimes->at(i + 1) - retentionTimes->at(i);
-        }
-        assert(!diffs.empty());
-
-        // @todo this should be the mode, not the median
-        float expectedDiff = (float)medianVec(&diffs);
-        // if this is not given, there are severe distortions at some point in the data. We accept one non-compliance,
-        // at the first scan in the spectrum only, which is generally one of the first recorded scans
-        // incorrectness here could be due to a vendor-specific instrument checkup procedure, which has been observed once at least
-        // assert(tmpDiffs[1] > expectedDiff / 2);
-
-        std::vector<RT_Grouping> totalRTs;
-        totalRTs.reserve(scanCount * 2);
-        std::vector<size_t> idxToGrouping(scanCount, UINT_MAX);
-
-        float critDiff = (expectedDiff * 3) / 2; // if the difference is 1.5 times greater than the critDiff, there should be at least one interpolation
-
-        for (size_t i = 0; i < diffs.size(); i++)
-        {
-            size_t interpScan = totalRTs.size();
-            totalRTs.push_back({i, interpScan, (*retentionTimes)[i], false});
-            idxToGrouping[i] = interpScan;
-
-            if (diffs[i] > critDiff + FLT_EPSILON) // this is necessary since for truly equidistant data, critDiff can be greater than diff even if they should be identical
-            {
-                // interpolate at least one point
-                const size_t numInterpolations = size_t(diffs[i] / expectedDiff + 0.5 - FLT_EPSILON); // + 0.5 since value is truncated (round up), see above for epsilon
-                assert(numInterpolations != 0);
-
-                float RTstep = diffs[i] / (numInterpolations);
-                for (size_t j = 1; j < numInterpolations; j++) // +1 since the span is between two points
-                {
-                    interpScan = totalRTs.size();
-                    float newRT = (*retentionTimes)[i] + RTstep * j;
-                    totalRTs.push_back({UINT64_MAX, interpScan, newRT, true});
-                }
-            }
-        }
-        // add in the last remaining point
-        size_t lastScan = totalRTs.size();
-        idxToGrouping.back() = lastScan;
-        totalRTs.push_back({diffs.size(), lastScan, retentionTimes->back(), false});
-
-        return {totalRTs, idxToGrouping};
-    }
-
     float weightedMeanAndVariance_EIC(const std::vector<float> *weight,
                                       const std::vector<float> *values,
                                       const Range_i regSpan,

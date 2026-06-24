@@ -89,21 +89,6 @@ namespace qAlgorithms
         // unsigned int interpolations;
     };
 
-    struct RT_Grouping // @todo remove this
-    {
-        size_t originalIndex = UINT_MAX;
-        size_t interpolatedIndex = UINT_MAX;
-        float trueRT = -1;
-        bool interpolated = true;
-    };
-
-    struct RT_Converter
-    {
-        std::vector<RT_Grouping> groups;
-        // index into the groups vector. The "originalIndex" field ind the RT_Grouping struct is the index into this vector
-        std::vector<size_t> indexOfOriginalInInterpolated = {0};
-    };
-
     struct EIC // Extracted Ion Chromatogram @todo fidn a better representation that does not involve this many allocations
     {
         std::vector<unsigned int> scanNumbers = {0};
