@@ -1911,7 +1911,8 @@ namespace qAlgorithms
             sum_weight += (*weight)[j] * interpolated;
             realPoints += 1 * interpolated; // interpolated points do not count!
         }
-        mean_weights /= realPoints;
+        double dpoints = (double)realPoints;
+        mean_weights /= dpoints;
         sum_weighted_x /= mean_weights;
         sum_weight /= mean_weights;
 
@@ -1925,148 +1926,10 @@ namespace qAlgorithms
         }
         if (variance != nullptr)
         {
-            *variance = sqrt(sum_Qxxw / sum_weight / (double)realPoints);
+            *variance = (float)sqrt(sum_Qxxw / sum_weight / dpoints);
         }
         return float(weighted_mean);
     };
-
-    void fillPeakVals(const EIC *eic, FeaturePeak *currentPeak)
-    {
-        // the correct limits in the non-interpolated EIC need to be determined. They are already included
-        // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
-        // use the index df[limit] - 1 into the original, non-interpolated vector
-
-        size_t limit_L = eic->df[currentPeak->idxPeakStart];
-        limit_L = min(limit_L, limit_L - 1); // uint underflows, so no issues.
-        size_t limit_R = eic->df[currentPeak->idxPeakEnd] - 1;
-        assert(limit_L < limit_R);
-
-        Range_i regSpan = {limit_L, limit_R};
-
-        float variance = 0;
-        currentPeak->mz = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->mz, regSpan, &variance);
-        currentPeak->mzUncertainty = variance;
-        currentPeak->DQSC = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSC, regSpan, nullptr);
-
-        // currentPeak->DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB, regSpan)
-        //                         .mean;
-        currentPeak->DQSB = -1; // @todo
-    }
-
-    std::vector<FeaturePeak> findFeatures_old(std::vector<EIC> &EICs, // @todo rework this to also utilise qpeaks_find()
-                                              const RT_Converter *convertRT)
-    {
-        // @todo this is not a universal limit and only chosen for computational speed at the moment
-        // with an estimated scan difference of 0.6 s this means the maximum peak width is 61 * 0.6 = 36.6 s
-        static const size_t GLOBAL_MAXSCALE_FEATURES = 30;
-        assert(GLOBAL_MAXSCALE_FEATURES <= QALGORITHMS_MAXSCALE_PRECOMPILED);
-
-        std::vector<FeaturePeak> peaks;    // return vector for feature list
-        peaks.reserve(EICs.size() / 4);    // should be enough to fit all features without reallocation
-        std::vector<FeaturePeak> tmpPeaks; // add features to this before pasting into FL
-
-        std::vector<RegressionGauss> validRegressions;
-        validRegressions.reserve(512);
-
-        std::vector<float> logIntensity;
-
-        for (size_t i = 0; i < EICs.size(); ++i)
-        {
-            auto currentEIC = EICs[i];
-            if (currentEIC.scanNumbers.size() < 5)
-            {
-                continue; // skip due to lack of data, i.e., degrees of freedom will be zero
-            }
-
-            validRegressions.clear();
-            size_t length = currentEIC.df.size();
-            assert(length > 4); // data must contain at least five points
-
-            logIntensity.resize(length);
-            logIntensity.clear();
-
-            size_t maxscale = min(GLOBAL_MAXSCALE_FEATURES, (length - 1) / 2);
-
-            runningRegression(
-                currentEIC.ints_area.data(),
-                &logIntensity,
-                currentEIC.df.data(),
-                currentEIC.ints_area.size(),
-                maxscale,
-                &validRegressions);
-
-            if (validRegressions.empty())
-                continue;
-
-            assert(!validRegressions.empty());
-            assert(tmpPeaks.empty());
-
-            for (size_t peakidx = 0; peakidx < validRegressions.size(); peakidx++)
-            {
-                const RegressionGauss *regression = validRegressions.data() + peakidx;
-                assert(regression->isValid);
-                size_t maxIdx = convertRT->groups.back().interpolatedIndex;
-                assert(regression->regSpan.endIdx <= maxIdx);
-
-                FeaturePeak peak;
-                // add height
-                RegCoeffs coeff = regression->coeffs;
-                // peak height (exp(b0 - b1^2/4/b2)) with position being -b1/2/b2
-                peak.height = (float)exp(coeff.b0 + (regression->apex_position - coeff.x0) * coeff.b1 * 0.5);
-                peak.heightUncertainty = regression->uncert_height * peak.height;
-
-                // calculate the apex position in RT
-                size_t idx_leftOfApex = (size_t)regression->apex_position;
-                float rt_leftOfApex_true = currentEIC.RT.at(idx_leftOfApex);
-                float rt_rightOfApex_true = currentEIC.RT.at(idx_leftOfApex + 1);
-                assert(rt_leftOfApex_true < rt_rightOfApex_true);
-                float delta_rt = rt_rightOfApex_true - rt_leftOfApex_true;
-                float rt_fraction = (regression->apex_position - floor(regression->apex_position));
-                assert(rt_fraction >= 0);
-                assert(rt_fraction < 1);
-                float rt_apex = rt_leftOfApex_true + delta_rt * rt_fraction;
-                peak.retentionTime = rt_apex;
-                peak.RT_Uncertainty = regression->uncert_position * delta_rt;
-
-                // add area @todo decide where b0 and delta_x should influence the area
-                float exp_b0 = (float)exp(coeff.b0);
-                peak.area = regression->area * exp_b0 * delta_rt;
-                peak.areaUncertainty = regression->uncert_area * exp_b0 * delta_rt;
-
-                // mz, mzUncertainty, mean DQSC and meanDQSF are all calculated in after this function is called in measurement_data
-                peak.DQSF = 1 - erf(regression->uncert_area / regression->area);
-
-                assert(regression->regSpan.endIdx - coeff.x0 > 1);
-                peak.idxPeakStart = regression->regSpan.startIdx;
-                peak.idxPeakEnd = regression->regSpan.endIdx;
-                peak.idxCenter_offset = coeff.x0 - regression->regSpan.startIdx;
-                peak.coefficients = coeff;
-
-                tmpPeaks.push_back(peak);
-            }
-
-            for (size_t j = 0; j < tmpPeaks.size(); j++)
-            {
-                FeaturePeak currentPeak = tmpPeaks[j];
-
-                // the correct limits in the non-interpolated EIC need to be determined. They are already included
-                // in the cumulative degrees of freedom, but since there, df 0 is outside the EIC, we need to
-                // use the index df[limit] - 1 into the original, non-interpolated vector
-
-                currentPeak.idxBin = i;
-
-                fillPeakVals(&currentEIC, &currentPeak);
-
-                peaks.push_back(currentPeak);
-            }
-
-            tmpPeaks.clear();
-        }
-
-        // peaks are sorted here so they can be treated as const throughout the rest of the program
-        std::sort(peaks.begin(), peaks.end(), [](FeaturePeak lhs, FeaturePeak rhs) { return lhs.retentionTime < rhs.retentionTime; });
-        return peaks;
-    }
 
     FeaturePeak peakToFeat(const PeakFit *peak)
     {
@@ -2100,6 +1963,9 @@ namespace qAlgorithms
         ret.retentionTime = peak->position;
         ret.RT_Uncertainty = peak->uncert_position;
 
+        ret.idxPeakStart = peak->startIdx;
+        ret.idxPeakEnd = peak->range.endIdx;
+
         return ret;
     }
 
@@ -2120,18 +1986,26 @@ namespace qAlgorithms
             qpeaks_find(bin->ints_area.data(),
                         rt,
                         bin->df.data(),
-                        binLen, 40, // @todo dynamic maxscale
+                        binLen, 30, // @todo dynamic maxscale
                         &peaks);
             for (size_t peak = 0; peak < peaks.size(); peak++)
             {
                 FeaturePeak feat = peakToFeat(&peaks[peak]);
-                fillPeakVals(bin, &feat); // set mz, its uncertainty and DQSC / DQSB
 
                 Range_i regSpan = peaks[peak].range;
+                assert(bin->df[regSpan.startIdx] > 0);
+                assert((bin->df[regSpan.endIdx] - 1) > 0);
+
+                feat.idxPeakStart = regSpan.startIdx;
+                feat.idxPeakEnd = regSpan.endIdx;
+
                 float variance = 0;
                 feat.mz = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->mz, regSpan, &variance);
                 feat.mzUncertainty = variance;
                 feat.DQSC = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->DQSC, regSpan, nullptr);
+                // currentPeak->DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB, regSpan)
+                //                         .mean;
+                feat.DQSB = -1; // @todo
 
                 res->push_back(feat);
             }

@@ -123,8 +123,6 @@ namespace qAlgorithms
 
     RT_Converter interpolateScanNumbers(const std::vector<float> *retentionTimes);
 
-    std::vector<FeaturePeak> findFeatures_old(std::vector<EIC> &EICs, const RT_Converter *convertRT);
-
     // take a jacobian matrix as input and return the transpose at scale
     double matProductReg(const double J[4], const size_t scale);
 
