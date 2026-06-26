@@ -20,6 +20,7 @@ namespace qAlgorithms
     {
         size_t startIdx;
         size_t endIdx;
+        size_t length;
     };
     inline size_t rangeLen(const Range_i *range)
     {
@@ -106,9 +107,6 @@ namespace qAlgorithms
     /// @param observed
     /// @param range
     /// @return
-    double calcRSS(const float *predict,
-                   const float *observed,
-                   const Range_i *range);
 
     /**
      * @brief returns the critical value for binning using the order spaces

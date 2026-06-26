@@ -225,19 +225,6 @@ namespace qAlgorithms
         return 0;
     }
 
-    double calcRSS(const float *predict,
-                   const float *observed,
-                   const Range_i *range)
-    {
-        double RSS = 0;
-        for (size_t i = range->startIdx; i <= range->endIdx; i++)
-        {
-            double diff = predict[i] - observed[i];
-            RSS += diff * diff;
-        }
-        return RSS;
-    }
-
     // critical order space of two normally distributed populations
     double binningCritVal(const int n, const double stdDev)
     {
@@ -372,14 +359,13 @@ namespace qAlgorithms
     unsigned int sumOfCumulative(const unsigned int *const cumArray, const Range_i *r)
     {
         // if the cumulative array does not exist (== null), assume that
-        // the toal df is the length
+        // the toal df is the length @todo this is not the correct function to handle that in!
         if (cumArray == nullptr)
             return rangeLen(r);
 
         // it is assumed that the range does not violate array bounds
-        assert(r->startIdx <= r->endIdx);
         unsigned int subtractor = r->startIdx == 0 ? 0 : cumArray[r->startIdx - 1];
-        unsigned int totalSum = cumArray[r->endIdx] - subtractor;
+        unsigned int totalSum = (cumArray[r->length + r->startIdx - 1] - subtractor);
         return totalSum;
     }
 

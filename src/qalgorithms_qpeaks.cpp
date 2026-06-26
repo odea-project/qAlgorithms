@@ -472,6 +472,7 @@ namespace qAlgorithms
             // @todo could it be better to decide based on something else, since the range
             // is not adjusted afterward?
             Range_i newRange = {compReg->regSpan.startIdx, reg->regSpan.endIdx};
+            newRange.length = rangeLen(&newRange);
             size_t df = sumOfCumulative(df_cum, &newRange) - 4;
 
             double mse_reg = calcMSE_exp(&reg->coeffs,
@@ -748,6 +749,7 @@ namespace qAlgorithms
                 Range_i commonRange = {
                     min(lowerReg->regSpan.startIdx, upperReg->regSpan.startIdx),
                     max(lowerReg->regSpan.endIdx, upperReg->regSpan.endIdx)};
+                commonRange.length = rangeLen(&commonRange);
                 size_t df = sumOfCumulative(df_cum, &commonRange) - 4; // this also applies for features
 
                 double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df);
@@ -777,6 +779,7 @@ namespace qAlgorithms
                 Range_i commonRange = {
                     min(lowerRegS->regSpan.startIdx, upperReg->regSpan.startIdx),
                     max(lowerRegE->regSpan.endIdx, upperReg->regSpan.endIdx)};
+                commonRange.length = rangeLen(&commonRange);
                 size_t df = sumOfCumulative(df_cum, &commonRange);
 
                 double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df - 4);
@@ -971,6 +974,7 @@ namespace qAlgorithms
         }
 
         Range_i newRange = {left_limit, right_limit};
+        newRange.length = rangeLen(&newRange);
         double df_sum = sumOfCumulative(degreesOfFreedom_cum, &newRange);
         df_sum -= 4; // four coefficients
         assert(df_sum > 0);
@@ -1307,6 +1311,7 @@ namespace qAlgorithms
         size_t lim_l = coeffs->x0 - coeffs->scale;
         size_t lim_r = coeffs->x0 + coeffs->scale;
         *range = {lim_l, lim_r};
+        range->length = rangeLen(range);
 
         if (!(valley_left || valley_right))
             return ok; // all ok by definition
@@ -1338,7 +1343,7 @@ namespace qAlgorithms
         assert(lim_r > coeffs->x0);
 
         *range = {lim_l, lim_r};
-
+        range->length = rangeLen(range);
         return ok;
     }
 
