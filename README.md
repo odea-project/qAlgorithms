@@ -45,12 +45,17 @@ pacman -Syu mingw-w64-x86_64-zlib
 ```
 from the installed UCRT environment. 
 
-### Linux / Mac
-Currently, no Linux releases are provided. We recommend you to clone the repository
-and compile from source using CMake and GCC. Since we do not depend on anything besides
-zlib, GCC and cmake being installed, we consider this a reasonable policy.
+### Linux
+Currently, no compiled Linux releases are provided. We recommend you to clone the repository
+and compile from source. The only dependencies apart from a modern kernel are a compiler (we
+only test for gcc, but clang should also work), gnu make, cmake and the zlib headers. The 
+script `install.sh` provided in the main directory will check missing dependencies and
+install them through your package manager, although they should already be present on almost
+all linux installations. The script also runs the cmake setup described below and compiles
+the program.
 
-We require CMake 3.25 or later and only test for GCC 15 or later. The program requires features from the C++17 standard.
+We require CMake 3.25 or later and only test for GCC 15 or later. The program requires features from 
+the C++17 standard. All should already be present or readily available on any modern system.
 
 Build `qAlgorithms` by executing these commands:
 ```sh

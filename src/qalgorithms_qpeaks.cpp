@@ -1522,6 +1522,7 @@ namespace qAlgorithms
         double RSS = 0.0;
         const size_t start = mutateReg->regSpan.startIdx;
         const size_t end = mutateReg->regSpan.endIdx + 1;
+        assert(observed->size() >= (end - 1));
         for (size_t i = start; i < end; i++)
         {
             double pred = regAt(&mutateReg->coeffs, x);
@@ -1529,6 +1530,7 @@ namespace qAlgorithms
             x += 1.0;
             RSS += difference * difference;
         }
+        assert(RSS > 0);
         return RSS;
     }
 
@@ -1943,6 +1945,7 @@ namespace qAlgorithms
 
                 float variance = 0;
                 feat.mz = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->mz, regSpan, &variance);
+                assert(feat.mz > 10); // @todo this should be fine, set higher bound?
                 feat.mzUncertainty = variance;
                 feat.DQSC = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->DQSC, regSpan, nullptr);
                 // currentPeak->DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB, regSpan)

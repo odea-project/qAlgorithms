@@ -30,7 +30,8 @@ if [ -z "$need_install" ]; then
   echo "All packages required for building qAlgorithms are already installed."
 
   if [ -f ./CMakeLists.txt ]; then
-    mkdir -p build && cmake -S . -B build
+    mkdir -p build && cmake -S . -B build && cmake --build ./build -j
+    # @todo finish off the installation by registering qalgo to the users path
     exit 0
   else
     echo "Error: CMakeLists.txt is missing" 

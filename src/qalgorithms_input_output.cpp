@@ -257,8 +257,8 @@ namespace qAlgorithms
                 exit(1);
             }
         } // end of reading in command line arguments
-        assert(!args.inputPaths.empty());
-        assert(!args.inputPaths[0].empty());
+        // assert(!args.inputPaths.empty());
+        // assert(!args.inputPaths[0].empty());
         return args;
     }
 
@@ -732,12 +732,12 @@ namespace qAlgorithms
             return;
         }
 
-        constexpr std::string_view header = "CompID,ID,binID,binIdxStart,binIdxEnd,mz,mzUncertainty,retentionTime,RT_Uncertainty,"
+        constexpr std::string_view header = "ID,binID,mz,mzUncertainty,retentionTime,RT_Uncertainty,"
                                             "lowestRetentionTime,highestRetentionTime,area,areaUncertainty,height,heightUncertainty,"
-                                            "scale,interpolations,competitors,DQSC,DQSB,DQSF,mse,b0,b1,b2,b3\n";
+                                            "scale,DQSC,DQSB,DQSF,b0,b1,b2,b3\n";
         output << header;
 
-        unsigned int counter = 1;
+        unsigned int ID = 1;
         for (size_t i = 0; i < peaktable->size(); i++)
         {
             const FeaturePeak peak = peaktable->at(i);
@@ -748,14 +748,14 @@ namespace qAlgorithms
 
             char buffer[256];
             snprintf(buffer, 256, "%d,%lu,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%lu,%0.5f,%0.5f,%0.5f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                     counter, binID, peak.mz, peak.mzUncertainty,
+                     ID, binID, peak.mz, peak.mzUncertainty,
                      peak.retentionTime, peak.RT_Uncertainty, RT_start, RT_end,
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, (unsigned long)peak.coefficients.scale,
                      peak.DQSC, peak.DQSB, peak.DQSF,
                      // properties relevant for componentisation, remove this later
                      peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
             output << buffer;
-            ++counter;
+            ++ID;
         }
 
         file_out << output.str();

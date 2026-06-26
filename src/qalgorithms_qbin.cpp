@@ -683,27 +683,26 @@ namespace qAlgorithms
         // using the knowledge of where points should be interpolated, transfer centroids into
         // arrays with gaps for later processing
 
-        size_t firstScan = pointsInBin.front()->number_MS1;
-        size_t lastScan = pointsInBin.back()->number_MS1;
+        // size_t firstScan = pointsInBin.front()->number_MS1;
+        // size_t lastScan = pointsInBin.back()->number_MS1;
+        std::vector<unsigned int> tmp_interpScans(eicsize, 0);
+        // std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan);
 
-        size_t interpolatedSize = lastScan - firstScan + 1; // range is extended, but clamped to valid region
-        std::vector<unsigned int> tmp_interpScans(interpolatedSize, 0);
-        std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan);
-
-        std::vector<unsigned int> tmp_scanNumbers(interpolatedSize, 0);
-        std::vector<float> tmp_mz(interpolatedSize, 0);
-        std::vector<float> tmp_mzUncert(interpolatedSize, 0);
-        std::vector<float> tmp_ints_area(interpolatedSize, 0);
-        std::vector<float> tmp_ints_height(interpolatedSize, 0);
-        std::vector<float> tmp_DQSC(interpolatedSize, 0);
-        std::vector<unsigned int> tmp_cenID(interpolatedSize, 0);
-        std::vector<unsigned int> tmp_df(interpolatedSize, 0);
-        std::vector<float> tmp_rt(interpolatedSize, 0);
+        std::vector<unsigned int> tmp_scanNumbers(eicsize, 0);
+        std::vector<float> tmp_mz(eicsize, 0);
+        std::vector<float> tmp_mzUncert(eicsize, 0);
+        std::vector<float> tmp_ints_area(eicsize, 0);
+        std::vector<float> tmp_ints_height(eicsize, 0);
+        std::vector<float> tmp_DQSC(eicsize, 0);
+        std::vector<unsigned int> tmp_cenID(eicsize, 0);
+        std::vector<unsigned int> tmp_df(eicsize, 0);
+        std::vector<float> tmp_rt(eicsize, 0);
 
         for (size_t i = 0; i < eicsize; i++)
         {
             const CentroidPeak *point = pointsInBin[i];
             assert(point->ID != 0);
+            assert(point->area > 1);
 
             tmp_rt[i] = point->RT;
             tmp_scanNumbers[i] = point->number_MS1;
@@ -715,15 +714,9 @@ namespace qAlgorithms
             tmp_DQSC[i] = point->DQSC;
             tmp_cenID[i] = point->ID;
 
-            tmp_df[i] = point->ID == 0 ? 0 : 1; // ignore the individual degrees of freedom for centroids (for now)
+            tmp_df[i] = eicsize; // @todo this is a temporary solution, think about moving interpolation to its own block
         }
-
-        // cumulative degrees of freedom
-        for (size_t i = 1; i < tmp_df.size(); i++)
-        {
-            tmp_df[i] = tmp_df[i] + tmp_df[i - 1];
-        }
-        assert(tmp_df.back() == eicsize); // @todo this can be disturbed by supplying incorrectly formatted data as RT converter
+        assert(tmp_df.back() == eicsize);
 
         EIC returnVal = {
             tmp_scanNumbers,
