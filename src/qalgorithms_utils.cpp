@@ -361,7 +361,7 @@ namespace qAlgorithms
         // if the cumulative array does not exist (== null), assume that
         // the toal df is the length @todo this is not the correct function to handle that in!
         if (cumArray == nullptr)
-            return rangeLen(r);
+            return r->length;
 
         // it is assumed that the range does not violate array bounds
         unsigned int subtractor = r->startIdx == 0 ? 0 : cumArray[r->startIdx - 1];

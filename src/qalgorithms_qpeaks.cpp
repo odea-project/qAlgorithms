@@ -62,7 +62,7 @@ namespace qAlgorithms
                 delta_mean += d;
                 printf("%f, ", d);
             }
-            delta_mean /= rangeLen(&regression->regSpan) - 1;
+            delta_mean /= regression->regSpan.length - 1;
             printf(" | mean: %f\n", delta_mean);
 #endif
 
@@ -78,7 +78,7 @@ namespace qAlgorithms
             // @todo remove
             peak.range = regression->regSpan;
             peak.startIdx = regression->regSpan.startIdx;
-            peak.length = rangeLen(&regression->regSpan);
+            peak.length = regression->regSpan.length;
 
             // peak height = regression at apex position before transformation
             peak.height = (float)exp(regAt(&coeff, apex_raw));
@@ -471,8 +471,9 @@ namespace qAlgorithms
             // by comparing MSEs for measured values over the region of both regressions
             // @todo could it be better to decide based on something else, since the range
             // is not adjusted afterward?
-            Range_i newRange = {compReg->regSpan.startIdx, reg->regSpan.endIdx};
-            newRange.length = rangeLen(&newRange);
+            Range_i newRange = {compReg->regSpan.startIdx,
+                                reg->regSpan.endIdx,
+                                reg->regSpan.endIdx - reg->regSpan.startIdx + 1};
             size_t df = sumOfCumulative(df_cum, &newRange) - 4;
 
             double mse_reg = calcMSE_exp(&reg->coeffs,
@@ -746,10 +747,10 @@ namespace qAlgorithms
                 RegressionGauss *lowerReg = validRegressions->data() + regRange.endIdx;
                 assert(lowerReg->isValid);
                 assert(upperReg->isValid);
-                Range_i commonRange = {
-                    min(lowerReg->regSpan.startIdx, upperReg->regSpan.startIdx),
-                    max(lowerReg->regSpan.endIdx, upperReg->regSpan.endIdx)};
-                commonRange.length = rangeLen(&commonRange);
+
+                size_t start = min(lowerReg->regSpan.startIdx, upperReg->regSpan.startIdx);
+                size_t end = max(lowerReg->regSpan.endIdx, upperReg->regSpan.endIdx);
+                Range_i commonRange = {start, end, end - start + 1};
                 size_t df = sumOfCumulative(df_cum, &commonRange) - 4; // this also applies for features
 
                 double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df);
@@ -776,10 +777,10 @@ namespace qAlgorithms
                 // last point of the last regression. This is because regressions are always sorted by x0 in a scale.
                 RegressionGauss *lowerRegS = validRegressions->data() + regRange.startIdx;
                 RegressionGauss *lowerRegE = validRegressions->data() + regRange.endIdx;
-                Range_i commonRange = {
-                    min(lowerRegS->regSpan.startIdx, upperReg->regSpan.startIdx),
-                    max(lowerRegE->regSpan.endIdx, upperReg->regSpan.endIdx)};
-                commonRange.length = rangeLen(&commonRange);
+
+                size_t start = min(lowerRegS->regSpan.startIdx, upperReg->regSpan.startIdx);
+                size_t end = max(lowerRegE->regSpan.endIdx, upperReg->regSpan.endIdx);
+                Range_i commonRange = {start, end, end - start + 1};
                 size_t df = sumOfCumulative(df_cum, &commonRange);
 
                 double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df - 4);
@@ -973,8 +974,7 @@ namespace qAlgorithms
             right_limit = max(right_limit, reg->regSpan.endIdx);
         }
 
-        Range_i newRange = {left_limit, right_limit};
-        newRange.length = rangeLen(&newRange);
+        Range_i newRange = {left_limit, right_limit, right_limit - left_limit + 1};
         double df_sum = sumOfCumulative(degreesOfFreedom_cum, &newRange);
         df_sum -= 4; // four coefficients
         assert(df_sum > 0);
@@ -982,8 +982,8 @@ namespace qAlgorithms
         for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            const RegressionGauss *reg = &(*regressions)[i];
-            const Range_i range = {left_limit, right_limit}; // @todo this should update with the regressions
+            const RegressionGauss *reg = regressions->data() + i;
+            Range_i range = {left_limit, right_limit, right_limit - left_limit + 1}; // @todo this should update with the regressions
             double mse = calcMSE_exp(&reg->coeffs,
                                      intensities,
                                      &range,
@@ -1310,8 +1310,7 @@ namespace qAlgorithms
         size_t apex = size_t(x0d + apexd);
         size_t lim_l = coeffs->x0 - coeffs->scale;
         size_t lim_r = coeffs->x0 + coeffs->scale;
-        *range = {lim_l, lim_r};
-        range->length = rangeLen(range);
+        *range = {lim_l, lim_r, lim_r - lim_l + 1};
 
         if (!(valley_left || valley_right))
             return ok; // all ok by definition
@@ -1342,8 +1341,7 @@ namespace qAlgorithms
         assert(lim_l < coeffs->x0);
         assert(lim_r > coeffs->x0);
 
-        *range = {lim_l, lim_r};
-        range->length = rangeLen(range);
+        *range = {lim_l, lim_r, lim_r - lim_l + 1};
         return ok;
     }
 
@@ -1371,9 +1369,11 @@ namespace qAlgorithms
 
     std::vector<int> failbook;
 
-    // @todo rework: this function only calculates regression properties and the p-value (or something to the same effect)
-    // of every property. Then, a later function can filter the regressions by these quality criteria. Still
-    // some filtering should take place natively to cut down on the total data (?). Either way, the proper
+    // @todo rework: Currently, we are trying to determine the validity of a given regression
+    // using multiple tests. This is wrong, since this way we get uneven p-values of the final
+    // outcome (refer to bonferroni correction). Instead, a correct version of this function
+    // should only perform one test (if any) and resolve regressions primarily via decision
+    // rules founded in logical necessities for the peak model
     invalid calcRegressionProperties( // returns the number of the failed test
         const float *intensities,
         const std::vector<float> *intensities_log,
@@ -1424,8 +1424,6 @@ namespace qAlgorithms
         // double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
 
-        // mutateReg->mse = mse_log;
-
         /*
         competing regressions filter:
         If the real distribution of points could also be described as a continuum (i.e. only b0 is relevant),
@@ -1433,8 +1431,6 @@ namespace qAlgorithms
         is the mean of all predicted values. @todo test this function
         */
         bool f_ok = f_testRegression(intensities_log->data(), RSS_log, &regSpan);
-        // bool f_ok = f_testRegression(intensities, RSS_exp, &regSpan);
-        // assert(f_ok_log == f_ok);
         if (!f_ok)
         {
             failstates += 2;
@@ -1448,11 +1444,11 @@ namespace qAlgorithms
             // failstates += 4;
             // return invalid_quadratic; // statistical insignificance of the quadratic term
         }
-        if (!isValidPeakArea(coeffs, mse_log, df_sum)) // mse used in the "calcUncertainty" function call
-        {
-            failstates += 8;
-            // return invalid_area; // statistical insignificance of the area
-        }
+        // if (!isValidPeakArea(coeffs, mse_log, df_sum)) // mse used in the "calcUncertainty" function call
+        // {
+        //     failstates += 8;
+        //     // return invalid_area; // statistical insignificance of the area
+        // }
 
         // uncertainty calculation and t-tests against peak properties
 
@@ -1468,26 +1464,17 @@ namespace qAlgorithms
 
         // @todo in principle, we should probably use the paired t-test here. This is not possible,
         // since we cannot assume same sample sizes / variances and generally only have the two means.
-
-        /*
-          Area Filter:
-          This block of code implements the area filter. It calculates the Jacobian
-          matrix for the peak area based on the coefficients matrix B. Then it calculates
-          the uncertainty of the peak area based on the Jacobian matrix.
-          NOTE: this function does not consider b0: i.e. to get the real uncertainty and
-          area multiply both with Exp(b0) later. This is done to avoid exp function at this point
-        */
-        // it might be preferential to combine both functions again or store the common matrix somewhere
-        calcPeakAreaUncert(mutateReg, mse_log);
         double uncertainty = -1;
-
         mutateReg->area = (float)peakArea(coeffs, 1, mse_log, &uncertainty);
+        mutateReg->uncert_area = uncertainty;
 
-        if (mutateReg->area / mutateReg->uncert_area <= T_VALUES[df_sum])
-        {
-            failstates += 32;
-            // return invalid_area; // statistical insignificance of the area
-        }
+        // this is also nonsensical since we care about the validity of the exponential
+        // area only.
+        // if (mutateReg->area / mutateReg->uncert_area <= T_VALUES[df_sum])
+        // {
+        //     failstates += 32;
+        //     // return invalid_area; // statistical insignificance of the area
+        // }
 
         /*
           Chi-Square Filter:
@@ -1496,6 +1483,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid. @todo why?
         */
+        assert(mutateReg->regSpan.length > 0);
         double chiSquare = calcSSE_chisqared(&mutateReg->regSpan, intensities, predict);
         if (chiSquare > CHI_SQUARES[df_sum])
         {
@@ -1522,16 +1510,15 @@ namespace qAlgorithms
 
     double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *observed)
     {
-        const double idxCenter = mutateReg->coeffs.x0;
-        double x = double(mutateReg->regSpan.startIdx) - idxCenter;
-        double RSS = 0.0;
+        double RSS = 0;
         const size_t start = mutateReg->regSpan.startIdx;
-        const size_t end = mutateReg->regSpan.endIdx + 1;
-        assert(observed->size() >= (end - 1));
-        for (size_t i = start; i < end; i++)
+        const float *obs = observed->data() + start;
+        double x = double(start) - double(mutateReg->coeffs.x0);
+        const size_t len = mutateReg->regSpan.length;
+        for (size_t i = 0; i < len; i++)
         {
             double pred = regAt(&mutateReg->coeffs, x);
-            double difference = observed->at(i) - pred;
+            double difference = obs[i] - pred;
             x += 1.0;
             RSS += difference * difference;
         }
@@ -1539,24 +1526,59 @@ namespace qAlgorithms
         return RSS;
     }
 
+    double calcMSE_exp(const RegCoeffs *coeff,
+                       const float *observed,
+                       const Range_i *regSpan,
+                       const double df)
+    {
+        double mse = 0;
+        double x = double(regSpan->startIdx) - double(coeff->x0);
+        const float *obs = observed + regSpan->length;
+        for (size_t i = 0; i < regSpan->length; i++)
+        {
+            double pred = exp(regAt(coeff, x));
+            double diff = obs[i] - pred;
+            mse += diff * diff;
+            x += 1.0;
+        }
+        mse /= df;
+        assert(mse > 0);
+        return mse;
+    }
+
+    double calcSSE_chisqared(const Range_i *regSpan,
+                             const float *observed,
+                             const std::vector<float> *predict)
+    {
+        const float *obs = observed + regSpan->startIdx;
+        const float *pred = predict->data() + regSpan->startIdx;
+        double result = 0.0;
+        for (size_t i = 0; i < regSpan->length; i++)
+        {
+            double diff = obs[i] - pred[i];
+            result += diff * diff / pred[i];
+        }
+        return result;
+    }
+
     double calcRSS_H0_cf1(const float *observed, const Range_i *range)
     {
         // this function calculates the RSS for H0: y = b0 (a constant value)
-
         double mean = 0;
-        for (size_t i = range->startIdx; i <= range->endIdx; i++)
+        const float *obs = observed + range->startIdx;
+        for (size_t i = 0; i < range->length; i++)
         {
-            mean += observed[i];
+            mean += obs[i];
         }
-        mean /= rangeLen(range);
+        mean /= range->length;
 
         double RSS = 0;
-        for (size_t i = range->startIdx; i <= range->endIdx; i++)
+        for (size_t i = 0; i < range->length; i++)
         {
-            double difference = observed[i] - mean;
+            double difference = obs[i] - mean;
             RSS += difference * difference;
         }
-
+        assert(RSS > 0);
         return RSS;
     }
 
@@ -1565,19 +1587,20 @@ namespace qAlgorithms
         // this function calculates the RSS for H0: y = b0 + x * b1 (no weights)
 
         double slope, intercept;
-        size_t length = rangeLen(range);
-        const float *start = observed + range->startIdx;
-        linReg_intx(start, length, &slope, &intercept);
+        size_t length = range->length;
+        assert(length > 0);
+        const float *obs = observed + range->startIdx;
+        linReg_intx(obs, length, &slope, &intercept);
 
         double RSS = 0;
-        size_t x = 0;
-        for (size_t i = range->startIdx; i <= range->endIdx; i++)
+        double x = 0;
+        for (size_t i = 0; i < length; i++)
         {
-            double difference = observed[i] - (intercept - slope * x);
+            double difference = obs[i] - (intercept - slope * x);
             RSS += difference * difference;
             x += 1;
         }
-        assert(x == length);
+        assert(RSS > 0);
 
         return RSS;
     }
@@ -1586,7 +1609,7 @@ namespace qAlgorithms
     {
         // during the tests, the RSS for the regression has already been calculated in calcRSS_log
         assert(RSS_reg > 0);
-        const size_t length = rangeLen(range);
+        const size_t length = range->length;
         double RSS_H0 = INFINITY;
         bool f_ok = false;
 
@@ -1602,21 +1625,6 @@ namespace qAlgorithms
 
         // no alternatives were accepted
         return true;
-    }
-
-    double calcSSE_chisqared(const Range_i *regSpan,
-                             const float *observed,
-                             const std::vector<float> *predict)
-    {
-        double result = 0.0;
-        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
-        {
-            double pred = predict->at(i);
-            double obs = observed[i];
-            double newdiff = (obs - pred) * (obs - pred);
-            result += newdiff / pred;
-        }
-        return result;
     }
 
 #pragma endregion calcSSE
@@ -1646,180 +1654,6 @@ namespace qAlgorithms
         double tValue = max(abs2, abs3);
         return tValue / divisor > T_VALUES[df_sum] * divisor; // statistical significance of the quadratic term
     }
-
-    void calcPeakAreaUncert(RegressionGauss *mutateReg, double mse) // @todo only take coeffs as input, do not add shadow dependency on multiplication with e^b0
-    {
-        double b1 = mutateReg->coeffs.b1;
-        double b2 = mutateReg->coeffs.b2;
-        double b3 = mutateReg->coeffs.b3;
-        double _SQRTB2 = 1 / sqrt(abs(b2));
-        double _SQRTB3 = 1 / sqrt(abs(b3));
-        double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
-        double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
-        double B1_2_B2 = b1 / 2 / b2;
-        double B1_2_B3 = b1 / 2 / b3;
-
-        // error calculation uses imaginary part if coefficient is > 0
-        double err_L = (b2 < 0)
-                           ? libcerf::erfcx(B1_2_SQRTB2)   // 1 - erf(b1 / 2 / SQRTB2) // ordinary peak
-                           : libcerf::dawson(B1_2_SQRTB2); // erfi(b1 / 2 / SQRTB2);        // peak with valley point;
-
-        double err_R = (b3 < 0)
-                           ? libcerf::erfcx(B1_2_SQRTB3)    // 1 + erf(b1 / 2 / SQRTB3) // ordinary peak
-                           : libcerf::dawson(-B1_2_SQRTB3); // -erfi(b1 / 2 / SQRTB3);       // peak with valley point ;
-
-        // calculate the Jacobian matrix terms
-        double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
-        double J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
-        double J_2_common_L = B1_2_B2 / b1;
-        double J_2_common_R = B1_2_B3 / b1;
-        double J_1_L = J_1_common_L * err_L;
-        double J_1_R = J_1_common_R * err_R;
-        double J_2_L = J_2_common_L - J_1_L * B1_2_B2;
-        double J_2_R = -J_2_common_R - J_1_R * B1_2_B3;
-
-        double J[4]; // Jacobian matrix
-        J[0] = J_1_R + J_1_L;
-        J[1] = J_2_R + J_2_L;
-        J[2] = -B1_2_B2 * (J_2_L + J_1_L / b1);
-        J[3] = -B1_2_B3 * (J_2_R + J_1_R / b1);
-
-        // at this point the area is without exp(b0), i.e., to get the real area multiply with exp(b0) later. This is done to avoid exp function at this point
-        mutateReg->area = (float)J[0];
-        // mutateReg->uncert_area = calcUncertainty(J, mutateReg->coeffs.scale, mutateReg->mse);
-        double uncertainty = sqrt(matProductReg(J, mutateReg->coeffs.scale) * mse);
-        mutateReg->uncert_area = (float)uncertainty;
-
-        return;
-    }
-
-    bool isValidPeakArea(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
-    // @todo this function re-checks regression limits, we should always use the regression range for that
-    {
-        // function checks for coverage of the area by the regression
-        double doubleScale = double(coeffs->scale);
-        double b1 = coeffs->b1;
-        double b2 = coeffs->b2;
-        double b3 = coeffs->b3;
-
-        double _SQRTB2 = 1 / sqrt(abs(b2));
-        double _SQRTB3 = 1 / sqrt(abs(b3));
-        double B1_2_B2 = b1 / 2 / b2;
-        double B1_2_B3 = b1 / 2 / b3;
-
-        double err_L_covered = 0;
-        double x_left = -doubleScale;
-        {
-            double B1_2_SQRTB2 = b1 / 2 * _SQRTB2;
-            double EXP_B12 = exp(-b1 * B1_2_B2 / 2);
-
-            bool valley = b2 > 0;
-            if (valley)
-            {
-                // valley point on the left side of the apex
-                // error = erfi(b1 / 2 / SQRTB2)
-                double err_L = libcerf::dawson(B1_2_SQRTB2);
-                // check if the valley point is inside the window for the regression and consider it if necessary
-                if (-B1_2_B2 < -doubleScale)
-                {
-                    // valley point is outside the window, use scale as limit
-                    err_L_covered = err_L - libcerf::erfi((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12;
-                }
-                else
-                {
-                    // valley point is inside the window, use valley point as limit
-                    err_L_covered = err_L;
-                    x_left = -B1_2_B2;
-                }
-            }
-            else
-            {
-                // no valley point
-                // error = 1 - erf(b1 / 2 / SQRTB2)
-                double err_L = libcerf::erfcx(B1_2_SQRTB2);
-                // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-                // erf((b1 - 2 * b2 * scale) / 2 / SQRTB2) + err_L - 1
-                err_L_covered = erf((b1 - 2 * b2 * doubleScale) / 2 * _SQRTB2) * EXP_B12 * SQRTPI_2 + err_L - SQRTPI_2 * EXP_B12;
-            }
-        }
-
-        double err_R_covered = 0;
-        double x_right = doubleScale; // right limit due to the window
-        {
-            double B1_2_SQRTB3 = b1 / 2 * _SQRTB3;
-            double EXP_B13 = exp(-b1 * B1_2_B3 / 2);
-
-            bool valley = b3 > 0;
-            if (valley)
-            {
-                // valley point is on the right side of the apex
-                // error = - erfi(b1 / 2 / SQRTB3)
-                double err_R = libcerf::dawson(-B1_2_SQRTB3);
-                if (-B1_2_B3 > doubleScale)
-                {
-                    // valley point is outside the window, use scale as limit
-                    err_R_covered = libcerf::erfi((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * EXP_B13 + err_R;
-                }
-                else
-                {
-                    // valley point is inside the window, use valley point as limit
-                    err_R_covered = err_R;
-                    x_right = -B1_2_B3;
-                }
-            }
-            else
-            {
-                // no valley point
-                // error = 1 + erf(b1 / 2 / SQRTB3)
-                double err_R = libcerf::erfcx(B1_2_SQRTB3);
-                // ordinary peak half, take always scale as integration limit; we use erf instead of erfi due to the sqrt of absoulte value
-                // err_R - 1 - erf((b1 + 2 * b3 * scale) / 2 / SQRTB3)
-                err_R_covered = err_R - SQRTPI_2 * EXP_B13 - erf((b1 + 2 * b3 * doubleScale) / 2 * _SQRTB3) * SQRTPI_2 * EXP_B13;
-            }
-        }
-        assert(x_left < x_right);
-
-        double J_covered[4]; // Jacobian matrix for the covered peak area
-        {
-            // b0 not used on purpose, error is height independent
-            const double y_left = exp(b1 * x_left + b2 * x_left * x_left);
-            const double y_right = exp(b1 * x_right + b3 * x_right * x_right);
-            const double dX = x_right - x_left;
-
-            // calculate the Jacobian matrix terms
-            const double J_1_common_L = _SQRTB2; // SQRTPI_2 * EXP_B12 / SQRTB2;
-            const double J_1_common_R = _SQRTB3; // SQRTPI_2 * EXP_B13 / SQRTB3;
-            const double J_2_common_L = B1_2_B2 / b1;
-            const double J_2_common_R = B1_2_B3 / b1;
-
-            // calculate the trapzoid correction terms for the jacobian matrix
-            double trpzd_b0 = (y_right + y_left) * dX / 2;
-            double trpzd_b1 = (x_right * y_right + x_left * y_left) * dX / 2;
-            double trpzd_b2 = (x_left * x_left * y_left) * dX / 2;
-            double trpzd_b3 = (x_right * x_right * y_right) * dX / 2;
-
-            const double J_1_L_covered = J_1_common_L * err_L_covered;
-            const double J_1_R_covered = J_1_common_R * err_R_covered;
-            const double J_2_L_covered = J_2_common_L - J_1_L_covered * B1_2_B2;
-            const double J_2_R_covered = -J_2_common_R - J_1_R_covered * B1_2_B3;
-
-            J_covered[0] = J_1_R_covered + J_1_L_covered - trpzd_b0;
-            J_covered[1] = J_2_R_covered + J_2_L_covered - trpzd_b1;
-            J_covered[2] = -B1_2_B2 * (J_2_L_covered + J_1_L_covered / b1) - trpzd_b2;
-            J_covered[3] = -B1_2_B3 * (J_2_R_covered + J_1_R_covered / b1) - trpzd_b3;
-        }
-        if (J_covered[0] < 0)
-            return false;
-
-        // float area_uncertainty_covered = calcUncertainty(J_covered, mutateReg->coeffs.scale, mutateReg->mse);
-        double area_uncertainty_covered = sqrt(matProductReg(J_covered, coeffs->scale) * mse);
-
-        // J[0] / uncertainty > Tval
-        bool J_is_significant = J_covered[0] > T_VALUES[df_sum] * area_uncertainty_covered;
-
-        return J_is_significant;
-    }
-#pragma endregion isValidPeakArea
 
 #pragma region "Feature Detection"
 
@@ -2098,7 +1932,7 @@ namespace qAlgorithms
             return true;
         }
 
-        const float minIntensity = 10; // @todo bad solution?
+        const float minIntensity = 1; // @todo bad solution?
 
         for (; idx < len; idx++)
         {
@@ -2174,33 +2008,6 @@ namespace qAlgorithms
 
         return (x_r - x_l) * delta_x;
     }
-
-    double FWHM_to_sdev(const double fwhm)
-    {
-        // equivalent standard deviation for a symmetrical gaussian peak
-        // for the gaussian peak, fwhm only depends on the standard deviation.
-        // this function returns the standard deviation based on that model.
-
-        // FWHM = 2 * sqrt(-log(0.5) * 2 * sdev^2)
-        // (FWHM / 2)^2 = -log(0.5) * 2 * sdev^2
-        // sdev^2 = (FWHM / 2)^2 / (-log(0.5) * 2)
-        // sdev = sqrt((FWHM / 2)^2 / (-log(0.5) * 2))
-        // sdev = (FWHM / 2) / sqrt(-log(0.5) * 2))
-        // sdev = FWHM / (sqrt(-log(0.5) * 2)) * 2)
-
-        // constexpr double divisor = sqrt(-log(0.5) * 2.0) * 2.0;
-        const double divisor = 2.354820045030949;
-        return fwhm / divisor;
-    }
-
-    // struct RegVariances
-    // {
-    //     double var_b0, var_b1, var_b2, var_b3; // individual variances
-    //     double covar_b0_b1, covar_b0_b2, covar_b0_b3;
-    //     double covar_b1_b2, covar_b1_b3;
-    //     // three-way interactions are not considered
-    //     // the covariance between b2 and b3 is never relevant in the application
-    // };
 
     double matProductReg(const double J[4], const size_t scale)
     {
@@ -2529,24 +2336,4 @@ namespace qAlgorithms
         return uncert;
     }
 
-    double calcMSE_exp(const RegCoeffs *coeff,
-                       const float *observed,
-                       const Range_i *regSpan,
-                       const double df)
-    {
-        double idxCenter = double(coeff->x0);
-        double x = double(regSpan->startIdx) - idxCenter;
-        double result = 0.0;
-        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
-        { // this loop is vectorised at level O3
-            double pred = exp(regAt(coeff, x));
-            double obs = observed[i];
-            double newdiff = (obs - pred) * (obs - pred);
-            result += newdiff;
-            x += 1.0;
-        }
-        double mse = result / df;
-        assert(mse > 0);
-        return mse;
-    }
 } // namespace qAlgorithms

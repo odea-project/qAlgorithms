@@ -22,10 +22,6 @@ namespace qAlgorithms
         size_t endIdx;
         size_t length;
     };
-    inline size_t rangeLen(const Range_i *range)
-    {
-        return range->endIdx - range->startIdx + 1;
-    }
 
     /**
      * @brief perform the welch-test for comparing two means of unequal variance

@@ -124,13 +124,10 @@ namespace qAlgorithms
 
     bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
 
-    bool isValidPeakArea(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
-
     // utility functions for calculating regression values
     double regAt(const RegCoeffs *coeff, const double x);
 
     double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x);
-    double FWHM_to_sdev(const double fwhm);
 
     // this one does not include b0
     double regExp_fac(const RegCoeffs *coeff, const double x);

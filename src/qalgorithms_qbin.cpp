@@ -431,7 +431,7 @@ namespace qAlgorithms
             const Range_i range = stack->back();
             stack->pop_back();
 
-            const size_t binsizeInOS = rangeLen(&range);
+            const size_t binsizeInOS = range.endIdx - range.startIdx + 1;
             assert(binsizeInOS <= pointsInSourceBin->size());
 
             if (binsizeInOS < 5) // min of five points per bin
