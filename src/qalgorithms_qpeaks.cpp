@@ -36,8 +36,6 @@ namespace qAlgorithms
 
             double apex_raw = -coeff.b1 / (b23 * 2);
             double apex = apex_raw + double(coeff.x0);
-            // size_t start = regression->regSpan.startIdx;
-            // size_t end = regression->regSpan.endIdx;
 
             PeakFit peak;
 
@@ -473,7 +471,7 @@ namespace qAlgorithms
             // is not adjusted afterward?
             Range_i newRange = {compReg->regSpan.startIdx,
                                 reg->regSpan.endIdx,
-                                reg->regSpan.endIdx - reg->regSpan.startIdx + 1};
+                                reg->regSpan.endIdx - compReg->regSpan.startIdx + 1};
             size_t df = sumOfCumulative(df_cum, &newRange) - 4;
 
             double mse_reg = calcMSE_exp(&reg->coeffs,
