@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <time.h>
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 {
     using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
 
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            filename = filename + (polarity ? "_positive" : "_negative");
+            filename += (polarity ? "_positive" : "_negative");
 
             if (userArgs.printCentroids)
             {
@@ -277,7 +277,6 @@ int main(int argc, char *argv[])
                 printf("    constructed %zu features in %f s\n", features.size(), timePassed_s);
             }
 
-            continue;
 #if 0
             if (userArgs.printFeatCens)
             {
@@ -295,7 +294,6 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            continue; // @todo ensure feature constrction works correctly before redoing componentisation
 
             if (userArgs.term == TerminateAfter::components)
             {
@@ -320,3 +318,4 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
+// NOLINTEND(concurrency-mt-unsafe)

@@ -6,7 +6,6 @@
 #include <climits>
 #include <cstddef>
 #include <math.h>
-#include <numeric> // used for std::partial_sum during order space construction
 #include <vector>
 
 namespace qAlgorithms
@@ -243,7 +242,7 @@ namespace qAlgorithms
                 auto activeOS = makeOrderSpace(&processThis);
                 auto cumError = makeCumError(&processThis.pointsInBin);
 
-                std::vector<Range_i> rangeStack(1, {0, activeOS.size() - 1});
+                std::vector<Range_i> rangeStack(1, {0, activeOS.size() - 1, activeOS.size()});
                 subsetMZ_stack(&rangeStack,
                                bincontainer.targetBins,
                                &bincontainer.notInBins,
@@ -475,11 +474,11 @@ namespace qAlgorithms
 
             {
                 assert(cutpos >= range.startIdx);
-                stack->push_back({range.startIdx, cutpos});
+                stack->push_back({range.startIdx, cutpos, cutpos - range.startIdx + 1});
             }
             {
                 assert(cutpos < range.endIdx);
-                stack->push_back({cutpos + 1, range.endIdx});
+                stack->push_back({cutpos + 1, range.endIdx, range.endIdx - cutpos});
             }
         }
         assert(pointsProcessed == pointsInSourceBin->size());

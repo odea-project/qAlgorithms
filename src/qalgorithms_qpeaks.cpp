@@ -19,7 +19,7 @@
 
 namespace qAlgorithms
 {
-    void retransformPeaks(
+    static void retransformPeaks(
         const std::vector<RegressionGauss> *peaks,
         const float *x_values,
         const size_t numPeaks,
@@ -117,7 +117,7 @@ namespace qAlgorithms
         // {
         //     return -2;
         // }
-        if (length < 5)
+        if (length < MINLENGTH)
         {
             return -3;
         }
@@ -175,9 +175,9 @@ namespace qAlgorithms
 
 #pragma region "running regression"
 
-    invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
+    static invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
 
-    int validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
+    static int validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
         const float *intensities,
         const std::vector<float> *intensities_log,
         const unsigned int *const degreesOfFreedom_cum,
@@ -196,7 +196,7 @@ namespace qAlgorithms
                 continue;
 
             size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, &range);
-            if (df_sum < 5)
+            if (df_sum < MINLENGTH)
                 continue;
 
             df_sum -= 4; // four coefficients, adjust for components
@@ -237,12 +237,12 @@ namespace qAlgorithms
 
 #pragma region "Conflict Elimination"
 
-    int pruneConflictingRegs(
+    static int pruneConflictingRegs(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
         const unsigned int *const df_cum);
 
-    int resolveScaleConflicts(
+    static int resolveScaleConflicts(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
         const unsigned int *const df_cum);
@@ -251,20 +251,20 @@ namespace qAlgorithms
     //                     const unsigned int *const df_cum,
     //                     std::vector<RegressionGauss> *validRegressions);
 
-    double calcMSE_exp(const RegCoeffs *coeff,
-                       const float *observed,
-                       const Range_i *regSpan,
-                       const double df);
+    static double calcMSE_exp(const RegCoeffs *coeff,
+                              const float *observed,
+                              const Range_i *regSpan,
+                              const double df);
 
     // ----------- old functions -------------//
 
-    void mergeRegsInScale(
+    static void mergeRegsInScale(
         const float *intensities,
         const unsigned int *const df_cum,
         std::vector<RegressionGauss> *validRegsTmp,
         std::vector<RegressionGauss> *validRegressions);
 
-    void mergeRegressionsOverScales(
+    static void mergeRegressionsOverScales(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities);
 
@@ -348,7 +348,6 @@ namespace qAlgorithms
 
         // assert(validRegressions->size() == apexCount);
         // assert(validRegsTmp2.size() == validRegressions->size());
-        return;
     }
 
 #if 0
@@ -520,7 +519,7 @@ namespace qAlgorithms
 
     // these are helper functions for the big resolveScaleConflicts part of the program
 
-    int findNextReg(
+    static int findNextReg(
         const std::vector<RegressionGauss> *validRegressions,
         const size_t scale,
         const size_t startIdx)
@@ -547,14 +546,14 @@ namespace qAlgorithms
         return pos;
     }
 
-    Range_i findComparisonRegs(
+    static Range_i findComparisonRegs(
         const std::vector<RegressionGauss> *validRegressions,
         const Range_i *range,
         const size_t scale)
     {
         // since all regressions are in order, only the outermost two must be passed along
         // if regs = 1, 0: no valid regs found at this scale / in this range
-        Range_i regs = {1, 0};
+        Range_i regs = {1, 0, 0};
         bool first = true;
 
         for (size_t i = 0; i < validRegressions->size(); i++)
@@ -594,7 +593,7 @@ namespace qAlgorithms
         return regs;
     }
 
-    size_t invalidateRange(const Range_i *r, std::vector<RegressionGauss> *validRegressions)
+    static size_t invalidateRange(const Range_i *r, std::vector<RegressionGauss> *validRegressions)
     {
         // returns the total competitors eliminated
         size_t competitors = 0;
@@ -607,7 +606,7 @@ namespace qAlgorithms
         return competitors;
     }
 
-    void addCompetitors(const Range_i *r, std::vector<RegressionGauss> *validRegressions, size_t comp)
+    static void addCompetitors(const Range_i *r, std::vector<RegressionGauss> *validRegressions, size_t comp)
     {
         // distribute the number in comp evenly. Bias towards lower end regressions is accepted
         while (comp != 0)
@@ -624,7 +623,7 @@ namespace qAlgorithms
         }
     }
 
-    double multiMSE(
+    static double multiMSE(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
         const Range_i *selectRegs,
@@ -650,7 +649,7 @@ namespace qAlgorithms
             // determine MSE for the left of both regressions
             // the start is known from the previous regression, the end is the middle between both regs
             currentEnd = (regFront->regSpan.endIdx + regCurr->regSpan.startIdx) / 2;
-            Range_i rangeNow = {currentStart, currentEnd};
+            Range_i rangeNow = {currentStart, currentEnd, currentEnd - currentStart + 1};
 
             // the mse is composed of individual regressions that do not share responsibility
             // for the same point
@@ -664,7 +663,7 @@ namespace qAlgorithms
 
         // there is still one unprocessed regression
         currentEnd = commonRange->endIdx;
-        Range_i rangeNow = {currentStart, currentEnd};
+        Range_i rangeNow = {currentStart, currentEnd, currentEnd - currentStart + 1};
         summedMSE += calcMSE_exp(&regFront->coeffs, intensities, &rangeNow, df);
 
         return summedMSE / (df - regCount * 4); // important: two individual regs lose degrees of freedom
@@ -717,7 +716,7 @@ namespace qAlgorithms
                 if (idx == -1)
                     break; // no scale to compare with exists
 
-                startIdx = size_t(idx + 1); // necessary since otherwise the regression will be reset to itself
+                startIdx = idx + 1; // necessary since otherwise the regression will be reset to itself
                 upperReg = validRegressions->data() + idx;
                 assert(upperReg->isValid);
 
@@ -874,7 +873,7 @@ namespace qAlgorithms
         double mse;
     };
 
-    RegPair findBestRegression(
+    static RegPair findBestRegression(
         const float *intensities,
         const std::vector<RegressionGauss> *regressions,
         const unsigned int *const degreesOfFreedom_cum,
@@ -918,10 +917,12 @@ namespace qAlgorithms
                 continue;
 
             // the two regressions differ, i.e. create a new group
-            groups.push_back({prev_i, i});
+            groups.push_back({prev_i, i, i - prev_i + 1});
             prev_i = i + 1;
         }
-        groups.push_back({prev_i, validRegsTmp->size() - 1}); // last group ends with index of the last element
+        groups.push_back({prev_i,
+                          validRegsTmp->size() - 1,
+                          validRegsTmp->size() - prev_i}); // last group ends with index of the last element
 
         /*
           Survival of the Fittest Filter:
@@ -1203,8 +1204,6 @@ namespace qAlgorithms
                 offset_prev += length - 2 * scale;
             }
         }
-
-        return;
     }
 
 #pragma endregion "running regression"
@@ -1346,26 +1345,26 @@ namespace qAlgorithms
     double calcPeakHeightUncert(RegressionGauss *mutateReg, double mse);
     void calcPeakAreaUncert(RegressionGauss *mutateReg, double mse);
 
-    double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
+    static double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
 
     /// @brief calculate the residual sum of squares for the log regression / data
     /// @param mutateReg relevant regression
     /// @param y_start log data
     /// @return RSS value
-    double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
+    static double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
 
     /// @brief performs two F-tests against the log data. First H0 is the mean, second y = mx + b
     /// @param observed log data (or normal data, depends on the use case)
     /// @param RSS_reg previously calculated residual sum of squares of the complex model. Hard assumpion of four coefficients.
     /// @param range range of the regression.
     /// @return true: Regression is significant; false: Regression is not better than either alternative.
-    bool f_testRegression(const float *observed, double RSS_reg, const Range_i *range);
+    static bool f_testRegression(const float *observed, double RSS_reg, const Range_i *range);
 
-    double calcSSE_chisqared(const Range_i *regSpan,
-                             const float *observed,
-                             const std::vector<float> *predict);
+    static double calcSSE_chisqared(const Range_i *regSpan,
+                                    const float *observed,
+                                    const std::vector<float> *predict);
 
-    std::vector<int> failbook;
+    static std::vector<int> failbook;
 
     // @todo rework: Currently, we are trying to determine the validity of a given regression
     // using multiple tests. This is wrong, since this way we get uneven p-values of the final
@@ -1464,7 +1463,7 @@ namespace qAlgorithms
         // since we cannot assume same sample sizes / variances and generally only have the two means.
         double uncertainty = -1;
         mutateReg->area = (float)peakArea(coeffs, 1, mse_log, &uncertainty);
-        mutateReg->uncert_area = uncertainty;
+        mutateReg->uncert_area = (float)uncertainty;
 
         // this is also nonsensical since we care about the validity of the exponential
         // area only.
@@ -1531,7 +1530,7 @@ namespace qAlgorithms
     {
         double mse = 0;
         double x = double(regSpan->startIdx) - double(coeff->x0);
-        const float *obs = observed + regSpan->length;
+        const float *obs = observed + regSpan->startIdx;
         for (size_t i = 0; i < regSpan->length; i++)
         {
             double pred = exp(regAt(coeff, x));
@@ -1559,7 +1558,7 @@ namespace qAlgorithms
         return result;
     }
 
-    double calcRSS_H0_cf1(const float *observed, const Range_i *range)
+    static double calcRSS_H0_cf1(const float *observed, const Range_i *range)
     {
         // this function calculates the RSS for H0: y = b0 (a constant value)
         double mean = 0;
@@ -1580,7 +1579,7 @@ namespace qAlgorithms
         return RSS;
     }
 
-    double calcRSS_H0_cf2(const float *observed, const Range_i *range)
+    static double calcRSS_H0_cf2(const float *observed, const Range_i *range)
     {
         // this function calculates the RSS for H0: y = b0 + x * b1 (no weights)
 
@@ -1618,11 +1617,8 @@ namespace qAlgorithms
 
         RSS_H0 = calcRSS_H0_cf2(observed, range); // y = b0 + b1 * x
         f_ok = F_test_regs(RSS_reg, RSS_H0, 4, 1, length, 0.05);
-        if (!f_ok)
-            return false; // reject H0, significant difference from
 
-        // no alternatives were accepted
-        return true;
+        return f_ok;
     }
 
 #pragma endregion calcSSE
@@ -1672,10 +1668,10 @@ namespace qAlgorithms
         }
     }
 
-    float weightedMeanAndVariance_EIC(const std::vector<float> *weight,
-                                      const std::vector<float> *values,
-                                      const Range_i regSpan,
-                                      float *variance)
+    static float weightedMeanAndVariance_EIC(const std::vector<float> *weight,
+                                             const std::vector<float> *values,
+                                             const Range_i regSpan,
+                                             float *variance)
     {
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
         size_t realPoints = 0;
@@ -1712,7 +1708,7 @@ namespace qAlgorithms
         return float(weighted_mean);
     };
 
-    FeaturePeak peakToFeat(const PeakFit *peak)
+    static FeaturePeak peakToFeat(const PeakFit *peak)
     {
         // RegCoeffs coefficients{0};
         // float height = 0;
@@ -1812,12 +1808,12 @@ namespace qAlgorithms
         size_t length;
     };
 
-    bool getNextProfileRegion(
+    static bool getNextProfileRegion(
         const std::vector<float> *spectrum_mz,
         const std::vector<float> *spectrum_int,
         ProfileBlock *block);
 
-    CentroidPeak peakToCen(const PeakFit *peak, const std::vector<float> *retentionTimes, size_t id, size_t specNum)
+    static CentroidPeak peakToCen(const PeakFit *peak, const std::vector<float> *retentionTimes, size_t id, size_t specNum)
     {
         CentroidPeak cen = {0};
 
@@ -1921,7 +1917,7 @@ namespace qAlgorithms
         size_t idx = block->startPos + block->length; // first element past the previous block
         size_t len = spectrum_int->size();
 
-        if (idx >= len || len - idx < 5)
+        if (idx >= len || (len - idx) < MINLENGTH)
         {
             block->intensity = nullptr;
             block->mz = nullptr;
@@ -1948,7 +1944,7 @@ namespace qAlgorithms
             length += 1;
         }
 
-        if (length > 5)
+        if (length > MINLENGTH)
         {
             assert(intensity[length - 1] > 0);
             assert(intensity[length] < minIntensity);

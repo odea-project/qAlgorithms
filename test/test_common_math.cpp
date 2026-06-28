@@ -11,6 +11,8 @@
 
 using namespace qAlgorithms;
 
+// NOLINTBEGIN(misc-use-internal-linkage)
+
 void test_rounding()
 { // rounding is functional
     verify(roundTo_d(145.136578244512, 3) == 145.137);
@@ -37,11 +39,11 @@ void test_array_min_max()
 }
 void test_standard_deviation()
 { // standard deviation - true values generated with wolfram alpha
-    double numbers[10] = {1, 2, 3, 4, 5, 5, 5, 6, 3, 2};
+    const double numbers[10] = {1, 2, 3, 4, 5, 5, 5, 6, 3, 2};
     double sd = sdev(numbers, 10);
     assert(roundTo_d(sd, 14) == roundTo_d(1.64654520469713, 14), "Standard deviation calculated wrong");
 
-    double numbers_L[10] = {300.021736801890, 299.997556193020, 299.996439273950, 300.003719530080, 299.993646472210, 299.990848954870, 299.989294329370, 299.998503324230, 300.008035381130, 300.004645938850};
+    const double numbers_L[10] = {300.021736801890, 299.997556193020, 299.996439273950, 300.003719530080, 299.993646472210, 299.990848954870, 299.989294329370, 299.998503324230, 300.008035381130, 300.004645938850};
     sd = sdev(numbers_L, 10);
     assert(roundTo_d(sd, 14) == roundTo_d(0.009603979272, 14), "Standard deviation inaccurate at larger numbers");
 }
@@ -134,3 +136,4 @@ int main()
     test_erfs();
     // test_normalDist(50000);
 }
+// NOLINTEND(misc-use-internal-linkage)

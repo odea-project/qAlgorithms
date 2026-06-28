@@ -1,8 +1,8 @@
 #ifndef QALGORITHMS_DATATYPE_PEAK_H
 #define QALGORITHMS_DATATYPE_PEAK_H
 
-#include <vector>
 #include <qalgorithms_utils.h>
+#include <vector>
 
 // This file includes the structs used for data management in qAlgorithms.
 // All data structures required by multiple parts of the full program should be listed here.
@@ -26,12 +26,12 @@ namespace qAlgorithms
 
     struct RegressionGauss
     {
-        RegCoeffs coeffs = {0};   // regression coefficients
-        Range_i regSpan = {0, 0}; // limits of the peak regression window
+        RegCoeffs coeffs = {0};      // regression coefficients
+        Range_i regSpan = {0, 0, 0}; // limits of the peak regression window
         size_t startIdx;
         size_t length;
-        int df = 0;               // degrees of freedom, interpolated data points will not be considered
-        float apex_position = 0;  // position of the apex of the peak
+        int df = 0;              // degrees of freedom, interpolated data points will not be considered
+        float apex_position = 0; // position of the apex of the peak
         // float mse = 0;            // mean squared error
         float area = 0; // area of the peak (in evenly spaced x dimension, scaled later)
         float uncert_area = 0, uncert_position = 0, uncert_height = 0;

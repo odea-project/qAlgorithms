@@ -140,6 +140,7 @@ namespace qAlgorithms
     double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert);
 
 #define GLOBAL_MINSCALE 2
+#define MINLENGTH 5
 
 #include "../external/qalgorithms_matinverse.h"
 

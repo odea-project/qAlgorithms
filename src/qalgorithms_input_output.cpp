@@ -75,6 +75,7 @@ namespace qAlgorithms
 
 #pragma region "command line arguments"
 
+    // NOLINTBEGIN(concurrency-mt-unsafe)
     UserInputSettings passCliArgs(int argc, char *argv[])
     {
         UserInputSettings args;
@@ -261,6 +262,7 @@ namespace qAlgorithms
         // assert(!args.inputPaths[0].empty());
         return args;
     }
+    // NOLINTEND(concurrency-mt-unsafe)
 
     UserInputSettings interactiveMode() // @todo this should be replaced by a better debug interface
     {
@@ -414,6 +416,7 @@ namespace qAlgorithms
 
 #pragma region "file reading"
 
+    // NOLINTBEGIN(concurrency-mt-unsafe)
     std::vector<std::filesystem::path> controlInput(const std::vector<std::string> *inputTasks)
     {
         const std::string filetype = ".mzML"; // @todo change this if other filetpes should be supported
@@ -478,7 +481,8 @@ namespace qAlgorithms
             fprintf(stderr, "Error: no valid files selected.\n");
             exit(1);
         }
-        std::sort(tasklist.begin(), tasklist.end(), [](const TaskEntry lhs, const TaskEntry rhs) { return lhs.filesize < rhs.filesize; });
+        std::sort(tasklist.begin(), tasklist.end(),
+                  [](const TaskEntry &lhs, const TaskEntry &rhs) { return lhs.filesize < rhs.filesize; });
         size_t prevsize = tasklist[0].filesize;
         for (size_t i = 1; i < tasknumber; i++)
         {
@@ -527,15 +531,16 @@ namespace qAlgorithms
         // make polarity switching to two files
         return (outputTasks);
     }
+    // NOLINTEND(concurrency-mt-unsafe)
 
 #pragma endregion "file reading"
 
 #pragma region "print functions"
     // @todo use macros to move the boilderplate out of the function body
 
-    void errorMsg(std::filesystem::path pathOutput, bool noOverwrite)
+    static void errorMsg(std::filesystem::path *pathOutput, bool noOverwrite)
     {
-        if (std::filesystem::exists(pathOutput))
+        if (std::filesystem::exists(*pathOutput))
         {
             if (noOverwrite)
             {
@@ -544,10 +549,10 @@ namespace qAlgorithms
 #else
                 const char format[] = "Warning: \"%s\" already exists and will not be overwritten\n";
 #endif
-                fprintf(stderr, format, pathOutput.c_str());
+                fprintf(stderr, format, pathOutput->c_str());
                 return;
             }
-            std::filesystem::remove(pathOutput);
+            std::filesystem::remove(*pathOutput);
         }
     }
 
@@ -567,7 +572,7 @@ namespace qAlgorithms
     {
         filename += "_centroids.csv";
         pathOutput /= filename;
-        errorMsg(pathOutput, noOverwrite);
+        errorMsg(&pathOutput, noOverwrite);
 
         if (!silent)
         {

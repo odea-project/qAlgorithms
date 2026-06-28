@@ -39,14 +39,14 @@ namespace qAlgorithms
         return f_ok;
     }
 
-    size_t hashm(int a, int b)
+    static size_t hashm(int a, int b)
     {
         size_t a2 = (size_t)a;
         a2 = a2 << __INT_WIDTH__;
         return a2 | (size_t)b;
     }
     // this global hashmap is used to avoid recalculating the f value every time - better, thread-safe solution possible? @todo
-    std::unordered_map<size_t, double> global_fhash_5perc;
+    static std::unordered_map<size_t, double> global_fhash_5perc;
 
     double F_stat(double alpha, size_t params_complex, size_t params_simple, size_t numPoints)
     {
@@ -341,13 +341,6 @@ namespace qAlgorithms
         return ret;
     }
 
-    double meanOfCumulative(double *const cumArray, const size_t startIdx, const size_t endIdx)
-    {
-        assert(startIdx <= endIdx);
-        double subtractor = startIdx == 0 ? 0 : cumArray[startIdx - 1]; // account for index 0
-        double totalSum = cumArray[endIdx] - subtractor;
-        return totalSum / (endIdx - startIdx + 1);
-    }
     double meanOfCumulative(const double *const cumArray, const size_t startIdx, const size_t endIdx)
     {
         assert(startIdx <= endIdx);
@@ -367,23 +360,6 @@ namespace qAlgorithms
         unsigned int subtractor = r->startIdx == 0 ? 0 : cumArray[r->startIdx - 1];
         unsigned int totalSum = (cumArray[r->length + r->startIdx - 1] - subtractor);
         return totalSum;
-    }
-
-    double sdev(double *const array, const size_t n)
-    {
-        assert(n > 2); // while standard deviation of two numbers is possible, it makes no sense
-        double mean = 0;
-        double sdev = 0;
-        for (size_t i = 0; i < n; i++)
-        {
-            mean += array[i];
-        }
-        mean /= n;
-        for (size_t i = 0; i < n; i++)
-        {
-            sdev += (array[i] - mean) * (array[i] - mean);
-        }
-        return sqrt(sdev / (n - 1));
     }
 
     double sdev(const double *const array, const size_t n)

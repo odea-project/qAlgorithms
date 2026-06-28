@@ -13,8 +13,8 @@
 
 namespace qAlgorithms
 {
-    int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
-                        std::vector<float> *result)
+    static int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
+                               std::vector<float> *result)
     {
         // cast the byte array resulting from zlib decompression to a float array
         const size_t fsize = sizeof(float);
@@ -51,7 +51,7 @@ namespace qAlgorithms
     };
 
     // Decompresses a string using the zlib library (https://zlib.net/).
-    void decompress_zlib(const std::vector<char> *compressed_string, std::vector<char> *output_string)
+    static void decompress_zlib(const std::vector<char> *compressed_string, std::vector<char> *output_string)
     {
         // max expected compression is factor 6
         output_string->resize(compressed_string->size() * 6);
@@ -78,7 +78,7 @@ namespace qAlgorithms
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
     // (https://github.com/simdutf/simdutf/tree/master?tab=readme-ov-file#single-header-version-with-limited-features).
-    std::vector<char> decode_base64(const std::string &encoded_string)
+    static std::vector<char> decode_base64(const std::string &encoded_string)
     {
         size_t length = encoded_string.size() / 4 * 3;
         std::vector<char> output(length);
@@ -139,7 +139,7 @@ namespace qAlgorithms
 
         linknodes = new std::vector<pugi::xml_node>(number_spectra);
         linknodes->clear();
-        for (pugi::xml_node child = spec_list.first_child(); child; child = child.next_sibling())
+        for (pugi::xml_node child = spec_list.first_child(); (bool)child; child = child.next_sibling())
         {
             linknodes->push_back(child);
         }
@@ -152,8 +152,7 @@ namespace qAlgorithms
 
     void XML_File::free_linknodes()
     {
-        if (linknodes != nullptr)
-            delete linknodes;
+        delete linknodes;
         defective = true;
     };
 
@@ -310,7 +309,7 @@ namespace qAlgorithms
         }
     };
 
-    float extract_scan_RT(const pugi::xml_node &spec)
+    static float extract_scan_RT(const pugi::xml_node &spec)
     {
         pugi::xml_node rt_node = spec.child("scanList").child("scan").find_child_by_attribute("cvParam", "name", "scan start time");
 
