@@ -219,7 +219,7 @@ double position_empiric(const std::vector<float> *x, const std::vector<float> *y
 }
 
 // not sure why this doesn't work with the utils function
-double regExpAt__(const RegCoeffs *coeff, const double x)
+static double regExpAt2(const RegCoeffs *coeff, const double x)
 {
     double b23 = x < 0 ? coeff->b2 : coeff->b3;
     return exp(coeff->b0 + (coeff->b1 + x * b23) * x);
@@ -233,7 +233,7 @@ void print_regFit(const RegCoeffs *coeff, const std::vector<float> *x, const flo
     for (size_t i = 0; i < x->size(); i++)
     {
         float xval = (x->at(i) - x0) / delta_x;
-        double y = regExpAt__(coeff, xval);
+        double y = regExpAt2(coeff, xval);
         printf("%f,", y);
     }
     printf("\n");

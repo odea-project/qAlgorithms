@@ -26,6 +26,7 @@ Checks: '*,
        readability-simplify-boolean-expr,
        -cert-err33-c,
        -bugprone-implicit-widening-of-multiplication-result,
+       -cert-dcl50-cpp,
        -hicpp-*'
 CheckOptions: [{ key: misc-non-private-member-variables-in-classes, value: IgnoreClassesWithAllMemberVariablesBeingPublic }]
 WarningsAsErrors: ''

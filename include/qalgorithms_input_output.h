@@ -2,6 +2,7 @@
 #define QALGORITHMS_INPUT_OUTPUT
 
 #include "qalgorithms_datatypes.h"
+#include <cstdint>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -11,7 +12,7 @@ namespace qAlgorithms
 
 #pragma region "command line arguments"
 
-    enum TerminateAfter
+    enum TerminateAfter : uint8_t
     {
         never,
         centroids,
@@ -37,6 +38,7 @@ namespace qAlgorithms
         bool printFeatCens = false;
         bool printComponentRegs = false;
         bool printComponentBins = false;
+        bool printProfileSection = false;
         // progress reporting
         bool silent = false;
         bool verboseProgress = false;
@@ -70,13 +72,11 @@ namespace qAlgorithms
 #pragma endregion "file reading"
 
 #pragma region "print functions"
-    struct ProfilePoint
-    {
-        float mz;
-        float rt;
-        int scan;
-        float intensity;
-    };
+
+    void printProfileSection(const std::vector<float> *mz,
+                             const std::vector<float> *rt,
+                             std::filesystem::path pathOutput,
+                             std::string filename);
 
     void printSpectrumAndCens(const std::vector<CentroidPeak> *peaktable,
                               std::filesystem::path pathOutput,
