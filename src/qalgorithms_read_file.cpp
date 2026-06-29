@@ -23,6 +23,7 @@ namespace qAlgorithms
         size_t lengthDecoded = bytes->size() / (isDouble ? dsize : fsize);
 
         result->resize(lengthDecoded);
+        float *res = result->data();
 
 // for only this block, ignore the alignment change. It is intended behavouir.
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
@@ -33,7 +34,7 @@ namespace qAlgorithms
             const double *dbl = (const double *)bytes->data();
             for (size_t i = 0; i < lengthDecoded; i++)
             {
-                result->at(i) = (float)dbl[i]; // result must be cast to float individually
+                res[i] = (float)dbl[i]; // result must be cast to float individually
             }
         }
         else
@@ -43,7 +44,7 @@ namespace qAlgorithms
             const float *flt = (const float *)bytes->data();
             for (size_t i = 0; i < lengthDecoded; i++)
             {
-                result->at(i) = flt[i];
+                res[i] = flt[i];
             }
         }
 #pragma clang diagnostic pop
@@ -194,14 +195,7 @@ namespace qAlgorithms
         {
             const std::string compression = node_comp.attribute("name").as_string();
 
-            if (compression == "zlib" || compression == "zlib compression")
-            {
-                mtd.compressed = true;
-            }
-            else
-            {
-                mtd.compressed = false; // @todo what if it isn't zlib compressed?
-            }
+            mtd.compressed = (compression == "zlib" || compression == "zlib compression"); // @todo what if it isn't zlib compressed?
         }
 
         bool has_bin_data_type = false;

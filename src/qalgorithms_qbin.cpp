@@ -12,71 +12,6 @@ namespace qAlgorithms
 {
     const size_t MAX_SCAN_GAP = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
 
-    void initContainer(BinContainer *activeBins, std::vector<CentroidPeak> *centroids)
-    {
-        Bin firstBin;
-        for (size_t i = 0; i < centroids->size(); i++)
-        {
-            assert(centroids->at(i).mz > 0);
-
-            firstBin.pointsInBin.push_back(&(centroids->at(i)));
-        }
-        activeBins->processBinsF.push_back(firstBin);
-    }
-
-    void resetContainer(BinContainer *activeBins, bool which)
-    {
-        std::vector<Bin> *storage = which ? &activeBins->processBinsT : &activeBins->processBinsF;
-
-        for (size_t num = 0; num < storage->size(); num++)
-        {
-            Bin *bin = &storage->at(num);
-            for (size_t i = 0; i < bin->pointsInBin.size(); i++)
-            {
-                activeBins->notInBins.push_back(bin->pointsInBin[i]);
-            }
-        }
-        storage->clear();
-    }
-
-    size_t setFinalBins(BinContainer *activeBins)
-    {
-        size_t cenCountFinal = 0;
-        size_t producedBins = activeBins->viableBins.size();
-        for (size_t j = 0; j < producedBins; j++)
-        {
-            Bin *bin = &(activeBins->viableBins[j]);
-            if (activeBins->viableBins[j].duplicateScan)
-            {
-                deduplicateBin(&activeBins->processBinsF, &activeBins->notInBins, bin);
-            }
-            else
-            {
-                cenCountFinal += bin->pointsInBin.size();
-                activeBins->finalBins.push_back(*bin);
-            }
-        }
-        activeBins->viableBins.clear();
-        return cenCountFinal;
-    }
-
-    size_t resetUnbinned(BinContainer *activeBins)
-    {
-        // only perform rebinning if at least one new bin could be formed
-        size_t res = activeBins->notInBins.size();
-        assert(activeBins->processBinsT.empty());
-        if (res > 4)
-        {
-            // add all points that were not binned into the new bin, since these centroids
-            // tend to contain smaller bins which were not properly processed due to being
-            // at the borders of a cutting region
-            activeBins->processBinsF.push_back(Bin{});
-            activeBins->processBinsF.back().pointsInBin = activeBins->notInBins;
-            activeBins->notInBins.clear();
-        }
-        return res;
-    }
-
     std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData)
     {
         // @todo split out subfunctions so the structure is subset -> score -> format
@@ -213,8 +148,6 @@ namespace qAlgorithms
         }
     }
 
-    double previousBinMax = 0; // @todo this is a very bad idea
-
     void subsetBins(BinContainer &bincontainer) // @todo string return values are stupid
     {
         bincontainer.readFrom = false; // starting bin is in processBinsF
@@ -249,8 +182,6 @@ namespace qAlgorithms
                                &processThis.pointsInBin,
                                &activeOS,
                                &cumError);
-
-                previousBinMax = 0; // @todo get rid of this without sacrificing validity
             }
             // @todo logging
             switchTarget(&bincontainer);

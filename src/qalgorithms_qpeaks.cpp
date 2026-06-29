@@ -705,7 +705,7 @@ namespace qAlgorithms
         size_t scale = compScale + 1;
         size_t startIdx = 0;
 
-        RegressionGauss *upperReg;
+        RegressionGauss *upperReg = nullptr;
         bool getNextReg = true;
 
         while (true)
@@ -1583,7 +1583,7 @@ namespace qAlgorithms
     {
         // this function calculates the RSS for H0: y = b0 + x * b1 (no weights)
 
-        double slope, intercept;
+        double slope = NAN, intercept = NAN;
         size_t length = range->length;
         assert(length > 0);
         const float *obs = observed + range->startIdx;
@@ -1981,7 +1981,7 @@ namespace qAlgorithms
         double b = coeff->b1;
         double c = coeff->b0 - y;
 
-        double x_l, x_r, dummy;
+        double x_l = NAN, x_r = NAN, dummy = NAN;
         solveQuadratic(a_l, b, c, &x_l, &dummy);
         solveQuadratic(a_r, b, c, &dummy, &x_r);
 
@@ -2099,11 +2099,16 @@ namespace qAlgorithms
         const double b3 = c->b3;
         const double sqrt_pi_2 = 1.7724538509055158819 / 2; // sqrt(M_PI);
 
-        bool b2_pos = b2 > 0;
-        bool b3_pos = b3 > 0;
-        assert(!(b2_pos && b3_pos));
-        assert(!(b2_pos && b1 < 0));
-        assert(!(b3_pos && b1 > 0));
+        bool b2_neg = b2 < 0;
+        bool b3_neg = b3 < 0;
+        assert(b2_neg || b3_neg);
+        // the apex cannot be left if b2 is positive, same for b3
+        // (NOT b2_neg) NAND (b1 < 0)
+        // NOT ((NOT b2_neg) AND (b1 < 0))
+        // b2_neg OR (NOT b1 < 0) // b1 != 0
+        // b2_neg OR b1 > 0
+        assert(b2_neg || b1 > 0);
+        assert(b3_neg || b1 < 0);
         assert(delta_x > 0);
 
         double sqrt_b2 = sqrt(abs(b2));
@@ -2111,24 +2116,24 @@ namespace qAlgorithms
         double b0_exp = exp(b0);
 
         double area_L = -1;
-        if (b2_pos)
+        if (b2_neg)
         {
-            area_L = libcerf::dawson(b1 / sqrt_b2 / 2) / sqrt_b2;
+            area_L = libcerf::erfcx(b1 / sqrt_b2 / 2) / sqrt_b2 * sqrt_pi_2;
         }
         else
         {
-            area_L = libcerf::erfcx(b1 / sqrt_b2 / 2) / sqrt_b2 * sqrt_pi_2;
+            area_L = libcerf::dawson(b1 / sqrt_b2 / 2) / sqrt_b2;
         }
         assert(area_L > 0);
 
         double area_R = -1;
-        if (b3_pos)
+        if (b3_neg)
         {
-            area_R = -libcerf::dawson(b1 / sqrt_b3 / 2) / sqrt_b3;
+            area_R = libcerf::erfcx(-b1 / sqrt_b3 / 2) / sqrt_b3 * sqrt_pi_2;
         }
         else
         {
-            area_R = libcerf::erfcx(-b1 / sqrt_b3 / 2) / sqrt_b3 * sqrt_pi_2;
+            area_R = -libcerf::dawson(b1 / sqrt_b3 / 2) / sqrt_b3;
         }
         assert(area_R > 0);
 
@@ -2250,22 +2255,22 @@ namespace qAlgorithms
 
             // @todo results are not fully symmetric - is there an error here?
 
-            if (b2_pos)
-            {
-                J[2] = (area_L * (b1 * b1 - 2 * b2) - b1) / (4 * b2 * b2);
-            }
-            else
+            if (b2_neg)
             {
                 J[2] = (b1 - area_L * (b1 * b1 + 2 * b2)) / (4 * b2 * b2);
             }
-
-            if (b3_pos)
+            else
             {
-                J[3] = (b1 - area_R * (b1 * b1 - 2 * b3)) / (4 * b3 * b3);
+                J[2] = (area_L * (b1 * b1 - 2 * b2) - b1) / (4 * b2 * b2);
+            }
+
+            if (b3_neg)
+            {
+                J[3] = -(b1 + area_R * (b1 * b1 + 2 * b3)) / (4 * b3 * b3);
             }
             else
             {
-                J[3] = -(b1 + area_R * (b1 * b1 + 2 * b3)) / (4 * b3 * b3);
+                J[3] = (b1 - area_R * (b1 * b1 - 2 * b3)) / (4 * b3 * b3);
             }
 
             double u = matProductReg(J, c->scale);

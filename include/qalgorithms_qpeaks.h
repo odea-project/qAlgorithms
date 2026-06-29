@@ -84,18 +84,18 @@ namespace qAlgorithms
                      float *predicted,
                      RegCoeffs *coeff);
 
-    enum invalid
+    enum invalid // @todo rework causes for invalidation
     {
-        ok,
-        no_apex,
-        invalid_apex,
-        no_df,
-        invalid_apexToEdge, // this will probably be removed
-        f_test_fail,
-        invalid_quadratic,
-        invalid_area,
-        invalid_height,
-        invalid_chisq,
+        ok = 0,
+        no_apex = 1,
+        invalid_apex = 2,
+        no_df = 3,
+        invalid_apexToEdge = 4, // this will probably be removed
+        f_test_fail = 5,
+        invalid_quadratic = 6,
+        invalid_area = 7,
+        invalid_height = 8,
+        invalid_chisq = 9,
         none = -1
     };
 

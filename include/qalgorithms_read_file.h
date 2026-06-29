@@ -43,7 +43,7 @@ namespace qAlgorithms
         bool polarity; // 0 = negative, 1 = positive
     };
 
-    static std::vector<std::string> possible_accessions_binary_data_mzML = {
+    const std::vector<std::string> possible_accessions_binary_data_mzML = {
         "MS:1000514", "MS:1000515", "MS:1000516", "MS:1000517",
         "MS:1000595", "MS:1000617", "MS:1000786", "MS:1000820",
         "MS:1000821", "MS:1000822", "MS:1002478", "MS:1002529",
@@ -51,7 +51,7 @@ namespace qAlgorithms
         "MS:1002745", "MS:1002893", "MS:1003143", "MS:1003157",
         "MS:1003158"};
 
-    static std::vector<std::string> possible_short_name_binary_data_mzML = {
+    const std::vector<std::string> possible_short_name_binary_data_mzML = {
         "mz", "intensity", "charge", "sn",
         "time", "wavelength", "other", "flowrate",
         "pressure", "temperature", "mean_charge", "resolution",
