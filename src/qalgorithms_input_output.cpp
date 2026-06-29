@@ -1,5 +1,6 @@
 #include <algorithm> // remove duplicates from task list
 #include <assert.h>
+#include <cstddef>
 #include <filesystem> // printing absolute path in case read fails
 #include <fstream>    // write peaks to file @todo remove
 #include <iostream>
@@ -422,21 +423,23 @@ namespace qAlgorithms
         const std::string filetype = ".mzML"; // @todo change this if other filetpes should be supported
         namespace fs = std::filesystem;
         std::vector<fs::path> outputTasks;
-        outputTasks.reserve(inputTasks->size());
+        const size_t inputLen = inputTasks->size();
+        outputTasks.reserve(inputLen);
         struct TaskEntry
         {
             fs::path path;
             uintmax_t filesize;
         };
         std::vector<TaskEntry> tasklist;
-        tasklist.reserve(inputTasks->size());
+        tasklist.reserve(inputLen);
         // find all valid inputs and add them to the task list
-        for (std::string inputPath : *inputTasks)
+        for (size_t path = 0; path < inputLen; path++)
         {
-            fs::path currentPath{inputPath};
+            const std::string *inputPath = inputTasks->data() + path;
+            fs::path currentPath{*inputPath};
             if (!fs::exists(currentPath))
             {
-                fprintf(stderr, "Warning: the file \"%s\" does not exist.\n", inputPath.c_str());
+                fprintf(stderr, "Warning: the file \"%s\" does not exist.\n", inputPath->c_str());
                 continue;
             }
             currentPath = fs::canonical(currentPath);
@@ -447,7 +450,7 @@ namespace qAlgorithms
                 if (currentPath.extension() != filetype)
                 {
                     fprintf(stderr, "Warning: only %s files are supported. The file \"%s\" has been skipped.\n",
-                            filetype.c_str(), inputPath.c_str());
+                            filetype.c_str(), inputPath->c_str());
                     if (currentPath.extension() == ".mzml")
                     {
                         fprintf(stderr, "Warning: qAlgorithms file reading is case-sensitive. Please change the file extension to \".mzML\"");
@@ -470,7 +473,9 @@ namespace qAlgorithms
             }
             else
             {
-                fprintf(stderr, "Warning: \"%s\" is not a supported file or directory. The file has been skipped.\n", inputPath.c_str());
+                fprintf(stderr, "Warning: \"%s\" is not a supported file or directory."
+                                " The file has been skipped.\n",
+                        inputPath->c_str());
             }
         }
         // remove duplicate files
@@ -482,7 +487,8 @@ namespace qAlgorithms
             exit(1);
         }
         std::sort(tasklist.begin(), tasklist.end(),
-                  [](const TaskEntry &lhs, const TaskEntry &rhs) { return lhs.filesize < rhs.filesize; });
+                  [](const TaskEntry &lhs, const TaskEntry &rhs)
+                  { return lhs.filesize < rhs.filesize; });
         size_t prevsize = tasklist[0].filesize;
         for (size_t i = 1; i < tasknumber; i++)
         {
@@ -519,16 +525,17 @@ namespace qAlgorithms
         }
         if (removedEntries > 0)
         {
-            fprintf(stderr, "Warning: removed %u duplicate input files from processing queue.\n", removedEntries);
+            fprintf(stderr, "Warning: removed %u duplicate input files from processing queue.\n",
+                    removedEntries);
         }
-        for (auto entry : tasklist)
+        for (size_t task = 0; task < tasklist.size(); task++)
         {
-            if (entry.filesize > 0)
+            TaskEntry *entry = tasklist.data() + task;
+            if (entry->filesize > 0)
             {
-                outputTasks.push_back(entry.path);
+                outputTasks.push_back(entry->path);
             }
         }
-        // make polarity switching to two files
         return (outputTasks);
     }
     // NOLINTEND(concurrency-mt-unsafe)
@@ -669,18 +676,18 @@ namespace qAlgorithms
         output << "binID,cenID,mz,mzUncertainty,retentionTime,number_MS1,area,height,degreesOfFreedom,DQSC\n";
         for (unsigned long binID = 0; binID < bins->size(); binID++)
         {
-            const EIC bin = bins->at(binID);
-            if (bin.scanNumbers.empty())
+            const EIC *bin = bins->data() + binID;
+            if (bin->scanNumbers.empty())
                 continue;
 
-            for (size_t i = 0; i < bin.mz.size(); i++)
+            for (size_t i = 0; i < bin->mz.size(); i++)
             {
-                const CentroidPeak cen = centroids->at(bin.cenID[i]);
+                const CentroidPeak cen = centroids->at(bin->cenID[i]);
                 char buffer[128];
                 snprintf(buffer, 128, "%lu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f\n", // @todo re-add the dqsb once that works
-                         binID, cen.ID, bin.mz[i], bin.predInterval[i],
-                         bin.RT[i], bin.scanNumbers[i], bin.ints_area[i],
-                         bin.ints_height[i], bin.df[i], bin.DQSC[i]);
+                         binID, cen.ID, bin->mz[i], bin->predInterval[i],
+                         bin->RT[i], bin->scanNumbers[i], bin->ints_area[i],
+                         bin->ints_height[i], bin->df[i], bin->DQSC[i]);
                 output << buffer;
             }
         }

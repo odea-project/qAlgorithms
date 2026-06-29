@@ -1791,7 +1791,8 @@ namespace qAlgorithms
         }
 
         // peaks are sorted here so they can be treated as const throughout the rest of the program
-        std::sort(res->begin(), res->end(), [](FeaturePeak lhs, FeaturePeak rhs) { return lhs.retentionTime < rhs.retentionTime; });
+        std::sort(res->begin(), res->end(), [](FeaturePeak lhs, FeaturePeak rhs)
+                  { return lhs.retentionTime < rhs.retentionTime; });
 
         return res->size();
     }
