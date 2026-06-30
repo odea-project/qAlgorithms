@@ -26,6 +26,7 @@ namespace qAlgorithms
     enum TerminateAfter : uint8_t
     {
         never,
+        profilesec,
         centroids,
         binning,
         features,

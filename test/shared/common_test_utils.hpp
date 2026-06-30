@@ -7,7 +7,6 @@
 #include <cstdio> // printing
 #include <cstdlib>
 #include <ctime>
-#include <qalgorithms_qpeaks.h>
 #include <vector>
 #define _USE_MATH_DEFINES
 #include <cfloat> // placing this here instead of in every individual test
@@ -16,8 +15,6 @@
 #ifndef _GLIBCXX_CFLOAT
     #error "this is just here to suppress a warning"
 #endif
-
-using namespace qAlgorithms;
 
 bool flt_equal(double a, double b, double tol);
 
@@ -74,12 +71,8 @@ void printVec_f(const std::vector<float> *vec, const char *vecName);
 double roundTo_d(double x, size_t digits);
 double randRange_d(double lower, double upper, long seed = 0);
 
-RegCoeffs getCoeffs(double height, double position, double sd_left, double sd_right);
-
 double gauss_rand(const double mean, const double sdev);
 
 double fwhm_empiric(const std::vector<float> *x, const std::vector<float> *y);
 double area_empiric(const std::vector<float> *x, const std::vector<float> *y);
 double position_empiric(const std::vector<float> *x, const std::vector<float> *y);
-
-void print_regFit(const RegCoeffs *coeff, const std::vector<float> *x, const float delta_x);

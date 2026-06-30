@@ -427,6 +427,9 @@ namespace qAlgorithms
         }
 
         // set termination point here so that the program will only process data when necessary
+        // note: since this statement is only evaluated once, it must be set up in the same order
+        // as the termination points in the main function. Since these cannot be arbitrary, that
+        // is not considered an issue for now.
         if (args.printComponentRegs || args.printComponentBins)
         {
             args.term = TerminateAfter::components;
@@ -442,6 +445,10 @@ namespace qAlgorithms
         else if (args.printCentroids)
         {
             args.term = TerminateAfter::centroids;
+        }
+        else if (args.printProfileSection)
+        {
+            args.term = TerminateAfter::profilesec;
         }
         else
         {
@@ -653,8 +660,14 @@ namespace qAlgorithms
                             "mz range from %f to %f and RT range from %f to %f (min)\n"
                             "exist in the supplied data.\n",
                     inargs->prof_lim_mz_lower, inargs->prof_lim_mz_upper,
-                    inargs->prof_lim_rt_lower, inargs->prof_lim_rt_upper);
+                    inargs->prof_lim_rt_lower / 60, inargs->prof_lim_rt_upper / 60);
             return;
+        }
+
+        if (!inargs->silent)
+        {
+            const char format[] = "writing profile section to: " _STR "\n";
+            printf(format, pathOutput.c_str());
         }
 
         FILE *outfile = fopen(pathOutput.c_str(), "w");

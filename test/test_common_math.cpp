@@ -1,5 +1,5 @@
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
-#pragma GCC diagnostic ignored "-Wfloat-conversion" // added because of manuall defined arrays
+#pragma GCC diagnostic ignored "-Wfloat-conversion" // added because of manually defined arrays
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
 

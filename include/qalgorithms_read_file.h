@@ -106,6 +106,12 @@ namespace qAlgorithms
 
         void free_linknodes();
     };
+
+    // functions exposed for testing
+    std::vector<char> decode_base64(const std::string &encoded_string);
+
+    int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
+                        std::vector<float> *result);
 }; // namespace qAlgorithms
 
 #endif // QALGORITHMS_READ_FILE_H

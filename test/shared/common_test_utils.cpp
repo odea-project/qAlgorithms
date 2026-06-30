@@ -10,7 +10,15 @@
 #define _USE_MATH_DEFINES
 #include <stdint.h> // printing
 
-using namespace qAlgorithms;
+static const float *maxVal(const float *const arrayStart, const size_t length)
+{
+    const float *ret = arrayStart;
+    for (size_t i = 1; i < length; i++) // no need to check the first element
+    {
+        ret = *ret > *(arrayStart + i) ? ret : arrayStart + i;
+    }
+    return ret;
+}
 
 float ran0(long *idum)
 {
@@ -216,25 +224,4 @@ double position_empiric(const std::vector<float> *x, const std::vector<float> *y
     const float *maxElem = maxVal(y->data(), len);
     size_t idx = maxElem - y->data();
     return x->at(idx);
-}
-
-// not sure why this doesn't work with the utils function
-static double regExpAt2(const RegCoeffs *coeff, const double x)
-{
-    double b23 = x < 0 ? coeff->b2 : coeff->b3;
-    return exp(coeff->b0 + (coeff->b1 + x * b23) * x);
-}
-
-void print_regFit(const RegCoeffs *coeff, const std::vector<float> *x, const float delta_x)
-{
-    // only prints data for now
-    printf("    Predicted values:\n");
-    float x0 = x->at(coeff->x0);
-    for (size_t i = 0; i < x->size(); i++)
-    {
-        float xval = (x->at(i) - x0) / delta_x;
-        double y = regExpAt2(coeff, xval);
-        printf("%f,", y);
-    }
-    printf("\n");
 }

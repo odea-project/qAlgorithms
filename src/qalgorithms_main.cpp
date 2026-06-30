@@ -145,20 +145,9 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
             bool polarity = polarities[pol];
 
             filename = pathSource.stem().string();
-#pragma region "centroiding"
 
             // @todo add check if set polarity is correct
             const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra(true, polarity, false); // @todo MS2 support here!
-
-            if (userArgs.printProfileSection)
-            {
-                // This is a somewhat crude solution to print a section of the data in profile mode.
-                // Really, this should be a separate program within the qAlgorithms project @todo
-                printProfileSections(&inputFile,
-                                     &userArgs,
-                                     &selectedIndices,
-                                     filename);
-            }
 
             if (selectedIndices.empty())
             {
@@ -171,6 +160,20 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
             {
                 printf("    Processing %s peaks\n", polarity ? "positive" : "negative");
             }
+
+            if (userArgs.printProfileSection)
+            {
+                // This is a somewhat crude solution to print a section of the data in profile mode.
+                // Really, this should be a separate program within the qAlgorithms project @todo
+                printProfileSections(&inputFile,
+                                     &userArgs,
+                                     &selectedIndices,
+                                     filename);
+                if (userArgs.term == TerminateAfter::profilesec)
+                    continue;
+            }
+
+#pragma region "centroiding"
             std::vector<float> retentionTimes;
             inputFile.get_spectra_RT(&selectedIndices, &retentionTimes);
 
@@ -193,9 +196,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
                 printCentroids(centroids, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.noOverwrite);
 
                 if (userArgs.term == TerminateAfter::centroids)
-                {
                     continue;
-                }
             }
 
             assert(!centroids->empty());

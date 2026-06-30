@@ -191,6 +191,20 @@ void control_sim_gauss()
     assert(flt_equal(area, area_p, 0.01), "inaccurate area (%f vs. %f), empiric %f\n", area, area_p, area_e);
 }
 
+// void print_regFit(const RegCoeffs *coeff, const std::vector<float> *x, const float delta_x)
+// {
+//     // only prints data for now
+//     printf("    Predicted values:\n");
+//     float x0 = x->at(coeff->x0);
+//     for (size_t i = 0; i < x->size(); i++)
+//     {
+//         float xval = (x->at(i) - x0) / delta_x;
+//         double y = regExpAt(coeff, xval);
+//         printf("%f,", y);
+//     }
+//     printf("\n");
+// }
+
 struct ErrorEMG
 {
     float r_tau;

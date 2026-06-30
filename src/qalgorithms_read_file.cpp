@@ -14,8 +14,8 @@
 
 namespace qAlgorithms
 {
-    static int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
-                               std::vector<float> *result)
+    int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
+                        std::vector<float> *result)
     {
         // cast the byte array resulting from zlib decompression to a float array
         const size_t fsize = sizeof(float);
@@ -76,7 +76,7 @@ namespace qAlgorithms
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
     // (https://github.com/simdutf/simdutf/tree/master?tab=readme-ov-file#single-header-version-with-limited-features).
-    static std::vector<char> decode_base64(const std::string &encoded_string)
+    std::vector<char> decode_base64(const std::string &encoded_string)
     {
         size_t length = encoded_string.size() / 4 * 3;
         std::vector<char> output(length);
@@ -245,7 +245,7 @@ namespace qAlgorithms
         std::vector<char> buffer;
         { // extract mz values
             pugi::xml_node node_binary = dataArray->child("binary");
-            std::string encoded_string = node_binary.child_value();
+            const char *encoded_string = node_binary.child_value();
             std::vector<char> decoded_string = decode_base64(encoded_string);
 
             // error handling
