@@ -402,4 +402,31 @@ namespace qAlgorithms
 
         return intersect / union_val;
     }
+
+    void clampSorted(const float *const array,
+                     size_t *const startIdx,
+                     size_t *const length,
+                     const float lim_lower,
+                     const float lim_upper)
+    {
+        assert(array != nullptr);
+        assert(lim_lower < lim_upper);
+        assert(array[*startIdx] < array[*length - 1]);
+
+        *startIdx = 0;
+        for (; *startIdx < *length; *startIdx += 1) // @todo use SIMD-friendly loop conditions
+        {
+            if (array[*startIdx] > lim_lower)
+                break;
+        }
+
+        size_t newLength = *startIdx;
+        for (; newLength < *length; newLength++)
+        {
+            if (array[newLength] > lim_upper)
+                break;
+        }
+        newLength -= *startIdx;
+        *length = newLength;
+    }
 } // namespace qAlgorithms

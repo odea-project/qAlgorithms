@@ -1,6 +1,7 @@
 #include <algorithm> // remove duplicates from task list
 #include <assert.h>
 #include <cstddef>
+#include <cstdio>
 #include <filesystem> // printing absolute path in case read fails
 #include <fstream>    // write peaks to file @todo remove
 #include <iostream>
@@ -9,6 +10,8 @@
 
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_input_output.h"
+#include "qalgorithms_read_file.h"
+#include "qalgorithms_utils.h"
 
 namespace qAlgorithms
 {
@@ -34,7 +37,6 @@ namespace qAlgorithms
         "                                  3) filenames may never start with a \"-\".\n"
         //   "      -tl, -tasklist <PATH>:      pass a list of file paths to the function. A tasklist can also contain directories\n"
         //   "                                  to search recursively and output directories for different blocks of the input files.\n"
-        //   "                                  You can comment out lines by starting them with a \"#\".\n" // @todo update
         "\n    Single-file output settings:\n"
         "      Note                      : The filename is always the original filename extended by the polarity\n"
         "                                  and the processing step. For example, printing features of the file\n"
@@ -62,7 +64,11 @@ namespace qAlgorithms
         "                                  The filter is specified in the pattern mz-min, mz-max, rt-min, rt-max given\n"
         "                                  in dalton and minutes respectively.\n"
         "\n    Program behaviour:\n"
-        "      -s, -silent               : do not print progress reports to standard out.\n"
+        "      -time-min                 : Use minutes as the default for all command-line input (default).\n"
+        "      -time-sec                 : Use seconds as the default for all command-line input.\n"
+        "                                  Note: Whichever is supplied last will be used, -time-sec -time-min is not an\n"
+        "                                  error. All times must be given in the same unit, as this is not checked\n"
+        "      -s, -silent               : Do not print progress reports to standard out.\n"
         // @todo add an option for printing all process stats without timing and explanations for use with CLI toolchains
         "      -skip-existing            : Do not write to files that already exist, even if an output option is set.\n"
         "      -skip-error               : If processing fails, the program will not exit and instead start processing\n"
@@ -130,34 +136,35 @@ namespace qAlgorithms
                 }
                 --i;
             }
-            else if ((argument == "-tl") || (argument == "-tasklist")) // @todo test this
+            else if ((argument == "-tl") || (argument == "-tasklist"))
             {
                 fprintf(stderr, "Error: tasklist support is not integrated at the moment.\n");
 
                 args.tasklistSpecified = true;
                 ++i;
+                const char format_err_tl[] = "Error: argument -tasklist was set, but no valid file supplied.\n";
                 if (i == argc)
                 {
-                    fprintf(stderr, "Error: argument -tasklist was set, but no valid file supplied.\n");
+                    fprintf(stderr, format_err_tl);
                     return args;
                 }
                 std::string inputString = argv[i];
                 if (inputString[0] == '-')
                 {
-                    fprintf(stderr, "Error: argument -tasklist was set, but no valid file supplied.\n");
+                    fprintf(stderr, format_err_tl);
                     return args;
                 }
                 /*@todo
-                        the task file should contain a list of all files the program
-                        should run over. It should give access to additional settings,
-                        for example per-group output location and multiple recursion points.
-                        Lines can be commented out with a "#". empty lines are ignored.
-                        The file must start with a line containing only "TASKFILE" and
-                        should accept some standardised user data like name and project.
-                        Suggested options:
-                            ADDDATE: The current date (YYYYMMDD) is added with an underscore
-                            to the front of the filename
-                        */
+                the task file should contain a list of all files the program
+                should run over. It should give access to additional settings,
+                for example per-group output location and multiple recursion points.
+                Lines can be commented out with a "#". empty lines are ignored.
+                The file must start with a line containing only "TASKFILE" and
+                should accept some standardised user data like name and project.
+                Suggested options:
+                    ADDDATE: The current date (YYYYMMDD) is added with an underscore
+                    to the front of the filename
+                */
                 args.inputPaths.push_back(inputString);
             }
 
@@ -222,6 +229,23 @@ namespace qAlgorithms
             }
             else if ((argument == "-prfsc") || (argument == "-profile-section"))
             {
+                args.printProfileSection = true;
+                // we expect exactly four floats to be supplied next. The order is always mz -> rt and lower -> upper
+                // @todo error handling for bad input
+                assert(i + 4 < argc);
+                args.prof_lim_mz_lower = std::stof(argv[i + 1]);
+                args.prof_lim_mz_upper = std::stof(argv[i + 2]);
+                args.prof_lim_rt_lower = std::stof(argv[i + 3]);
+                args.prof_lim_rt_upper = std::stof(argv[i + 4]);
+                i += 4;
+            }
+            else if (argument == "-time-min")
+            {
+                args.time_seconds = false;
+            }
+            else if (argument == "-time-sec")
+            {
+                args.time_seconds = true;
             }
             else if (argument == "-log")
             {
@@ -262,8 +286,13 @@ namespace qAlgorithms
                 exit(1);
             }
         } // end of reading in command line arguments
-        // assert(!args.inputPaths.empty());
-        // assert(!args.inputPaths[0].empty());
+
+        // adjust time to seconds if necessary
+        if (!args.time_seconds)
+        {
+            args.prof_lim_rt_lower *= 60;
+            args.prof_lim_rt_upper *= 60;
+        }
         return args;
     }
     // NOLINTEND(concurrency-mt-unsafe)
@@ -315,25 +344,40 @@ namespace qAlgorithms
 
         if (args.inputPaths.empty())
         {
-            fprintf(stderr, "Error: no input file supplied. Specify a file or directorey using the -i or "
+            fprintf(stderr, "Error: no input file supplied. Specify a file or directory using the -i or "
                             "-tl flag. Execute qAlgorithms with the -h flag for more information.\n");
             goodInputs = false;
         }
         if (args.outputPath.empty())
         {
-
-            if (args.printCentroids || args.printFeatures || args.printBins)
+            if (args.printCentroids ||
+                args.printFeatures ||
+                args.printBins ||
+                args.printProfileSection)
             {
                 std::string badOptions = "";
-                bool prevBad = false;
+                int prevBad = 0;
+                if (args.printProfileSection)
+                {
+                    prevBad += 1;
+                    if (prevBad > 0)
+                    {
+                        badOptions += ", ";
+                    }
+                    badOptions += "-profile-section";
+                }
                 if (args.printCentroids)
                 {
-                    prevBad = true;
+                    prevBad += 1;
+                    if (prevBad > 0)
+                    {
+                        badOptions += ", ";
+                    }
                     badOptions += "-printcentroids";
                 }
                 if (args.printBins)
                 {
-                    if (prevBad)
+                    if (prevBad > 0)
                     {
                         badOptions += ", ";
                     }
@@ -342,19 +386,14 @@ namespace qAlgorithms
                 }
                 if (args.printFeatures)
                 {
-                    if (prevBad)
+                    if (prevBad > 0)
                     {
                         badOptions += ", ";
                     }
                     badOptions += "-printfeatures";
                 }
-                bool pluralSet = false;
-                if (badOptions.size() > 15) // more than one option was set
-                {
-                    pluralSet = true;
-                }
 
-                if (pluralSet)
+                if (prevBad > 1)
                 {
                     fprintf(stderr, "Error: output flags \"%s\" were set, but no output path supplied.\n",
                             badOptions.c_str());
@@ -551,29 +590,78 @@ namespace qAlgorithms
 #pragma region "print functions"
     // @todo use macros to move the boilerplate out of the function body
 
-    void printProfileSection(const std::vector<float> *mz,
-                             const std::vector<float> *rt,
-                             std::filesystem::path pathOutput,
-                             std::string filename)
-    {
-    }
-
-    static void errorMsg(std::filesystem::path *pathOutput, bool noOverwrite)
+    static bool stopOverwrite(std::filesystem::path *pathOutput, bool noOverwrite)
     {
         if (std::filesystem::exists(*pathOutput))
         {
             if (noOverwrite)
             {
-#ifdef _WIN32
-                const char format[] = "Warning: \"%ls\" already exists and will not be overwritten\n";
-#else
-                const char format[] = "Warning: \"%s\" already exists and will not be overwritten\n";
-#endif
+                const char format[] = "Warning: \"" _STR "\" already exists and will not be overwritten\n";
                 fprintf(stderr, format, pathOutput->c_str());
-                return;
+                return true;
             }
             std::filesystem::remove(*pathOutput);
         }
+        return false;
+    }
+
+    void printProfileSections(XML_File *infile,
+                              const UserInputSettings *inargs,
+                              const std::vector<unsigned int> *selectedIndices,
+                              std::string filename)
+    {
+        filename += "_profspec.csv";
+        std::filesystem::path pathOutput = inargs->outputPath;
+        pathOutput /= filename;
+        if (stopOverwrite(&pathOutput, inargs->noOverwrite))
+            return;
+
+        std::vector<float> rt;
+        infile->get_spectra_RT(selectedIndices, &rt);
+        size_t startIdx = 0;
+        size_t length = rt.size();
+        clampSorted(rt.data(), &startIdx, &length,
+                    inargs->prof_lim_rt_lower, inargs->prof_lim_rt_upper);
+
+        // for all relevant retention times, print formatted output to a buffer. Buffer size should
+        // be static, but solved via std::string here.
+        std::vector<float> mz;
+        std::vector<float> intensity;
+        std::string outBuffer = "idx_spec,rt,mz,intensity\n";
+        for (size_t i = startIdx; i < length; i++)
+        {
+            unsigned int idx = selectedIndices->at(i);
+            float rt_idx = rt.at(i);
+            infile->get_spectrum(&mz, &intensity, idx);
+            size_t startSpec = 0;
+            size_t lengthSpec = mz.size();
+            clampSorted(mz.data(), &startSpec, &lengthSpec,
+                        inargs->prof_lim_mz_lower, inargs->prof_lim_mz_upper);
+            char buffer[32] = "";
+            for (size_t point = startSpec; point < lengthSpec; point++)
+            {
+                sprintf(buffer, "%d,%f,%f,%f\n",
+                        idx, rt_idx, mz[point], intensity[point]);
+                outBuffer += buffer;
+            }
+            mz.clear();
+            intensity.clear();
+        }
+        if (outBuffer.size() == 25) // size of the header string is 25
+        {
+            fprintf(stderr, "Error: No regions with the specified properties:\n"
+                            "mz range from %f to %f and RT range from %f to %f (min)\n"
+                            "exist in the supplied data.\n",
+                    inargs->prof_lim_mz_lower, inargs->prof_lim_mz_upper,
+                    inargs->prof_lim_rt_lower, inargs->prof_lim_rt_upper);
+            return;
+        }
+
+        FILE *outfile = fopen(pathOutput.c_str(), "w");
+
+        fprintf(outfile, "%s", outBuffer.c_str());
+
+        fclose(outfile);
     }
 
     void printCentroids(const std::vector<CentroidPeak> *peaktable,
@@ -584,30 +672,23 @@ namespace qAlgorithms
     {
         filename += "_centroids.csv";
         pathOutput /= filename;
-        errorMsg(&pathOutput, noOverwrite);
-
-        if (!silent)
-        {
-#ifdef _WIN32
-            const char format[] = "writing centroids to: %ls\n";
-#else
-            const char format[] = "writing centroids to: %s\n";
-#endif
-            printf(format, pathOutput.c_str());
-        }
+        if (stopOverwrite(&pathOutput, noOverwrite))
+            return;
 
         std::ofstream file_out;
         std::stringstream output;
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
         {
-#ifdef _WIN32
-            const char format[] = "Error: could not open output path during centroid printing. No files have been written.\nFilename: %ls\n";
-#else
-            const char format[] = "Error: could not open output path during centroid printing. No files have been written.\nFilename: %s\n";
-#endif
+            const char format[] = "Error: could not open output path during centroid printing.\n"
+                                  "No files have been written.Filename:\n" _STR "\n";
             fprintf(stderr, format, pathOutput.c_str());
             return;
+        }
+        if (!silent)
+        {
+            const char format[] = "writing centroids to: " _STR "\n";
+            printf(format, pathOutput.c_str());
         }
         output << "cenID,mz,mzUncertainty,number_MS1,retentionTime,area,areaUncertainty,"
                << "height,heightUncertainty,scale,DQSC,competitors\n";
@@ -638,21 +719,8 @@ namespace qAlgorithms
         filename += "_bins.csv";
         pathOutput /= filename;
 
-        if (std::filesystem::exists(pathOutput))
-        {
-            if (noOverwrite)
-            {
-#ifdef _WIN32
-                const char format[] = "Warning: %ls already exists and will not be overwritten\n";
-#else
-                const char format[] = "Warning: %s already exists and will not be overwritten\n";
-#endif
-                fprintf(stderr, format, pathOutput.c_str());
-
-                return;
-            }
-            std::filesystem::remove(pathOutput);
-        }
+        if (stopOverwrite(&pathOutput, noOverwrite))
+            return;
 
         if (!silent)
         {
@@ -711,20 +779,9 @@ namespace qAlgorithms
         filename += "_features.csv";
         pathOutput /= filename;
 
-        if (std::filesystem::exists(pathOutput))
-        {
-            if (noOverwrite)
-            {
-#ifdef _WIN32
-                const char format[] = "writing bins to: %ls\n";
-#else
-                const char format[] = "writing bins to: %s\n";
-#endif
-                printf(format, pathOutput.c_str());
-                return;
-            }
-            std::filesystem::remove(pathOutput);
-        }
+        if (stopOverwrite(&pathOutput, noOverwrite))
+            return;
+
         if (!silent)
         {
 #ifdef _WIN32

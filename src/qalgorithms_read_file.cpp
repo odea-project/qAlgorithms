@@ -7,6 +7,7 @@
 // #include <filesystem>
 #include <cassert>
 #include <cstddef>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <zlib.h>
@@ -40,12 +41,8 @@ namespace qAlgorithms
         else
         {
             // encountered one relevant file "in the wild", but this is still rare enough to warrant a warning
-            // @todo replace with memcpy
-            const float *flt = (const float *)bytes->data();
-            for (size_t i = 0; i < lengthDecoded; i++)
-            {
-                res[i] = flt[i];
-            }
+            const void *src = bytes->data();
+            memcpy(res, src, lengthDecoded * sizeof(float));
         }
 #pragma clang diagnostic pop
         return lengthDecoded;
@@ -193,32 +190,31 @@ namespace qAlgorithms
         pugi::xml_node node_comp = bin.find_child_by_attribute("cvParam", "accession", "MS:1000574");
         if (node_comp)
         {
-            const std::string compression = node_comp.attribute("name").as_string();
-
-            mtd.compressed = (compression == "zlib" || compression == "zlib compression"); // @todo what if it isn't zlib compressed?
+            const char *compression = node_comp.attribute("name").as_string();
+            mtd.compressed = (std::strcmp(compression, "zlib") == 0) ||
+                             (std::strcmp(compression, "zlib compression") == 0);
+        }
+        else
+        {
+            mtd.compressed = false;
         }
 
         bool has_bin_data_type = false;
-
-        std::string tmp;
         for (size_t i = 0; 1 < possible_accessions_binary_data_mzML.size(); ++i)
         {
-            pugi::xml_node node_data_type = bin.find_child_by_attribute("cvParam", "accession", possible_accessions_binary_data_mzML[i].c_str());
+            pugi::xml_node node_data_type = bin.find_child_by_attribute(
+                "cvParam", "accession",
+                possible_accessions_binary_data_mzML[i].c_str());
 
             if (node_data_type)
             {
                 has_bin_data_type = true;
-                tmp = node_data_type.attribute("value").as_string();
                 mtd.data_name_short = possible_short_name_binary_data_mzML[i];
                 break;
             }
         }
         assert(has_bin_data_type); // Encoded data type could not be found matching the mzML official vocabulary
-
-        if (mtd.data_name_short == "other") // this should be separated into a check for null / termination condition @todo
-        {
-            mtd.data_name_short += ": " + tmp;
-        }
+        assert(mtd.data_name_short != "other");
 
         return mtd;
     }
@@ -283,7 +279,9 @@ namespace qAlgorithms
             // error handling
             if (decoded_string.empty())
             {
-                fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 correctly. Ensure the input file is not corrupted.\n", index);
+                fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 "
+                                "correctly. Ensure the input file is not corrupted.\n",
+                        index);
                 return; // implement a defined way to skip the current file? @todo
             }
 
@@ -299,7 +297,6 @@ namespace qAlgorithms
             }
 
             assert(spectrum_int->size() == number_traces); // this happens if an index is tried which does not exist in the data
-            // assert(spectra_binary_metadata[1].data_name_short == "intensity");
         }
     };
 
@@ -322,6 +319,7 @@ namespace qAlgorithms
     {
         const size_t idxSize = indices->size();
         assert(!this->defective);
+        assert(idxSize > 0);
 
         RTs->resize(idxSize);
 

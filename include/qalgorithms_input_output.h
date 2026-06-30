@@ -7,6 +7,17 @@
 #include <string>
 #include <vector>
 
+// when printing filepaths, on windows we have to use %ls in format strings while on linux,
+// %s is used. This is annoying and leads to string duplication. Instead, we can use a macro
+// and accept the slightly worse readability of writing "text" MACRO "text\n" for the format
+// strings in printf. Since this is mainly abstracted into a logging function, that is acceptable.
+
+#ifdef _WIN_32
+    #define _STR "%ls"
+#else
+    #define _STR "%s"
+#endif
+
 namespace qAlgorithms
 {
 
@@ -29,6 +40,11 @@ namespace qAlgorithms
         std::string outputPath = "";
         size_t skipAhead = 0;        // this is intended to make testing over many files more time efficient
         TerminateAfter term = never; // continue loop execution after the desired result has been printed
+        // limits for printing profile region
+        float prof_lim_mz_lower = 0;
+        float prof_lim_mz_upper = 0;
+        float prof_lim_rt_lower = 0;
+        float prof_lim_rt_upper = 0;
         // output options
         bool printCentroids = false;
         bool printBins = false;
@@ -44,6 +60,7 @@ namespace qAlgorithms
         bool verboseProgress = false;
         bool doLogging = false;
         // extended functionality
+        bool time_seconds = false;
         bool skipError = false;
         bool noOverwrite = false;
         bool tasklistSpecified = false; // @todo implement
@@ -73,10 +90,11 @@ namespace qAlgorithms
 
 #pragma region "print functions"
 
-    void printProfileSection(const std::vector<float> *mz,
-                             const std::vector<float> *rt,
-                             std::filesystem::path pathOutput,
-                             std::string filename);
+    class XML_File;
+    void printProfileSections(XML_File *infile,
+                              const UserInputSettings *inargs,
+                              const std::vector<unsigned int> *selectedIndices,
+                              std::string filename);
 
     void printSpectrumAndCens(const std::vector<CentroidPeak> *peaktable,
                               std::filesystem::path pathOutput,

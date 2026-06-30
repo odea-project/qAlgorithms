@@ -131,6 +131,12 @@ namespace qAlgorithms
     double *maxVal(double *const arrayStart, const size_t length);
     const double *maxVal(const double *const arrayStart, const size_t length);
 
+    void clampSorted(const float *const array,
+                     size_t *const startIdx,
+                     size_t *const length,
+                     const float lim_lower,
+                     const float lim_upper);
+
     double meanOfCumulative(double *const cumArray, const size_t startIdx, const size_t endIdx);
     double meanOfCumulative(const double *const cumArray, const size_t startIdx, const size_t endIdx);
     unsigned int sumOfCumulative(const unsigned int *const cumArray, const Range_i *r);

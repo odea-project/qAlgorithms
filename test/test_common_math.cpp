@@ -1,4 +1,5 @@
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wfloat-conversion" // added because of manuall defined arrays
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
 
@@ -36,6 +37,17 @@ void test_array_min_max()
     double *max_d = maxVal(test_d, len);
     verify(*min_d == 0);
     verify(*max_d == FLT_MAX);
+}
+void test_clamping()
+{
+    size_t len = 7;
+    const float data[] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7};
+    float lim_1_L = 0.11;
+    float lim_1_R = 0.65;
+    size_t startIdx = 0;
+    clampSorted(data, &startIdx, &len, lim_1_L, lim_1_R);
+    verify(startIdx == 1);
+    verify(len == 5);
 }
 void test_standard_deviation()
 { // standard deviation - true values generated with wolfram alpha
@@ -134,6 +146,7 @@ int main()
     test_linear_solve();
     test_quadraticSolve();
     test_erfs();
+    test_clamping();
     // test_normalDist(50000);
 }
 // NOLINTEND(misc-use-internal-linkage)

@@ -150,6 +150,16 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
             // @todo add check if set polarity is correct
             const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra(true, polarity, false); // @todo MS2 support here!
 
+            if (userArgs.printProfileSection)
+            {
+                // This is a somewhat crude solution to print a section of the data in profile mode.
+                // Really, this should be a separate program within the qAlgorithms project @todo
+                printProfileSections(&inputFile,
+                                     &userArgs,
+                                     &selectedIndices,
+                                     filename);
+            }
+
             if (selectedIndices.empty())
             {
                 fprintf(stderr, "Error: No valid spectra exist in the source file %s\n", filename.c_str());
