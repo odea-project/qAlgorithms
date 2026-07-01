@@ -28,8 +28,8 @@ namespace qAlgorithms
     {
         RegCoeffs coeffs = {0};      // regression coefficients
         Range_i regSpan = {0, 0, 0}; // limits of the peak regression window
-        size_t startIdx;
-        size_t length;
+        size_t startIdx = 0;
+        size_t length = 0;
         int df = 0;              // degrees of freedom, interpolated data points will not be considered
         float apex_position = 0; // position of the apex of the peak
         // float mse = 0;            // mean squared error

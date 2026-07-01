@@ -40,8 +40,7 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
-
-latex
+cppcheck_cache
 
 # Executables
 *.exe
@@ -57,5 +56,4 @@ qAlgorithms
 *.pdf
 .cache
 .vscode
-*.mzML
 ./obj

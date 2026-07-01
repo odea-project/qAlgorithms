@@ -1,5 +1,6 @@
 #include <algorithm> // remove duplicates from task list
 #include <assert.h>
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <filesystem> // printing absolute path in case read fails
@@ -633,28 +634,52 @@ namespace qAlgorithms
         // for all relevant retention times, print formatted output to a buffer. Buffer size should
         // be static, but solved via std::string here.
         std::vector<float> mz;
+        float mz_min = INFINITY;
+        float mz_max = 0;
         std::vector<float> intensity;
-        std::string outBuffer = "idx_spec,rt,mz,intensity\n";
+
+        FILE *outfile = fopen(pathOutput.c_str(), "w");
+        if (outfile)
+        {
+            fprintf(outfile, "idx_spec,rt,mz,intensity\n");
+        }
+        else
+        {
+            fprintf(stderr, "Error: fopen() failed, no data has been written\n");
+            return;
+        }
+
+        size_t totalWritten = 0;
         for (size_t i = startIdx; i < length; i++)
         {
             unsigned int idx = selectedIndices->at(i);
             float rt_idx = rt.at(i);
             infile->get_spectrum(&mz, &intensity, idx);
+            mz_min = (float)min(mz_min, mz[0]);
+            mz_max = (float)max(mz_max, mz.back());
             size_t startSpec = 0;
             size_t lengthSpec = mz.size();
             clampSorted(mz.data(), &startSpec, &lengthSpec,
                         inargs->prof_lim_mz_lower, inargs->prof_lim_mz_upper);
-            char buffer[32] = "";
-            for (size_t point = startSpec; point < lengthSpec; point++)
+
+            for (size_t point = 0; point < lengthSpec; point++)
             {
-                sprintf(buffer, "%d,%f,%f,%f\n",
-                        idx, rt_idx, mz[point], intensity[point]);
-                outBuffer += buffer;
+                size_t access = point + startSpec;
+                totalWritten += fprintf(outfile, "%d,%f,%f,%f\n",
+                                        idx, rt_idx, mz[access], intensity[access]);
             }
             mz.clear();
             intensity.clear();
         }
-        if (outBuffer.size() == 25) // size of the header string is 25
+
+        fclose(outfile);
+
+        if (!inargs->silent)
+        {
+            printf("File boundaries:\n    m/z: %f to %f\n    RT: %f to %f (min)\n",
+                   mz_min, mz_max, rt[0] / 60, rt.back() / 60);
+        }
+        if (totalWritten == 0) // size of the header string is 25
         {
             fprintf(stderr, "Error: No regions with the specified properties:\n"
                             "mz range from %f to %f and RT range from %f to %f (min)\n"
@@ -669,12 +694,6 @@ namespace qAlgorithms
             const char format[] = "writing profile section to: " _STR "\n";
             printf(format, pathOutput.c_str());
         }
-
-        FILE *outfile = fopen(pathOutput.c_str(), "w");
-
-        fprintf(outfile, "%s", outBuffer.c_str());
-
-        fclose(outfile);
     }
 
     void printCentroids(const std::vector<CentroidPeak> *peaktable,

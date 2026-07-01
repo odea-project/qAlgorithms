@@ -13,6 +13,7 @@
 #include <math.h>
 
 #ifndef _GLIBCXX_CFLOAT
+    // cppcheck-suppress preprocessorErrorDirective
     #error "this is just here to suppress a warning"
 #endif
 
@@ -46,6 +47,7 @@ inline void default_assertion_handler(const char *assertion_as_cstring, const ch
 #elif defined(__arm__) || defined(__aarch64__)
     __asm__ volatile("brk #0");
 #else
+    // cppcheck-suppress preprocessorErrorDirective
     #error "Unsupported architecture for breakpoint trap"
 #endif
     a++;

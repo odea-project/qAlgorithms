@@ -29,7 +29,10 @@ need_install="$(echo "$need_install" | xargs)"
 if [ -z "$need_install" ]; then
   echo "All packages required for building qAlgorithms are already installed."
 
-  if [ -f ./CMakeLists.txt ]; then
+  # get the directory of the script (taken from https://stackoverflow.com/questions/59895/how-do-i-get-the-directory-where-a-bash-script-is-located-from-within-the-script)
+  SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+  if [ -f $SCRIPT_DIR/CMakeLists.txt ]; then
     mkdir -p build && cmake -S . -B build && cmake --build ./build -j
     # @todo finish off the installation by registering qalgo to the users path
     exit 0

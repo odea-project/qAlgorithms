@@ -1364,8 +1364,6 @@ namespace qAlgorithms
                                     const float *observed,
                                     const std::vector<float> *predict);
 
-    static std::vector<int> failbook;
-
     // @todo rework: Currently, we are trying to determine the validity of a given regression
     // using multiple tests. This is wrong, since this way we get uneven p-values of the final
     // outcome (refer to bonferroni correction). Instead, a correct version of this function
@@ -1495,7 +1493,6 @@ namespace qAlgorithms
         assert(predict->size() == length);
         mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict->data(), length);
 
-        failbook.push_back(failstates);
         if (failstates != 0)
             return invalid::invalid_apex;
 
@@ -1897,16 +1894,7 @@ namespace qAlgorithms
             static const size_t maxscale = 10;
             qpeaks_find(block.intensity, block.mz, nullptr, block.length, maxscale, &ret);
         }
-        volatile bool dumpData = false;
-        if (dumpData)
-        {
-            FILE *F = fopen("./faildump.txt", "w");
-            for (size_t i = 0; i < failbook.size(); i++)
-            {
-                fprintf(F, "%d,", failbook[i]);
-            }
-            fclose(F);
-        }
+
         return centroids->size();
     }
 
