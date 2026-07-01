@@ -71,6 +71,7 @@ in the centroid dimension. Problem: m/z variation
 * Function to process a complete file based on a filepath and returns a feature list
 * integration of full qalgo functionality to patroon
 * (maybe) add qalgo to openchrom and mzmine // minimize interaction with commercial platforms for now
+* Rework install on linux so that the executeable is registered in PATH and manpages are added to the system
 
 ## Testing
 Any code that is not run when processing data and concerned with logical correctness of the program.
