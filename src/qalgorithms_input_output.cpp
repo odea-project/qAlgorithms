@@ -480,7 +480,7 @@ namespace qAlgorithms
         struct TaskEntry
         {
             fs::path path;
-            uintmax_t filesize;
+            uintmax_t filesize = 0;
         };
         std::vector<TaskEntry> tasklist;
         tasklist.reserve(inputLen);
@@ -665,7 +665,7 @@ namespace qAlgorithms
             for (size_t point = 0; point < lengthSpec; point++)
             {
                 size_t access = point + startSpec;
-                totalWritten += fprintf(outfile, "%d,%f,%f,%f\n",
+                totalWritten += fprintf(outfile, "%u,%f,%f,%f\n",
                                         idx, rt_idx, mz[access], intensity[access]);
             }
             mz.clear();
@@ -728,7 +728,7 @@ namespace qAlgorithms
         {
             const CentroidPeak peak = peaktable->at(j);
             char buffer[256];
-            snprintf(buffer, 256, "%d,%0.6f,%0.6f,%d,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d,%0.5f,%d\n",
+            snprintf(buffer, 256, "%u,%0.6f,%0.6f,%u,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%u,%0.5f,%u\n",
                      peak.ID, peak.mz, peak.mzUncertainty, peak.number_MS1, convertRT->at(peak.number_MS1),
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.DQSC,
                      //  peak.interpolations,
@@ -789,7 +789,7 @@ namespace qAlgorithms
             {
                 const CentroidPeak cen = centroids->at(bin->cenID[i]);
                 char buffer[128];
-                snprintf(buffer, 128, "%lu,%u,%0.8f,%0.8f,%0.4f,%d,%0.6f,%0.6f,%u,%0.4f\n", // @todo re-add the dqsb once that works
+                snprintf(buffer, 128, "%lu,%u,%0.8f,%0.8f,%0.4f,%u,%0.6f,%0.6f,%u,%0.4f\n", // @todo re-add the dqsb once that works
                          binID, cen.ID, bin->mz[i], bin->predInterval[i],
                          bin->RT[i], bin->scanNumbers[i], bin->ints_area[i],
                          bin->ints_height[i], bin->df[i], bin->DQSC[i]);
@@ -853,7 +853,7 @@ namespace qAlgorithms
             float RT_end = 0;
 
             char buffer[256];
-            snprintf(buffer, 256, "%d,%lu,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%lu,%0.5f,%0.5f,%0.5f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+            snprintf(buffer, 256, "%u,%lu,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%lu,%0.5f,%0.5f,%0.5f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                      ID, binID, peak.mz, peak.mzUncertainty,
                      peak.retentionTime, peak.RT_Uncertainty, RT_start, RT_end,
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, (unsigned long)peak.coefficients.scale,

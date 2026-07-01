@@ -32,6 +32,7 @@ namespace qAlgorithms
 #pragma clang diagnostic ignored "-Wcast-align"
         if (isDouble)
         {
+            // cppcheck-suppress invalidPointerCast
             const double *dbl = (const double *)bytes->data();
             for (size_t i = 0; i < lengthDecoded; i++)
             {

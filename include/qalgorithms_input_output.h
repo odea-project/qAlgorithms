@@ -80,9 +80,9 @@ namespace qAlgorithms
     struct TaskItem
     {
         std::filesystem::path path;
-        Polarities polarity;
-        unsigned int replicateGroup; // @todo
-        unsigned int fileID;         // count upwards after reading everything in @todo produce a unique identifier
+        Polarities polarity = Polarities::unknown_polarity;
+        unsigned int replicateGroup = 0; // @todo
+        unsigned int fileID = 0;         // count upwards after reading everything in @todo produce a unique identifier
     };
 
     std::vector<std::filesystem::path> controlInput(const std::vector<std::string> *inputTasks);

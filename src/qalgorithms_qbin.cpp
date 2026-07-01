@@ -77,7 +77,7 @@ namespace qAlgorithms
         // no change in bin result, so all remaining bins cannot be coerced into a valid state
         if (!activeBins.processBinsF.empty())
         {
-            for (Bin bin : activeBins.processBinsF)
+            for (const Bin &bin : activeBins.processBinsF)
             {
                 // for (size_t i = 0; i < bin.pointsInBin.size(); i++)
                 // {
@@ -93,7 +93,7 @@ namespace qAlgorithms
 
         if (!activeBins.processBinsT.empty())
         {
-            for (Bin bin : activeBins.processBinsT)
+            for (const Bin &bin : activeBins.processBinsT)
             {
                 for (size_t i = 0; i < bin.pointsInBin.size(); i++)
                 {

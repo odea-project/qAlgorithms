@@ -44,9 +44,9 @@ namespace qAlgorithms
     struct PeakFit
     {
         RegCoeffs coeffs = {0};
-        Range_i range;
-        size_t startIdx;
-        size_t length;
+        Range_i range = {};
+        size_t startIdx = 0;
+        size_t length = 0;
         float position = 0;
         float uncert_position = 0;
         float limit_L = 0;
