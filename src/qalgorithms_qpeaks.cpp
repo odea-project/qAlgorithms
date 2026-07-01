@@ -89,7 +89,7 @@ namespace qAlgorithms
             // model only has a standard deviation for the apex peak
             peak.fwhm = (float)fullWidthHalfMax(&coeff, peak.height, delta_x);
 
-            peak.dqs = 1 - erf(regression->uncert_area / regression->area);
+            peak.dqs = erfc(regression->uncert_area / regression->area);
             peak.jaccard = regression->jaccard;
 
             peak.coeffs = regression->coeffs;

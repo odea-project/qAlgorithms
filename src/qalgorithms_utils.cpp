@@ -231,7 +231,7 @@ namespace qAlgorithms
         // these values are determined empirically (see https://github.com/GeRe87/OS_critVal)
         const double OS_CRIT_A = 0.1443340625173891;
         const double OS_CRIT_B = 3.2412322699344687;
-        return (OS_CRIT_A + (OS_CRIT_B / std::sqrt(std::log(n + 1)))) * stdDev;
+        return (OS_CRIT_A + (OS_CRIT_B / sqrt(log1p(n)))) * stdDev; // log1p(x) = log(x + 1)
     }
 
     size_t min(size_t a, size_t b)
@@ -352,7 +352,7 @@ namespace qAlgorithms
     unsigned int sumOfCumulative(const unsigned int *const cumArray, const Range_i *r)
     {
         // if the cumulative array does not exist (== null), assume that
-        // the toal df is the length @todo this is not the correct function to handle that in!
+        // the toal df is the length
         if (cumArray == nullptr)
             return r->length;
 

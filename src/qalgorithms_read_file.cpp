@@ -91,10 +91,12 @@ namespace qAlgorithms
         return output;
     };
 
+    static BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
+
     XML_File::XML_File(const path_char *file, const SourceFileType type)
     {
         filetype = type;
-        assert(filetype == mzML); // @todo support mzXML and other xml based formats
+        assert(filetype == mzML);
 
         loading_result = mzml_base_document.load_file(file, pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
 
@@ -155,7 +157,7 @@ namespace qAlgorithms
         defective = true;
     };
 
-    BinaryMetadata XML_File::extract_binary_metadata(const pugi::xml_node &bin)
+    static BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin)
     {
         // extract type of number representation in binary data
         bool type_double = false, type_float = false, type_int32 = false, type_int64 = false;
@@ -220,7 +222,7 @@ namespace qAlgorithms
         return mtd;
     }
 
-    void XML_File::get_spectrum( // this obviously only extracts data that is in profile mode.
+    int XML_File::get_spectrum( // this obviously only extracts data that is in profile mode.
         std::vector<float> *const spectrum_mz,
         std::vector<float> *const spectrum_int,
         size_t index)
@@ -231,7 +233,7 @@ namespace qAlgorithms
         if (linknodes->size() == 0)
         {
             fprintf(stderr, "Error: no spectra found for index %zu\n", index);
-            return;
+            return 1;
         }
 
         const pugi::xml_node &spectrum_node = (*linknodes)[index];
@@ -252,8 +254,10 @@ namespace qAlgorithms
             // error handling
             if (decoded_string.empty())
             {
-                fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 correctly. Ensure the input file is not corrupted.\n", index);
-                return; // implement a defined way to skip the current file? @todo
+                fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 \n"
+                                "correctly. Ensure the input file is not corrupted.\n",
+                        index);
+                return 2;
             }
 
             if (mtd_mz.compressed)
@@ -283,7 +287,7 @@ namespace qAlgorithms
                 fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 "
                                 "correctly. Ensure the input file is not corrupted.\n",
                         index);
-                return; // implement a defined way to skip the current file? @todo
+                return 2;
             }
 
             if (mtd_intensity.compressed)
@@ -299,6 +303,7 @@ namespace qAlgorithms
 
             assert(spectrum_int->size() == number_traces); // this happens if an index is tried which does not exist in the data
         }
+        return 0;
     };
 
     static float extract_scan_RT(const pugi::xml_node &spec)
@@ -349,7 +354,7 @@ namespace qAlgorithms
             }
             else
             {
-                assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000129")); // @todo a single check should be enough
+                assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000129"));
                 negative = true;
             }
 
@@ -371,8 +376,6 @@ namespace qAlgorithms
     std::vector<unsigned int> XML_File::filter_spectra(
         bool ms1, bool polarity, bool centroided)
     {
-        // @todo this function should take a struct with the field names as input and switch it depending on format specifics
-
         // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
         assert(!this->defective);
         assert(this->number_spectra > 0);
@@ -424,15 +427,11 @@ namespace qAlgorithms
             centroided += 1;
         }
 
-        if (centroided == 0)
-            return false;
-
-        if (profile == 0)
+        if (centroided > 0)
+        {
+            assert(profile == 0);
             return true;
-
-        if (profile / centroided < 2) // @todo this is a suboptimal solution
-            return true;
-
+        }
         return false;
     }
 } // namespace qAlgorithms

@@ -361,10 +361,10 @@ namespace qAlgorithms
                 if (args.printProfileSection)
                 {
                     prevBad += 1;
-                    if (prevBad > 0)
-                    {
-                        badOptions += ", ";
-                    }
+                    // if (prevBad > 0) // uncomment if an earlier return point is introduced
+                    // {
+                    //     badOptions += ", ";
+                    // }
                     badOptions += "-profile-section";
                 }
                 if (args.printCentroids)

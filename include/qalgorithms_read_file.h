@@ -8,16 +8,14 @@
 #define PUGIXML_HEADER_ONLY
 #include "../external/pugixml/pugixml.hpp"
 
-namespace qAlgorithms
-{
-    // @todo split off into "read file" and "read mzml", where the mzml reader just prepares an intermediate struct, processing of which is handled separately
-
 #if defined(_WIN32)
-    typedef wchar_t path_char;
+typedef wchar_t path_char;
 #else
-    typedef char path_char;
+typedef char path_char;
 #endif
 
+namespace qAlgorithms
+{
     struct BinaryMetadata // @todo there is no need for a file-specific metadata object. Is it possible for different spectra and properties to be compressed / uncompressed?
     {
         std::string data_name_short;
@@ -67,8 +65,6 @@ namespace qAlgorithms
         // std::vector<BinaryMetadata> spectra_binary_metadata;
         BinaryMetadata mtd_mz{}, mtd_intensity{};
 
-        BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
-
         pugi::xml_document mzml_base_document;
 
         pugi::xml_parse_result loading_result;
@@ -94,7 +90,7 @@ namespace qAlgorithms
 
         XML_File(const path_char *fileconst, SourceFileType type);
 
-        void get_spectrum(
+        int get_spectrum(
             std::vector<float> *const spectrum_mz,
             std::vector<float> *const spectrum_int,
             size_t index);

@@ -8,6 +8,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 mkdir -p $SCRIPT_DIR/cppcheck_cache
 # 
 cppcheck --project="$SCRIPT_DIR/build/compile_commands.json" --cppcheck-build-dir="$SCRIPT_DIR/cppcheck_cache" \
-         --inline-suppr --enable=warning,performance,portability --suppress=*:*/external/* --suppress=postfixOperator \
-         --suppress=dangerousTypeCast --suppress=uninitMemberVarNoCtor
+         --inline-suppr --enable=style --suppress=*:*/external/* --suppress=postfixOperator \
+         --suppress=dangerousTypeCast --suppress=uninitMemberVarNoCtor --suppress=constVariablePointer
         

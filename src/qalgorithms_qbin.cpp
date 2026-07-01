@@ -380,7 +380,7 @@ namespace qAlgorithms
             // the last distance of the order space is never relevant, since the point one past
             // it is already out of range for the current block
             const double *pointerToMax = maxVal(pointerToStart + range.startIdx, binsizeInOS - 1);
-            const double max = *pointerToMax;
+            const double max_mz_gap = *pointerToMax;
 
             size_t sourcePos = size_t(pointerToMax - pointerToStart);
             size_t cenID = pointsInSourceBin->at(sourcePos)->ID;
@@ -389,9 +389,9 @@ namespace qAlgorithms
 
             const double meanError = meanOfCumulative(cumError->data(), range.startIdx, range.endIdx);
 
-            const double vcrit = binningCritVal(binsizeInOS, meanError);
+            const double crit_mz_gap = binningCritVal(binsizeInOS, meanError);
 
-            if (max < vcrit) // all values in range are part of one mz bin
+            if (max_mz_gap < crit_mz_gap) // all values in range are part of one mz bin
             {
                 // the difference is calculated for the position n, and is accordingly excluded from the
                 // next recursive call at every step. Since position n is still part of the bin (the distance
