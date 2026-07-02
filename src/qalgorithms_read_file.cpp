@@ -75,22 +75,6 @@ namespace qAlgorithms
         output_string->resize(infstream.total_out);
     };
 
-    // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
-    // (https://github.com/simdutf/simdutf/tree/master?tab=readme-ov-file#single-header-version-with-limited-features).
-    std::vector<char> decode_base64(const std::string &encoded_string)
-    {
-        size_t length = encoded_string.size() / 4 * 3;
-        std::vector<char> output(length);
-        auto simd_res = simdutf::base64_to_binary(encoded_string.c_str(), encoded_string.size(), output.data());
-
-        if (simd_res.error != 0) // [[unlikely]]
-        {
-            return {0}; // error message is handled one function above
-        }
-        output.resize(simd_res.count);
-        return output;
-    };
-
     static BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
 
     XML_File::XML_File(const path_char *file, const SourceFileType type)
@@ -434,4 +418,34 @@ namespace qAlgorithms
         }
         return false;
     }
+
+    // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
+    // (https://github.com/simdutf/simdutf/tree/master?tab=readme-ov-file#single-header-version-with-limited-features).
+    std::vector<char> decode_base64(const std::string &encoded_string)
+    {
+        size_t length = encoded_string.size() / 4 * 3;
+        std::vector<char> output(length);
+        simdutf::result simd_res = simdutf::base64_to_binary(encoded_string.c_str(),
+                                                             encoded_string.size(),
+                                                             output.data());
+
+        if (simd_res.error != 0) // [[unlikely]]
+        {
+            return {0}; // error message is handled one function above
+        }
+        output.resize(simd_res.count);
+        return output;
+    };
+
+    std::string encode_base64_flt(const float *input_flt, const size_t in_len_flt)
+    {
+        const size_t length = in_len_flt * sizeof(float);
+        const char *input = (const char *)input_flt;
+        std::string output;
+        output.resize(((length + 2) / 3) * 4);
+        size_t written = simdutf::binary_to_base64(input, length, output.data());
+        assert(written == output.size());
+        return output;
+    }
+
 } // namespace qAlgorithms

@@ -106,6 +106,8 @@ namespace qAlgorithms
     // functions exposed for testing
     std::vector<char> decode_base64(const std::string &encoded_string);
 
+    std::string encode_base64_flt(const float *input_flt, const size_t in_len_flt);
+
     int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
                         std::vector<float> *result);
 }; // namespace qAlgorithms
