@@ -437,15 +437,14 @@ namespace qAlgorithms
         return output;
     };
 
-    std::string encode_base64_flt(const float *input_flt, const size_t in_len_flt)
+    std::vector<char> encode_base64_dbl(const double *input_dbl, const size_t in_len_dbl)
     {
-        const size_t length = in_len_flt * sizeof(float);
-        const char *input = (const char *)input_flt;
-        std::string output;
-        output.resize(((length + 2) / 3) * 4);
-        size_t written = simdutf::binary_to_base64(input, length, output.data());
-        assert(written == output.size());
-        return output;
+        const size_t length = in_len_dbl * sizeof(double);
+        const char *input = (const char *)input_dbl;
+        std::vector<char> buffer(simdutf::base64_length_from_binary(length));
+        size_t written = simdutf::binary_to_base64(input, length, buffer.data());
+        assert(written == buffer.size());
+        return buffer;
     }
 
 } // namespace qAlgorithms
