@@ -13,14 +13,14 @@ if ! command -v cmake >/dev/null 2>&1; then
   need_install="$need_install cmake"
 fi
 
-# zlib (header/library)
-if [ ! -f /usr/include/zlib.h ] && [ ! -f /usr/local/include/zlib.h ]; then
+# zlib-ng (header/library)
+if [ ! -f /usr/include/zlib-ng.h ] && [ ! -f /usr/local/include/zlib-ng.h ]; then
   if command -v ldconfig >/dev/null 2>&1; then
     if ! ldconfig -p 2>/dev/null | grep -qi 'libz\.so'; then
-      need_install="$need_install zlib"
+      need_install="$need_install zlib-ng"
     fi
   else
-    need_install="$need_install zlib"
+    need_install="$need_install zlib-ng"
   fi
 fi
 

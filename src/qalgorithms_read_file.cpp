@@ -10,9 +10,41 @@
 #include <cstring>
 #include <string>
 #include <vector>
-#include <zlib.h>
 
-namespace qAlgorithms
+The default setting of the -fdiagnostics-color= command-line option is now configurable when building GCC using configuration option --with-diagnostics-color=. The possible values are: never, always, auto and auto-if-env. The new default auto uses color only when the standard error is a terminal. The default in GCC 4.9 was auto-if-env, which is equivalent to auto if there is a non-empty GCC_COLORS environment variable, and never otherwise. As in GCC 4.9, an empty GCC_COLORS variable in the environment will always disable colors, no matter what the default is or what command-line options are used.
+A new command-line option -Wswitch-bool has been added for the C and C++ compilers, which warns whenever a switch statement has an index of boolean type.
+A new command-line option -Wlogical-not-parentheses has been added for the C and C++ compilers, which warns about "logical not" used on the left hand side operand of a comparison.
+A new command-line option -Wsizeof-array-argument has been added for the C and C++ compilers, which warns when the sizeof operator is applied to a parameter that has been declared as an array in a function definition.
+A new command-line option -Wbool-compare has been added for the C and C++ compilers, which warns about boolean expressions compared with an integer value different from true/false.
+Full support for Cilk Plus has been added to the GCC compiler. Cilk Plus is an extension to the C and C++ languages to support data and task parallelism.
+A new attribute no_reorder prevents reordering of selected symbols against other such symbols or inline assembler. This enables to link-time optimize the Linux kernel without having to resort to -fno-toplevel-reorder that disables several optimizations.
+New preprocessor constructs, __has_include and __has_include_next, to test the availability of headers have been added.
+This demonstrates a way to include the header <optional> only if it is available:
+
+#ifdef __has_include
+    #if __has_include(<optional>)
+        #include <optional>
+        #define have_optional 1
+    #elif __has_include(<experimental/optional>)
+        #include <experimental/optional>
+        #define have_optional 1
+        #define experimental_optional
+    #else
+        #define have_optional 0
+    #endif
+#endif
+
+// since we care mostly about speed, we want to use the generally faster zlib-ng for decompression.
+// However, we cannot be sure that it exists for a given system. Therefore, it is only included if
+// it can be installed for the host
+#ifdef __has_include
+("zlib-ng.h")
+    #include <zlib-ng.h>
+else
+    #include <zlib.h>
+#endif
+
+    namespace qAlgorithms
 {
     int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
                         std::vector<float> *result)
@@ -439,5 +471,16 @@ namespace qAlgorithms
         assert(written == buffer.size());
         return buffer;
     }
+
+    static void compress_zlib(const std::vector<char> *uncompressed_string, std::vector<char> *output_string)
+    {
+        // worst case: no compression (probably impossible)
+        output_string->resize(uncompressed_string->size());
+        size_t outSize = output_string->size();
+        zng_compress((Bytef *)output_string->data(), &outSize,
+                     (Bytef *)uncompressed_string->data(), outSize);
+        assert(outSize != uncompressed_string->size());
+        output_string->resize(outSize);
+    };
 
 } // namespace qAlgorithms
