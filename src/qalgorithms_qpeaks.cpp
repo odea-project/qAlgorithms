@@ -1349,9 +1349,9 @@ namespace qAlgorithms
 
     /// @brief calculate the residual sum of squares for the log regression / data
     /// @param mutateReg relevant regression
-    /// @param y_start log data
+    /// @param observed log data
     /// @return RSS value
-    static double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *y_start);
+    static double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *observed);
 
     /// @brief performs two F-tests against the log data. First H0 is the mean, second y = mx + b
     /// @param observed log data (or normal data, depends on the use case)
@@ -1580,7 +1580,8 @@ namespace qAlgorithms
     {
         // this function calculates the RSS for H0: y = b0 + x * b1 (no weights)
 
-        double slope = NAN, intercept = NAN;
+        double slope = NAN;
+        double intercept = NAN;
         size_t length = range->length;
         assert(length > 0);
         const float *obs = observed + range->startIdx;
@@ -1655,14 +1656,10 @@ namespace qAlgorithms
 
         size_t size = tmpDiffs.size();
         assert(size > 0);
-        if (size % 2 == 0)
-        {
-            return (tmpDiffs[size / 2 - 1] + tmpDiffs[size / 2]) / 2;
-        }
-        else
-        {
-            return tmpDiffs[size / 2];
-        }
+        double diff = (size % 2 == 0)
+                          ? (tmpDiffs[size / 2 - 1] + tmpDiffs[size / 2]) / 2
+                          : tmpDiffs[size / 2];
+        return diff;
     }
 
     static float weightedMeanAndVariance_EIC(const std::vector<float> *weight,
@@ -1970,7 +1967,9 @@ namespace qAlgorithms
         double b = coeff->b1;
         double c = coeff->b0 - y;
 
-        double x_l = NAN, x_r = NAN, dummy = NAN;
+        double x_l = NAN;
+        double x_r = NAN;
+        double dummy = NAN;
         solveQuadratic(a_l, b, c, &x_l, &dummy);
         solveQuadratic(a_r, b, c, &dummy, &x_r);
 

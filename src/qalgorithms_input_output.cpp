@@ -274,7 +274,7 @@ namespace qAlgorithms
                     fprintf(stderr, "Error: you cannot skip ahead by \"%s\" entries.\n", argv[i]);
                     return args;
                 }
-                else if (skip < 0)
+                if (skip < 0)
                 {
                     fprintf(stderr, "Error: you cannot skip ahead a negative number of entries.\n");
                 }
@@ -320,18 +320,22 @@ namespace qAlgorithms
             ".",
             0,
             never,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
             0,
+            0,
+            0,
+            0,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
             false,
             true};
 
@@ -356,24 +360,24 @@ namespace qAlgorithms
                 args.printBins ||
                 args.printProfileSection)
             {
-                std::string badOptions = "";
+                std::string badOptions;
                 int prevBad = 0;
                 if (args.printProfileSection)
                 {
-                    prevBad += 1;
                     // if (prevBad > 0) // uncomment if an earlier return point is introduced
                     // {
                     //     badOptions += ", ";
                     // }
+                    prevBad += 1;
                     badOptions += "-profile-section";
                 }
                 if (args.printCentroids)
                 {
-                    prevBad += 1;
                     if (prevBad > 0)
                     {
                         badOptions += ", ";
                     }
+                    prevBad += 1;
                     badOptions += "-printcentroids";
                 }
                 if (args.printBins)
@@ -382,7 +386,7 @@ namespace qAlgorithms
                     {
                         badOptions += ", ";
                     }
-                    prevBad = true;
+                    prevBad += 1;
                     badOptions += "-printbins";
                 }
                 if (args.printFeatures)
@@ -391,6 +395,7 @@ namespace qAlgorithms
                     {
                         badOptions += ", ";
                     }
+                    prevBad += 1;
                     badOptions += "-printfeatures";
                 }
 
@@ -639,7 +644,7 @@ namespace qAlgorithms
         std::vector<float> intensity;
 
         FILE *outfile = fopen(pathOutput.c_str(), "w");
-        if (outfile)
+        if (outfile != nullptr)
         {
             fprintf(outfile, "idx_spec,rt,mz,intensity\n");
         }
@@ -738,7 +743,6 @@ namespace qAlgorithms
 
         file_out << output.str();
         file_out.close();
-        return;
     }
 
     void printBins(const std::vector<CentroidPeak> *centroids,
@@ -798,7 +802,6 @@ namespace qAlgorithms
         }
         file_out << output.str();
         file_out.close();
-        return;
     }
 
     void printFeatureList(const std::vector<FeaturePeak> *peaktable,
@@ -866,7 +869,6 @@ namespace qAlgorithms
 
         file_out << output.str();
         file_out.close();
-        return;
     }
 
 #pragma endregion "print functions"

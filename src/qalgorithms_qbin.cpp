@@ -1,4 +1,5 @@
 #include "qalgorithms_qbin.h"
+#include "qalgorithms_datatypes.h"
 #include "qalgorithms_utils.h"
 
 #include <algorithm> // sorting
@@ -11,6 +12,7 @@
 namespace qAlgorithms
 {
     const size_t MAX_SCAN_GAP = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
+    const size_t MIN_BIN_SIZE = 3;
 
     std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData)
     {
@@ -213,7 +215,6 @@ namespace qAlgorithms
         bincontainer.processBinsT.clear();
         // reset to input condition
         bincontainer.readFrom = false;
-        return;
     }
 
     // @todo rework this function
@@ -265,7 +266,7 @@ namespace qAlgorithms
                 returnBin.pointsInBin.push_back(bin->pointsInBin[i - 1]);
             }
         }
-        if (returnBin.pointsInBin.size() < 5)
+        if (returnBin.pointsInBin.size() < MIN_BIN_SIZE)
         {
             for (size_t i = 0; i < returnBin.pointsInBin.size(); i++)
             {
@@ -291,7 +292,7 @@ namespace qAlgorithms
 
         for (size_t i = range->startIdx; i < range->endIdx + 1; i++)
         { // +1 since the range is inclusive
-            auto point = (*centroids)[i];
+            const CentroidPeak *point = (*centroids)[i];
             res.pointsInBin.push_back(point);
         }
         assert(res.pointsInBin.size() > 4);
@@ -367,7 +368,7 @@ namespace qAlgorithms
             const size_t binsizeInOS = range.endIdx - range.startIdx + 1;
             assert(binsizeInOS <= pointsInSourceBin->size());
 
-            if (binsizeInOS < 5) // min of five points per bin
+            if (binsizeInOS < MIN_BIN_SIZE)
             {
                 for (size_t i = range.startIdx; i < range.endIdx + 1; i++)
                 {
@@ -436,7 +437,7 @@ namespace qAlgorithms
             if (distanceScan > MAX_SCAN_GAP) // bin needs to be split
             {
                 // less than five points in bin
-                if (i - lastpos + 1 < 5) // +1 since i starts at 0
+                if (i - lastpos + 1 < MIN_BIN_SIZE) // +1 since i starts at 0
                 {
                     for (size_t j = lastpos; j <= i; j++)
                     {
@@ -683,7 +684,7 @@ namespace qAlgorithms
         size_t position = 0;
         for (size_t i = 0; i < binsize; i++)
         {
-            const auto cen = (*pointsInBin)[i];
+            const CentroidPeak *cen = (*pointsInBin)[i];
             size_t scanRegionStart = cen->number_MS1 < expandedDist + 1 ? 0 : cen->number_MS1 - expandedDist - 1;
             size_t scanRegionEnd = cen->number_MS1 + expandedDist + 1;
             double accum = 0;
@@ -704,16 +705,14 @@ namespace qAlgorithms
         return output;
     }
 
-    inline float calcDQS(float meanInnerDist, float minOuterDist)
+    float calcDQS(double meanInnerDist, double minOuterDist)
     {
-        float maxInVal = std::max(minOuterDist, meanInnerDist); // meanInnerDist should generally be much smaller than minOuterDist
+        double maxInVal = max(minOuterDist, meanInnerDist); // meanInnerDist should generally be much smaller than minOuterDist
         if (maxInVal == INFINITY)
-        {
             return 1;
-        }
 
-        // dqs = (minOuterDist - meanInnerDist) * (1 / (1 + meanInnerDist)) / maxInVal
-        return (minOuterDist - meanInnerDist) / (float)fmal(meanInnerDist, maxInVal, maxInVal);
+        double dqs = (minOuterDist - meanInnerDist) * (1 / (1 + meanInnerDist)) / maxInVal;
+        return (float)dqs;
     }
 #pragma endregion "Functions"
 } // namespace qAlgorithms

@@ -98,10 +98,8 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
                 ++errorCount;
                 continue;
             }
-            else
-            {
-                exit(101);
-            }
+
+            exit(101);
         }
 
         if (inputFile.isCentroided) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?

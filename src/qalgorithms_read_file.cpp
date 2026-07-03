@@ -146,7 +146,7 @@ namespace qAlgorithms
         // extract type of number representation in binary data
         bool type_double = false, type_float = false, type_int32 = false, type_int64 = false;
 
-        for (pugi::xml_node cvParam = bin.child("cvParam"); cvParam; cvParam = cvParam.next_sibling("cvParam"))
+        for (pugi::xml_node cvParam = bin.child("cvParam"); cvParam != nullptr; cvParam = cvParam.next_sibling("cvParam"))
         {
             std::string val = cvParam.attribute("accession").value();
             if (val == "MS:1000523")
@@ -175,7 +175,7 @@ namespace qAlgorithms
         mtd.isDouble = type_double;
 
         pugi::xml_node node_comp = bin.find_child_by_attribute("cvParam", "accession", "MS:1000574");
-        if (node_comp)
+        if (node_comp != nullptr)
         {
             const char *compression = node_comp.attribute("name").as_string();
             mtd.compressed = (std::strcmp(compression, "zlib") == 0) ||
@@ -193,7 +193,7 @@ namespace qAlgorithms
                 "cvParam", "accession",
                 possible_accessions_binary_data_mzML[i].c_str());
 
-            if (node_data_type)
+            if (node_data_type != nullptr)
             {
                 has_bin_data_type = true;
                 mtd.data_name_short = possible_short_name_binary_data_mzML[i];
@@ -332,7 +332,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < count; ++i)
         {
             pugi::xml_node spec = (*linknodes)[i];
-            if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000130"))
+            if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr)
             {
                 positive = true;
             }
@@ -344,17 +344,10 @@ namespace qAlgorithms
 
             if (positive && negative)
             {
-                return mixed;
+                return Polarities::mixed;
             }
         }
-        if (positive)
-        {
-            return Polarities::positive;
-        }
-        else
-        {
-            return Polarities::negative;
-        }
+        return positive ? Polarities::positive : Polarities::negative;
     };
 
     std::vector<unsigned int> XML_File::filter_spectra(
@@ -370,11 +363,11 @@ namespace qAlgorithms
         {
             pugi::xml_node spec = (*linknodes)[i];
 
-            bool isCentroid = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127");
+            bool isCentroid = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
             if (isCentroid != centroided)
                 continue; // this does not allow for processing of partially centroided data
 
-            bool polarityPos = spec.find_child_by_attribute("cvParam", "accession", "MS:1000130");
+            bool polarityPos = spec.find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr;
             if (polarityPos != polarity)
                 continue;
 
@@ -403,7 +396,7 @@ namespace qAlgorithms
             if (!isMS1)
                 continue;
 
-            if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000128"))
+            if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000128") != nullptr)
             {
                 profile += 1;
                 continue; // profile mode

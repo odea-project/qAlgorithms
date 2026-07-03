@@ -90,7 +90,7 @@ void test_quadraticSolve()
     double x_L_true = -1.0 / 3.0;
     double x_R_true = 1;
 
-    double x_l, x_r;
+    double x_l = 0, x_r = 0;
     solveQuadratic(a, b, c, &x_l, &x_r);
 
     double diff_l = abs(x_l - x_L_true);

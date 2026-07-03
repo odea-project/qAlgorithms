@@ -38,7 +38,7 @@ namespace qAlgorithms
     /// @param MID mean inner distance in mz to all other elements in the bin
     /// @param MOD minimum outer distance - the shortest distance in mz to a data point that is within maxdist and not in the bin
     /// @return the data quality score for the specified element
-    inline float calcDQS(const float MID, const float MOD); // Mean Inner Distance, Minimum Outer Distance
+    float calcDQS(double meanInnerDist, double minOuterDist);
 
 #pragma endregion "utility"
 

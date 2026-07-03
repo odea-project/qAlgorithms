@@ -30,14 +30,12 @@ float ran0(long *idum)
 #define IR 2836
 #define MASK 123459876
 
-    long k;
-    float ans;
     *idum ^= MASK;
-    k = (*idum) / IQ;
+    long k = (*idum) / IQ;
     *idum = IA * (*idum - k * IQ) - IR * k;
     if (*idum < 0)
         *idum += IM;
-    ans = (float)AM * (*idum);
+    float ans = (float)AM * (*idum);
     *idum ^= MASK;
     return ans;
 }
@@ -99,7 +97,7 @@ double gauss_rand(const double mean, const double sdev)
 
     static double V1, V2, S;
     static int phase = 0;
-    double X;
+    double X = 0;
 
     if (phase == 0)
     {

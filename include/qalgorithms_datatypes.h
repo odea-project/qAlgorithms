@@ -1,6 +1,7 @@
 #ifndef QALGORITHMS_DATATYPE_PEAK_H
 #define QALGORITHMS_DATATYPE_PEAK_H
 
+#include <cstdint>
 #include <qalgorithms_utils.h>
 #include <vector>
 
@@ -10,7 +11,7 @@
 namespace qAlgorithms
 {
     // handle polarity switching
-    enum Polarities
+    enum Polarities : uint8_t
     {
         unknown_polarity,
         positive,

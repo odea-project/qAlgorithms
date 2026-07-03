@@ -38,7 +38,7 @@ namespace qAlgorithms
     {
         // user input for input and output
         std::vector<std::string> inputPaths;
-        std::string outputPath = "";
+        std::string outputPath;
         size_t skipAhead = 0;        // this is intended to make testing over many files more time efficient
         TerminateAfter term = never; // continue loop execution after the desired result has been printed
         // limits for printing profile region
