@@ -12,7 +12,7 @@
 namespace qAlgorithms
 {
     const size_t MAX_SCAN_GAP = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
-    const size_t MIN_BIN_SIZE = 3;
+    const size_t MIN_BIN_SIZE = 5;
 
     std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData)
     {
@@ -295,7 +295,7 @@ namespace qAlgorithms
             const CentroidPeak *point = (*centroids)[i];
             res.pointsInBin.push_back(point);
         }
-        assert(res.pointsInBin.size() > 4);
+        assert(res.pointsInBin.size() >= MIN_BIN_SIZE);
 
         res.mzMin = (float)res.pointsInBin.front()->mz;
         res.mzMax = (float)res.pointsInBin.back()->mz;

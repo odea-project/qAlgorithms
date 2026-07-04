@@ -11,40 +11,15 @@
 #include <string>
 #include <vector>
 
-The default setting of the -fdiagnostics-color= command-line option is now configurable when building GCC using configuration option --with-diagnostics-color=. The possible values are: never, always, auto and auto-if-env. The new default auto uses color only when the standard error is a terminal. The default in GCC 4.9 was auto-if-env, which is equivalent to auto if there is a non-empty GCC_COLORS environment variable, and never otherwise. As in GCC 4.9, an empty GCC_COLORS variable in the environment will always disable colors, no matter what the default is or what command-line options are used.
-A new command-line option -Wswitch-bool has been added for the C and C++ compilers, which warns whenever a switch statement has an index of boolean type.
-A new command-line option -Wlogical-not-parentheses has been added for the C and C++ compilers, which warns about "logical not" used on the left hand side operand of a comparison.
-A new command-line option -Wsizeof-array-argument has been added for the C and C++ compilers, which warns when the sizeof operator is applied to a parameter that has been declared as an array in a function definition.
-A new command-line option -Wbool-compare has been added for the C and C++ compilers, which warns about boolean expressions compared with an integer value different from true/false.
-Full support for Cilk Plus has been added to the GCC compiler. Cilk Plus is an extension to the C and C++ languages to support data and task parallelism.
-A new attribute no_reorder prevents reordering of selected symbols against other such symbols or inline assembler. This enables to link-time optimize the Linux kernel without having to resort to -fno-toplevel-reorder that disables several optimizations.
-New preprocessor constructs, __has_include and __has_include_next, to test the availability of headers have been added.
-This demonstrates a way to include the header <optional> only if it is available:
-
-#ifdef __has_include
-    #if __has_include(<optional>)
-        #include <optional>
-        #define have_optional 1
-    #elif __has_include(<experimental/optional>)
-        #include <experimental/optional>
-        #define have_optional 1
-        #define experimental_optional
-    #else
-        #define have_optional 0
-    #endif
-#endif
+// zlib-ng should be present on all modern systems, use the __has_include macro
+// and redefine the zng_... functions if this doesn't work
+#include <zlib-ng.h>
 
 // since we care mostly about speed, we want to use the generally faster zlib-ng for decompression.
 // However, we cannot be sure that it exists for a given system. Therefore, it is only included if
 // it can be installed for the host
-#ifdef __has_include
-("zlib-ng.h")
-    #include <zlib-ng.h>
-else
-    #include <zlib.h>
-#endif
 
-    namespace qAlgorithms
+namespace qAlgorithms
 {
     int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
                         std::vector<float> *result)
@@ -82,30 +57,30 @@ else
     };
 
     // Decompresses a string using the zlib library (https://zlib.net/).
-    static void decompress_zlib(const std::vector<char> *compressed_string, std::vector<char> *output_string)
-    {
-        // max expected compression is factor 6
-        output_string->resize(compressed_string->size() * 6);
-        // zlib struct
-        z_stream infstream;
-        infstream.zalloc = Z_NULL;
-        infstream.zfree = Z_NULL;
-        infstream.opaque = Z_NULL;
-        // setup input and output
-        infstream.avail_in = compressed_string->size();         // size of input
-        infstream.next_in = (Bytef *)compressed_string->data(); // input char array
-        infstream.avail_out = output_string->size();            // maximum size of output
-        infstream.next_out = (Bytef *)output_string->data();    // output char array
+    // static void decompress_zlib(const std::vector<char> *compressed_string, std::vector<char> *output_string)
+    // {
+    //     // max expected compression is factor 6
+    //     output_string->resize(compressed_string->size() * 6);
+    //     // zlib struct
+    //     z_stream infstream;
+    //     infstream.zalloc = Z_NULL;
+    //     infstream.zfree = Z_NULL;
+    //     infstream.opaque = Z_NULL;
+    //     // setup input and output
+    //     infstream.avail_in = compressed_string->size();         // size of input
+    //     infstream.next_in = (Bytef *)compressed_string->data(); // input char array
+    //     infstream.avail_out = output_string->size();            // maximum size of output
+    //     infstream.next_out = (Bytef *)output_string->data();    // output char array
 
-        // the actual DE-compression work.
-        inflateInit(&infstream);
-        auto ret_1 = inflate(&infstream, Z_NO_FLUSH);
-        assert(ret_1 == 1);
-        auto ret_2 = inflateEnd(&infstream);
-        assert(ret_2 == 0);
-        // since resize does not deallocate, this just ensures we can use the vector without making compromises later
-        output_string->resize(infstream.total_out);
-    };
+    //     // the actual DE-compression work.
+    //     inflateInit(&infstream);
+    //     auto ret_1 = inflate(&infstream, Z_NO_FLUSH);
+    //     assert(ret_1 == 1);
+    //     auto ret_2 = inflateEnd(&infstream);
+    //     assert(ret_2 == 0);
+    //     // since resize does not deallocate, this just ensures we can use the vector without making compromises later
+    //     output_string->resize(infstream.total_out);
+    // };
 
     static BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
 
@@ -278,8 +253,14 @@ else
 
             if (mtd_mz.compressed)
             {
-                buffer.clear();
-                decompress_zlib(&decoded_string, &buffer);
+                size_t expectedSize = decoded_string.size() * 6;
+                buffer.resize(expectedSize);
+                zng_uncompress((uint8_t *)buffer.data(), &expectedSize,
+                               (uint8_t *)decoded_string.data(), decoded_string.size());
+                // decompress_zlib(&decoded_string, &buffer);
+                // check that less characters have been written than fit into the buffer
+                assert(buffer.size() > expectedSize);
+                buffer.resize(expectedSize);
                 bytesToFloatVec(&buffer, mtd_mz.isDouble, spectrum_mz);
             }
             else
@@ -308,8 +289,14 @@ else
 
             if (mtd_intensity.compressed)
             {
-                buffer.clear();
-                decompress_zlib(&decoded_string, &buffer);
+                size_t expectedSize = decoded_string.size() * 6;
+                buffer.resize(expectedSize);
+                zng_uncompress((uint8_t *)buffer.data(), &expectedSize,
+                               (uint8_t *)decoded_string.data(), decoded_string.size());
+                // decompress_zlib(&decoded_string, &buffer);
+                // check that less characters have been written than fit into the buffer
+                assert(buffer.size() > expectedSize);
+                buffer.resize(expectedSize);
                 bytesToFloatVec(&buffer, mtd_intensity.isDouble, spectrum_int);
             }
             else

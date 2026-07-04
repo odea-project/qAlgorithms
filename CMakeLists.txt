@@ -136,11 +136,11 @@ if(WIN32 AND (CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES
     set(ZLIB_LIBRARY     "${ZLIB_ROOT}/lib/libz.a")
     set(ZLIB_USE_STATIC_LIBS "ON")
 endif()
-find_package(ZLIB REQUIRED)
+find_package(zlib-ng REQUIRED)
 
 # PROGRAM SOURCE
 add_executable(${PROJECT_NAME} "${SOURCE_DIR}/qalgorithms_main.cpp")
-target_link_libraries(${PROJECT_NAME} qalgo_lib ZLIB::ZLIB) 
+target_link_libraries(${PROJECT_NAME} qalgo_lib zlib-ng::zlib) 
 
 # TESTS
 include(CTest)
@@ -166,7 +166,7 @@ foreach(src IN LISTS TESTFILES)
 
     add_executable(${target_name} "${src}")
     set_target_properties(${target_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests_bin)
-    target_link_libraries(${target_name} PRIVATE qalgo_lib test_shared_lib PUBLIC  ZLIB::ZLIB)
+    target_link_libraries(${target_name} PRIVATE qalgo_lib test_shared_lib PUBLIC  zlib-ng::zlib)
     add_test(NAME ${target_name} COMMAND ${target_name})
 endforeach()
 
