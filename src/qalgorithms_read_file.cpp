@@ -140,6 +140,7 @@ namespace qAlgorithms
         isCentroided = isCentroided_fun();
 
         polarityMode = get_polarity_mode();
+        assert(polarityMode != Polarities::unknown_polarity);
     };
 
     void XML_File::free_linknodes()

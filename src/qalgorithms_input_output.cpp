@@ -617,6 +617,8 @@ namespace qAlgorithms
         }
         return false;
     }
+    const char error_open_fail[] = "Error: could not open output path during centroid printing.\n"
+                                   "No files have been written.Filename:\n" _STR "\n";
 
     void printProfileSections(XML_File *infile,
                               const UserInputSettings *inargs,
@@ -717,9 +719,8 @@ namespace qAlgorithms
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
         {
-            const char format[] = "Error: could not open output path during centroid printing.\n"
-                                  "No files have been written.Filename:\n" _STR "\n";
-            fprintf(stderr, format, pathOutput.c_str());
+
+            fprintf(stderr, error_open_fail, pathOutput.c_str());
             return;
         }
         if (!silent)
@@ -760,11 +761,7 @@ namespace qAlgorithms
 
         if (!silent)
         {
-#ifdef _WIN32
-            const char format[] = "writing bins to: %ls\n";
-#else
-            const char format[] = "writing bins to: %s\n";
-#endif
+            const char format[] = "writing bins to: " _STR "\n";
             printf(format, pathOutput.c_str());
         }
 
@@ -773,12 +770,7 @@ namespace qAlgorithms
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
         {
-#ifdef _WIN32
-            const char format[] = "Error: could not open output path during bin printing. No files have been written.\nFilename: %ls\n";
-#else
-            const char format[] = "Error: could not open output path during bin printing. No files have been written.\nFilename: %s\n";
-#endif
-            fprintf(stderr, format, pathOutput.c_str());
+            fprintf(stderr, error_open_fail, pathOutput.c_str());
             return;
         }
         // @todo consider if the mz error is relevant when checking individual bins
@@ -819,11 +811,7 @@ namespace qAlgorithms
 
         if (!silent)
         {
-#ifdef _WIN32
-            const char format[] = "writing features to: %ls\n";
-#else
-            const char format[] = "writing features to: %s\n";
-#endif
+            const char format[] = "writing features to: " _STR "\n";
             printf(format, pathOutput.c_str());
         }
 
@@ -832,12 +820,7 @@ namespace qAlgorithms
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
         {
-#ifdef _WIN32
-            const char format[] = "Error: could not open output path during feature printing. No files have been written.\nFilename: %ls\n";
-#else
-            const char format[] = "Error: could not open output path during feature printing. No files have been written.\nFilename: %s\n";
-#endif
-            fprintf(stderr, format, pathOutput.c_str());
+            fprintf(stderr, error_open_fail, pathOutput.c_str());
             return;
         }
 

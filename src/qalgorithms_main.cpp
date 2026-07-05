@@ -1,4 +1,5 @@
 // internal
+#include "qalgorithms_datatypes.h"
 #include "qalgorithms_input_output.h"
 #include "qalgorithms_qbin.h"
 #include "qalgorithms_qpeaks.h"
@@ -79,11 +80,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         clock_t timeStart = clock();
         if (!userArgs.silent)
         {
-#ifdef _WIN32
-            const char format[] = "\nreading file %zu of %zu\n%ls\n";
-#else
-            const char format[] = "\nreading file %zu of %zu\n%s\n";
-#endif
+            const char format[] = "\nreading file %zu of %zu\n" _STR "\n";
             printf(format, pathIdx + 1, tasklist.size(), pathSource.c_str());
         }
 
@@ -111,205 +108,189 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         {
             printf(" file in profile mode, ok\n");
         }
+        filename = pathSource.stem().string();
 
-        // @todo single access function into qAlgorithms
+        // start with positive scans when evaluating mixed mode spectra
+        bool polarity_selected = (inputFile.polarityMode == Polarities::positive) ||
+                                 (inputFile.polarityMode == Polarities::mixed);
 
-        // @todo find a more elegant solution for polarity switching, this one trips up clang-tidy
-        static bool polarities[2] = {true, false};
-        int check_true = 0;
-        int check_false = 2;
+    // because there are only three cases, the logic is handled lik this:
+    // 1) negative or positive only: set the argument for filter_spectra correctly and proceed. The loop does not reset.
+    // 2) mixed mode: start with positive scans, then set polarity to negative and goto the the next line.
+    //    This is a bit messy, but everything else i can think of involves an abused loop construct that
+    //    has horrible readability and requires more variables to handle the switching.
+    EVALUATE_MIXED_POLARITY:
+        // @todo MS2 support here!
+        const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra(true, polarity_selected, false);
 
-        switch (inputFile.polarityMode)
+        if (selectedIndices.empty())
         {
-        case positive:
-            check_false = 1; // loop will terminate after pol == 0
-            break;
-
-        case negative:
-            check_true = 1; // loop starts at pol == 1
-            break;
-
-        case mixed:
-            // does nothing since both is default
-            break;
-
-        default:
-            assert(false);
-            break;
+            fprintf(stderr, "Error: No valid spectra exist in the source file %s\n", filename.c_str());
+            // @todo better error reporting
+            continue;
         }
 
-        for (int pol = check_true; pol < check_false; pol++)
+        if (!userArgs.silent)
         {
-            bool polarity = polarities[pol];
+            printf("    Processing %s peaks\n", polarity_selected ? "positive" : "negative");
+        }
 
-            filename = pathSource.stem().string();
-
-            // @todo add check if set polarity is correct
-            const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra(true, polarity, false); // @todo MS2 support here!
-
-            if (selectedIndices.empty())
-            {
-                fprintf(stderr, "Error: No valid spectra exist in the source file %s\n", filename.c_str());
-                // @todo better error reporting
+        if (userArgs.printProfileSection)
+        {
+            // This is a somewhat crude solution to print a section of the data in profile mode.
+            // Really, this should be a separate program within the qAlgorithms project @todo
+            printProfileSections(&inputFile,
+                                 &userArgs,
+                                 &selectedIndices,
+                                 filename);
+            if (userArgs.term == TerminateAfter::profilesec)
                 continue;
-            }
-
-            if (!userArgs.silent)
-            {
-                printf("    Processing %s peaks\n", polarity ? "positive" : "negative");
-            }
-
-            if (userArgs.printProfileSection)
-            {
-                // This is a somewhat crude solution to print a section of the data in profile mode.
-                // Really, this should be a separate program within the qAlgorithms project @todo
-                printProfileSections(&inputFile,
-                                     &userArgs,
-                                     &selectedIndices,
-                                     filename);
-                if (userArgs.term == TerminateAfter::profilesec)
-                    continue;
-            }
+        }
 
 #pragma region "centroiding"
-            std::vector<float> retentionTimes;
-            inputFile.get_spectra_RT(&selectedIndices, &retentionTimes);
+        std::vector<float> retentionTimes;
+        inputFile.get_spectra_RT(&selectedIndices, &retentionTimes);
 
-            std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-            int centroidCount = findCentroids(inputFile,
-                                              &selectedIndices,
-                                              &retentionTimes,
-                                              centroids); // it is guaranteed that only profile mode data is used
+        std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
+        int centroidCount = findCentroids(inputFile,
+                                          &selectedIndices,
+                                          &retentionTimes,
+                                          centroids); // it is guaranteed that only profile mode data is used
 
-            if (centroidCount == 0)
-            {
-                fprintf(stderr, "Error: no centroids found despite valid indices");
+        if (centroidCount == 0)
+        {
+            fprintf(stderr, "Error: no centroids found despite valid indices");
+            continue;
+        }
+
+        filename += (polarity_selected ? "_positive" : "_negative");
+
+        if (userArgs.printCentroids)
+        {
+            printCentroids(centroids, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.noOverwrite);
+
+            if (userArgs.term == TerminateAfter::centroids)
                 continue;
-            }
+        }
 
-            filename += (polarity ? "_positive" : "_negative");
+        assert(!centroids->empty());
 
-            if (userArgs.printCentroids)
-            {
-                printCentroids(centroids, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.noOverwrite);
+        // find lowest intensity among all centroids to use as baseline during componentisation
+        float minCenArea = INFINITY;
+        for (size_t cenID = 1; cenID < (size_t)centroidCount; cenID++)
+        {
+            float currentInt = centroids->at(cenID).area;
+            minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
+        }
+        size_t totalScans = centroids->back().number_MS1;
 
-                if (userArgs.term == TerminateAfter::centroids)
-                    continue;
-            }
+        clock_t timeEnd = clock();
+        double timePassed_s = double(timeEnd - timeStart) / CLOCKS_PER_SEC;
 
-            assert(!centroids->empty());
-
-            // find lowest intensity among all centroids to use as baseline during componentisation
-            float minCenArea = INFINITY;
-            for (size_t cenID = 1; cenID < (size_t)centroidCount; cenID++)
-            {
-                float currentInt = centroids->at(cenID).area;
-                minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
-            }
-            size_t totalScans = centroids->back().number_MS1;
-
-            clock_t timeEnd = clock();
-            double timePassed_s = double(timeEnd - timeStart) / CLOCKS_PER_SEC;
-
-            if (!userArgs.silent)
-            {
-                printf("    produced %d centroids from %zu spectra in %0.3f s\n",
-                       centroidCount, totalScans, timePassed_s);
-            }
+        if (!userArgs.silent)
+        {
+            printf("    produced %d centroids from %zu spectra in %0.3f s\n",
+                   centroidCount, totalScans, timePassed_s);
+        }
 
 #pragma region "binning"
-            timeStart = clock();
+        timeStart = clock();
 
-            std::vector<EIC> binnedData = performQbinning_old(centroids);
+        std::vector<EIC> binnedData = performQbinning_old(centroids);
 
-            timeEnd = clock();
+        timeEnd = clock();
 
-            if (binnedData.size() == 0)
+        if (binnedData.size() == 0)
+        {
+            fprintf(stderr, "Error: no bins could be constructed from the data.\n");
+            if (!userArgs.skipError)
             {
-                fprintf(stderr, "Error: no bins could be constructed from the data.\n");
-                if (!userArgs.skipError)
-                {
-                    exit(1);
-                }
-                else
-                {
-                    ++errorCount;
-                    continue;
-                }
+                exit(1);
             }
-
-            if (!userArgs.silent)
+            else
             {
-                timePassed_s = double(timeEnd - timeStart) / CLOCKS_PER_SEC;
-                printf("    assembled %zu bins in %f s\n", binnedData.size(), timePassed_s);
-            }
-            if (userArgs.printBins)
-            {
-                printBins(centroids,
-                          &binnedData,
-                          // &retentionTimes,
-                          userArgs.outputPath,
-                          filename,
-                          userArgs.silent,
-                          userArgs.noOverwrite);
-
-                if (userArgs.term == TerminateAfter::binning)
-                {
-                    continue;
-                }
-            }
-            delete centroids;
-
-#pragma region "feature construction"
-            timeStart = clock();
-
-            std::vector<FeaturePeak> features;
-            findFeatures(&binnedData, &retentionTimes, &features);
-
-            if (features.size() == 0)
-            {
-                fprintf(stderr, "Warning: no features were constructed, continuing...\n");
+                ++errorCount;
                 continue;
             }
+        }
 
+        if (!userArgs.silent)
+        {
+            timePassed_s = double(timeEnd - timeStart) / CLOCKS_PER_SEC;
+            printf("    assembled %zu bins in %f s\n", binnedData.size(), timePassed_s);
+        }
+        if (userArgs.printBins)
+        {
+            printBins(centroids,
+                      &binnedData,
+                      // &retentionTimes,
+                      userArgs.outputPath,
+                      filename,
+                      userArgs.silent,
+                      userArgs.noOverwrite);
+
+            if (userArgs.term == TerminateAfter::binning)
+            {
+                continue;
+            }
+        }
+        delete centroids;
+
+#pragma region "feature construction"
+        timeStart = clock();
+
+        std::vector<FeaturePeak> features;
+        findFeatures(&binnedData, &retentionTimes, &features);
+
+        if (features.size() == 0)
+        {
+            fprintf(stderr, "Warning: no features were constructed, continuing...\n");
+            continue;
+        }
+
+        if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
+        {
+            printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
+                             userArgs.silent, userArgs.noOverwrite);
+        }
+
+        timeEnd = clock();
+
+        if (!userArgs.silent)
+        {
+            timePassed_s = double(timeEnd - timeStart) / CLOCKS_PER_SEC;
+            printf("    constructed %zu features in %f s\n", features.size(), timePassed_s);
+        }
+
+#if 0
+        if (userArgs.printFeatCens)
+        {
+            // printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData, // &retentionTimes, // @todo this is incomplete
+            //                       userArgs.silent, userArgs.noOverwrite);
+        }
+
+        if (userArgs.term == TerminateAfter::features)
+        {
             if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
             {
                 printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
                                  userArgs.silent, userArgs.noOverwrite);
             }
-
-            timeEnd = clock();
-
-            if (!userArgs.silent)
-            {
-                timePassed_s = double(timeEnd - timeStart) / CLOCKS_PER_SEC;
-                printf("    constructed %zu features in %f s\n", features.size(), timePassed_s);
-            }
-
-#if 0
-            if (userArgs.printFeatCens)
-            {
-                // printFeatureCentroids(&features, userArgs.outputPath, filename, &binnedData, // &retentionTimes, // @todo this is incomplete
-                //                       userArgs.silent, userArgs.noOverwrite);
-            }
-
-            if (userArgs.term == TerminateAfter::features)
-            {
-                if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
-                {
-                    printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
-                                     userArgs.silent, userArgs.noOverwrite);
-                }
-                continue;
-            }
-
-
-            if (userArgs.term == TerminateAfter::components)
-            {
-                continue;
-            }
-#endif
+            continue;
         }
+
+        if (userArgs.term == TerminateAfter::components)
+        {
+            continue;
+        }
+#endif
+        if (inputFile.polarityMode == Polarities::mixed)
+        {
+            assert(polarity_selected);
+            polarity_selected = false;
+            goto EVALUATE_MIXED_POLARITY;
+        }
+
         // @todo this function really needs to be shortened
         inputFile.free_linknodes();
     }

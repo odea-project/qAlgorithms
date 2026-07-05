@@ -9,5 +9,5 @@ mkdir -p $SCRIPT_DIR/cppcheck_cache
 # 
 cppcheck --project="$SCRIPT_DIR/build/compile_commands.json" --cppcheck-build-dir="$SCRIPT_DIR/cppcheck_cache" \
          --inline-suppr --enable=style --suppress=*:*/external/* --suppress=postfixOperator \
-         --suppress=dangerousTypeCast --suppress=uninitMemberVarNoCtor --suppress=constVariablePointer
-        
+         --suppress=dangerousTypeCast --suppress=uninitMemberVarNoCtor --suppress=constVariablePointer \
+         --suppress=cstyleCast

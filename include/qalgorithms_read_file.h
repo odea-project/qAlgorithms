@@ -8,7 +8,7 @@
 #define PUGIXML_HEADER_ONLY
 #include "../external/pugixml/pugixml.hpp"
 
-#if defined(_WIN32)
+#ifdef _WIN32
 typedef wchar_t path_char;
 #else
 typedef char path_char;

@@ -12,7 +12,7 @@
 // and accept the slightly worse readability of writing "text" MACRO "text\n" for the format
 // strings in printf. Since this is mainly abstracted into a logging function, that is acceptable.
 
-#ifdef _WIN_32
+#ifdef _WIN32
     #define _STR "%ls"
 #else
     #define _STR "%s"

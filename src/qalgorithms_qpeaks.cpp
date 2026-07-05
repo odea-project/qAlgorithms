@@ -1828,6 +1828,9 @@ namespace qAlgorithms
         return cen;
     }
 
+    // @todo find a better way of determining the smallest possible upper scale
+    static const size_t maxscale_cen = 10;
+
     int findCentroids(XML_File &data, // @todo move this into the xml file specific part of qAlgorithms
                       const std::vector<unsigned int> *selectedIndices,
                       const std::vector<float> *retentionTimes,
@@ -1887,12 +1890,17 @@ namespace qAlgorithms
             }
             endOfSPectrumReached = getNextProfileRegion(&spectrum_mz, &spectrum_int, &block);
             // at this point, the block contains one continuous region of points in the source spectrum
-            // @todo find a better way of determining the smallest possible upper scale
-            static const size_t maxscale = 10;
-            qpeaks_find(block.intensity, block.mz, nullptr, block.length, maxscale, &ret);
+            qpeaks_find(block.intensity, block.mz, nullptr, block.length, maxscale_cen, &ret);
         }
 
         return centroids->size();
+    }
+
+    void centroids_to_mzml(XML_File *const source_file, XML_File *const modify_file)
+    {
+        assert(source_file != modify_file);
+        // design: for all non-centroided spectra, centroid the data and overwrite the
+        // read in part of the file. Note: use std::filesystem::copy first in the main function somewhere
     }
 
     bool getNextProfileRegion(
