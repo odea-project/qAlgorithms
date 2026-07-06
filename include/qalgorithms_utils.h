@@ -12,17 +12,6 @@ namespace qAlgorithms
     // sqrt(pi) / 2
     static const double SQRTPI_2 = 0.886226925452758013649;
 
-    // inclusive range in an array @todo replace all start / end index cases with this
-    // always assert start and end correctness when writing to such a struct!
-    // addition: think about replacing this with a start pointer and length, sicne they
-    // are generally just used as ranged access pointers into a larger array
-    struct Range_i
-    {
-        size_t startIdx;
-        size_t endIdx;
-        size_t length;
-    };
-
     /**
      * @brief perform the welch-test for comparing two means of unequal variance
      * @param mean mean of sample 1 or 2
@@ -139,7 +128,7 @@ namespace qAlgorithms
 
     double meanOfCumulative(double *const cumArray, const size_t startIdx, const size_t endIdx);
     double meanOfCumulative(const double *const cumArray, const size_t startIdx, const size_t endIdx);
-    unsigned int sumOfCumulative(const unsigned int *const cumArray, const Range_i *r);
+    unsigned int sumOfCumulative(const unsigned int *const cumArray, const size_t startIdx, const size_t length);
 
     // standard deviation
     double sdev(double *const array, const size_t n);

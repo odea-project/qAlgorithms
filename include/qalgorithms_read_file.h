@@ -110,6 +110,8 @@ namespace qAlgorithms
 
     int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
                         std::vector<float> *result);
+
+    void compress_zlib(const std::vector<char> *uncompressed_string, std::vector<char> *output_string);
 }; // namespace qAlgorithms
 
 #endif // QALGORITHMS_READ_FILE_H

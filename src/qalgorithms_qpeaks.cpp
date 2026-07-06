@@ -1,6 +1,6 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_datatypes.h"
-#include "qalgorithms_read_file.h" // @todo remove coupling
+#include "qalgorithms_read_file.h"
 #include "qalgorithms_utils.h"
 
 #include "libcerf_reduced.h"
@@ -41,7 +41,7 @@ namespace qAlgorithms
 
             // @todo ensure that this is a good way to estimate delta_x for real data
             // we could also use a strategy such as taking the distance closest to the apex.
-            // check if the chosen delta_x is acceptable @todo
+            // Also check if the chosen delta_x is acceptable.
             size_t leftOfApex = size_t(apex);
             float delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
 
@@ -52,7 +52,7 @@ namespace qAlgorithms
             double delta_min = delta_x;
             double delta_max = delta_x;
             double delta_mean = 0;
-            for (size_t pos = regression->regSpan.startIdx; pos < regression->regSpan.endIdx; pos++)
+            for (size_t pos = regression->startIdx; pos < regression->regSpan.endIdx; pos++)
             {
                 double d = x_values[pos + 1] - x_values[pos];
                 delta_min = min(d, delta_min);
@@ -70,13 +70,11 @@ namespace qAlgorithms
             peak.uncert_position = regression->uncert_position * delta_x;
 
             // left and right limits
-            peak.limit_L = x_values[regression->regSpan.startIdx];
+            peak.limit_L = x_values[regression->startIdx];
             peak.limit_R = x_values[regression->regSpan.endIdx];
 
-            // @todo remove
-            peak.range = regression->regSpan;
-            peak.startIdx = regression->regSpan.startIdx;
-            peak.length = regression->regSpan.length;
+            peak.startIdx = regression->startIdx;
+            peak.length = regression->length;
 
             // peak height = regression at apex position before transformation
             peak.height = (float)exp(regAt(&coeff, apex_raw));
@@ -195,7 +193,7 @@ namespace qAlgorithms
             if (failpoint != ok)
                 continue;
 
-            size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, &range);
+            size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, range.startIdx, range.length);
             if (df_sum < MINLENGTH)
                 continue;
 
@@ -204,6 +202,8 @@ namespace qAlgorithms
             RegressionGauss reg;
             reg.coeffs = coefficients->at(i);
             reg.regSpan = range;
+            reg.startIdx = range.startIdx;
+            reg.length = range.length;
 
             /*
                 Adjustment of b0 coefficient:
@@ -457,7 +457,7 @@ namespace qAlgorithms
                 compReg = reg;
                 continue;
             }
-            if (compReg->regSpan.endIdx <= reg->regSpan.startIdx) // the regressions can switch at one point
+            if (compReg->regSpan.endIdx <= reg->startIdx) // the regressions can switch at one point
             {
                 // no conflict despite same scale
                 compReg = reg;
@@ -468,10 +468,10 @@ namespace qAlgorithms
             // by comparing MSEs for measured values over the region of both regressions
             // @todo could it be better to decide based on something else, since the range
             // is not adjusted afterward?
-            Range_i newRange = {compReg->regSpan.startIdx,
+            Range_i newRange = {compReg->startIdx,
                                 reg->regSpan.endIdx,
-                                reg->regSpan.endIdx - compReg->regSpan.startIdx + 1};
-            size_t df = sumOfCumulative(df_cum, &newRange) - 4;
+                                reg->regSpan.endIdx - compReg->startIdx + 1};
+            size_t df = sumOfCumulative(df_cum, newRange.startIdx, newRange.length) - 4;
 
             double mse_reg = calcMSE_exp(&reg->coeffs,
                                          intensities,
@@ -575,7 +575,7 @@ namespace qAlgorithms
             // at most one point overlap is tolerated since the regression "ends" at that point
             if (reg->regSpan.endIdx <= range->startIdx)
                 continue;
-            if (reg->regSpan.startIdx >= range->endIdx)
+            if (reg->startIdx >= range->endIdx)
                 break;
 
             // validity check here due to early termination from previous checks
@@ -648,7 +648,7 @@ namespace qAlgorithms
 
             // determine MSE for the left of both regressions
             // the start is known from the previous regression, the end is the middle between both regs
-            currentEnd = (regFront->regSpan.endIdx + regCurr->regSpan.startIdx) / 2;
+            currentEnd = (regFront->regSpan.endIdx + regCurr->startIdx) / 2;
             Range_i rangeNow = {currentStart, currentEnd, currentEnd - currentStart + 1};
 
             // the mse is composed of individual regressions that do not share responsibility
@@ -745,10 +745,10 @@ namespace qAlgorithms
                 assert(lowerReg->isValid);
                 assert(upperReg->isValid);
 
-                size_t start = min(lowerReg->regSpan.startIdx, upperReg->regSpan.startIdx);
+                size_t start = min(lowerReg->startIdx, upperReg->startIdx);
                 size_t end = max(lowerReg->regSpan.endIdx, upperReg->regSpan.endIdx);
                 Range_i commonRange = {start, end, end - start + 1};
-                size_t df = sumOfCumulative(df_cum, &commonRange) - 4; // this also applies for features
+                size_t df = sumOfCumulative(df_cum, commonRange.startIdx, commonRange.length) - 4; // this also applies for features
 
                 double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df);
                 double mseLower = calcMSE_exp(&lowerReg->coeffs, intensities, &commonRange, df);
@@ -775,10 +775,10 @@ namespace qAlgorithms
                 RegressionGauss *lowerRegS = validRegressions->data() + regRange.startIdx;
                 RegressionGauss *lowerRegE = validRegressions->data() + regRange.endIdx;
 
-                size_t start = min(lowerRegS->regSpan.startIdx, upperReg->regSpan.startIdx);
+                size_t start = min(lowerRegS->startIdx, upperReg->startIdx);
                 size_t end = max(lowerRegE->regSpan.endIdx, upperReg->regSpan.endIdx);
                 Range_i commonRange = {start, end, end - start + 1};
-                size_t df = sumOfCumulative(df_cum, &commonRange);
+                size_t df = sumOfCumulative(df_cum, commonRange.startIdx, commonRange.length);
 
                 double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df - 4);
 
@@ -910,7 +910,7 @@ namespace qAlgorithms
             if (std::abs(reg1->apex_position - reg2->apex_position) < 4)
                 continue;
 
-            if (reg1->apex_position > reg2->regSpan.startIdx)
+            if (reg1->apex_position > reg2->startIdx)
                 continue;
 
             if (reg1->regSpan.endIdx > reg2->apex_position)
@@ -969,12 +969,12 @@ namespace qAlgorithms
         for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
             const RegressionGauss *reg = &(*regressions)[i];
-            left_limit = min(left_limit, reg->regSpan.startIdx);
+            left_limit = min(left_limit, reg->startIdx);
             right_limit = max(right_limit, reg->regSpan.endIdx);
         }
 
         Range_i newRange = {left_limit, right_limit, right_limit - left_limit + 1};
-        double df_sum = sumOfCumulative(degreesOfFreedom_cum, &newRange);
+        double df_sum = sumOfCumulative(degreesOfFreedom_cum, left_limit, newRange.length);
         df_sum -= 4; // four coefficients
         assert(df_sum > 0);
 
@@ -1035,13 +1035,13 @@ namespace qAlgorithms
                 if (!secondReg->isValid) // check is needed because regressions are set to invalid in the outer loop
                     continue;
 
-                if (activeReg->apex_position < secondReg->regSpan.startIdx)
+                if (activeReg->apex_position < secondReg->startIdx)
                     continue;
 
                 if (activeReg->apex_position > secondReg->regSpan.endIdx)
                     continue;
 
-                if (secondReg->apex_position < activeReg->regSpan.startIdx)
+                if (secondReg->apex_position < activeReg->startIdx)
                     continue;
 
                 if (secondReg->apex_position > activeReg->regSpan.endIdx)
@@ -1505,7 +1505,7 @@ namespace qAlgorithms
     double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *observed)
     {
         double RSS = 0;
-        const size_t start = mutateReg->regSpan.startIdx;
+        const size_t start = mutateReg->startIdx;
         const float *obs = observed->data() + start;
         double x = double(start) - double(mutateReg->coeffs.x0);
         const size_t len = mutateReg->regSpan.length;
@@ -1627,7 +1627,7 @@ namespace qAlgorithms
         // assumption: outermost point is already near base level
         const size_t idxApex = size_t(mutateReg->apex_position) + mutateReg->coeffs.x0;
 
-        double left = intensities[mutateReg->regSpan.startIdx];
+        double left = intensities[mutateReg->startIdx];
         double right = intensities[mutateReg->regSpan.endIdx];
         double minIntensity = min(left, right);
         double apex = intensities[idxApex]; // @todo since this is not the actual apex height, it might be a bad idea to use it
@@ -1662,24 +1662,29 @@ namespace qAlgorithms
         return diff;
     }
 
-    static float weightedMeanAndVariance_EIC(const std::vector<float> *weight,
-                                             const std::vector<float> *values,
-                                             const Range_i regSpan,
+    static float weightedMeanAndVariance_EIC(const float *weight,
+                                             const float *values,
+                                             const size_t length,
                                              float *variance)
     {
+        assert(weight[0] > 0);
+        assert(values[0] > 0);
+        assert(weight[length - 1] > 0);
+        assert(values[length - 1] > 0);
+
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
         size_t realPoints = 0;
         double mean_weights = 0;
         double sum_weighted_x = 0; // sum of values * weight
         double sum_weight = 0;
-        for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
+        for (size_t j = 0; j < length; j++)
         {
             // multiplication with one or zero is used instead of a continue so this can be vectorised.
             // @todo use another method of omitting interpolations
-            unsigned int interpolated = (*values)[j] == 0 ? 0 : 1;
-            mean_weights += (*weight)[j] * interpolated;
-            sum_weighted_x += (*values)[j] * (*weight)[j] * interpolated;
-            sum_weight += (*weight)[j] * interpolated;
+            unsigned int interpolated = values[j] == 0 ? 0 : 1;
+            mean_weights += weight[j] * interpolated;
+            sum_weighted_x += values[j] * weight[j] * interpolated;
+            sum_weight += weight[j] * interpolated;
             realPoints += 1 * interpolated; // interpolated points do not count!
         }
         double dpoints = (double)realPoints;
@@ -1688,56 +1693,58 @@ namespace qAlgorithms
         sum_weight /= mean_weights;
 
         double weighted_mean = sum_weighted_x / sum_weight;
+
+        // only calculate the mean if the variance is not required
+        if (variance == nullptr)
+            return (float)weighted_mean;
+
         double sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
-        for (size_t j = regSpan.startIdx; j <= regSpan.endIdx; j++)
+        for (size_t j = 0; j < length; j++)
         {
-            double difference = (*values)[j] - weighted_mean;
-            double interpolated = (*values)[j] == 0 ? 0 : 1; // @todo see above, add 0 if value is not real
-            sum_Qxxw += interpolated * difference * difference * (*weight)[j];
+            double difference = values[j] - weighted_mean;
+            double interpolated = values[j] == 0 ? 0 : 1; // @todo see above, add 0 if value is not real
+            sum_Qxxw += interpolated * difference * difference * weight[j];
         }
-        if (variance != nullptr)
-        {
-            *variance = (float)sqrt(sum_Qxxw / sum_weight / dpoints);
-        }
-        return float(weighted_mean);
+
+        *variance = (float)sqrt(sum_Qxxw / sum_weight / dpoints);
+        return (float)weighted_mean;
     };
 
-    static FeaturePeak peakToFeat(const PeakFit *peak)
+    static FeaturePeak peakToFeat(const PeakFit *peak, const EIC *eic, unsigned int eic_ID)
     {
-        // RegCoeffs coefficients{0};
-        // float height = 0;
-        // float area = 0;
-        // // float width;
-        // float heightUncertainty = 0;
-        // float areaUncertainty = 0;
-        // float DQSF = 0, DQSB = 0, DQSC = 0;
-        // float retentionTime = 0;
-        // float mz = 0;
-        // float RT_Uncertainty = 0;
-        // float mzUncertainty = 0;
-        // unsigned int idxBin = 0;
-        // // these refer to the EIC
-        // unsigned int idxPeakStart = 0, idxPeakEnd = 0, idxCenter_offset = 0;
-        // float lowerRT = 0;
-        // float upperRT = 0;
+        const float *area_arr = eic->ints_area.data() + peak->startIdx;
+        const float *mz_arr = eic->mz.data() + peak->startIdx;
+        const float *dqsc_arr = eic->DQSC.data() + peak->startIdx;
+        const float *rt_arr = eic->RT.data() + peak->startIdx;
 
-        FeaturePeak ret;
-        ret.coefficients = peak->coeffs;
-        ret.height = peak->height;
-        ret.area = peak->area;
-        ret.heightUncertainty = peak->uncert_height;
-        ret.areaUncertainty = peak->uncert_area;
-        ret.DQSC = 0;
-        ret.DQSB = -1; // @todo temporarily removed
-        ret.DQSF = peak->dqs;
+        float DQSB = -1; // = weightedMeanAndVariance_EIC(area_arr, dqsb_arr, peak->length, nullptr);
+        float DQSC = weightedMeanAndVariance_EIC(area_arr, dqsc_arr, peak->length, nullptr);
+        assert(DQSC > 0);
+        assert(DQSC < 1);
 
-        ret.retentionTime = peak->position;
-        ret.RT_Uncertainty = peak->uncert_position;
+        float mz_uncert = 0;
+        float mz = weightedMeanAndVariance_EIC(area_arr, mz_arr, peak->length, &mz_uncert);
+        assert(mz > 10);
+        assert(mz_uncert > 0);
 
-        ret.idxPeakStart = peak->startIdx;
-        ret.idxPeakEnd = peak->range.endIdx;
-
-        return ret;
+        return {
+            peak->coeffs,
+            peak->height,
+            peak->area,
+            peak->uncert_height,
+            peak->uncert_area,
+            peak->dqs,
+            DQSB,
+            DQSC,
+            peak->position,
+            mz,
+            peak->uncert_position,
+            mz_uncert,
+            eic_ID,
+            (unsigned int)peak->startIdx,
+            (unsigned int)peak->length,
+            rt_arr[0],
+            rt_arr[peak->length - 1]};
     }
 
     int findFeatures(const std::vector<EIC> *EICs,
@@ -1748,10 +1755,10 @@ namespace qAlgorithms
 
         // the only relevant change here is that the start point of the x axis (RT) depends on the first scan in an EIC
         // it is already assured that a bin contains continuous data
-        size_t binCount = EICs->size();
-        for (size_t eic = 0; eic < binCount; eic++)
+        size_t eicCount = EICs->size();
+        for (size_t eic_ID = 0; eic_ID < eicCount; eic_ID++)
         {
-            const EIC *bin = EICs->data() + eic;
+            const EIC *bin = EICs->data() + eic_ID;
             const float *rt = convertRT->data() + bin->scanNumbers[0];
             size_t binLen = bin->df.size();
             qpeaks_find(bin->ints_area.data(),
@@ -1761,24 +1768,7 @@ namespace qAlgorithms
                         &peaks);
             for (size_t peak = 0; peak < peaks.size(); peak++)
             {
-                FeaturePeak feat = peakToFeat(&peaks[peak]);
-
-                Range_i regSpan = peaks[peak].range;
-                assert(bin->df[regSpan.startIdx] > 0);
-                assert((bin->df[regSpan.endIdx] - 1) > 0);
-
-                feat.idxPeakStart = regSpan.startIdx;
-                feat.idxPeakEnd = regSpan.endIdx;
-
-                float variance = 0;
-                feat.mz = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->mz, regSpan, &variance);
-                assert(feat.mz > 10); // @todo this should be fine, set higher bound?
-                feat.mzUncertainty = variance;
-                feat.DQSC = weightedMeanAndVariance_EIC(&bin->ints_area, &bin->DQSC, regSpan, nullptr);
-                // currentPeak->DQSB = weightedMeanAndVariance_EIC(&eic->ints_area, &eic->DQSB, regSpan)
-                //                         .mean;
-                feat.DQSB = -1; // @todo
-
+                FeaturePeak feat = peakToFeat(&peaks[peak], bin, eic_ID);
                 res->push_back(feat);
             }
             peaks.clear();

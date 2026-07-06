@@ -25,6 +25,13 @@ namespace qAlgorithms
         size_t scale = 0, x0 = 0;
     };
 
+    struct Range_i
+    {
+        size_t startIdx;
+        size_t endIdx;
+        size_t length;
+    };
+
     struct RegressionGauss
     {
         RegCoeffs coeffs = {0};      // regression coefficients
@@ -45,7 +52,6 @@ namespace qAlgorithms
     struct PeakFit
     {
         RegCoeffs coeffs = {0};
-        Range_i range = {};
         size_t startIdx = 0;
         size_t length = 0;
         float position = 0;
@@ -119,9 +125,10 @@ namespace qAlgorithms
         float mz = 0;
         float RT_Uncertainty = 0;
         float mzUncertainty = 0;
-        unsigned int idxBin = 0;
+        unsigned int eic_ID = 0;
         // these refer to the EIC
-        unsigned int idxPeakStart = 0, idxPeakEnd = 0, idxCenter_offset = 0;
+        unsigned int idxPeakStart = 0;
+        unsigned int length = 0;
         float lowerRT = 0;
         float upperRT = 0; // @todo set these during feature construction
     };

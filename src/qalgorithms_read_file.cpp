@@ -460,7 +460,7 @@ namespace qAlgorithms
         return buffer;
     }
 
-    static void compress_zlib(const std::vector<char> *uncompressed_string, std::vector<char> *output_string)
+    void compress_zlib(const std::vector<char> *uncompressed_string, std::vector<char> *output_string)
     {
         // worst case: no compression (probably impossible)
         output_string->resize(uncompressed_string->size());

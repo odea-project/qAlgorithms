@@ -833,7 +833,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < peaktable->size(); i++)
         {
             const FeaturePeak peak = peaktable->at(i);
-            unsigned long binID = peak.idxBin;
+            unsigned long binID = peak.eic_ID;
             assert(binID < originalBins->size());
             float RT_start = 0;
             float RT_end = 0;
