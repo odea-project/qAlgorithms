@@ -122,8 +122,6 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         if (selectedIndices.empty())
         {
             fprintf(stderr, "Error: No valid spectra exist in the source file %s\n", filename.c_str());
-            // @todo better error reporting
-            continue;
         }
 
         if (!userArgs.silent)
@@ -143,8 +141,6 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
                                  &userArgs,
                                  &selectedIndices,
                                  filename);
-            if (userArgs.term == TerminateAfter::profilesec)
-                continue;
         }
 
 #pragma region "centroiding"
@@ -160,15 +156,11 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         if (centroidCount == 0)
         {
             fprintf(stderr, "Error: no centroids found despite valid indices");
-            continue;
         }
 
         if (userArgs.printCentroids)
         {
             printCentroids(centroids, &retentionTimes, userArgs.outputPath, filename, userArgs.silent, userArgs.noOverwrite);
-
-            if (userArgs.term == TerminateAfter::centroids)
-                continue;
         }
 
         assert(!centroids->empty());
@@ -208,7 +200,6 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
             else
             {
                 ++errorCount;
-                continue;
             }
         }
 
@@ -226,11 +217,6 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
                       filename,
                       userArgs.silent,
                       userArgs.noOverwrite);
-
-            if (userArgs.term == TerminateAfter::binning)
-            {
-                continue;
-            }
         }
         delete centroids;
 
@@ -243,7 +229,6 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         if (features.size() == 0)
         {
             fprintf(stderr, "Warning: no features were constructed, continuing...\n");
-            continue;
         }
 
         if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
@@ -274,13 +259,8 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
                 printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
                                  userArgs.silent, userArgs.noOverwrite);
             }
-            continue;
         }
 
-        if (userArgs.term == TerminateAfter::components)
-        {
-            continue;
-        }
 #endif
         if (inputFile.polarityMode == Polarities::mixed)
         {
