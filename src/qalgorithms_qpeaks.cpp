@@ -1890,7 +1890,18 @@ namespace qAlgorithms
     {
         assert(source_file != modify_file);
         // design: for all non-centroided spectra, centroid the data and overwrite the
-        // read in part of the file. Note: use std::filesystem::copy first in the main function somewhere
+
+        // only work on the copy
+        source_file->defective = true;
+        source_file->free_linknodes();
+
+        // 1) obtain next spectrum
+        // 2) continue if spectrum is MS2 or centroided
+        // 3) extract spectum data, process with qpeaks_find
+        // 4) write centroid m/z and intensity into two float arrays
+        // 5) compress arrays to char *
+        // 6) set spectrum mode to centroided
+        // 7) overwrite intensity and m/z for spectrum
     }
 
     bool getNextProfileRegion(

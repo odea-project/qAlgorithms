@@ -9,6 +9,8 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
+#include <filesystem>
 #include <time.h>
 
 int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
@@ -54,7 +56,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
     }
 
     // the final task list contains only unique files, sorted by filesize
-    std::vector<std::filesystem::path> tasklist = controlInput(&userArgs.inputPaths);
+    const std::vector<std::filesystem::path> tasklist = controlInput(&userArgs);
 
     clock_t absoluteStart = clock();
 
@@ -102,6 +104,20 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         {
             fprintf(stderr, "Warning: Due to the way processing is handled internally, it is not possible\n"
                             "to use qAlgorithms for centroiding to mzML and to produce feature lists in one run.\n");
+
+            // copy the original file for writing into
+            std::filesystem::path pathTarget = pathSource;
+            pathTarget.replace_filename(filename + "_qcentroid.mzML");
+            std::filesystem::copy_file(pathSource, pathTarget);
+
+            // @todo process the copied file. This invalidates the file from which the copy was
+            // produced to prevent unwanted modification.
+
+            // edit processing section of copy to include centroiding by qAlgorithms
+
+            // free linknodes on copy
+
+            exit(1);
         }
 
 #pragma endregion "centroid to mzml"

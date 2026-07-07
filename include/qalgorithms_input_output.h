@@ -86,7 +86,7 @@ namespace qAlgorithms
         unsigned int fileID = 0;         // count upwards after reading everything in @todo produce a unique identifier
     };
 
-    std::vector<std::filesystem::path> controlInput(const std::vector<std::string> *inputTasks);
+    std::vector<std::filesystem::path> controlInput(const UserInputSettings *args);
 
 #pragma endregion "file reading"
 

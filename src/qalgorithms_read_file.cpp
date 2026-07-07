@@ -56,32 +56,6 @@ namespace qAlgorithms
         return lengthDecoded;
     };
 
-    // Decompresses a string using the zlib library (https://zlib.net/).
-    // static void decompress_zlib(const std::vector<char> *compressed_string, std::vector<char> *output_string)
-    // {
-    //     // max expected compression is factor 6
-    //     output_string->resize(compressed_string->size() * 6);
-    //     // zlib struct
-    //     z_stream infstream;
-    //     infstream.zalloc = Z_NULL;
-    //     infstream.zfree = Z_NULL;
-    //     infstream.opaque = Z_NULL;
-    //     // setup input and output
-    //     infstream.avail_in = compressed_string->size();         // size of input
-    //     infstream.next_in = (Bytef *)compressed_string->data(); // input char array
-    //     infstream.avail_out = output_string->size();            // maximum size of output
-    //     infstream.next_out = (Bytef *)output_string->data();    // output char array
-
-    //     // the actual DE-compression work.
-    //     inflateInit(&infstream);
-    //     auto ret_1 = inflate(&infstream, Z_NO_FLUSH);
-    //     assert(ret_1 == 1);
-    //     auto ret_2 = inflateEnd(&infstream);
-    //     assert(ret_2 == 0);
-    //     // since resize does not deallocate, this just ensures we can use the vector without making compromises later
-    //     output_string->resize(infstream.total_out);
-    // };
-
     static BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
 
     XML_File::XML_File(const path_char *file, const SourceFileType type)
