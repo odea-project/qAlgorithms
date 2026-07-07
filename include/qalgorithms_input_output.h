@@ -48,6 +48,7 @@ namespace qAlgorithms
         float prof_lim_rt_upper = 0;
         // output options
         bool printCentroids = false;
+        bool printCentroidsMZML = false;
         bool printBins = false;
         bool printExtended = false;
         bool printFeatures = false;
