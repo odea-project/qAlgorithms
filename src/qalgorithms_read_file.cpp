@@ -207,11 +207,11 @@ namespace qAlgorithms
             return 1;
         }
 
-        const pugi::xml_node &spectrum_node = (*linknodes)[index];
+        const pugi::xml_node *spectrum_node = linknodes->data() + index;
 
-        pugi::xml_node node_binary_list = spectrum_node.child("binaryDataArrayList");
+        pugi::xml_node node_binary_list = spectrum_node->child("binaryDataArrayList");
 
-        unsigned int number_traces = spectrum_node.attribute("defaultArrayLength").as_uint();
+        unsigned int number_traces = spectrum_node->attribute("defaultArrayLength").as_uint();
 
         auto dataArray = node_binary_list.children("binaryDataArray").begin();
         assert(dataArray != node_binary_list.children("binaryDataArray").end());
@@ -289,9 +289,9 @@ namespace qAlgorithms
         return 0;
     };
 
-    static float extract_scan_RT(const pugi::xml_node &spec)
+    static float extract_scan_RT(const pugi::xml_node *spec)
     {
-        pugi::xml_node rt_node = spec.child("scanList").child("scan").find_child_by_attribute("cvParam", "name", "scan start time");
+        pugi::xml_node rt_node = spec->child("scanList").child("scan").find_child_by_attribute("cvParam", "name", "scan start time");
 
         float rt_val = rt_node.attribute("value").as_float();
         const char *rt_unit = rt_node.attribute("unitName").as_string();
@@ -315,7 +315,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < idxSize; ++i)
         {
             size_t idx = indices->at(i);
-            pugi::xml_node spec = (*linknodes)[idx];
+            pugi::xml_node *spec = linknodes->data() + idx;
             float RT = extract_scan_RT(spec);
             RTs->at(i) = RT;
         }
@@ -330,14 +330,14 @@ namespace qAlgorithms
         bool negative = false;
         for (size_t i = 0; i < count; ++i)
         {
-            pugi::xml_node spec = (*linknodes)[i];
-            if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr)
+            pugi::xml_node *spec = linknodes->data() + i;
+            if (spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr)
             {
                 positive = true;
             }
             else
             {
-                assert(spec.find_child_by_attribute("cvParam", "accession", "MS:1000129"));
+                assert(spec->find_child_by_attribute("cvParam", "accession", "MS:1000129"));
                 negative = true;
             }
 
@@ -360,17 +360,17 @@ namespace qAlgorithms
 
         for (unsigned int i = 0; i < this->number_spectra; i++)
         {
-            pugi::xml_node spec = (*linknodes)[i];
+            pugi::xml_node *spec = linknodes->data() + i;
 
-            bool isCentroid = spec.find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
+            bool isCentroid = spec->find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
             if (isCentroid != centroided)
                 continue; // this does not allow for processing of partially centroided data
 
-            bool polarityPos = spec.find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr;
+            bool polarityPos = spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr;
             if (polarityPos != polarity)
                 continue;
 
-            int level = spec.find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
+            int level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
             bool isMS1 = 1 == level;
             if (isMS1 != ms1)
                 continue; // only ms1 or msn data can be retrieved at once.
@@ -388,14 +388,14 @@ namespace qAlgorithms
 
         for (size_t i = 0; i < this->number_spectra; ++i)
         {
-            pugi::xml_node spec = (*linknodes)[i];
+            pugi::xml_node *spec = linknodes->data() + i;
 
-            int level = spec.find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
+            int level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
             bool isMS1 = 1 == level;
             if (!isMS1)
                 continue;
 
-            if (spec.find_child_by_attribute("cvParam", "accession", "MS:1000128") != nullptr)
+            if (spec->find_child_by_attribute("cvParam", "accession", "MS:1000128") != nullptr)
             {
                 profile += 1;
                 continue; // profile mode

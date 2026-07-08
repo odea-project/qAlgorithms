@@ -969,7 +969,7 @@ namespace qAlgorithms
         size_t right_limit = 0;
         for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {
-            const RegressionGauss *reg = &(*regressions)[i];
+            const RegressionGauss *reg = regressions->data() + i;
             left_limit = min(left_limit, reg->startIdx);
             right_limit = max(right_limit, reg->regSpan.endIdx);
         }
@@ -1193,14 +1193,13 @@ namespace qAlgorithms
                 const size_t offset_front = x0 - scale;
                 const size_t access = offset_front + offset_prev;
                 assert(access < totalRegs);
-#define current (*coeffs)[access]
-                current.b0 = inv.A * product_sum_b0 + inv.B * (product_sum_b2 + product_sum_b3);
-                current.b1 = inv.C * product_sum_b1 + inv.D * (product_sum_b2 - product_sum_b3);
-                current.b2 = inv_B_b0 + inv_D_b1 + inv.E * product_sum_b2 + inv.F * product_sum_b3;
-                current.b3 = inv_B_b0 - inv_D_b1 + inv.F * product_sum_b2 + inv.E * product_sum_b3;
-                current.scale = scale;
-                current.x0 = x0;
-#undef current
+                RegCoeffs *current = coeffs->data() + access;
+                current->b0 = inv.A * product_sum_b0 + inv.B * (product_sum_b2 + product_sum_b3);
+                current->b1 = inv.C * product_sum_b1 + inv.D * (product_sum_b2 - product_sum_b3);
+                current->b2 = inv_B_b0 + inv_D_b1 + inv.E * product_sum_b2 + inv.F * product_sum_b3;
+                current->b3 = inv_B_b0 - inv_D_b1 + inv.F * product_sum_b2 + inv.E * product_sum_b3;
+                current->scale = scale;
+                current->x0 = x0;
                 // next scale would access front of vector
                 offset_prev += length - 2 * scale;
             }

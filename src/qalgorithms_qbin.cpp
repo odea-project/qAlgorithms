@@ -291,8 +291,8 @@ namespace qAlgorithms
         res.pointsInBin.reserve(range->endIdx - range->startIdx + 1);
 
         for (size_t i = range->startIdx; i < range->endIdx + 1; i++)
-        { // +1 since the range is inclusive
-            const CentroidPeak *point = (*centroids)[i];
+        {                                                // +1 since the range is inclusive
+            const CentroidPeak *point = (*centroids)[i]; // @todo access through normal array
             res.pointsInBin.push_back(point);
         }
         assert(res.pointsInBin.size() >= MIN_BIN_SIZE);
@@ -312,7 +312,7 @@ namespace qAlgorithms
         res.pointsInBin.reserve(binEndPos - binStartPos + 1);
         for (size_t i = binStartPos; i <= binEndPos; i++)
         {
-            res.pointsInBin.push_back((*centroids)[i]);
+            res.pointsInBin.push_back((*centroids)[i]); // @todo confusing types
         }
         assert(res.pointsInBin.size() > 4);
         return res;
