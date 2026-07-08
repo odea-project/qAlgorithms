@@ -1798,7 +1798,7 @@ namespace qAlgorithms
         const std::vector<float> *spectrum_int,
         ProfileBlock *block);
 
-    static CentroidPeak peakToCen(const PeakFit *peak, const std::vector<float> *retentionTimes, size_t id, size_t specNum)
+    static CentroidPeak peakToCen(const PeakFit *peak, size_t id, size_t specNum)
     {
         CentroidPeak cen = {0};
 
@@ -1811,7 +1811,6 @@ namespace qAlgorithms
         cen.mz = peak->position;
         cen.mzUncertainty = peak->uncert_position;
         cen.number_MS1 = specNum;
-        cen.RT = retentionTimes->at(specNum);
         cen.scale = peak->coeffs.scale;
         cen.width = peak->fwhm;
 
@@ -1823,7 +1822,6 @@ namespace qAlgorithms
 
     int findCentroids(XML_File &data, // @todo move this into the xml file specific part of qAlgorithms
                       const std::vector<unsigned int> *selectedIndices,
-                      const std::vector<float> *retentionTimes,
                       std::vector<CentroidPeak> *centroids)
     {
         const size_t countSelected = selectedIndices->size();
@@ -1861,7 +1859,7 @@ namespace qAlgorithms
                 {
                     PeakFit *peak = ret.data() + i;
                     size_t id = centroids->size();
-                    centroids->push_back(peakToCen(peak, retentionTimes, id, specNum));
+                    centroids->push_back(peakToCen(peak, id, specNum));
                 }
                 ret.clear();
 

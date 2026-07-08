@@ -45,7 +45,6 @@ namespace qAlgorithms
     class XML_File; // forward declaration so at least the header does not couple with read_file
     int findCentroids(XML_File &data,
                       const std::vector<unsigned int> *selectedIndices,
-                      const std::vector<float> *retentionTimes,
                       std::vector<CentroidPeak> *centroids);
 
     /// @param intensity_log logarithmy of the intensity values. This is the y axis of the fit. The x axis is required to be equidistant.

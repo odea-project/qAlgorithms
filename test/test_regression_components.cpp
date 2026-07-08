@@ -4,7 +4,6 @@
 #pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
 
 #include "qalgorithms_datatypes.h"
-#include "qalgorithms_qbin.h"
 #include "qalgorithms_qpeaks.h"
 
 #include "CDFlib/cdflib.hpp"
@@ -95,83 +94,9 @@ int main()
         assert(validRegressions.size() == 2, "Failed to find representative centroid peaks in pair system 2");
     }
 
-    return 0;
+    // @todo test binning
 
-    // test: execute binning function on five identical centroids with increasing scan numbers
-    // @todo the test is wrong
-    if (false)
-    {
-        CentroidPeak centroid = {0};
-        centroid.mz = 100;
-        centroid.mzUncertainty = 2 * 10e-6;
-
-        size_t vecLen = 6;
-        std::vector<CentroidPeak> inputCens(vecLen, centroid);
-        // the first centroid is a dummy value
-        inputCens[0].mz = 0;
-
-        std::vector<unsigned int> convertRT(vecLen, 0);
-        for (size_t i = 0; i < vecLen; i++)
-        {
-            inputCens[i].number_MS1 = i;
-            inputCens[i].ID = i;
-            inputCens[i].mz = randRange_d(99.998, 100.002, 1);
-            convertRT[i] = i;
-        }
-
-        vecLen -= 1;
-
-        // expected output: one EIC with five points
-        std::vector<qAlgorithms::EIC> testEIC = performQbinning_old(&inputCens);
-        volatile qAlgorithms::EIC copy = testEIC[0];
-        assert(testEIC.size() != 0, "No EIC constructed");
-        assert(testEIC.size() < 2, "More than one EIC found");
-        assert(testEIC[0].mz.size() > vecLen - 1 + 4, "Some points were excluded from the EIC");
-        assert(testEIC[0].mz.size() < vecLen + 1 + 4, "Centroids added to EIC");
-        printf("EIC processing with one EIC and no interference works\n");
-
-        convertRT.push_back(vecLen + 1);
-        inputCens.push_back(centroid);
-        inputCens.back().mz = 200;
-        inputCens.back().mzUncertainty = 4 * 10e-6;
-        inputCens.back().number_MS1 = vecLen;
-        inputCens.back().ID = vecLen + 1;
-
-        vecLen++;
-        // expected output: one EIC with five points and one trailing centroid
-        testEIC = performQbinning_old(&inputCens);
-        assert(testEIC.size() != 0, "No EIC constructed");
-        assert(testEIC.size() < 2, "More than one EIC found");
-        // correct length is 9 since two points are added to each side. This is very confusing, change it @todo
-        assert(testEIC[0].mz.size() > 8, "Some points were excluded from the EIC");
-        assert(testEIC[0].mz.size() < 10, "Centroids added to EIC");
-        printf("EIC processing with one EIC and one noise point past the end works\n");
-
-        // test for two bins separated in mz and RT with some noise and the second bin having no other points
-        vecLen += 6;
-        for (size_t i = 0; i < 6; i++)
-        {
-            CentroidPeak centroid2 = {0};
-            centroid2.mz = 400;
-            centroid2.mzUncertainty = 5 * 10e-6;
-            centroid2.number_MS1 = i;
-            centroid2.ID = vecLen + i;
-            inputCens.push_back(centroid2);
-            size_t prevRT = convertRT.back();
-            convertRT.push_back(prevRT + 1);
-        }
-
-        for (size_t RT : convertRT)
-            printf("%zu ", RT);
-
-        testEIC = performQbinning_old(&inputCens);
-        assert(testEIC.size() != 0, "No EIC constructed");
-        assert(testEIC.size() == 2, "Incorrect number of EICs");
-        assert(testEIC[1].mz.size() == 10, "Incorrect EIC size");
-        printf("EIC processing with two EICs and noise inbetween works\n");
-    }
-
-    //@todo add a test for correct peak identification using a subset of real data (centroids and features)
+    // @todo add a test for correct peak identification using a subset of real data (centroids and features)
 
     return 0;
 }

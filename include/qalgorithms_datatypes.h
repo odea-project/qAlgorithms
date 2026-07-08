@@ -77,7 +77,6 @@ namespace qAlgorithms
     struct CentroidPeak
     {
         double mz = 0;
-        float RT = 0;
         float height = 0;
         float area = 0;
         float width = 0;
@@ -85,13 +84,13 @@ namespace qAlgorithms
         float DQSC = 0;
         // the binning tolerates at most three non-occurrences of a mass in order, but should not include interpolated spectra for this.
         // for conversion, number_MS1 is also the index into a vector that stores the "corrected" scan numbers after interpolation
-        unsigned int number_MS1 = 0;
+        uint16_t number_MS1 = 0;
         // unsigned int df = 0; // degrees of freedom
-        ProfilePos trace = {0};
-        unsigned int numCompetitors = 0;
-        unsigned int scale = 0;
-        unsigned int ID = 0;
-        // unsigned int interpolations;
+        // ProfilePos trace = {0};
+        uint16_t scale = 0;
+        uint16_t ID = 0;
+        uint8_t numCompetitors = 0;
+        // uint8_t interpolations;
     };
 
     struct EIC // Extracted Ion Chromatogram @todo fidn a better representation that does not involve this many allocations

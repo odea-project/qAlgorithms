@@ -167,7 +167,6 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
         int centroidCount = findCentroids(inputFile,
                                           &selectedIndices,
-                                          &retentionTimes,
                                           centroids); // it is guaranteed that only profile mode data is used
 
         if (centroidCount == 0)
@@ -203,7 +202,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 #pragma region "binning"
         timeStart = clock();
 
-        std::vector<EIC> binnedData = performQbinning_old(centroids);
+        std::vector<EIC> binnedData = performQbinning(centroids, &retentionTimes);
 
         timeEnd = clock();
 

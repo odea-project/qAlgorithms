@@ -14,7 +14,7 @@ namespace qAlgorithms
     const size_t MAX_SCAN_GAP = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
     const size_t MIN_BIN_SIZE = 5;
 
-    std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData)
+    std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData, const std::vector<float> *retentionTimes)
     {
         // @todo split out subfunctions so the structure is subset -> score -> format
 
@@ -124,7 +124,7 @@ namespace qAlgorithms
         size_t countPointsInBins = 0;
         for (size_t i = 0; i < binCount; i++)
         {
-            auto eic = activeBins.finalBins[i].createEIC();
+            EIC eic = activeBins.finalBins[i].createEIC(retentionTimes);
             finalBins.push_back(eic);
             countPointsInBins += eic.df.back(); // interpolated points are already included in the size
         }
@@ -607,7 +607,7 @@ namespace qAlgorithms
     }
 #endif
 
-    EIC Bin::createEIC()
+    EIC Bin::createEIC(const std::vector<float> *retentionTimes)
     {
         size_t eicsize = pointsInBin.size();
         assert(eicsize > 4);
@@ -640,7 +640,7 @@ namespace qAlgorithms
             assert(point->ID != 0);
             assert(point->area > 1);
 
-            tmp_rt[i] = point->RT;
+            tmp_rt[i] = retentionTimes->at(point->number_MS1);
             tmp_scanNumbers[i] = point->number_MS1;
             tmp_mz[i] = (float)point->mz;
             assert(point->mz > 0);

@@ -23,7 +23,7 @@ namespace qAlgorithms
     /// @param convertRT vector containing the retention time for every scan number
     /// @param verbose if this option is selected, additional progress report is written to standard out
     /// @return returns the centroids as a collection of vectors
-    std::vector<EIC> performQbinning_old(const std::vector<CentroidPeak> *centroidedData);
+    std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData, const std::vector<float> *retentionTimes);
 
     // ###################################################################################################### //
 #pragma region "utility"
@@ -71,7 +71,7 @@ namespace qAlgorithms
         // this function is too complicated and has been removed
         // size_t makeDQSB(const std::vector<const CentroidPeak *> *notInBins, size_t idx_lowerLimit);
 
-        EIC createEIC();
+        EIC createEIC(const std::vector<float> *retentionTimes);
     };
 
     Bin makeBin_scan(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos);
