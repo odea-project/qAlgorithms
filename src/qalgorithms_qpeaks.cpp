@@ -82,6 +82,7 @@ namespace qAlgorithms
 
             peak.area = regression->area * delta_x;
             peak.uncert_area = regression->uncert_area * (float)exp(coeff.b0) * delta_x;
+            assert(peak.area > 1);
 
             // the empirical peak width is generally estimated at half maximum. Our peak
             // model only has a standard deviation for the apex peak
@@ -982,7 +983,7 @@ namespace qAlgorithms
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
             const RegressionGauss *reg = regressions->data() + i;
-            Range_i range = {left_limit, right_limit, right_limit - left_limit + 1}; // @todo this should update with the regressions
+            Range_i range = {left_limit, right_limit, right_limit - left_limit + 1};
             double mse = calcMSE_exp(&reg->coeffs,
                                      intensities,
                                      &range,
@@ -1342,9 +1343,6 @@ namespace qAlgorithms
         return ok;
     }
 
-    double calcPeakHeightUncert(RegressionGauss *mutateReg, double mse);
-    void calcPeakAreaUncert(RegressionGauss *mutateReg, double mse);
-
     static double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
 
     /// @brief calculate the residual sum of squares for the log regression / data
@@ -1420,10 +1418,9 @@ namespace qAlgorithms
         double mse_log = RSS_log / double(df_sum);
 
         /*
-        competing regressions filter:
-        If the real distribution of points could also be described as a continuum (i.e. only b0 is relevant),
-        the regression does not describe a peak. This is done through a nested F-test against a constant that
-        is the mean of all predicted values. @todo test this function
+        We use an F-test instead of a normal height threshold. If the peak shape is a good enough
+        fit, even very low intensity signals should be accounted for. The test here has a hard-coded
+        alpha of 0.05
         */
         bool f_ok = f_testRegression(intensities_log->data(), RSS_log, &regSpan);
         if (!f_ok)
@@ -1432,19 +1429,6 @@ namespace qAlgorithms
             // return f_test_fail; // H0 holds, the two distributions are not noticeably different
         }
 
-        // @todo this test might not be useful in any context, discuss final removal
-        if (!isValidQuadraticTerm(coeffs, mse_log, df_sum))
-        {
-            // assert(failstates > 1);
-            // failstates += 4;
-            // return invalid_quadratic; // statistical insignificance of the quadratic term
-        }
-        // if (!isValidPeakArea(coeffs, mse_log, df_sum)) // mse used in the "calcUncertainty" function call
-        // {
-        //     failstates += 8;
-        //     // return invalid_area; // statistical insignificance of the area
-        // }
-
         // uncertainty calculation and t-tests against peak properties
 
         float uncert_position = (float)peakPositionUncert(coeffs, mse_log);
@@ -1452,16 +1436,10 @@ namespace qAlgorithms
         float uncert_height = (float)peakHeightUncert(coeffs, mse_log);
         mutateReg->uncert_height = uncert_height;
 
-        // Height Significance Test:
-        // use a paired t-test to check if the apex height is a significant increase from the
-        // height at regression limits @todo for double peak systems, this will likely prefer
-        // removal of those regressions which correctly find the valley close to the apex
-
-        // @todo in principle, we should probably use the paired t-test here. This is not possible,
-        // since we cannot assume same sample sizes / variances and generally only have the two means.
         double uncertainty = -1;
         mutateReg->area = (float)peakArea(coeffs, 1, mse_log, &uncertainty);
         mutateReg->uncert_area = (float)uncertainty;
+        assert(mutateReg->area > 1);
 
         // this is also nonsensical since we care about the validity of the exponential
         // area only.
@@ -1488,8 +1466,6 @@ namespace qAlgorithms
 
         mutateReg->df = df_sum;
         mutateReg->apex_position += coeffs->x0;
-        assert(mutateReg->apex_position > 1); // @todo this should be superfluous
-        assert(mutateReg->apex_position < length - 1);
         assert(predict->size() == length);
         mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict->data(), length);
 
@@ -1919,7 +1895,7 @@ namespace qAlgorithms
             return true;
         }
 
-        const float minIntensity = 1; // @todo bad solution?
+        const float minIntensity = 1; // the log will be negative otherwise, making the implementation more complicated
 
         for (; idx < len; idx++)
         {

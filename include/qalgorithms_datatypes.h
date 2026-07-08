@@ -82,13 +82,13 @@ namespace qAlgorithms
         float width = 0;
         float heightUncertainty = 0, areaUncertainty = 0, mzUncertainty = 0;
         float DQSC = 0;
+        uint32_t ID = 0;
         // the binning tolerates at most three non-occurrences of a mass in order, but should not include interpolated spectra for this.
         // for conversion, number_MS1 is also the index into a vector that stores the "corrected" scan numbers after interpolation
         uint16_t number_MS1 = 0;
         // unsigned int df = 0; // degrees of freedom
         // ProfilePos trace = {0};
         uint16_t scale = 0;
-        uint16_t ID = 0;
         uint8_t numCompetitors = 0;
         // uint8_t interpolations;
     };

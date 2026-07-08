@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
@@ -165,10 +166,10 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         inputFile.get_spectra_RT(&selectedIndices, &retentionTimes);
 
         std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-        int centroidCount = findCentroids(inputFile,
-                                          &selectedIndices,
-                                          centroids); // it is guaranteed that only profile mode data is used
-
+        size_t centroidCount = findCentroids(inputFile,
+                                             &selectedIndices,
+                                             centroids); // it is guaranteed that only profile mode data is used
+        assert(centroidCount < UINT32_MAX);
         if (centroidCount == 0)
         {
             fprintf(stderr, "Error: no centroids found despite valid indices");
@@ -183,7 +184,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         // find lowest intensity among all centroids to use as baseline during componentisation
         float minCenArea = INFINITY;
-        for (size_t cenID = 1; cenID < (size_t)centroidCount; cenID++)
+        for (size_t cenID = 1; cenID < centroidCount; cenID++)
         {
             float currentInt = centroids->at(cenID).area;
             minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
@@ -195,7 +196,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         if (!userArgs.silent)
         {
-            printf("    produced %d centroids from %zu spectra in %0.3f s\n",
+            printf("    produced %ld centroids from %zu spectra in %0.3f s\n",
                    centroidCount, totalScans, timePassed_s);
         }
 
@@ -293,7 +294,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
     if (!userArgs.silent)
     {
         double timePassed_s = double(clock() - absoluteStart) / CLOCKS_PER_SEC;
-        printf("Completed data processing on %zu files in %f s.\n", tasklist.size() - userArgs.skipAhead, timePassed_s);
+        printf("Completed data processing on %zu files in %f s.\n", tasklist.size(), timePassed_s);
         if (errorCount > 0)
         {
             printf("Skipped %zu files which could not be processed.\n", errorCount);

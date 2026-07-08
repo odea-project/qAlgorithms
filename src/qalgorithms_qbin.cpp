@@ -637,7 +637,6 @@ namespace qAlgorithms
         for (size_t i = 0; i < eicsize; i++)
         {
             const CentroidPeak *point = pointsInBin[i];
-            assert(point->ID != 0);
             assert(point->area > 1);
 
             tmp_rt[i] = retentionTimes->at(point->number_MS1);
