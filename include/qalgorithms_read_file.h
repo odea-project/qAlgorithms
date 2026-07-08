@@ -23,7 +23,7 @@ namespace qAlgorithms
         bool isDouble = false;
     };
 
-    enum SourceFileType
+    enum SourceFileType // NOLINT (performance-enum-size)
     {
         unknown_filetype,
         mzML,

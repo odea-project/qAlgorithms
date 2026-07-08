@@ -7,6 +7,7 @@
 
 // other includes are avoided here to reduce header duplication
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>

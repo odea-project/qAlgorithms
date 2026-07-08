@@ -78,12 +78,17 @@ namespace qAlgorithms
             return;
         }
 
-        std::string format = mzml_root_node.name();
-        assert(format == "indexedmzML");
-
+        // traverse the xml tree while ensuring that failure occurs at the first possible moment
+        assert(std::strcmp("indexedmzML", mzml_root_node.name()) == 0);
         mzml_root_node = mzml_root_node.first_child();
-        pugi::xpath_node xps_run = mzml_root_node.select_node("//run");
-        pugi::xml_node spec_list = xps_run.node().child("spectrumList");
+        assert(std::strcmp("mzML", mzml_root_node.name()) == 0);
+
+        // qAlgorithms is not designed to process data which consists of more than one sample @todo more graceful erroring
+        assert(mzml_root_node.child("sampleList").attribute("count").value()[0] == '1');
+
+        assert(mzml_root_node.child("run"));
+
+        pugi::xml_node spec_list = mzml_root_node.child("run").child("spectrumList");
         assert(spec_list);
 
         number_spectra = spec_list.attribute("count").as_uint();
