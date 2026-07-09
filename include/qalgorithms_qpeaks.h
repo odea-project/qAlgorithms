@@ -5,6 +5,7 @@
 // internal
 #include "qalgorithms_datatypes.h"
 
+#include <cstdint>
 #include <vector>
 
 namespace qAlgorithms
@@ -17,7 +18,7 @@ namespace qAlgorithms
     /// @param y_values Values used to determine height of the peak
     /// @param x_values Values used as width of the peak, same length as y_values. It is a requirement that x values are evenly
     //                  spaced when applying this function, since it depends on that assumption for its precalculated matric transform.
-    /// @param degreesOfFreedom_cum cumulative degrees of freedom to account for interpolations and mean values. This is the cumulative
+    /// @param DF_cum cumulative degrees of freedom to account for interpolations and mean values. This is the cumulative
     //                              sum of the number of measured points for all y. It has the same length as x and y.
     //                              This can be set to nullptr if all df are one.
     /// @param length length of y, x and df if supplied
@@ -38,7 +39,7 @@ namespace qAlgorithms
     int qpeaks_find(
         const float *y_values,
         const float *x_values,
-        const unsigned int *DF_cum,
+        const uint16_t *DF_cum,
         const size_t length,
         size_t maxscale,
         std::vector<PeakFit> *result);
@@ -63,12 +64,12 @@ namespace qAlgorithms
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
                         std::vector<RegressionGauss> *validRegsTmp,
                         const float *intensities,
-                        const unsigned int *const degreesOfFreedom_cum);
+                        const uint16_t *const degreesOfFreedom_cum);
 
     void runningRegression(
         const float *intensities,
         std::vector<float> *intensities_log,
-        const unsigned int *const degreesOfFreedom_cum,
+        const uint16_t *const degreesOfFreedom_cum,
         const size_t length,
         const size_t maxscale,
         std::vector<RegressionGauss> *validRegressions);

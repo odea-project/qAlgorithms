@@ -2,6 +2,7 @@
 #define QALGORITHMS_UTILS_H
 
 #include <cstddef>
+#include <cstdint>
 #include <stddef.h>
 
 // ### functions in this file should never call malloc! ###
@@ -128,7 +129,7 @@ namespace qAlgorithms
 
     double meanOfCumulative(double *const cumArray, const size_t startIdx, const size_t endIdx);
     double meanOfCumulative(const double *const cumArray, const size_t startIdx, const size_t endIdx);
-    unsigned int sumOfCumulative(const unsigned int *const cumArray, const size_t startIdx, const size_t length);
+    unsigned int sumOfCumulative(const uint16_t *const cumArray, const size_t startIdx, const size_t length);
 
     // standard deviation
     double sdev(double *const array, const size_t n);

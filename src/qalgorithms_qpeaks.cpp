@@ -101,7 +101,7 @@ namespace qAlgorithms
         // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
         const float *y_values,
         const float *x_values,
-        const unsigned int *DF_cum,
+        const uint16_t *DF_cum,
         const size_t length,
         size_t maxscale,
         std::vector<PeakFit> *result)
@@ -154,17 +154,25 @@ namespace qAlgorithms
         */
         std::vector<float> y_log;
         std::vector<RegressionGauss> validRegressions;
-
+        std::vector<RegressionGauss> reallyValidRegressions;
         // @todo move the process of sectioning input data here, execute runningRegression in loop
 
         // Processing requires the point to be of intensity > 1 due to the log transform. In order
-        // to prevent high uncertainty, the minimum intensity is set to an absolute value of ep(1),
+        // to prevent high uncertainty, the minimum intensity is set to an absolute value of exp(1),
         // meaning it is guaranteed that within qpeaks, all processed values will be > 1 and thus
         // multiplication always increases the magnitude of a number.
         const float minIntensity = exp(1);
-
+        size_t rangeStart = 0;
         for (size_t pointIdx = 0; pointIdx < length; pointIdx++)
         {
+            if (y_values[pointIdx] > minIntensity)
+                continue;
+
+            // the point pointIdx - 1 is the last relevant index
+            size_t newLen = pointIdx - rangeStart;
+            const float *y_subset = y_values + rangeStart;
+            const float *x_subset = x_values + rangeStart;
+            const uint16_t *df = DF_cum == nullptr ? nullptr : DF_cum + rangeStart;
         }
 
         runningRegression(
@@ -190,7 +198,7 @@ namespace qAlgorithms
     static int validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
         const float *intensities,
         const std::vector<float> *intensities_log,
-        const unsigned int *const degreesOfFreedom_cum,
+        const uint16_t *const degreesOfFreedom_cum,
         const std::vector<RegCoeffs> *coefficients,
         const size_t length,
         std::vector<RegressionGauss> *validRegressions)
@@ -252,15 +260,15 @@ namespace qAlgorithms
     static int pruneConflictingRegs(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
-        const unsigned int *const df_cum);
+        const uint16_t *const df_cum);
 
     static int resolveScaleConflicts(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
-        const unsigned int *const df_cum);
+        const uint16_t *const df_cum);
 
     // int pruneRegsByApex(const float *intensities,
-    //                     const unsigned int *const df_cum,
+    //                     const uint16_t *const df_cum,
     //                     std::vector<RegressionGauss> *validRegressions);
 
     static double calcMSE_exp(const RegCoeffs *coeff,
@@ -272,7 +280,7 @@ namespace qAlgorithms
 
     static void mergeRegsInScale(
         const float *intensities,
-        const unsigned int *const df_cum,
+        const uint16_t *const df_cum,
         std::vector<RegressionGauss> *validRegsTmp,
         std::vector<RegressionGauss> *validRegressions);
 
@@ -285,7 +293,7 @@ namespace qAlgorithms
     void runningRegression(
         const float *intensities,
         std::vector<float> *intensities_log,
-        const unsigned int *const degreesOfFreedom_cum,
+        const uint16_t *const degreesOfFreedom_cum,
         const size_t length,
         const size_t maxscale,
         std::vector<RegressionGauss> *validRegressions)
@@ -364,7 +372,7 @@ namespace qAlgorithms
 
 #if 0
     int pruneRegsByApex(const float *intensities,
-                        const unsigned int *const df_cum,
+                        const uint16_t *const df_cum,
                         std::vector<RegressionGauss> *validRegressions)
     {
         // yet another attempt to solve this problem gracefully. This time, the
@@ -429,7 +437,7 @@ namespace qAlgorithms
     int pruneConflictingRegs(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
-        const unsigned int *const df_cum)
+        const uint16_t *const df_cum)
     {
         // regressions start out valid and sorted by scale, and position within scales
         // S1R1 S1R2 S1 R3 S1 Rn | S2R1 S2R2 S2Rn | SnRn
@@ -684,7 +692,7 @@ namespace qAlgorithms
     int resolveScaleConflicts(
         std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
-        const unsigned int *const df_cum)
+        const uint16_t *const df_cum)
     {
         // this function takes in the output of the previous function and then checks which regressions
         // should be preferred. It is important that comparisons are made in ascending scale order so that
@@ -840,7 +848,7 @@ namespace qAlgorithms
     // --------------- old functions ---------------- //
     void mergeRegsInScale(
         const float *intensities,
-        const unsigned int *const df_cum,
+        const uint16_t *const df_cum,
         std::vector<RegressionGauss> *validRegsTmp,
         std::vector<RegressionGauss> *validRegressions)
     {
@@ -888,13 +896,13 @@ namespace qAlgorithms
     static RegPair findBestRegression(
         const float *intensities,
         const std::vector<RegressionGauss> *regressions,
-        const unsigned int *const degreesOfFreedom_cum,
+        const uint16_t *const degreesOfFreedom_cum,
         const Range_i regSpan);
 
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
                         std::vector<RegressionGauss> *validRegsTmp,
                         const float *intensities,
-                        const unsigned int *const degreesOfFreedom_cum)
+                        const uint16_t *const degreesOfFreedom_cum)
     {
         /*
             Grouping:
@@ -969,7 +977,7 @@ namespace qAlgorithms
     RegPair findBestRegression(
         const float *intensities,
         const std::vector<RegressionGauss> *regressions,
-        const unsigned int *const degreesOfFreedom_cum,
+        const uint16_t *const degreesOfFreedom_cum,
         const Range_i regSpan)
     {
         double best_mse = INFINITY;

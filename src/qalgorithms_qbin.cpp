@@ -6,6 +6,7 @@
 #include <cassert>
 #include <climits>
 #include <cstddef>
+#include <cstdint>
 #include <math.h>
 #include <vector>
 
@@ -631,7 +632,7 @@ namespace qAlgorithms
         std::vector<float> tmp_ints_height(eicsize, 0);
         std::vector<float> tmp_DQSC(eicsize, 0);
         std::vector<unsigned int> tmp_cenID(eicsize, 0);
-        std::vector<unsigned int> tmp_df(eicsize, 0);
+        std::vector<uint16_t> tmp_df(eicsize, 0);
         std::vector<float> tmp_rt(eicsize, 0);
 
         for (size_t i = 0; i < eicsize; i++)

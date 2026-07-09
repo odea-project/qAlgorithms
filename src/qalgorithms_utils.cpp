@@ -1,5 +1,6 @@
 #include "qalgorithms_utils.h"
 #include <cstddef>
+#include <cstdint>
 #define _USE_MATH_DEFINES
 #include "cephes.h"
 #include <cassert>
@@ -349,7 +350,7 @@ namespace qAlgorithms
         return totalSum / (endIdx - startIdx + 1);
     }
 
-    unsigned int sumOfCumulative(const unsigned int *const cumArray, const size_t startIdx, const size_t length)
+    unsigned int sumOfCumulative(const uint16_t *const cumArray, const size_t startIdx, const size_t length)
     {
         // if the cumulative array does not exist (== null), assume that
         // the toal df is the length
