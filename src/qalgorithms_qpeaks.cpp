@@ -965,7 +965,7 @@ namespace qAlgorithms
         unsigned int bestRegIdx = 0;
 
         // identify left (smallest) and right (largest) limit of the grouped regression windows
-        size_t left_limit = UINT_MAX;
+        uint16_t left_limit = UINT16_MAX;
         size_t right_limit = 0;
         for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
         {

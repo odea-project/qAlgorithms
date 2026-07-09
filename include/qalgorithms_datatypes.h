@@ -22,7 +22,7 @@ namespace qAlgorithms
     struct RegCoeffs
     {
         double b0 = 0, b1 = 0, b2 = 0, b3 = 0;
-        size_t scale = 0, x0 = 0;
+        uint16_t scale = 0, x0 = 0;
     };
 
     struct Range_i
@@ -36,16 +36,15 @@ namespace qAlgorithms
     {
         RegCoeffs coeffs = {0};      // regression coefficients
         Range_i regSpan = {0, 0, 0}; // limits of the peak regression window
-        size_t startIdx = 0;
-        size_t length = 0;
-        int df = 0;              // degrees of freedom, interpolated data points will not be considered
-        float apex_position = 0; // position of the apex of the peak
-        // float mse = 0;            // mean squared error
-        float area = 0; // area of the peak (in evenly spaced x dimension, scaled later)
+        float apex_position = 0;     // position of the apex of the peak
+        float area = 0;              // area of the peak (in evenly spaced x dimension, scaled later)
         float uncert_area = 0, uncert_position = 0, uncert_height = 0;
-        unsigned int numCompetitors = 0; // number of points that were discarded in favour of this regression
         float jaccard = 0;
-        bool isValid = false; // flag to indicate if the regression is valid
+        uint16_t startIdx = 0;
+        uint16_t length = 0;
+        uint16_t df = 0;             // degrees of freedom, interpolated data points will not be considered
+        uint16_t numCompetitors = 0; // number of points that were discarded in favour of this regression
+        bool isValid = false;        // flag to indicate if the regression is valid
     };
 
     // The distinction between centroid and feature is not really sensible as a core part of the project
@@ -76,7 +75,7 @@ namespace qAlgorithms
 
     struct CentroidPeak
     {
-        double mz = 0;
+        float mz = 0;
         float height = 0;
         float area = 0;
         float width = 0;
@@ -93,7 +92,7 @@ namespace qAlgorithms
         // uint8_t interpolations;
     };
 
-    struct EIC // Extracted Ion Chromatogram @todo fidn a better representation that does not involve this many allocations
+    struct EIC // Extracted Ion Chromatogram @todo find a better representation that does not involve this many allocations
     {
         std::vector<unsigned int> scanNumbers = {0};
         std::vector<float> mz = {0};
