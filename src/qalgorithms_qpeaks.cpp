@@ -6,7 +6,6 @@
 #include "libcerf_reduced.h"
 
 #include <cassert>
-#include <climits>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -108,20 +107,19 @@ namespace qAlgorithms
         std::vector<PeakFit> *result)
     {
         // control input for nullpointers, mismatching x and y, and fitting maxscale
-        // @todo use one enum for errors uniformly throughout the code
         if (y_values == nullptr || x_values == nullptr || result == nullptr)
         {
             return -1;
         }
-        // if (y_values->size() != x_values->size())
-        // {
-        //     return -2;
-        // }
         if (length < MINLENGTH)
+        {
+            return -2;
+        }
+        if (maxscale < GLOBAL_MINSCALE)
         {
             return -3;
         }
-        if (maxscale < GLOBAL_MINSCALE)
+        if (maxscale > QALGORITHMS_MAXSCALE_PRECOMPILED)
         {
             return -4;
         }
@@ -158,6 +156,16 @@ namespace qAlgorithms
         std::vector<RegressionGauss> validRegressions;
 
         // @todo move the process of sectioning input data here, execute runningRegression in loop
+
+        // Processing requires the point to be of intensity > 1 due to the log transform. In order
+        // to prevent high uncertainty, the minimum intensity is set to an absolute value of ep(1),
+        // meaning it is guaranteed that within qpeaks, all processed values will be > 1 and thus
+        // multiplication always increases the magnitude of a number.
+        const float minIntensity = exp(1);
+
+        for (size_t pointIdx = 0; pointIdx < length; pointIdx++)
+        {
+        }
 
         runningRegression(
             y_values,
@@ -871,7 +879,7 @@ namespace qAlgorithms
         validRegsTmp->pop_back();
     }
 
-    struct RegPair
+    struct RegPair // NOLINT
     {
         unsigned int idx;
         double mse;
@@ -1763,7 +1771,7 @@ namespace qAlgorithms
 
 #pragma region "find centroids"
 
-    struct ProfileBlock // @todo eventually remove this (?)
+    struct ProfileBlock // NOLINT @todo eventually remove this (?)
     {
         const float *intensity;
         const float *mz;

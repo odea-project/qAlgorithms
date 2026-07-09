@@ -21,15 +21,16 @@ namespace qAlgorithms
     //                              sum of the number of measured points for all y. It has the same length as x and y.
     //                              This can be set to nullptr if all df are one.
     /// @param length length of y, x and df if supplied
-    /// @param maxscale up to which scale regressions should be attempted. The maximum peak width (in points) is maxscale * 2 + 1. maxscale must be > 1.
+    /// @param maxscale up to which scale regressions should be attempted. The maximum peak width (in points) is maxscale * 2 + 1.
     //                  If maxscale would exceed the length of x or y, it is set to (the length of either -1) / 2.
     /// @param result All found peaks are appended to this vector.
     /// @return the total number of appended peaks. If this is < 0, the function did not execute correctly.
     /// @details Errorcodes:
     ///  0 = no valid peaks were found (this is not an error per se, when supplying ex. a constant y this is the expected result)
     /// -1 = one of y_values, x_values or detectedPeaks was nullptr
-    /// -2 = y_values, x_values or degreesOfFreedom_cum have unequal lengths
-    /// -3 maxscale is < 2
+    /// -2 = lenght is smaller than minimum required
+    /// -3 = maxscale is < 2
+    /// -4 = maxscale exceeds maxscale determined by implementation
     /// ### Assumptions: ###  these are not tested @todo
     /// x and degreesOfFreedom_cum increase monotonically.
     /// y has equal variance at every point
@@ -85,7 +86,7 @@ namespace qAlgorithms
                      float *predicted,
                      RegCoeffs *coeff);
 
-    enum invalid // @todo rework causes for invalidation
+    enum invalid // NOLINT @todo rework causes for invalidation
     {
         ok = 0,
         no_apex = 1,
