@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #define _USE_MATH_DEFINES // relevant for windows to have math constants
 #include <math.h>
 #include <vector>
@@ -154,8 +155,10 @@ namespace qAlgorithms
         before calling the qpeaks_find.
         */
         std::vector<float> y_log;
-
         std::vector<RegressionGauss> validRegressions;
+
+        // @todo move the process of sectioning input data here, execute runningRegression in loop
+
         runningRegression(
             y_values,
             &y_log,
@@ -1859,22 +1862,83 @@ namespace qAlgorithms
         return centroids->size();
     }
 
-    void centroids_to_mzml(XML_File *const source_file, XML_File *const modify_file)
+    void centroids_to_mzml(const path_char *pathTarget, const path_char *pathSource)
     {
-        assert(source_file != modify_file);
-        // design: for all non-centroided spectra, centroid the data and overwrite the
+        assert(std::strcmp(pathTarget, pathSource) != 0);
 
         // only work on the copy
-        source_file->defective = true;
-        source_file->free_linknodes();
+        XML_File source_file(pathSource, mzML);
+        const size_t numSpecs = source_file.number_spectra;
 
-        // 1) obtain next spectrum
-        // 2) continue if spectrum is MS2 or centroided
-        // 3) extract spectum data, process with qpeaks_find
-        // 4) write centroid m/z and intensity into two float arrays
-        // 5) compress arrays to char *
-        // 6) set spectrum mode to centroided
-        // 7) overwrite intensity and m/z for spectrum
+        std::vector<float> spectrum_mz;
+        std::vector<float> spectrum_int;
+        std::vector<PeakFit> result;
+        std::vector<double> res_spectrum_mz;
+        std::vector<double> res_spectrum_int;
+        std::vector<char> char_spectrum_mz;
+        std::vector<char> char_spectrum_int;
+
+        for (size_t i = 0; i < numSpecs; i++)
+        {
+            // 1) obtain next spectrum that is MS level 1 and not centroided
+            pugi::xml_node *spec = source_file.linknodes->data() + i;
+
+            bool isCentroid = spec->find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
+            if (isCentroid)
+                continue; // this does not allow for processing of partially centroided data
+
+            int ms_level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
+            if (ms_level != 1)
+                continue; // centroiding only makes sense for ms level 1
+
+            source_file.get_spectrum(&spectrum_mz, &spectrum_int, i);
+
+            // 3) extract spectum data, process with qpeaks_find
+            int numPeaks = qpeaks_find(spectrum_int.data(),
+                                       spectrum_mz.data(),
+                                       nullptr,
+                                       spectrum_mz.size(),
+                                       40,
+                                       &result);
+            assert(numPeaks > 0);
+            const size_t numPeaks_u = (size_t)numPeaks;
+
+            // 4) write centroid m/z and intensity into two float arrays
+            res_spectrum_int.resize(numPeaks_u);
+            res_spectrum_mz.resize(numPeaks_u);
+            for (size_t peak = 0; peak < numPeaks_u; peak++)
+            {
+                res_spectrum_int[peak] = result[peak].area;
+                res_spectrum_mz[peak] = result[peak].position;
+            }
+
+            // 5) compress arrays to char *
+            encode_and_compress(&res_spectrum_int, &char_spectrum_int);
+            encode_and_compress(&res_spectrum_mz, &char_spectrum_mz);
+
+            // 6) set spectrum mode to centroided. This means replacing the attribute name and value
+            spec->find_child_by_attribute("cvParam", "name", "profile spectrum").set_value("centroid spectrum");
+            spec->find_child_by_attribute("cvParam", "accession", "MS:1000128").set_value("MS:1000127");
+
+            // 7) overwrite intensity and m/z for spectrum, also set length of array
+            pugi::xml_named_node_iterator dataArray = spec->child("binaryDataArrayList").children("binaryDataArray").begin();
+            dataArray->attribute("encodedLength").set_value(char_spectrum_mz.size());
+            dataArray->child("binary").set_value(char_spectrum_mz.data());
+            dataArray->next_sibling();
+            dataArray->attribute("encodedLength").set_value(char_spectrum_int.size());
+            dataArray->child("binary").set_value(char_spectrum_int.data());
+
+            // reset storage vectors to avoid in-loop allocation
+            spectrum_mz.clear();
+            spectrum_int.clear();
+            result.clear();
+            res_spectrum_mz.clear();
+            res_spectrum_int.clear();
+            char_spectrum_mz.clear();
+            char_spectrum_int.clear();
+        }
+        source_file.mzml_base_document.save_file(pathTarget);
+        source_file.free_linknodes();
     }
 
     bool getNextProfileRegion(

@@ -1,5 +1,5 @@
-#ifndef QALGORITHMS_DATATYPE_PEAK_H
-#define QALGORITHMS_DATATYPE_PEAK_H
+#ifndef QALGORITHMS_DATATYPES_H
+#define QALGORITHMS_DATATYPES_H
 
 #include <cstdint>
 #include <qalgorithms_utils.h>
@@ -7,6 +7,15 @@
 
 // This file includes the structs used for data management in qAlgorithms.
 // All data structures required by multiple parts of the full program should be listed here.
+// Further, all OS-dependent conditionals are handled here if possible
+
+#ifdef _WIN32
+typedef wchar_t path_char;
+    #define _STR "%ls" // NOLINT
+#else
+typedef char path_char;
+    #define _STR "%s" // NOLINT
+#endif
 
 namespace qAlgorithms
 {
@@ -132,4 +141,4 @@ namespace qAlgorithms
     };
 } // namespace qAlgorithms
 
-#endif // QALGORITHMS_DATATYPE_PEAK_H
+#endif // QALGORITHMS_DATATYPES_H

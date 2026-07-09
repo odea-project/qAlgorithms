@@ -8,12 +8,6 @@
 #define PUGIXML_HEADER_ONLY
 #include "../external/pugixml/pugixml.hpp"
 
-#ifdef _WIN32
-typedef wchar_t path_char;
-#else
-typedef char path_char;
-#endif
-
 namespace qAlgorithms
 {
     struct BinaryMetadata // @todo there is no need for a file-specific metadata object. Is it possible for different spectra and properties to be compressed / uncompressed?
@@ -61,7 +55,7 @@ namespace qAlgorithms
     class XML_File
     {
         // @todo change this to a generalised XML document interface for mass spec data
-      private:
+      public:
         // std::vector<BinaryMetadata> spectra_binary_metadata;
         BinaryMetadata mtd_mz{}, mtd_intensity{};
 
@@ -75,7 +69,6 @@ namespace qAlgorithms
 
         Polarities get_polarity_mode();
 
-      public:
         pugi::xml_node mzml_root_node;
 
         SourceFileType filetype = unknown_filetype;
@@ -88,7 +81,7 @@ namespace qAlgorithms
 
         bool isCentroided = false;
 
-        XML_File(const path_char *fileconst, SourceFileType type);
+        XML_File(const path_char *filepath, SourceFileType type);
 
         int get_spectrum(
             std::vector<float> *const spectrum_mz,
@@ -112,6 +105,8 @@ namespace qAlgorithms
                         std::vector<float> *result);
 
     void compress_zlib(const std::vector<char> *uncompressed_string, std::vector<char> *output_string);
+
+    void encode_and_compress(std::vector<double> *input_dbl, std::vector<char> *output_string);
 }; // namespace qAlgorithms
 
 #endif // QALGORITHMS_READ_FILE_H

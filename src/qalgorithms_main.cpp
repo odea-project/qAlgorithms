@@ -75,7 +75,25 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
             printf(format, pathIdx + 1, tasklist.size(), pathSource.c_str());
         }
 
-        assert(pathSource.extension() == ".mzML"); // @todo support other filetypes
+#pragma region "centroid to mzml"
+        if (userArgs.printCentroidsMZML)
+        {
+            fprintf(stderr, "Warning: Due to the way processing is handled internally, it is not possible\n"
+                            "to use qAlgorithms for centroiding to mzML and to produce feature lists in one run.\n");
+
+            // copy the original file for writing into
+            std::filesystem::path pathTarget = pathSource;
+            pathTarget.replace_filename(filename + "_qcentroid.mzML");
+
+            // This function handles everything from input validation to processing and file saving.
+            // We should probably make it a separate program with its own specialised input validation
+            centroids_to_mzml(pathTarget.c_str(), pathSource.c_str());
+
+            exit(1);
+        }
+
+#pragma endregion "centroid to mzml"
+
         XML_File inputFile(pathSource.c_str(), mzML);
 
         if (inputFile.defective)
@@ -100,29 +118,6 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
             printf(" file in profile mode, ok\n");
         }
         filename = pathSource.stem().string();
-
-#pragma region "centroid to mzml"
-        if (userArgs.printCentroidsMZML)
-        {
-            fprintf(stderr, "Warning: Due to the way processing is handled internally, it is not possible\n"
-                            "to use qAlgorithms for centroiding to mzML and to produce feature lists in one run.\n");
-
-            // copy the original file for writing into
-            std::filesystem::path pathTarget = pathSource;
-            pathTarget.replace_filename(filename + "_qcentroid.mzML");
-            std::filesystem::copy_file(pathSource, pathTarget);
-
-            // @todo process the copied file. This invalidates the file from which the copy was
-            // produced to prevent unwanted modification.
-
-            // edit processing section of copy to include centroiding by qAlgorithms
-
-            // free linknodes on copy
-
-            exit(1);
-        }
-
-#pragma endregion "centroid to mzml"
 
         // start with positive scans when evaluating mixed mode spectra
         bool polarity_selected = (inputFile.polarityMode == Polarities::positive) ||
@@ -196,7 +191,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         if (!userArgs.silent)
         {
-            printf("    produced %ld centroids from %zu spectra in %0.3f s\n",
+            printf("    produced %zu centroids from %zu spectra in %0.3f s\n",
                    centroidCount, totalScans, timePassed_s);
         }
 

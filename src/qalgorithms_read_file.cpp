@@ -213,7 +213,7 @@ namespace qAlgorithms
 
         unsigned int number_traces = spectrum_node->attribute("defaultArrayLength").as_uint();
 
-        auto dataArray = node_binary_list.children("binaryDataArray").begin();
+        pugi::xml_named_node_iterator dataArray = node_binary_list.children("binaryDataArray").begin();
         assert(dataArray != node_binary_list.children("binaryDataArray").end());
 
         std::vector<char> buffer;
@@ -449,5 +449,23 @@ namespace qAlgorithms
         assert(outSize != uncompressed_string->size());
         output_string->resize(outSize);
     };
+
+    void encode_and_compress(std::vector<double> *input_dbl, std::vector<char> *output_string)
+    {
+        // encode to base64
+        const size_t length = input_dbl->size() * sizeof(double);
+        const char *input = (const char *)input_dbl->data();
+        std::vector<char> buffer(simdutf::base64_length_from_binary(length));
+        const size_t written = simdutf::binary_to_base64(input, length, buffer.data());
+        assert(written == buffer.size());
+
+        // compress using zlib-ng
+        output_string->resize(written);
+        size_t outSize = written;
+        zng_compress((Bytef *)output_string->data(), &outSize,
+                     (Bytef *)buffer.data(), outSize);
+        assert(outSize != buffer.size());
+        output_string->resize(outSize);
+    }
 
 } // namespace qAlgorithms
