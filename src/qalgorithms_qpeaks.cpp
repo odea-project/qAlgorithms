@@ -97,6 +97,15 @@ namespace qAlgorithms
         }
     }
 
+    void regression_on_continuum(
+        const float *intensities,
+        const float *x_axis,
+        std::vector<float> *intensities_log,
+        const uint16_t *const degreesOfFreedom_cum,
+        const size_t length,
+        const size_t maxscale,
+        std::vector<RegressionGauss> *validRegressions);
+
     int qpeaks_find(
         // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
         const float *y_values,
@@ -154,6 +163,7 @@ namespace qAlgorithms
         */
         std::vector<float> y_log;
         std::vector<RegressionGauss> validRegressions;
+        std::vector<float> intensities_log;
         std::vector<RegressionGauss> reallyValidRegressions;
         // @todo move the process of sectioning input data here, execute runningRegression in loop
 
@@ -170,9 +180,14 @@ namespace qAlgorithms
 
             // the point pointIdx - 1 is the last relevant index
             size_t newLen = pointIdx - rangeStart;
-            const float *y_subset = y_values + rangeStart;
-            const float *x_subset = x_values + rangeStart;
+            if (newLen < MINLENGTH)
+                continue;
+
+            size_t newMaxscale = min(maxscale, (newLen - 1) / 2);
+            const float *intensities = y_values + rangeStart;
+            const float *x_axis = x_values + rangeStart;
             const uint16_t *df = DF_cum == nullptr ? nullptr : DF_cum + rangeStart;
+            // @todo merge peak retransform and runningRegression
         }
 
         runningRegression(
