@@ -89,12 +89,17 @@ namespace qAlgorithms
             size_t index);
 
         // return all indices of spectra that match the required criteria
-        std::vector<unsigned int> filter_spectra(const bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
+        std::vector<unsigned int> filter_spectra_old(const bool ms1, bool polarity, bool centroided); // @todo this is only useable to select MS1 or MS2
 
         void get_spectra_RT(const std::vector<unsigned int> *indices, std::vector<float> *const RTs);
 
         void free_linknodes();
     };
+
+    std::vector<uint32_t> filter_spectra(const XML_File *data,
+                                         const bool ms1,
+                                         const bool polarity,
+                                         const bool centroided);
 
     // functions exposed for testing
     std::vector<char> decode_base64(const std::string &encoded_string);

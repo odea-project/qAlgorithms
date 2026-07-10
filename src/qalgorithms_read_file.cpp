@@ -7,6 +7,7 @@
 // #include <filesystem>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -349,7 +350,7 @@ namespace qAlgorithms
         return positive ? Polarities::positive : Polarities::negative;
     };
 
-    std::vector<unsigned int> XML_File::filter_spectra(
+    std::vector<unsigned int> XML_File::filter_spectra_old(
         bool ms1, bool polarity, bool centroided)
     {
         // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
@@ -361,6 +362,41 @@ namespace qAlgorithms
         for (unsigned int i = 0; i < this->number_spectra; i++)
         {
             pugi::xml_node *spec = linknodes->data() + i;
+
+            bool isCentroid = spec->find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
+            if (isCentroid != centroided)
+                continue; // this does not allow for processing of partially centroided data
+
+            bool polarityPos = spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr;
+            if (polarityPos != polarity)
+                continue;
+
+            int level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
+            bool isMS1 = 1 == level;
+            if (isMS1 != ms1)
+                continue; // only ms1 or msn data can be retrieved at once.
+
+            indices.push_back(i);
+        }
+        indices.shrink_to_fit();
+        return indices;
+    }
+
+    std::vector<uint32_t> filter_spectra(const XML_File *data,
+                                         const bool ms1,
+                                         const bool polarity,
+                                         const bool centroided)
+    {
+        // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
+        assert(!data->defective);
+        const size_t specnum = data->number_spectra;
+        assert(specnum > 0);
+        std::vector<uint32_t> indices;
+        indices.reserve(specnum);
+
+        for (uint32_t i = 0; i < specnum; i++)
+        {
+            pugi::xml_node *spec = data->linknodes->data() + i;
 
             bool isCentroid = spec->find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
             if (isCentroid != centroided)

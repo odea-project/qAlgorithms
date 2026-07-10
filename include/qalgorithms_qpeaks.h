@@ -44,8 +44,8 @@ namespace qAlgorithms
         size_t maxscale,
         std::vector<PeakFit> *result);
 
-    class XML_File; // forward declaration so at least the header does not couple with read_file
-    int findCentroids(XML_File &data,
+    class XML_File;                   // forward declaration so at least the header does not couple with read_file
+    int findCentroids(XML_File *data, // @todo the internal file representation should be more generic
                       const std::vector<unsigned int> *selectedIndices,
                       std::vector<CentroidPeak> *centroids);
 

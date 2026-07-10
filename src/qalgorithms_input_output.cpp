@@ -721,9 +721,9 @@ namespace qAlgorithms
 
             for (size_t point = 0; point < lengthSpec; point++)
             {
-                size_t access = point + startSpec;
+                size_t selected = point + startSpec;
                 totalWritten += fprintf(outfile, "%u,%f,%f,%f\n",
-                                        idx, rt_idx, mz[access], intensity[access]);
+                                        idx, rt_idx, mz[selected], intensity[selected]);
             }
             mz.clear();
             intensity.clear();

@@ -180,8 +180,8 @@ namespace qAlgorithms
             if ((y_values[pointIdx] > minIntensity) && (pointIdx != length - 1))
                 continue;
 
-            // the point pointIdx - 1 is the last relevant index
-            const size_t newLen = pointIdx - rangeStart + 1;
+            // since the current point is out-of-range at this point, there is no +1 for the range
+            const size_t newLen = pointIdx - rangeStart;
             if (newLen >= MINLENGTH)
             {
                 const size_t newMaxscale = min(maxscale, (newLen - 1) / 2);
@@ -189,6 +189,8 @@ namespace qAlgorithms
                 const float *intensities_log = y_log.data() + rangeStart;
                 const float *x_axis = x_values + rangeStart;
                 const uint16_t *df = DF_cum == nullptr ? nullptr : DF_cum + rangeStart;
+
+                assert(intensities_log[newLen - 1] > 1);
 
                 regression_on_continuum(intensities,
                                         x_axis,
@@ -1265,9 +1267,9 @@ namespace qAlgorithms
                 // scale 4: 2 * length - (scale - 1) * 2 - (scale - 2) * 2 + x0 - scale
                 //          2 * length - scale * 4 + 6 + x0 - scale
                 const size_t offset_front = x0 - scale;
-                const size_t access = offset_front + offset_prev;
-                assert(access < totalRegs);
-                RegCoeffs *current = coeffs->data() + access;
+                const size_t offset = offset_front + offset_prev;
+                assert(offset < totalRegs);
+                RegCoeffs *current = coeffs->data() + offset;
                 current->b0 = inv.A * product_sum_b0 + inv.B * (product_sum_b2 + product_sum_b3);
                 current->b1 = inv.C * product_sum_b1 + inv.D * (product_sum_b2 - product_sum_b3);
                 current->b2 = inv_B_b0 + inv_D_b1 + inv.E * product_sum_b2 + inv.F * product_sum_b3;
@@ -1869,67 +1871,44 @@ namespace qAlgorithms
     // @todo find a better way of determining the smallest possible upper scale
     static const size_t maxscale_cen = 10;
 
-    int findCentroids(XML_File &data, // @todo move this into the xml file specific part of qAlgorithms
+    int findCentroids(XML_File *data,
                       const std::vector<unsigned int> *selectedIndices,
                       std::vector<CentroidPeak> *centroids)
     {
-        const size_t countSelected = selectedIndices->size();
+        assert(!data->defective);
+        assert(centroids->empty());
 
         std::vector<float> spectrum_mz;
         spectrum_mz.reserve(1000);
         std::vector<float> spectrum_int;
         spectrum_int.reserve(1000);
+        std::vector<PeakFit> ret;
 
-        std::vector<PeakFit> ret; // @todo add tracking stuff for retaining spectrum / startpoint information
-        ProfileBlock block = {nullptr, nullptr, 0, 0};
-
-        // note: The spectrum ID refers to the mzML file and also contains MS2 spectra / unwanted polarities.
-        // For the correct working of the algorithm, it is important that the specNum is used to describe
-        // ordering of centroids. A somewhat unintuitive design decision made here is setting the spectrum
-        // counter to overflow into 0 on the first loop iteration. The loop increments specNum whenever
-        // a new spectrum is taken from data, but on the first iteration no spectra have been assigned
-        // to a block. Since this means a new spectrum has to be fetched, the index will increment by
-        // one and overflow into 0 - the correct index. This design choice was made to avoid having two
-        // checks for end-of-block in the while loop so that the other loop assigning peaks to centroids
-        // is only traversed before the spectrum changes.
-        size_t ID_spectrum = selectedIndices->front();
-        size_t specNum = UINT64_MAX;
-        assert(specNum + 1 == 0);
-
-        bool endOfSPectrumReached = true;
-        while (true) // this is because the scan number is incremented after obtaining the spectrum
+        for (size_t specNum = 0; specNum < selectedIndices->size(); specNum++)
         {
-            if (endOfSPectrumReached)
+            int ok = data->get_spectrum(&spectrum_mz,
+                                        &spectrum_int,
+                                        selectedIndices->at(specNum));
+            assert(ok == 0);
+
+            const size_t peaksFound = qpeaks_find(spectrum_int.data(),
+                                                  spectrum_mz.data(),
+                                                  nullptr,
+                                                  spectrum_int.size(),
+                                                  maxscale_cen,
+                                                  &ret);
+
+            for (size_t p = 0; p < peaksFound; p++)
             {
-                // only write centroids every spectrum change since a minority of blocks has centroids
-                // and because placing it here makes the increment of specnum the last operation before
-                // switching spectra.
-                for (size_t i = 0; i < ret.size(); i++)
-                {
-                    PeakFit *peak = ret.data() + i;
-                    size_t id = centroids->size();
-                    centroids->push_back(peakToCen(peak, id, specNum));
-                }
-                ret.clear();
-
-                specNum += 1;
-
-                if (specNum >= countSelected)
-                {
-                    break;
-                }
-                // avoid needless allocation / deallocation of otherwise scope-local vectors
-                spectrum_mz.clear();
-                spectrum_int.clear();
-
-                ID_spectrum = selectedIndices->at(specNum);
-                data.get_spectrum(&spectrum_mz, &spectrum_int, ID_spectrum);
+                PeakFit *peak = ret.data() + p;
+                size_t id = centroids->size();
+                centroids->push_back(peakToCen(peak, id, specNum));
             }
-            endOfSPectrumReached = getNextProfileRegion(&spectrum_mz, &spectrum_int, &block);
-            // at this point, the block contains one continuous region of points in the source spectrum
-            qpeaks_find(block.intensity, block.mz, nullptr, block.length, maxscale_cen, &ret);
-        }
 
+            spectrum_mz.clear();
+            spectrum_int.clear();
+            ret.clear();
+        }
         return centroids->size();
     }
 
