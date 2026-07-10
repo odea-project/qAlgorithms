@@ -110,7 +110,7 @@ namespace qAlgorithms
     /// @return 0 if the regression is valid, otherwise the filter step which kicked it out
     invalid calcRegressionProperties(
         const float *intensities,
-        const std::vector<float> *intensities_log,
+        const float *intensities_log,
         const std::vector<float> *predict,
         const size_t df_sum,
         const size_t length,

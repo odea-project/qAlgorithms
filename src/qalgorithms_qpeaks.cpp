@@ -100,11 +100,11 @@ namespace qAlgorithms
     void regression_on_continuum(
         const float *intensities,
         const float *x_axis,
-        std::vector<float> *intensities_log,
-        const uint16_t *const degreesOfFreedom_cum,
+        const float *intensities_log,
+        const uint16_t *const df,
         const size_t length,
         const size_t maxscale,
-        std::vector<RegressionGauss> *validRegressions);
+        std::vector<PeakFit> *result);
 
     int qpeaks_find(
         // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
@@ -161,49 +161,47 @@ namespace qAlgorithms
         This means that no baseline exists. Baseline substraction, if appropriate, has to be performed
         before calling the qpeaks_find.
         */
-        std::vector<float> y_log;
-        std::vector<RegressionGauss> validRegressions;
-        std::vector<float> intensities_log;
-        std::vector<RegressionGauss> reallyValidRegressions;
-        // @todo move the process of sectioning input data here, execute runningRegression in loop
+        std::vector<float> y_log(length + 1);
+
+        for (size_t i = 0; i < length; i++)
+        {
+            y_log[i] = log(y_values[i]);
+        }
 
         // Processing requires the point to be of intensity > 1 due to the log transform. In order
         // to prevent high uncertainty, the minimum intensity is set to an absolute value of exp(1),
         // meaning it is guaranteed that within qpeaks, all processed values will be > 1 and thus
         // multiplication always increases the magnitude of a number.
-        const float minIntensity = exp(1);
+        const double minIntensity = exp(1);
         size_t rangeStart = 0;
         for (size_t pointIdx = 0; pointIdx < length; pointIdx++)
         {
-            if (y_values[pointIdx] > minIntensity)
+            // expand the region while y values are large enough
+            if ((y_values[pointIdx] > minIntensity) && (pointIdx != length - 1))
                 continue;
 
             // the point pointIdx - 1 is the last relevant index
-            size_t newLen = pointIdx - rangeStart;
-            if (newLen < MINLENGTH)
-                continue;
+            const size_t newLen = pointIdx - rangeStart + 1;
+            if (newLen >= MINLENGTH)
+            {
+                const size_t newMaxscale = min(maxscale, (newLen - 1) / 2);
+                const float *intensities = y_values + rangeStart;
+                const float *intensities_log = y_log.data() + rangeStart;
+                const float *x_axis = x_values + rangeStart;
+                const uint16_t *df = DF_cum == nullptr ? nullptr : DF_cum + rangeStart;
 
-            size_t newMaxscale = min(maxscale, (newLen - 1) / 2);
-            const float *intensities = y_values + rangeStart;
-            const float *x_axis = x_values + rangeStart;
-            const uint16_t *df = DF_cum == nullptr ? nullptr : DF_cum + rangeStart;
-            // @todo merge peak retransform and runningRegression
+                regression_on_continuum(intensities,
+                                        x_axis,
+                                        intensities_log,
+                                        df,
+                                        newLen,
+                                        newMaxscale,
+                                        result);
+            }
+            rangeStart = pointIdx + 1;
         }
 
-        runningRegression(
-            y_values,
-            &y_log,
-            DF_cum,
-            length,
-            maxscale,
-            &validRegressions);
-
-        // validregressions contains all relevant peak candidates
-
-        // reverse the not-calculated transform of the x axis only for region where peaks exist
-        retransformPeaks(&validRegressions, x_values, validRegressions.size(), result);
-
-        return int(validRegressions.size());
+        return (int)result->size();
     }
 
 #pragma region "running regression"
@@ -212,7 +210,7 @@ namespace qAlgorithms
 
     static int validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
         const float *intensities,
-        const std::vector<float> *intensities_log,
+        const float *intensities_log,
         const uint16_t *const degreesOfFreedom_cum,
         const std::vector<RegCoeffs> *coefficients,
         const size_t length,
@@ -305,6 +303,48 @@ namespace qAlgorithms
 
     // -------------------------------------- //
 
+    void regression_on_continuum(
+        const float *intensities,
+        const float *x_axis,
+        const float *intensities_log,
+        const uint16_t *const df,
+        const size_t length,
+        const size_t maxscale,
+        std::vector<PeakFit> *result)
+    {
+        // coefficients for single-b0 peaks, spans all regressions over a peak window
+        // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
+        std::vector<RegCoeffs> coefficients;
+        findCoefficients(intensities_log, length, maxscale, &coefficients);
+
+        std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
+        validRegsTmp.reserve(coefficients.size() / 2);
+        int validCount = validateRegressions(intensities,
+                                             intensities_log,
+                                             df,
+                                             &coefficients,
+                                             length,
+                                             &validRegsTmp);
+        if (validCount == 0)
+            return;
+
+        std::vector<RegressionGauss> validRegressions;
+
+        mergeRegsInScale(
+            intensities,
+            df,
+            &validRegsTmp,
+            &validRegressions);
+
+        // there can be 0, 1 or more than one regressions in validRegressions
+        mergeRegressionsOverScales(&validRegressions, intensities);
+
+        retransformPeaks(&validRegressions,
+                         x_axis,
+                         validRegressions.size(),
+                         result);
+    }
+
     void runningRegression(
         const float *intensities,
         std::vector<float> *intensities_log,
@@ -331,7 +371,7 @@ namespace qAlgorithms
         std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
         validRegsTmp.reserve(coefficients.size() / 2);
         int validCount = validateRegressions(intensities,
-                                             intensities_log,
+                                             intensities_log->data(),
                                              degreesOfFreedom_cum,
                                              &coefficients,
                                              length,
@@ -1382,7 +1422,7 @@ namespace qAlgorithms
     /// @param mutateReg relevant regression
     /// @param observed log data
     /// @return RSS value
-    static double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *observed);
+    static double calcRSS_log(const RegressionGauss *mutateReg, const float *observed);
 
     /// @brief performs two F-tests against the log data. First H0 is the mean, second y = mx + b
     /// @param observed log data (or normal data, depends on the use case)
@@ -1402,7 +1442,7 @@ namespace qAlgorithms
     // rules founded in logical necessities for the peak model
     invalid calcRegressionProperties( // returns the number of the failed test
         const float *intensities,
-        const std::vector<float> *intensities_log,
+        const float *intensities_log,
         const std::vector<float> *predict,
         const size_t df_sum,
         const size_t length,
@@ -1455,7 +1495,7 @@ namespace qAlgorithms
         fit, even very low intensity signals should be accounted for. The test here has a hard-coded
         alpha of 0.05
         */
-        bool f_ok = f_testRegression(intensities_log->data(), RSS_log, &regSpan);
+        bool f_ok = f_testRegression(intensities_log, RSS_log, &regSpan);
         if (!f_ok)
         {
             failstates += 2;
@@ -1511,11 +1551,11 @@ namespace qAlgorithms
 
 #pragma region calcSSE
 
-    double calcRSS_log(const RegressionGauss *mutateReg, const std::vector<float> *observed)
+    double calcRSS_log(const RegressionGauss *mutateReg, const float *observed)
     {
         double RSS = 0;
         const size_t start = mutateReg->startIdx;
-        const float *obs = observed->data() + start;
+        const float *obs = observed + start;
         double x = double(start) - double(mutateReg->coeffs.x0);
         const size_t len = mutateReg->regSpan.length;
         for (size_t i = 0; i < len; i++)
