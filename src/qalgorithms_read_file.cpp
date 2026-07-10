@@ -305,10 +305,10 @@ namespace qAlgorithms
         return unit_secs ? rt_val : rt_val * 60;
     };
 
-    void XML_File::get_spectra_RT(const std::vector<unsigned int> *indices, std::vector<float> *const RTs)
+    void get_spectra_RT(const XML_File *data, const std::vector<unsigned int> *indices, std::vector<float> *const RTs)
     {
         const size_t idxSize = indices->size();
-        assert(!this->defective);
+        assert(!data->defective);
         assert(idxSize > 0);
 
         RTs->resize(idxSize);
@@ -316,7 +316,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < idxSize; ++i)
         {
             size_t idx = indices->at(i);
-            pugi::xml_node *spec = linknodes->data() + idx;
+            pugi::xml_node *spec = data->linknodes->data() + idx;
             float RT = extract_scan_RT(spec);
             RTs->at(i) = RT;
         }
@@ -349,38 +349,6 @@ namespace qAlgorithms
         }
         return positive ? Polarities::positive : Polarities::negative;
     };
-
-    std::vector<unsigned int> XML_File::filter_spectra_old(
-        bool ms1, bool polarity, bool centroided)
-    {
-        // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
-        assert(!this->defective);
-        assert(this->number_spectra > 0);
-        std::vector<unsigned int> indices;
-        indices.reserve(this->number_spectra);
-
-        for (unsigned int i = 0; i < this->number_spectra; i++)
-        {
-            pugi::xml_node *spec = linknodes->data() + i;
-
-            bool isCentroid = spec->find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
-            if (isCentroid != centroided)
-                continue; // this does not allow for processing of partially centroided data
-
-            bool polarityPos = spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr;
-            if (polarityPos != polarity)
-                continue;
-
-            int level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
-            bool isMS1 = 1 == level;
-            if (isMS1 != ms1)
-                continue; // only ms1 or msn data can be retrieved at once.
-
-            indices.push_back(i);
-        }
-        indices.shrink_to_fit();
-        return indices;
-    }
 
     std::vector<uint32_t> filter_spectra(const XML_File *data,
                                          const bool ms1,

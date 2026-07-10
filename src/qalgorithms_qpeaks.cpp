@@ -97,7 +97,7 @@ namespace qAlgorithms
         }
     }
 
-    void regression_on_continuum(
+    static void regression_on_continuum(
         const float *intensities,
         const float *x_axis,
         const float *intensities_log,
@@ -305,7 +305,7 @@ namespace qAlgorithms
 
     // -------------------------------------- //
 
-    void regression_on_continuum(
+    static void regression_on_continuum(
         const float *intensities,
         const float *x_axis,
         const float *intensities_log,
@@ -1836,19 +1836,6 @@ namespace qAlgorithms
 
 #pragma region "find centroids"
 
-    struct ProfileBlock // NOLINT @todo eventually remove this (?)
-    {
-        const float *intensity;
-        const float *mz;
-        size_t startPos;
-        size_t length;
-    };
-
-    static bool getNextProfileRegion(
-        const std::vector<float> *spectrum_mz,
-        const std::vector<float> *spectrum_int,
-        ProfileBlock *block);
-
     static CentroidPeak peakToCen(const PeakFit *peak, size_t id, size_t specNum)
     {
         CentroidPeak cen = {0};
@@ -1989,54 +1976,6 @@ namespace qAlgorithms
         }
         source_file.mzml_base_document.save_file(pathTarget);
         source_file.free_linknodes();
-    }
-
-    bool getNextProfileRegion(
-        const std::vector<float> *spectrum_mz,
-        const std::vector<float> *spectrum_int,
-        ProfileBlock *block)
-    {
-        size_t idx = block->startPos + block->length; // first element past the previous block
-        size_t len = spectrum_int->size();
-
-        if (idx >= len || (len - idx) < MINLENGTH)
-        {
-            block->intensity = nullptr;
-            block->mz = nullptr;
-            block->length = 0;
-            block->startPos = 0;
-            return true;
-        }
-
-        const float minIntensity = 1; // the log will be negative otherwise, making the implementation more complicated
-
-        for (; idx < len; idx++)
-        {
-            if (spectrum_int->at(idx) > minIntensity)
-                break;
-        }
-        const float *intensity = spectrum_int->data() + idx;
-        const float *mz = spectrum_mz->data() + idx;
-
-        size_t length = 0;
-        for (size_t i = idx; i < len; i++)
-        {
-            if (spectrum_int->at(i) < minIntensity)
-                break;
-            length += 1;
-        }
-
-        if (length > MINLENGTH)
-        {
-            assert(intensity[length - 1] > 0);
-            assert(intensity[length] < minIntensity);
-        }
-
-        block->intensity = intensity;
-        block->mz = mz;
-        block->startPos = idx;
-        block->length = length;
-        return false;
     }
 
 #pragma region "Helper math"

@@ -682,7 +682,7 @@ namespace qAlgorithms
             return;
 
         std::vector<float> rt;
-        infile->get_spectra_RT(selectedIndices, &rt);
+        get_spectra_RT(infile, selectedIndices, &rt);
         size_t startIdx = 0;
         size_t length = rt.size();
         clampSorted(rt.data(), &startIdx, &length,

@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
     //    has horrible readability and requires more variables to handle the switching.
     EVALUATE_MIXED_POLARITY:
         // @todo MS2 support here!
-        const std::vector<unsigned int> selectedIndices = inputFile.filter_spectra_old(true, polarity_selected, false);
+        const std::vector<unsigned int> selectedIndices = filter_spectra(&inputFile, true, polarity_selected, false);
 
         if (selectedIndices.empty())
         {
@@ -158,18 +158,12 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
 #pragma region "centroiding"
         std::vector<float> retentionTimes;
-        inputFile.get_spectra_RT(&selectedIndices, &retentionTimes);
+        get_spectra_RT(&inputFile, &selectedIndices, &retentionTimes);
 
         std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
-        size_t centroidCount_old = findCentroids_old(inputFile,
-                                                     &selectedIndices,
-                                                     centroids); // it is guaranteed that only profile mode data is used
-        centroids->clear();
         size_t centroidCount = findCentroids(&inputFile,
                                              &selectedIndices,
                                              centroids);
-
-        assert(centroidCount == centroidCount_old);
 
         assert(centroidCount < UINT32_MAX);
         if (centroidCount == 0)
