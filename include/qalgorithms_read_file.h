@@ -112,7 +112,7 @@ namespace qAlgorithms
 
     void compress_zlib(const std::vector<char> *uncompressed_string, std::vector<char> *output_string);
 
-    void encode_and_compress(std::vector<double> *input_dbl, std::vector<char> *output_string);
+    void compress_and_encode(std::vector<double> *input_dbl, std::vector<char> *output_string);
 }; // namespace qAlgorithms
 
 #endif // QALGORITHMS_READ_FILE_H

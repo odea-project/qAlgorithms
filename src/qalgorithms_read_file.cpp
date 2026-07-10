@@ -454,22 +454,24 @@ namespace qAlgorithms
         output_string->resize(outSize);
     };
 
-    void encode_and_compress(std::vector<double> *input_dbl, std::vector<char> *output_string)
+    void compress_and_encode(std::vector<double> *input_dbl, std::vector<char> *output_string)
     {
-        // encode to base64
+        // cast double array to char array for transform
         const size_t length = input_dbl->size() * sizeof(double);
         const char *input = (const char *)input_dbl->data();
-        std::vector<char> buffer(simdutf::base64_length_from_binary(length));
-        const size_t written = simdutf::binary_to_base64(input, length, buffer.data());
-        assert(written == buffer.size());
 
         // compress using zlib-ng
-        output_string->resize(written);
-        size_t outSize = written;
-        zng_compress((Bytef *)output_string->data(), &outSize,
-                     (Bytef *)buffer.data(), outSize);
-        assert(outSize != buffer.size());
-        output_string->resize(outSize);
+        std::vector<char> buffer(zng_compressBound(length));
+        size_t outSize = length;
+        zng_compress((Bytef *)buffer.data(), &outSize,
+                     (Bytef *)input, length);
+        assert(outSize <= buffer.size());
+
+        // encode as base64
+        size_t base64_size = simdutf::base64_length_from_binary(outSize);
+        output_string->resize(base64_size);
+        const size_t written = simdutf::binary_to_base64(buffer.data(), outSize, output_string->data());
+        assert(written == base64_size);
     }
 
 } // namespace qAlgorithms
