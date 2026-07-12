@@ -15,9 +15,10 @@ namespace qAlgorithms
     // ### General Implementation ### //
 
     /// @brief This function serves as the central interface for performing peak detection on an arbitrary set of x and y data.
-    /// @param y_values Values used to determine height of the peak
+    /// @param intensity_base Values used to determine height of the peak
     /// @param x_values Values used as width of the peak, same length as y_values. It is a requirement that x values are evenly
-    //                  spaced when applying this function, since it depends on that assumption for its precalculated matric transform.
+    ///                 spaced when applying this function, since it depends on that assumption for its precalculated matric transform.
+    ///                 We use "x" because this is either m/z or RT.
     /// @param DF_cum cumulative degrees of freedom to account for interpolations and mean values. This is the cumulative
     //                              sum of the number of measured points for all y. It has the same length as x and y.
     //                              This can be set to nullptr if all df are one.
@@ -37,7 +38,7 @@ namespace qAlgorithms
     /// y has equal variance at every point
     /// there is enough space to write the results
     int qpeaks_find(
-        const float *y_values,
+        const float *intensity_base,
         const float *x_values,
         const uint16_t *DF_cum,
         const size_t length,
@@ -65,14 +66,6 @@ namespace qAlgorithms
                         std::vector<RegressionGauss> *validRegsTmp,
                         const float *intensities,
                         const uint16_t *const degreesOfFreedom_cum);
-
-    void runningRegression(
-        const float *intensities,
-        std::vector<float> *intensities_log,
-        const uint16_t *const degreesOfFreedom_cum,
-        const size_t length,
-        const size_t maxscale,
-        std::vector<RegressionGauss> *validRegressions);
 
     // mutate b0 so that it is optimal for the exponential case if b1, b2 and b3 are identical
 
@@ -111,7 +104,8 @@ namespace qAlgorithms
     invalid calcRegressionProperties(
         const float *intensities,
         const float *intensities_log,
-        const std::vector<float> *predict,
+        const float *x_axis,
+        const float *predict,
         const size_t df_sum,
         const size_t length,
         RegressionGauss *mutateReg);

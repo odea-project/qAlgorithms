@@ -106,9 +106,11 @@ namespace qAlgorithms
         const size_t maxscale,
         std::vector<PeakFit> *result);
 
+    const double minIntensity_global = exp(1);
+
     int qpeaks_find(
         // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
-        const float *y_values,
+        const float *intensity_base,
         const float *x_values,
         const uint16_t *DF_cum,
         const size_t length,
@@ -116,7 +118,7 @@ namespace qAlgorithms
         std::vector<PeakFit> *result)
     {
         // control input for nullpointers, mismatching x and y, and fitting maxscale
-        if (y_values == nullptr || x_values == nullptr || result == nullptr)
+        if (intensity_base == nullptr || x_values == nullptr || result == nullptr)
         {
             return -1;
         }
@@ -133,51 +135,33 @@ namespace qAlgorithms
             return -4;
         }
 
-        /*
-        The first, implicit operation is norming x so that every value of x is at a distance
-        of exactly 1 to both of its neighbouring elements. This allows us to use a pre-calculated
-        design matrix for every operation, which in turn massively reduces computation time.
-
-        Assuming that the points are equidistant in x with delta(x), the axis used for regression
-        is x' = x / delta(x). Additionally, x0 is different for every individual regression. Both
-        of these transformations must be reversed after finding the best fit, even if at no point
-        in the program there is a function that actually performs either transform explicitly.
-
-        At least for HRMS data, the majority of data regions does not contain any peaks (both
-        for centroids and features). To avoid unnecessary computations of delta_x, it is only
-        determined for cases where at least one regression was found.
-        */
-
         // @todo the assumtion that all values of x are equidistant is conrolled. If gaps are
         // found, the missing values are interpolated assuming an exponential rate of change.
         // this should happen before calling this function (?)
 
         // core operation: identify best-fit regressions for the input data
 
-        maxscale = min(maxscale, (length - 1) / 2); // apex is not included in scale -> -1
-
         /*
         The fitting routine assumes that all present peaks have a modified gaussian base function.
         This means that no baseline exists. Baseline substraction, if appropriate, has to be performed
         before calling the qpeaks_find.
         */
-        std::vector<float> y_log(length + 1);
+        std::vector<float> intensity_base_log(length + 1);
 
         for (size_t i = 0; i < length; i++)
         {
-            y_log[i] = log(y_values[i]);
+            intensity_base_log[i] = log(intensity_base[i]);
         }
 
-        // Processing requires the point to be of intensity > 1 due to the log transform. In order
-        // to prevent high uncertainty, the minimum intensity is set to an absolute value of exp(1),
-        // meaning it is guaranteed that within qpeaks, all processed values will be > 1 and thus
-        // multiplication always increases the magnitude of a number.
-        const double minIntensity = exp(1);
+        // The minimum intensity is "> e ", because this way we know that all log intensities
+        // treated in the program will be > 1. This reduces the risk of high floating point
+        // errors when multiplying a number << 1 with one >> 1.
+
         size_t rangeStart = 0;
         for (size_t pointIdx = 0; pointIdx < length; pointIdx++)
         {
             // expand the region while y values are large enough
-            if ((y_values[pointIdx] > minIntensity) && (pointIdx != length - 1))
+            if ((intensity_base[pointIdx] > minIntensity_global) && (pointIdx != length - 1))
                 continue;
 
             // since the current point is out-of-range at this point, there is no +1 for the range
@@ -185,8 +169,8 @@ namespace qAlgorithms
             if (newLen >= MINLENGTH)
             {
                 const size_t newMaxscale = min(maxscale, (newLen - 1) / 2);
-                const float *intensities = y_values + rangeStart;
-                const float *intensities_log = y_log.data() + rangeStart;
+                const float *intensities = intensity_base + rangeStart;
+                const float *intensities_log = intensity_base_log.data() + rangeStart;
                 const float *x_axis = x_values + rangeStart;
                 const uint16_t *df = DF_cum == nullptr ? nullptr : DF_cum + rangeStart;
 
@@ -213,6 +197,7 @@ namespace qAlgorithms
     static int validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
         const float *intensities,
         const float *intensities_log,
+        const float *x_axis,
         const uint16_t *const degreesOfFreedom_cum,
         const std::vector<RegCoeffs> *coefficients,
         const size_t length,
@@ -254,7 +239,8 @@ namespace qAlgorithms
             failpoint = calcRegressionProperties(
                 intensities,
                 intensities_log,
-                &predict,
+                x_axis,
+                predict.data(),
                 df_sum,
                 length,
                 &reg);
@@ -271,20 +257,6 @@ namespace qAlgorithms
     }
 
 #pragma region "Conflict Elimination"
-
-    static int pruneConflictingRegs(
-        std::vector<RegressionGauss> *validRegressions,
-        const float *intensities,
-        const uint16_t *const df_cum);
-
-    static int resolveScaleConflicts(
-        std::vector<RegressionGauss> *validRegressions,
-        const float *intensities,
-        const uint16_t *const df_cum);
-
-    // int pruneRegsByApex(const float *intensities,
-    //                     const uint16_t *const df_cum,
-    //                     std::vector<RegressionGauss> *validRegressions);
 
     static double calcMSE_exp(const RegCoeffs *coeff,
                               const float *observed,
@@ -323,6 +295,7 @@ namespace qAlgorithms
         validRegsTmp.reserve(coefficients.size() / 2);
         int validCount = validateRegressions(intensities,
                                              intensities_log,
+                                             x_axis,
                                              df,
                                              &coefficients,
                                              length,
@@ -345,561 +318,6 @@ namespace qAlgorithms
                          x_axis,
                          validRegressions.size(),
                          result);
-    }
-
-    void runningRegression(
-        const float *intensities,
-        std::vector<float> *intensities_log,
-        const uint16_t *const degreesOfFreedom_cum,
-        const size_t length,
-        const size_t maxscale,
-        std::vector<RegressionGauss> *validRegressions)
-    {
-        assert(validRegressions->empty());
-
-        intensities_log->clear();
-        intensities_log->reserve(length);
-        for (size_t i = 0; i < length; i++)
-        {
-            // assert(intensities[i] > 1); // @todo this could be relevant, currently ensured by the region pre-filter
-            intensities_log->push_back(log(intensities[i]));
-        }
-
-        // coefficients for single-b0 peaks, spans all regressions over a peak window
-        // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
-        std::vector<RegCoeffs> coefficients;
-        findCoefficients(intensities_log->data(), length, maxscale, &coefficients);
-
-        std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
-        validRegsTmp.reserve(coefficients.size() / 2);
-        int validCount = validateRegressions(intensities,
-                                             intensities_log->data(),
-                                             degreesOfFreedom_cum,
-                                             &coefficients,
-                                             length,
-                                             &validRegsTmp);
-        assert(validCount <= int(coefficients.size()));
-        if (validCount == 0)
-            return;
-
-        int invalidCount = pruneConflictingRegs(&validRegsTmp, intensities, degreesOfFreedom_cum);
-
-        assert(invalidCount < validCount);
-        // if (validCount - invalidCount == 1) // terminate early if only one regression remains
-        //     return; // @todo this vastly changes results, check for correctness!
-
-        resolveScaleConflicts(&validRegsTmp, intensities, degreesOfFreedom_cum);
-
-        // /*int apexCount =*/pruneRegsByApex(intensities, degreesOfFreedom_cum, &validRegsTmp);
-
-        // temp storage vector, eventually delete everything below this comment @todo
-        std::vector<RegressionGauss> validRegsTmp2;
-        for (size_t i = 0; i < validRegsTmp.size(); i++)
-        {
-            RegressionGauss *reg = validRegsTmp.data() + i;
-            if (reg->isValid)
-                validRegsTmp2.push_back(*reg);
-            else
-                reg->isValid = true; // required to force compliance with the old system for now
-        }
-
-        mergeRegsInScale(
-            intensities,
-            degreesOfFreedom_cum,
-            &validRegsTmp,
-            validRegressions);
-
-        // there can be 0, 1 or more than one regressions in validRegressions
-        mergeRegressionsOverScales(validRegressions, intensities);
-
-        // if (validRegsTmp2.size() != validRegressions->size())
-        // {
-        //     for (size_t i = 0; i < length; i++)
-        //     {
-        //         printf("%f, ", intensities[i]);
-        //     }
-        //     printf("\n");
-
-        //     // exit(1);
-        // }
-
-        // assert(validRegressions->size() == apexCount);
-        // assert(validRegsTmp2.size() == validRegressions->size());
-    }
-
-#if 0
-    int pruneRegsByApex(const float *intensities,
-                        const uint16_t *const df_cum,
-                        std::vector<RegressionGauss> *validRegressions)
-    {
-        // yet another attempt to solve this problem gracefully. This time, the
-        // strategy is to pick the first apex described by a regression and, regardless
-        // of scale, to select all regressions which describe the same peak. Then, the
-        // best among them is chosen iteratively by testing from the largest scale downward.
-
-        // 0: count the number of probable apexes
-        std::vector<float> apexes;
-        for (size_t i = 0; i < validRegressions->size(); i++)
-            apexes.push_back(validRegressions->at(i).apex_position);
-
-        std::sort(apexes.begin(), apexes.end());
-
-        int apexcount = 1;
-        for (size_t i = 1; i < apexes.size(); i++)
-        {
-            if (apexes[i] - apexes[i - 1] > 2)
-                apexcount += 1;
-        }
-
-        return apexcount;
-
-        // step one: for the first regression, select all other regressions that describe the same apex
-        std::vector<size_t> conflictIdx;
-        conflictIdx.reserve(validRegressions->size());
-
-        RegressionGauss *startReg = validRegressions->data();
-        double startApex_L = startReg->apex_position;
-        double startApex_R = startReg->apex_position;
-        for (size_t i = 0; i < validRegressions->size(); i++)
-        {
-            RegressionGauss *reg = validRegressions->data() + i;
-            double apex = reg->apex_position;
-            double diff = apex - startApex_L;
-
-            if (abs(diff) > 2 * GLOBAL_MINSCALE)
-                continue;
-            diff = apex - startApex_R;
-            if (abs(diff) > 2 * GLOBAL_MINSCALE)
-                continue;
-
-            // this should generally cover all cases due to the initial smaller scale being further left and right than later regressions
-            startApex_L = min(apex, startApex_L);
-            startApex_R = max(apex, startApex_R);
-
-            // the regressions are in conflict
-            conflictIdx.push_back(i);
-        }
-
-        // the main issue with multiple regressions is estimating if the greater scale ones cover too many points.
-        // if not, should overlap between regressions be permitted?
-
-        // use all input params for nothing here to suppress warnings - fix this @todo
-        assert(df_cum[0]);
-        assert(intensities[0] > apexes[0]);
-
-        return 0;
-    }
-#endif
-
-    int pruneConflictingRegs(
-        std::vector<RegressionGauss> *validRegressions,
-        const float *intensities,
-        const uint16_t *const df_cum)
-    {
-        // regressions start out valid and sorted by scale, and position within scales
-        // S1R1 S1R2 S1 R3 S1 Rn | S2R1 S2R2 S2Rn | SnRn
-
-        // case 0: SnRn is the only element with scale Sn
-        //    -->  it stays valid, continue
-
-        // case 1: SnR1 and SnR2 do not conflict
-        //    -->  SnR1 stays valid and testing continues with SnR2 and SnR3
-
-        // case 2: SnRn is the last regression in its scale
-        //    -->  it stays valid / invalid and we move on to Sn+1R1
-
-        // case 3: SnRn is invalid
-        //    -->  continue
-
-        // case 4: SnR1, SnR2 and SnR2, SnR3 conflict, but SnR1, SnR3 does not
-        //    -->  this is assumed to be extremely unlikely at one scale and also not covered for by the existing solution
-        // (this is only relevant if SnR1 and SnR3 are better than SnR2 when combined, which might not even be possible)
-        // the main relaistic problem case is all three being interesting but conflicting due to baseline overlap
-
-        size_t eliminations = 0;
-
-        if (validRegressions->size() < 2) // only run function if there can be conflict
-            return eliminations;
-
-        RegressionGauss *compReg = validRegressions->data();
-        assert(compReg->numCompetitors == 0);
-        for (size_t i = 1; i < validRegressions->size(); i++)
-        {
-            RegressionGauss *reg = validRegressions->data() + i;
-            assert(reg->isValid);
-            size_t currentScale = reg->coeffs.scale;
-
-            if (currentScale != compReg->coeffs.scale)
-            {
-                compReg = reg;
-                continue;
-            }
-            if (compReg->regSpan.endIdx <= reg->startIdx) // the regressions can switch at one point
-            {
-                // no conflict despite same scale
-                compReg = reg;
-                continue;
-            }
-
-            // both regressions conflict, one is invalid. The better regression is determined
-            // by comparing MSEs for measured values over the region of both regressions
-            // @todo could it be better to decide based on something else, since the range
-            // is not adjusted afterward?
-            Range_i newRange = {compReg->startIdx,
-                                reg->regSpan.endIdx,
-                                reg->regSpan.endIdx - compReg->startIdx + 1};
-            size_t df = sumOfCumulative(df_cum, newRange.startIdx, newRange.length) - 4;
-
-            double mse_reg = calcMSE_exp(&reg->coeffs,
-                                         intensities,
-                                         &newRange,
-                                         df);
-
-            double mse_prev = calcMSE_exp(&compReg->coeffs,
-                                          intensities,
-                                          &newRange,
-                                          df);
-
-            if (mse_reg < mse_prev)
-            {
-                // the current regression is better
-                compReg->isValid = false;
-                reg->numCompetitors += compReg->numCompetitors + 1;
-                compReg = reg;
-            }
-            else
-            {
-                // the old regression is better
-                compReg->numCompetitors += reg->numCompetitors + 1;
-                reg->isValid = false;
-            }
-            assert(compReg->numCompetitors < validRegressions->size()); // at most better than all other regressions
-            eliminations += 1;
-        }
-
-        // sanity check: the number of competitors in valid regressions is the number of invalid regressions
-        size_t invalidCount = 0;
-        size_t competitors = 0;
-        for (size_t i = 0; i < validRegressions->size(); i++)
-        {
-            RegressionGauss *reg = validRegressions->data() + i;
-            if (reg->isValid)
-                competitors += reg->numCompetitors;
-            else
-                invalidCount += 1;
-        }
-        assert(invalidCount == eliminations);
-        assert(invalidCount == competitors);
-
-        return eliminations; // if only one regression remains, the next function can be skipped!
-    }
-
-    // these are helper functions for the big resolveScaleConflicts part of the program
-
-    static int findNextReg(
-        const std::vector<RegressionGauss> *validRegressions,
-        const size_t scale,
-        const size_t startIdx)
-    {
-        // find the first valid regression that has the required scale at idx >= startidx or -1 if search fails
-        int pos = int(startIdx);
-        int len = validRegressions->size();
-        bool found = false;
-        for (int dpos = pos; dpos < len; dpos++)
-        {
-            const RegressionGauss *reg = validRegressions->data() + dpos;
-            if (reg->coeffs.scale < scale)
-                continue;
-            if (!reg->isValid)
-                continue;
-
-            found = true;
-            pos = dpos;
-            break;
-        }
-        if (!found)
-            return -1;
-
-        return pos;
-    }
-
-    static Range_i findComparisonRegs(
-        const std::vector<RegressionGauss> *validRegressions,
-        const Range_i *range,
-        const size_t scale)
-    {
-        // since all regressions are in order, only the outermost two must be passed along
-        // if regs = 1, 0: no valid regs found at this scale / in this range
-        Range_i regs = {1, 0, 0};
-        bool first = true;
-
-        for (size_t i = 0; i < validRegressions->size(); i++)
-        {
-            const RegressionGauss *reg = validRegressions->data() + i;
-            // only consider regressions in the current scale
-            if (reg->coeffs.scale < scale)
-                continue;
-            if (reg->coeffs.scale > scale)
-                break;
-
-            // only apex overlap is checked, good idea? @todo
-            // this gave bad results where an intermediate regression was left despite conflicts
-            // size_t apex = size_t(reg->apex_position) + 1;
-            // if (apex < range->startIdx)
-            //     continue;
-            // if (apex > range->endIdx)
-            //     break;
-            // at most one point overlap is tolerated since the regression "ends" at that point
-            if (reg->regSpan.endIdx <= range->startIdx)
-                continue;
-            if (reg->startIdx >= range->endIdx)
-                break;
-
-            // validity check here due to early termination from previous checks
-            if (!reg->isValid)
-                continue;
-
-            if (first)
-            {
-                first = false;
-                regs.startIdx = i;
-            }
-            regs.endIdx = i;
-        }
-
-        return regs;
-    }
-
-    static size_t invalidateRange(const Range_i *r, std::vector<RegressionGauss> *validRegressions)
-    {
-        // returns the total competitors eliminated
-        size_t competitors = 0;
-        for (size_t i = r->startIdx; i < r->endIdx; i++)
-        {
-            RegressionGauss *reg = validRegressions->data() + i;
-            competitors += reg->isValid ? reg->numCompetitors + 1 : 0;
-            reg->isValid = false;
-        }
-        return competitors;
-    }
-
-    static void addCompetitors(const Range_i *r, std::vector<RegressionGauss> *validRegressions, size_t comp)
-    {
-        // distribute the number in comp evenly. Bias towards lower end regressions is accepted
-        while (comp != 0)
-        {
-            for (size_t i = r->startIdx; i < r->endIdx; i++)
-            {
-                RegressionGauss *reg = validRegressions->data() + i;
-                if (reg->isValid)
-                {
-                    reg->numCompetitors += 1;
-                    comp -= 1;
-                }
-            }
-        }
-    }
-
-    static double multiMSE(
-        std::vector<RegressionGauss> *validRegressions,
-        const float *intensities,
-        const Range_i *selectRegs,
-        const Range_i *commonRange,
-        size_t df)
-    {
-        // the df must be without coefficients! (10 = at least two scale 2 regressions)
-        assert(df >= 10);
-
-        double summedMSE = 0;
-        size_t regCount = 1; // first one is not included in the loop
-        size_t currentStart = commonRange->startIdx;
-        size_t currentEnd = 0;
-
-        RegressionGauss *regFront = validRegressions->data() + selectRegs->startIdx;
-
-        for (size_t i = selectRegs->startIdx + 1; i < selectRegs->endIdx + 1; i++)
-        {
-            RegressionGauss *regCurr = validRegressions->data() + i;
-            if (!regCurr->isValid)
-                continue;
-
-            // determine MSE for the left of both regressions
-            // the start is known from the previous regression, the end is the middle between both regs
-            currentEnd = (regFront->regSpan.endIdx + regCurr->startIdx) / 2;
-            Range_i rangeNow = {currentStart, currentEnd, currentEnd - currentStart + 1};
-
-            // the mse is composed of individual regressions that do not share responsibility
-            // for the same point
-            summedMSE += calcMSE_exp(&regFront->coeffs, intensities, &rangeNow, df);
-
-            // set current regression as the active element of the mse
-            regFront = regCurr;
-            currentStart = currentEnd + 1;
-            regCount += 1;
-        }
-
-        // there is still one unprocessed regression
-        currentEnd = commonRange->endIdx;
-        Range_i rangeNow = {currentStart, currentEnd, currentEnd - currentStart + 1};
-        summedMSE += calcMSE_exp(&regFront->coeffs, intensities, &rangeNow, df);
-
-        return summedMSE / (df - regCount * 4); // important: two individual regs lose degrees of freedom
-    }
-
-    int resolveScaleConflicts(
-        std::vector<RegressionGauss> *validRegressions,
-        const float *intensities,
-        const uint16_t *const df_cum)
-    {
-        // this function takes in the output of the previous function and then checks which regressions
-        // should be preferred. It is important that comparisons are made in ascending scale order so that
-        // overfitting due to comparing two too broad regressions is minimised
-
-        // case 0: only one valid regression
-        //    -->  do nothing
-
-        // case 1: one valid regression at lower scale conflicts with a valid regression at a greater scale
-        //    -->  pick the better one for the full range of both
-
-        // case 2: Multiple regressions at lower scale conflict with the same regression at a greater scale
-        //    -->  switch contribution to the mse at the mean of both limits
-
-        // this function assumes that a conflict exists
-        // there is never conflict within a scale! (previous function execution)
-
-        // algorithm:
-        // 0: start at scale = 3
-        // is there a regression at this scale? -> function
-        // F: scale += 1, go to 0
-        // T: set this scale to the origin scale
-
-        // compare at scale = 2
-        // 1: Iterate from i = 0 over regressions
-        // did the scale change from
-
-        size_t minCompScale = validRegressions->front().coeffs.scale;
-        size_t compScale = minCompScale;
-        size_t scale = compScale + 1;
-        size_t startIdx = 0;
-
-        RegressionGauss *upperReg = nullptr;
-        bool getNextReg = true;
-
-        while (true)
-        {
-            if (getNextReg)
-            {
-                int idx = findNextReg(validRegressions, scale, startIdx);
-                if (idx == -1)
-                    break; // no scale to compare with exists
-
-                startIdx = idx + 1; // necessary since otherwise the regression will be reset to itself
-                upperReg = validRegressions->data() + idx;
-                assert(upperReg->isValid);
-
-                // the new regression is not necessarily at the searched input scale
-                scale = upperReg->coeffs.scale;
-                getNextReg = false;
-
-                // part of the reset is considering all possible regressions again. It is
-                // important to always do a full reset in case more than one valid peak
-                // exists within a selected block.
-                compScale = minCompScale;
-            }
-            assert(scale > compScale);
-
-            Range_i regRange = findComparisonRegs(validRegressions, &upperReg->regSpan, compScale);
-
-            // check the special case of only one regression at the lower scale
-            // first since this should be the most common one
-            if (regRange.startIdx == 1 && regRange.endIdx == 0)
-            {
-                // invalid state, do nothing @todo adjust minimum checked scale
-            }
-            else if (regRange.startIdx == regRange.endIdx)
-            {
-                RegressionGauss *lowerReg = validRegressions->data() + regRange.endIdx;
-                assert(lowerReg->isValid);
-                assert(upperReg->isValid);
-
-                size_t start = min(lowerReg->startIdx, upperReg->startIdx);
-                size_t end = max(lowerReg->regSpan.endIdx, upperReg->regSpan.endIdx);
-                Range_i commonRange = {start, end, end - start + 1};
-                size_t df = sumOfCumulative(df_cum, commonRange.startIdx, commonRange.length) - 4; // this also applies for features
-
-                double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df);
-                double mseLower = calcMSE_exp(&lowerReg->coeffs, intensities, &commonRange, df);
-
-                if (mseLower < mseUpper)
-                {
-                    getNextReg = true;
-                    upperReg->isValid = false;
-                    lowerReg->numCompetitors += upperReg->numCompetitors + 1;
-                }
-                else
-                {
-                    lowerReg->isValid = false;
-                    upperReg->numCompetitors += lowerReg->numCompetitors + 1;
-                }
-                assert(lowerReg->numCompetitors < validRegressions->size());
-                assert(upperReg->numCompetitors < validRegressions->size());
-            }
-            else // this branch was never taken for a test dataset!
-            {
-                // there are multiple regressions at the lower scale which need to be combined into one mse
-                // the leftmost relevant point is the first point of the first regression, the rightmost the
-                // last point of the last regression. This is because regressions are always sorted by x0 in a scale.
-                RegressionGauss *lowerRegS = validRegressions->data() + regRange.startIdx;
-                RegressionGauss *lowerRegE = validRegressions->data() + regRange.endIdx;
-
-                size_t start = min(lowerRegS->startIdx, upperReg->startIdx);
-                size_t end = max(lowerRegE->regSpan.endIdx, upperReg->regSpan.endIdx);
-                Range_i commonRange = {start, end, end - start + 1};
-                size_t df = sumOfCumulative(df_cum, commonRange.startIdx, commonRange.length);
-
-                double mseUpper = calcMSE_exp(&upperReg->coeffs, intensities, &commonRange, df - 4);
-
-                // slightly convoluted method for merging MSEs.
-                double mseLower = multiMSE(validRegressions, intensities, &regRange, &commonRange, df);
-
-                if (mseLower < mseUpper)
-                {
-                    addCompetitors(&regRange, validRegressions, upperReg->numCompetitors + 1);
-                    upperReg->isValid = false;
-                    getNextReg = true;
-                }
-                else
-                {
-                    // the greater-span regression persists and is checked against other contenders
-                    size_t competitors = invalidateRange(&regRange, validRegressions);
-                    upperReg->numCompetitors += competitors;
-                }
-            }
-
-            // the lower scale is advanced until the higher scale is matched
-            compScale += 1;
-            if (compScale == scale)
-            {
-                // We have reached the highest possible scale to compare against. This
-                // means that the checked regression is fully validated (or invalidated).
-                getNextReg = true;
-            }
-
-            // sanity check: the number of competitors in valid regressions is the number of invalid regressions
-            size_t invalidCount = 0;
-            size_t competitors = 0;
-            for (size_t i = 0; i < validRegressions->size(); i++)
-            {
-                RegressionGauss *reg = validRegressions->data() + i;
-                if (reg->isValid)
-                    competitors += reg->numCompetitors;
-                else
-                    invalidCount += 1;
-            }
-            assert(invalidCount == competitors);
-        }
-
-        return 0;
     }
 
     // --------------- old functions ---------------- //
@@ -1355,17 +773,12 @@ namespace qAlgorithms
         // test regression validity without depending on b0 or the degrees of freedom
         const bool valley_left = coeffs->b2 >= 0;
         const bool valley_right = coeffs->b3 >= 0;
-        if (valley_left && valley_right)
-        {
-            // there is no peak since both halves have a minimum
-            return no_apex;
-        }
-
         const bool apexLeft = coeffs->b1 < 0;
-        // the apex cannot be on the same side as the valley point
-        if (valley_left && apexLeft)
-            return no_apex;
-        if (valley_right && (!apexLeft))
+
+        // the peak must have a maximum
+        bool noApex = (valley_left && apexLeft) ||
+                      (valley_right && (!apexLeft));
+        if (noApex)
             return no_apex;
 
         // position maximum / minimum of b2 or b3. This is just the frst derivative of the peak half equation
@@ -1376,8 +789,10 @@ namespace qAlgorithms
 
         double apexd = apexLeft ? position_b2 : position_b3;
 
-        // there must be at least two full points to either side of the apex
-        if (abs(apexd) >= double(coeffs->scale - 1))
+        // there must be at least two full points to either side of the apex. The truncated apex is
+        // the number of points next to it towards the center
+        bool edge_too_far = 2 + (uint16_t)abs(apexd) > coeffs->scale;
+        if (edge_too_far)
             return invalid_apex; // apex outside of regression window
 
         size_t apex = size_t(x0d + apexd);
@@ -1418,8 +833,6 @@ namespace qAlgorithms
         return ok;
     }
 
-    static double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
-
     /// @brief calculate the residual sum of squares for the log regression / data
     /// @param mutateReg relevant regression
     /// @param observed log data
@@ -1435,7 +848,7 @@ namespace qAlgorithms
 
     static double calcSSE_chisqared(const Range_i *regSpan,
                                     const float *observed,
-                                    const std::vector<float> *predict);
+                                    const float *predict);
 
     // @todo rework: Currently, we are trying to determine the validity of a given regression
     // using multiple tests. This is wrong, since this way we get uneven p-values of the final
@@ -1445,7 +858,8 @@ namespace qAlgorithms
     invalid calcRegressionProperties( // returns the number of the failed test
         const float *intensities,
         const float *intensities_log,
-        const std::vector<float> *predict,
+        const float *x_axis,
+        const float *predict,
         const size_t df_sum,
         const size_t length,
         RegressionGauss *mutateReg)
@@ -1476,12 +890,12 @@ namespace qAlgorithms
           signal-to-noise ratio checkups.
           @todo this is not a relevant test
         */
-        double apexToEdge = apexToEdgeRatio(mutateReg, intensities);
-        if (apexToEdge < 2)
-        {
-            failstates += 1;
-            // return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
-        }
+        // double apexToEdge = apexToEdgeRatio(mutateReg, intensities);
+        // if (apexToEdge < 2)
+        // {
+        //     failstates += 1;
+        //     // return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
+        // }
 
         // @todo differentiate between tests performed in log and exp domain better
         // everything involving the RSS is dependent on b0!
@@ -1506,15 +920,20 @@ namespace qAlgorithms
 
         // uncertainty calculation and t-tests against peak properties
 
+        double position = -coeffs->b1 / 2 / (coeffs->b1 < 0 ? coeffs->b2 : coeffs->b3);
         float uncert_position = (float)peakPositionUncert(coeffs, mse_log);
         mutateReg->uncert_position = uncert_position;
         float uncert_height = (float)peakHeightUncert(coeffs, mse_log);
         mutateReg->uncert_height = uncert_height;
 
+        size_t leftOfApex = (size_t)position;
+        float delta_x = x_axis[leftOfApex + 1] - x_axis[leftOfApex];
         double uncertainty = -1;
-        mutateReg->area = (float)peakArea(coeffs, 1, mse_log, &uncertainty);
+        mutateReg->area = (float)peakArea(coeffs, delta_x, mse_log, &uncertainty);
         mutateReg->uncert_area = (float)uncertainty;
-        assert(mutateReg->area > 1);
+
+        if (mutateReg->area <= minIntensity_global)
+            return invalid_height;
 
         // this is also nonsensical since we care about the validity of the exponential
         // area only.
@@ -1541,8 +960,7 @@ namespace qAlgorithms
 
         mutateReg->df = df_sum;
         mutateReg->apex_position += coeffs->x0;
-        assert(predict->size() == length);
-        mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict->data(), length);
+        mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict, length);
 
         if (failstates != 0)
             return invalid::invalid_apex;
@@ -1593,10 +1011,10 @@ namespace qAlgorithms
 
     double calcSSE_chisqared(const Range_i *regSpan,
                              const float *observed,
-                             const std::vector<float> *predict)
+                             const float *predict)
     {
         const float *obs = observed + regSpan->startIdx;
-        const float *pred = predict->data() + regSpan->startIdx;
+        const float *pred = predict + regSpan->startIdx;
         double result = 0.0;
         for (size_t i = 0; i < regSpan->length; i++)
         {
@@ -1672,18 +1090,18 @@ namespace qAlgorithms
 
 #pragma endregion calcSSE
 
-    double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities)
-    {
-        // is the apex at least twice as large as the outermost point?
-        // assumption: outermost point is already near base level
-        const size_t idxApex = size_t(mutateReg->apex_position) + mutateReg->coeffs.x0;
+    // double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities)
+    // {
+    //     // is the apex at least twice as large as the outermost point?
+    //     // assumption: outermost point is already near base level
+    //     const size_t idxApex = size_t(mutateReg->apex_position) + mutateReg->coeffs.x0;
 
-        double left = intensities[mutateReg->startIdx];
-        double right = intensities[mutateReg->regSpan.endIdx];
-        double minIntensity = min(left, right);
-        double apex = intensities[idxApex]; // @todo since this is not the actual apex height, it might be a bad idea to use it
-        return apex / minIntensity;
-    }
+    //     double left = intensities[mutateReg->startIdx];
+    //     double right = intensities[mutateReg->regSpan.endIdx];
+    //     double minIntensity = min(left, right);
+    //     double apex = intensities[idxApex]; // @todo since this is not the actual apex height, it might be a bad idea to use it
+    //     return apex / minIntensity;
+    // }
 
     bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
     {

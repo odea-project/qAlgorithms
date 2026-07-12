@@ -15,42 +15,10 @@
 #include <filesystem>
 #include <time.h>
 
+using namespace qAlgorithms;
+
 int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 {
-    using namespace qAlgorithms; // considered bad practice from what i see online, but i believe it is acceptable for this program
-
-    volatile bool debug = false;
-    if (debug)
-    {
-        std::vector<float> intensity = {16427.9434, 34097.4414, 42639.7266, 102040.758, 264363.312, 486761.125, 909302, 783670.375, 404226.625, 194167.844, 81423.1406, 63319.4688, 62018.1602, 27416.2754};
-        // std::vector<float> intensity = {16649.7441, 34118.1367, 46703.2617, 41025.5352, 53125.8086, 140134.125, 402735.812, 689393.625, 907356.938, 728596.75, 432838.844, 156655.438, 43841.4922, 11888.1475, 3812.54126};
-        // std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
-        // std::vector<float> intensity = {157.883072, 1325.722046, 2188.603760, 5415.137695, 12294.484375, 16239.560547, 13575.218750, 9618.787109, 7654.178223, 20002.025391, 69383.062500, 147876.296875, 233001.171875, 244286.796875, 162216.375000, 82337.882812, 23717.978516, 5968.742676, 2921.130859, 945.386047};
-        // std::vector<float> intensity = {1274.10596, 5653.32959, 19341.3398, 51021.3789, 103777.039, 162754.797, 179871.859, 128027.453, 58688.5547, 17326.6309, 3294.46802};
-        size_t failcount = 0;
-        std::vector<RegressionGauss> validRegressions;
-
-        volatile bool repeat = false;
-        while (debug && (validRegressions.empty() || repeat))
-        {
-            const size_t length = intensity.size();
-            const size_t maxscale = 8; // @todo not bound to centroid maxscale
-            std::vector<float> logIntensity;
-            logIntensity.reserve(length);
-            validRegressions.clear();
-            runningRegression(
-                intensity.data(),
-                &logIntensity,
-                nullptr,
-                length,
-                maxscale,
-                &validRegressions);
-
-            failcount += 1;
-            assert(failcount != 10); // manually turn this into an endless loop by setting failcount > 10
-        }
-    }
-
     UserInputSettings userArgs = passCliArgs(argc, argv);
 
     if (!inputsAreSensible(userArgs))
@@ -99,13 +67,13 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         if (inputFile.defective)
         {
+            inputFile.free_linknodes();
             fprintf(stderr, "Error: the file is defective.\n");
             if (userArgs.skipError)
             {
                 ++errorCount;
                 continue;
             }
-
             exit(101);
         }
 

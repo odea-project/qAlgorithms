@@ -1,29 +1,23 @@
-#include <cmath>
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
 
-#include "math.h"
-#include "qalgorithms_datatypes.h"
-#include "qalgorithms_qpeaks.h"
-#include "string"
-#include <cfloat>
-
+#include "../src/qalgorithms_qpeaks.cpp" // NOLINT
 #include "common_test_utils.hpp"
 
 using namespace qAlgorithms;
 
-float peakVal_gauss(double x, double apex, double height, double sdev)
+static float peakVal_gauss(double x, double apex, double height, double sdev)
 {
     return float(height * exp(-(x - apex) * (x - apex) / (2 * sdev * sdev)));
 }
 
-double area_gauss(double height, double sdev)
+static double area_gauss(double height, double sdev)
 {
     return height * sdev * sqrt(2 * M_PI);
 }
 
-double fwhm_gauss(double sdev)
+static double fwhm_gauss(double sdev)
 {
     // 0.5 * height = height * exp(-(x-apex)^2 / (2 * sdev^2))
     // 0.5 = exp(-(x-apex)^2 / (2 * sdev^2))
@@ -41,7 +35,7 @@ double fwhm_gauss(double sdev)
 // it only makes sense to characterise the algorithm with data where the full peak is captured.
 // To make cases where two peaks are in one system or where noise is added easier, all
 // peak functions are additive. It is the responsibility of the user to zero them before first use.
-void simulate_gauss(
+static void simulate_gauss(
     const std::vector<float> *xvals,
     double apex, double height, double sdev,
     std::vector<float> *simulated)
@@ -57,7 +51,7 @@ void simulate_gauss(
     }
 }
 
-double peakVal_EMG(double x, double apex, double height, double sdev, double tau)
+static double peakVal_EMG(double x, double apex, double height, double sdev, double tau)
 {
     // implements the exponentially modified gaussian fit as a generative model
 
@@ -78,7 +72,7 @@ double peakVal_EMG(double x, double apex, double height, double sdev, double tau
     return (float)y;
 }
 
-double fwhm_EMG(double sdev, double tau)
+static double fwhm_EMG(double sdev, double tau)
 {
     // z = 1/sqrt(2) * ( (x_0 - x) / s + s / t )
     // since FWHM is position-independent, we can set x_0 = 0
@@ -115,13 +109,13 @@ double fwhm_EMG(double sdev, double tau)
     double c_1 = (sdev / tau) * sqrt(M_PI_2);
     double c_3 = log(c_1) - log(0.5) + z_2 * z_2;
 
-    double x1, x2;
+    double x1 = 0, x2 = 0;
     solveQuadratic(c_4, z_3, c_3, &x1, &x2); // @todo this will fail
 
     return x2 - x1;
 }
 
-void simulate_EMG(
+static void simulate_EMG(
     float x_start, float x_step,
     double apex, double height, double sdev, double tau,
     std::vector<float> *xvals, std::vector<float> *yvals)
@@ -146,7 +140,7 @@ void simulate_EMG(
     }
 }
 
-void control_sim_gauss()
+static void control_sim_gauss()
 {
     // generate data using a standard gaussian on an equidistant x axis
     float x_start = 100;
@@ -205,7 +199,7 @@ void control_sim_gauss()
 //     printf("\n");
 // }
 
-struct ErrorEMG
+struct ErrorEMG // NOLINT
 {
     float r_tau;
     float d_area_rel, d_area_abs;
@@ -217,8 +211,7 @@ struct ErrorEMG
     bool negativeB23 = true;
 };
 
-// void control_sim_EMG(float x_start, float x_step, float y_min, size_t n_samples, ErrorEMG *in_out)
-void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
+static void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
 {
     // generate data using an exponentially modified gaussian on an equidistant x axis
 
@@ -278,7 +271,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     float height_e = *maxVal(yvals.data(), yvals.size());
 
     in_out->r_height = height_e;
-    in_out->r_apex = (float)apex_e;
+    in_out->r_apex = apex_e;
 
     // assert(ret.size() != 0, "Peak not found\n");
     // this check is removed since some configurations of parameters result in no peaks
@@ -321,51 +314,7 @@ void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     in_out->jaccard = reg.jaccard;
 }
 
-void survey_EMG()
-{
-    // print results of fitting various EMG simulations to a file
-    std::vector<ErrorEMG> testCases;
-    float x_start = 10;
-    float x_step = 1;
-    ErrorEMG test = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, false};
-    test.r_apex = 20;
-
-    std::string container = "height,sdev,tau,position,d_area_rel,d_area_abs,d_fwhm_rel,d_fwhm_abs,d_apex_abs,d_height_rel,d_height_abs,dqs,jaccard,uncert_diff_position,closedPeak\n";
-
-    float heights[5] = {100, 1000, 2500, 5000, 10000};
-
-    for (size_t i = 0; i < 5; i++)
-    {
-        for (float sd = (float)0.7; sd < (float)3.1; sd += (float)0.1)
-        {
-            for (float tau = (float)0.1; tau < (float)2.1; tau += (float)0.1)
-            {
-                test.r_height = heights[i];
-                test.r_sdev = sd;
-                test.r_tau = tau;
-                control_sim_EMG(x_start, x_step, &test);
-                testCases.push_back(test);
-                char buffer[500];
-                sprintf(buffer, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%c\n", test.r_height, test.r_sdev, test.r_tau, test.r_apex, test.d_area_rel, test.d_area_abs,
-                        test.d_fwhm_rel, test.d_fwhm_abs, test.d_apex_abs, test.d_height_rel, test.d_height_abs, test.dqs, test.jaccard, test.uncert_diff_position, test.negativeB23 ? 'T' : 'F');
-                container += buffer;
-                test.d_height_rel = -1;
-                test.d_height_abs = -1;
-                test.d_apex_abs = -1;
-                test.d_area_rel = -1;
-                test.d_area_abs = -1;
-                test.d_fwhm_rel = -1;
-                test.d_fwhm_abs = -1;
-                test.dqs = -1;
-            }
-        }
-    }
-    FILE *f = fopen("./peaktest.csv", "w");
-    fprintf(f, "%s", container.c_str());
-    fclose(f);
-}
-
-int simulate_profile(
+static int simulate_profile(
     const RegCoeffs *coeff,
     std::vector<float> *simulated,
     std::vector<float> *simulated_log)
@@ -391,7 +340,7 @@ int simulate_profile(
     return 0;
 }
 
-void test_singlePeak()
+static void test_singlePeak()
 {
     RegCoeffs coeff;
     coeff.b0 = 12;
@@ -406,7 +355,7 @@ void test_singlePeak()
     simulate_profile(&coeff, &simulated, &simulated_log);
 
     std::vector<RegressionGauss> validRegs;
-    runningRegression(simulated.data(), &simulated_log, nullptr, simulated.size(), 5, &validRegs);
+    // runningRegression(simulated.data(), &simulated_log, nullptr, simulated.size(), 5, &validRegs);
 
     assert(validRegs.size() == 1, "incorrect number of regressions found\n", NULL);
     double diff_b0 = abs(coeff.b0 - validRegs.front().coeffs.b0);
@@ -420,7 +369,7 @@ void test_singlePeak()
     assert(diff_b3 < abs(coeff.b3) * 0.05, "> 5%% Error in b0 estimate\n", NULL);
 }
 
-int simulate_stepwise(
+static int simulate_stepwise(
     const RegCoeffs *coeff,
     std::vector<float> *xvec,
     std::vector<float> *simulated,
@@ -445,7 +394,7 @@ int simulate_stepwise(
     return 0;
 }
 
-void test_areaPrediction()
+static void test_areaPrediction()
 {
     RegCoeffs coeff;
     coeff.b0 = 8;
@@ -516,7 +465,7 @@ void test_areaPrediction()
 int main()
 {
     // initialise seed for noise generating funtions
-    srand(1234);
+    srand(1234); // NOLINT
 
     test_singlePeak();
     test_areaPrediction();
