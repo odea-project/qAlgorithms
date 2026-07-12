@@ -1,13 +1,6 @@
 #pragma GCC diagnostic ignored "-Wfloat-conversion"
 
-// #include "qalgorithms_input_output.h"
-#include "qalgorithms_read_file.h"
-
-#include <cfloat>
-#include <cstddef>
-#include <cstring>
-#include <vector>
-
+#include "../src/qalgorithms_read_file.cpp" // NOLINT
 #include "common_test_utils.hpp"
 
 using namespace qAlgorithms;

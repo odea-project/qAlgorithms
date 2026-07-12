@@ -3,12 +3,9 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
 
-#include "common_test_utils.hpp"
-#include "qalgorithms_utils.h"
-#define _USE_MATH_DEFINES
 #include "../../external/libcerf/libcerf_reduced.h"
-#include <cstdint>
-#include <math.h>
+#include "../src/qalgorithms_utils.cpp" // NOLINT
+#include "common_test_utils.hpp"
 
 using namespace qAlgorithms;
 
@@ -137,8 +134,7 @@ void test_erfs()
 
 int main()
 {
-    srand(1234);
-    // This could be automated using compile time execution
+    srand(1234); // NOLINT
     test_rounding();
     test_min_max();
     test_array_min_max();
