@@ -1,3 +1,4 @@
+#include "qalgorithms_datatypes.h"
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
@@ -358,11 +359,12 @@ static void test_singlePeak()
     std::vector<float> simulated;
     simulated.resize(11);
     std::vector<float> simulated_log;
+    std::vector<float> x_axis = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
     simulate_profile(&coeff, &simulated, &simulated_log);
 
-    std::vector<RegressionGauss> validRegs;
-    regression_on_continuum(simulated.data(), simulated_log.data(), nullptr, simulated.size(), 5, &validRegs);
+    std::vector<PeakFit> validRegs;
+    regression_on_continuum(simulated.data(), x_axis.data(), simulated_log.data(), nullptr, simulated.size(), 5, &validRegs);
 
     assert(validRegs.size() == 1, "incorrect number of regressions found\n", NULL);
     double diff_b0 = abs(coeff.b0 - validRegs.front().coeffs.b0);
