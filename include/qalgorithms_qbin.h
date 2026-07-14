@@ -74,22 +74,6 @@ namespace qAlgorithms
         EIC createEIC(const std::vector<float> *retentionTimes);
     };
 
-    Bin makeBin_scan(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos);
-
-    Bin makeBin_mz(const std::vector<const CentroidPeak *> *const centroids, const Range_i *range);
-
-    std::vector<double> makeOrderSpace(const Bin *bin);
-
-    std::vector<double> makeCumError(const std::vector<const CentroidPeak *> *bin);
-
-    // returns number of elements added to the stack?
-    int subsetMZ_stack(std::vector<Range_i> *stack,
-                       std::vector<Bin> *bincontainer,
-                       std::vector<const CentroidPeak *> *notInBins,
-                       const std::vector<const qAlgorithms::CentroidPeak *> *pointsInSourceBin,
-                       const std::vector<double> *OS,
-                       const std::vector<double> *cumError);
-
 #pragma endregion "Bin"
 
 #pragma region "Bin Container"

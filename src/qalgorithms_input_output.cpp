@@ -711,7 +711,7 @@ namespace qAlgorithms
         {
             unsigned int idx = selectedIndices->at(i);
             float rt_idx = rt.at(i);
-            infile->get_spectrum(&mz, &intensity, idx);
+            get_spectrum(infile, &mz, &intensity, idx);
             mz_min = (float)min(mz_min, mz[0]);
             mz_max = (float)max(mz_max, mz.back());
             size_t startSpec = 0;

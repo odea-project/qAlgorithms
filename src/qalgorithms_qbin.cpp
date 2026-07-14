@@ -135,6 +135,22 @@ namespace qAlgorithms
 
 #pragma region "BinContainer"
 
+    static Bin makeBin_scan(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos);
+
+    static Bin makeBin_mz(const std::vector<const CentroidPeak *> *const centroids, const size_t startIdx, const size_t length);
+
+    static std::vector<double> makeOrderSpace(const Bin *bin);
+
+    static std::vector<double> makeCumError(const std::vector<const CentroidPeak *> *bin);
+
+    // returns number of elements added to the stack?
+    static int subsetMZ_stack(std::vector<Range_i> *stack,
+                              std::vector<Bin> *bincontainer,
+                              std::vector<const CentroidPeak *> *notInBins,
+                              const std::vector<const qAlgorithms::CentroidPeak *> *pointsInSourceBin,
+                              const std::vector<double> *OS,
+                              const std::vector<double> *cumError);
+
     void switchTarget(BinContainer *bincontainer)
     {
         bincontainer->sourceBins->clear();
@@ -284,16 +300,17 @@ namespace qAlgorithms
 
 #pragma region "Bin"
 
-    Bin makeBin_mz(const std::vector<const CentroidPeak *> *const centroids, const Range_i *range)
+    static Bin makeBin_mz(const std::vector<const CentroidPeak *> *const centroids, const size_t startIdx, const size_t length)
     {
+        assert(length != 0);
         // function assumes bin is sorted by mz
 
         Bin res;
-        res.pointsInBin.reserve(range->endIdx - range->startIdx + 1);
+        res.pointsInBin.reserve(length);
 
-        for (size_t i = range->startIdx; i < range->endIdx + 1; i++)
-        {                                                // +1 since the range is inclusive
-            const CentroidPeak *point = (*centroids)[i]; // @todo access through normal array
+        for (size_t i = 0; i < length; i++)
+        {
+            const CentroidPeak *point = (*centroids)[startIdx + i]; // @todo access through normal array
             res.pointsInBin.push_back(point);
         }
         assert(res.pointsInBin.size() >= MIN_BIN_SIZE);
@@ -306,7 +323,7 @@ namespace qAlgorithms
         return res;
     }
 
-    Bin makeBin_scan(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos)
+    static Bin makeBin_scan(const std::vector<const CentroidPeak *> *centroids, const size_t binStartPos, const size_t binEndPos)
     {
         assert(binStartPos < binEndPos);
         Bin res;
@@ -319,7 +336,7 @@ namespace qAlgorithms
         return res;
     }
 
-    std::vector<double> makeOrderSpace(const Bin *bin)
+    static std::vector<double> makeOrderSpace(const Bin *bin)
     {
         // this function assumes that the centroids are sorted by mz
         auto points = bin->pointsInBin;
@@ -333,7 +350,7 @@ namespace qAlgorithms
         return OS;
     }
 
-    std::vector<double> makeCumError(const std::vector<const qAlgorithms::CentroidPeak *> *bin)
+    static std::vector<double> makeCumError(const std::vector<const qAlgorithms::CentroidPeak *> *bin)
     {
         std::vector<double> cumError;
         cumError.reserve(bin->size());
@@ -346,12 +363,12 @@ namespace qAlgorithms
         return cumError;
     }
 
-    int subsetMZ_stack(std::vector<Range_i> *stack,
-                       std::vector<Bin> *bincontainer,
-                       std::vector<const CentroidPeak *> *notInBins,
-                       const std::vector<const qAlgorithms::CentroidPeak *> *pointsInSourceBin,
-                       const std::vector<double> *OS,
-                       const std::vector<double> *cumError)
+    static int subsetMZ_stack(std::vector<Range_i> *stack,
+                              std::vector<Bin> *bincontainer,
+                              std::vector<const CentroidPeak *> *notInBins,
+                              const std::vector<const qAlgorithms::CentroidPeak *> *pointsInSourceBin,
+                              const std::vector<double> *OS,
+                              const std::vector<double> *cumError)
     {
         assert(OS->size() == cumError->size());
         assert(pointsInSourceBin->size() == OS->size());
@@ -364,6 +381,7 @@ namespace qAlgorithms
         while (!stack->empty())
         {
             const Range_i range = stack->back();
+            assert(range.length == range.endIdx - range.startIdx + 1);
             stack->pop_back();
 
             const size_t binsizeInOS = range.endIdx - range.startIdx + 1;
@@ -399,7 +417,7 @@ namespace qAlgorithms
                 // next recursive call at every step. Since position n is still part of the bin (the distance
                 // to n was not critical), one past the limit has to be included in the new bin
 
-                Bin output = makeBin_mz(pointsInSourceBin, &range);
+                Bin output = makeBin_mz(pointsInSourceBin, range.startIdx, range.length);
                 pointsProcessed += output.pointsInBin.size();
                 bincontainer->push_back(output);
 
@@ -487,126 +505,6 @@ namespace qAlgorithms
             }
         }
     }
-
-#if false
-    size_t Bin::makeDQSB(const std::vector<const CentroidPeak *> *notInBins, size_t idx_lowerLimit)
-    {
-        // assume that bins are separated well enough that any gap of this size is close to perfect
-        // separation already, so score = 1
-        assert(idx_lowerLimit < notInBins->size());
-        float mz_hardLimit = std::max(0.1, this->mzMax * 10e-5);
-        if (this->mzMax - this->mzMin > mz_hardLimit)
-        {
-            // failsafe if a nonsense bin is produced, score zeroed
-            std::vector<float> scores(this->pointsInBin.size(), 0);
-            this->DQSB = scores;
-            return idx_lowerLimit;
-        }
-        // iterate over points and only consider mass region + 0.1. It is assumed that if a distance
-        // of 0.1 mz is exceeded, the bin is perfectly separated. This is about 100 times more than
-        // the maximum tolerated distance between points even for very low density bins
-        size_t expandedDist = MAX_SCAN_GAP + 2; // always consider points one past the gap to account for potentially bad separation
-        this->DQSB.clear();
-
-        if (notInBins->back()->mz < this->mzMin - mz_hardLimit ||
-            notInBins->front()->mz > this->mzMax + mz_hardLimit)
-        {
-            // no points are within range, perfect score
-            std::vector<float> scores(this->pointsInBin.size(), 1.0);
-            this->DQSB = scores;
-            return idx_lowerLimit;
-        }
-
-        // @todo we can use SIMD here with relatively little effort
-        for (; idx_lowerLimit < notInBins->size(); idx_lowerLimit++)
-        {
-            if ((*notInBins)[idx_lowerLimit]->mz > this->mzMin - mz_hardLimit)
-            {
-                break;
-            }
-        }
-        size_t idx_upperLimit = idx_lowerLimit;
-        for (; idx_upperLimit < notInBins->size(); idx_upperLimit++)
-        {
-            if ((*notInBins)[idx_upperLimit]->mz > this->mzMax + mz_hardLimit)
-            {
-                break;
-            }
-        }
-        // all points with a sensible mass distance are between the two indices
-        // continue by moving all points within a relevant scan region into a separate vector
-        std::vector<const CentroidPeak *> scoreRegion;
-        scoreRegion.reserve((idx_upperLimit - idx_lowerLimit) / 2);
-        size_t lowestPossibleScan = this->scanMin > expandedDist ? this->scanMin - expandedDist : 0;
-        for (size_t i = idx_lowerLimit; i < idx_upperLimit; i++)
-        {
-            if ((*notInBins)[i]->number_MS1 > lowestPossibleScan && // cast to int due to negative being possible
-                (*notInBins)[i]->number_MS1 < this->scanMax + expandedDist)
-            {
-                // centroid is within MAX_SCAN_GAP and relevant mz region. However,
-                // one past MAX_SCAN_GAP is considered for better representativeness
-                scoreRegion.push_back((*notInBins)[i]);
-            }
-        }
-        std::sort(scoreRegion.begin(), scoreRegion.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs) { return lhs->number_MS1 < rhs->number_MS1; });
-
-        // calculate minimum outer distance
-        std::vector<float> minOuterDistances(this->pointsInBin.size());
-        // calc distance for every possible scan number to simplify algorithm
-        for (size_t i = 0; i < this->pointsInBin.size(); i++)
-        {
-            int activeScan = (int)this->pointsInBin[i]->number_MS1;
-            float activeMZ = this->pointsInBin[i]->mz;
-            float currentMin = INFINITY;
-            size_t readVal = 0;
-            // advance until first point within MAX_SCAN_GAP + 1 of scan
-
-            for (; readVal < scoreRegion.size(); readVal++)
-            {
-                if (scoreRegion[readVal]->number_MS1 > activeScan - expandedDist)
-                {
-                    break;
-                }
-            }
-            for (; readVal < scoreRegion.size(); readVal++)
-            {
-                if (scoreRegion[readVal]->number_MS1 > activeScan + expandedDist)
-                {
-                    break;
-                }
-                float distanceMZ = abs(scoreRegion[readVal]->mz - activeMZ);
-                if (distanceMZ < currentMin)
-                {
-                    currentMin = distanceMZ;
-                }
-            }
-            if (currentMin == 0)
-            {
-                currentMin = 1e-100; // set minimal distance to lowest sensible float
-            }
-
-            minOuterDistances[i] = currentMin;
-        }
-
-        // calculate mean inner distance
-        std::vector<float> meanInnerDistances = meanDistanceRegional(&pointsInBin, expandedDist);
-
-        for (size_t i = 0; i < this->pointsInBin.size(); i++)
-        {
-            if (meanInnerDistances[i] == minOuterDistances[i])
-            {
-                this->DQSB.push_back(0);
-                continue;
-            }
-
-            float tmpDQS = calcDQS(meanInnerDistances[i], minOuterDistances[i]);
-            assert(-1 < tmpDQS);
-            assert(tmpDQS <= 1);
-            this->DQSB.push_back(tmpDQS);
-        }
-        return idx_lowerLimit;
-    }
-#endif
 
     EIC Bin::createEIC(const std::vector<float> *retentionTimes)
     {
