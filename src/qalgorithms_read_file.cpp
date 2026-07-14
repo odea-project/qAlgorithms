@@ -58,6 +58,35 @@ namespace qAlgorithms
     };
 
     static BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
+    static bool isCentroided_fun(const XML_File *file);
+
+    static Polarities get_polarity_mode(const XML_File *file)
+    {
+        assert(file->linknodes->size() > 1);
+        size_t count = file->linknodes->size();
+
+        bool positive = false;
+        bool negative = false;
+        for (size_t i = 0; i < count; ++i)
+        {
+            pugi::xml_node *spec = file->linknodes->data() + i;
+            if (spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr)
+            {
+                positive = true;
+            }
+            else
+            {
+                assert(spec->find_child_by_attribute("cvParam", "accession", "MS:1000129"));
+                negative = true;
+            }
+
+            if (positive && negative)
+            {
+                return Polarities::mixed;
+            }
+        }
+        return positive ? Polarities::positive : Polarities::negative;
+    };
 
     XML_File::XML_File(const path_char *file, const SourceFileType type)
     {
@@ -117,9 +146,9 @@ namespace qAlgorithms
         }
         assert(linknodes->size() == number_spectra);
 
-        isCentroided = isCentroided_fun();
+        isCentroided = isCentroided_fun(this);
 
-        polarityMode = get_polarity_mode();
+        polarityMode = get_polarity_mode(this);
         assert(polarityMode != Polarities::unknown_polarity);
     };
 
@@ -194,21 +223,21 @@ namespace qAlgorithms
         return mtd;
     }
 
-    int XML_File::get_spectrum( // this obviously only extracts data that is in profile mode.
-        std::vector<float> *const spectrum_mz,
-        std::vector<float> *const spectrum_int,
-        size_t index)
+    int get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
+                     std::vector<float> *const spectrum_mz,
+                     std::vector<float> *const spectrum_int,
+                     size_t index)
     {
         assert(spectrum_mz->empty() && spectrum_int->empty());
-        assert(!this->defective);
+        assert(!file->defective);
 
-        if (linknodes->size() == 0)
+        if (file->linknodes->size() == 0)
         {
             fprintf(stderr, "Error: no spectra found for index %zu\n", index);
             return 1;
         }
 
-        const pugi::xml_node *spectrum_node = linknodes->data() + index;
+        const pugi::xml_node *spectrum_node = file->linknodes->data() + index;
 
         pugi::xml_node node_binary_list = spectrum_node->child("binaryDataArrayList");
 
@@ -232,7 +261,7 @@ namespace qAlgorithms
                 return 2;
             }
 
-            if (mtd_mz.compressed)
+            if (file->mtd_mz.compressed)
             {
                 size_t expectedSize = decoded_string.size() * 6;
                 buffer.resize(expectedSize);
@@ -242,11 +271,11 @@ namespace qAlgorithms
                 // check that less characters have been written than fit into the buffer
                 assert(buffer.size() > expectedSize);
                 buffer.resize(expectedSize);
-                bytesToFloatVec(&buffer, mtd_mz.isDouble, spectrum_mz);
+                bytesToFloatVec(&buffer, file->mtd_mz.isDouble, spectrum_mz);
             }
             else
             {
-                bytesToFloatVec(&decoded_string, mtd_mz.isDouble, spectrum_mz);
+                bytesToFloatVec(&decoded_string, file->mtd_mz.isDouble, spectrum_mz);
             }
 
             assert(spectrum_mz->size() == number_traces); // this happens if an index is tried which does not exist in the data
@@ -268,7 +297,7 @@ namespace qAlgorithms
                 return 2;
             }
 
-            if (mtd_intensity.compressed)
+            if (file->mtd_intensity.compressed)
             {
                 size_t expectedSize = decoded_string.size() * 6;
                 buffer.resize(expectedSize);
@@ -278,11 +307,11 @@ namespace qAlgorithms
                 // check that less characters have been written than fit into the buffer
                 assert(buffer.size() > expectedSize);
                 buffer.resize(expectedSize);
-                bytesToFloatVec(&buffer, mtd_intensity.isDouble, spectrum_int);
+                bytesToFloatVec(&buffer, file->mtd_intensity.isDouble, spectrum_int);
             }
             else
             {
-                bytesToFloatVec(&decoded_string, mtd_intensity.isDouble, spectrum_int);
+                bytesToFloatVec(&decoded_string, file->mtd_intensity.isDouble, spectrum_int);
             }
 
             assert(spectrum_int->size() == number_traces); // this happens if an index is tried which does not exist in the data
@@ -322,34 +351,6 @@ namespace qAlgorithms
         }
     };
 
-    Polarities XML_File::get_polarity_mode()
-    {
-        assert(linknodes->size() > 1);
-        size_t count = linknodes->size();
-
-        bool positive = false;
-        bool negative = false;
-        for (size_t i = 0; i < count; ++i)
-        {
-            pugi::xml_node *spec = linknodes->data() + i;
-            if (spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr)
-            {
-                positive = true;
-            }
-            else
-            {
-                assert(spec->find_child_by_attribute("cvParam", "accession", "MS:1000129"));
-                negative = true;
-            }
-
-            if (positive && negative)
-            {
-                return Polarities::mixed;
-            }
-        }
-        return positive ? Polarities::positive : Polarities::negative;
-    };
-
     std::vector<uint32_t> filter_spectra(const XML_File *data,
                                          const bool ms1,
                                          const bool polarity,
@@ -385,14 +386,14 @@ namespace qAlgorithms
         return indices;
     }
 
-    bool XML_File::isCentroided_fun()
+    static bool isCentroided_fun(const XML_File *file)
     {
         size_t centroided = 0;
         size_t profile = 0;
 
-        for (size_t i = 0; i < this->number_spectra; ++i)
+        for (size_t i = 0; i < file->number_spectra; ++i)
         {
-            pugi::xml_node *spec = linknodes->data() + i;
+            pugi::xml_node *spec = file->linknodes->data() + i;
 
             int level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
             bool isMS1 = 1 == level;

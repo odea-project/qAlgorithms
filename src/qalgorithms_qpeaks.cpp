@@ -1291,9 +1291,10 @@ namespace qAlgorithms
 
         for (size_t specNum = 0; specNum < selectedIndices->size(); specNum++)
         {
-            int ok = data->get_spectrum(&spectrum_mz,
-                                        &spectrum_int,
-                                        selectedIndices->at(specNum));
+            int ok = get_spectrum(data,
+                                  &spectrum_mz,
+                                  &spectrum_int,
+                                  selectedIndices->at(specNum));
             assert(ok == 0);
 
             const size_t peaksFound = qpeaks_find(spectrum_int.data(),
@@ -1346,7 +1347,7 @@ namespace qAlgorithms
             if (ms_level != 1)
                 continue; // centroiding only makes sense for ms level 1
 
-            source_file.get_spectrum(&spectrum_mz, &spectrum_int, i);
+            get_spectrum(&source_file, &spectrum_mz, &spectrum_int, i);
 
             // 3) extract spectum data, process with qpeaks_find
             int numPeaks = qpeaks_find(spectrum_int.data(),

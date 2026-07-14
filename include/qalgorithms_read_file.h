@@ -65,10 +65,6 @@ namespace qAlgorithms
 
         std::vector<pugi::xml_node> *linknodes = nullptr; // allocation during initialisation, has to be deallocated manually with the supplied function
 
-        bool isCentroided_fun();
-
-        Polarities get_polarity_mode();
-
         pugi::xml_node mzml_root_node;
 
         SourceFileType filetype = unknown_filetype;
@@ -83,11 +79,6 @@ namespace qAlgorithms
 
         XML_File(const path_char *filepath, SourceFileType type);
 
-        int get_spectrum(
-            std::vector<float> *const spectrum_mz,
-            std::vector<float> *const spectrum_int,
-            size_t index);
-
         // return all indices of spectra that match the required criteria
 
         void free_linknodes();
@@ -101,6 +92,11 @@ namespace qAlgorithms
     void get_spectra_RT(const XML_File *data,
                         const std::vector<unsigned int> *indices,
                         std::vector<float> *const RTs);
+
+    int get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
+                     std::vector<float> *const spectrum_mz,
+                     std::vector<float> *const spectrum_int,
+                     size_t index);
 
     // functions exposed for testing
     std::vector<char> decode_base64(const std::string &encoded_string);
