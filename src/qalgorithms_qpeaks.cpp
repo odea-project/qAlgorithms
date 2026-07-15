@@ -6,6 +6,7 @@
 #include "libcerf_reduced.h"
 
 #include <cassert>
+#include <cfloat>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -36,6 +37,7 @@ namespace qAlgorithms
 
             double apex_raw = -coeff.b1 / (b23 * 2);
             double apex = apex_raw + double(coeff.x0);
+            assert(abs(apex - regression->apex_position) < 10e-6); // this can differ up to 5 * 10e-7 from floating point error
 
             PeakFit peak;
 
@@ -80,8 +82,8 @@ namespace qAlgorithms
             peak.height = (float)exp(regAt(&coeff, apex_raw));
             peak.uncert_height = regression->uncert_height * peak.height;
 
-            peak.area = regression->area * delta_x;
-            peak.uncert_area = regression->uncert_area * (float)exp(coeff.b0) * delta_x;
+            peak.area = regression->area;
+            peak.uncert_area = regression->uncert_area * (float)exp(coeff.b0); // @todo this is incorrect, since we have two uncertainty bounds
             assert(peak.area > 1);
 
             // the empirical peak width is generally estimated at half maximum. Our peak
@@ -1820,7 +1822,7 @@ namespace qAlgorithms
     double peakPosition(const RegCoeffs *c)
     {
         double b23 = c->b1 < 0 ? c->b2 : c->b3;
-        return c->b1 / (2 * b23);
+        return -c->b1 / (2 * b23);
     }
 
     double peakHeightUncert(const RegCoeffs *c, const double mse)

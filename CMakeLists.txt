@@ -136,7 +136,7 @@ if(WIN32 AND (CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES
     set(ZLIB_LIBRARY     "${ZLIB_ROOT}/lib/libz.a")
     set(ZLIB_USE_STATIC_LIBS "ON")
 endif()
-find_package(zlib-ng REQUIRED)
+find_package(zlib-ng CONFIG REQUIRED)
 
 # PROGRAM SOURCE
 add_executable(${PROJECT_NAME} "${SOURCE_DIR}/qalgorithms_main.cpp")
