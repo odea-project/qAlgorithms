@@ -265,6 +265,12 @@ namespace qAlgorithms
 
     // ----------- old functions -------------//
 
+    void cumMSE(
+        std::vector<RegressionGauss> *validRegressions,
+        const size_t validCount,
+        const float *intensities,
+        const size_t length);
+
     static void mergeRegsInScale(
         const float *intensities,
         const uint16_t *const df_cum,
@@ -303,6 +309,8 @@ namespace qAlgorithms
         if (validCount == 0)
             return;
 
+        cumMSE(&validRegsTmp, validCount, intensities, length);
+
         std::vector<RegressionGauss> validRegressions;
 
         mergeRegsInScale(
@@ -318,6 +326,72 @@ namespace qAlgorithms
                          x_axis,
                          validRegressions.size(),
                          result);
+    }
+
+    size_t countApexes(std::vector<RegressionGauss> *validRegressions, const size_t length)
+    {
+        if (length < 2)
+            return length;
+
+        // there must be a distance of at least this many points between two apexes
+        // for them to be considered distinct. We use int here so that an apex at
+        // x < min_apex_dist will not be a problem later
+        const int min_apex_dist = 2 * GLOBAL_MINSCALE;
+
+        // keep a record of which apex group a given peak belongs to
+        int16_t apexGroup[length];
+        for (size_t i = 0; i < length; i++)
+            apexGroup[i] = -1;
+
+        // assign apex groups
+        double currentApex = validRegressions->at(0).apex_position;
+        int apexLeftLim = (int)currentApex - min_apex_dist;
+        int apexRightLim = (int)currentApex + min_apex_dist;
+        apexGroup[0] = 0;
+
+        return 0;
+    }
+
+    struct subReg // NOLINT
+    {
+        RegressionGauss *reg;
+        double *cum_MSE_start;
+        bool valid = true;
+    };
+
+    void cumMSE(
+        std::vector<RegressionGauss> *validRegressions,
+        const size_t validCount,
+        const float *intensities,
+        const size_t length)
+    {
+        // calculate cumulative mse arrays
+        // the vector of cumulative mean square errors is used so that we do
+        // not have to recalculate the MSE for every regression every time we
+        // perform a new comparison. 0 is inserted in front of every value so
+        // the access pattern i - 1 is always correct.
+        std::vector<double> cumulative_mse((length + 1) * validCount, 0);
+        std::vector<subReg> subregs(validCount);
+        for (size_t regnum = 0; regnum < validCount; regnum++)
+        {
+            RegressionGauss *reg = validRegressions->data() + regnum;
+            subregs[regnum].reg = reg;
+            double *cum_mse = cumulative_mse.data() + regnum * (length + 1) + 1; // the +1 means that cum_mse[-1] is always 0
+            subregs[regnum].cum_MSE_start = cum_mse;
+            // poplate the cumulative MSE per regression
+            for (size_t i = 0; i < length; i++)
+            {
+                double observed = intensities[i];
+                double xval = (double)i - (double)reg->coeffs.x0;
+                double predict = exp(regAt(&reg->coeffs, xval));
+                cum_mse[i] = (predict - observed) * (predict - observed);
+            }
+            assert(cum_mse[-1] == 0);
+            for (size_t i = 0; i < length; i++)
+            {
+                cum_mse[i] += cum_mse[i - 1];
+            }
+        }
     }
 
     // --------------- old functions ---------------- //
@@ -959,7 +1033,7 @@ namespace qAlgorithms
         }
 
         mutateReg->df = df_sum;
-        mutateReg->apex_position += coeffs->x0;
+        mutateReg->apex_position = (float)coeffs->x0 + (float)peakPosition(coeffs);
         mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict, length);
 
         if (failstates != 0)
@@ -1741,6 +1815,12 @@ namespace qAlgorithms
         assert(u > 0);
         double uncert = sqrt(u * mse);
         return uncert;
+    }
+
+    double peakPosition(const RegCoeffs *c)
+    {
+        double b23 = c->b1 < 0 ? c->b2 : c->b3;
+        return c->b1 / (2 * b23);
     }
 
     double peakHeightUncert(const RegCoeffs *c, const double mse)

@@ -136,6 +136,8 @@ namespace qAlgorithms
 
     double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert);
 
+    double peakPosition(const RegCoeffs *c);
+
 #define GLOBAL_MINSCALE 2
 #define MINLENGTH 5
 
