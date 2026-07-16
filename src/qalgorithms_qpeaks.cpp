@@ -265,6 +265,8 @@ namespace qAlgorithms
                               const Range_i *regSpan,
                               const double df);
 
+    size_t countApexes(std::vector<RegressionGauss> *validRegressions);
+
     // ----------- old functions -------------//
 
     void cumMSE(
@@ -311,6 +313,8 @@ namespace qAlgorithms
         if (validCount == 0)
             return;
 
+        size_t apexcount = countApexes(&validRegsTmp);
+
         cumMSE(&validRegsTmp, validCount, intensities, length);
 
         std::vector<RegressionGauss> validRegressions;
@@ -324,34 +328,89 @@ namespace qAlgorithms
         // there can be 0, 1 or more than one regressions in validRegressions
         mergeRegressionsOverScales(&validRegressions, intensities);
 
+        assert(validRegressions.size() == apexcount);
+
         retransformPeaks(&validRegressions,
                          x_axis,
                          validRegressions.size(),
                          result);
     }
 
-    size_t countApexes(std::vector<RegressionGauss> *validRegressions, const size_t length)
+    size_t countApexes(std::vector<RegressionGauss> *validRegressions)
     {
+        const size_t length = validRegressions->size();
+
+        assert(length < 256);
         if (length < 2)
             return length;
 
         // there must be a distance of at least this many points between two apexes
         // for them to be considered distinct. We use int here so that an apex at
         // x < min_apex_dist will not be a problem later
-        const int min_apex_dist = 2 * GLOBAL_MINSCALE;
+        const double min_apex_dist_d = 2 * GLOBAL_MINSCALE;
 
-        // keep a record of which apex group a given peak belongs to
-        int16_t apexGroup[length];
-        for (size_t i = 0; i < length; i++)
+        // keep a record of which apex group a given peak belongs to. We assume that
+        // 256 far exceeds the number of possible groups even for large inputs
+        int16_t apexGroup[256];
+        for (size_t i = 0; i < 256; i++)
             apexGroup[i] = -1;
 
         // assign apex groups
-        double currentApex = validRegressions->at(0).apex_position;
-        int apexLeftLim = (int)currentApex - min_apex_dist;
-        int apexRightLim = (int)currentApex + min_apex_dist;
-        apexGroup[0] = 0;
+        size_t assignments = 0;
+        uint16_t currentGroup = 0;
 
-        return 0;
+        size_t next_unassigned = 0;
+
+        double currentApex = validRegressions->at(next_unassigned).apex_position;
+        double apexLeftLim = currentApex - min_apex_dist_d;
+        double apexRightLim = currentApex + min_apex_dist_d;
+        apexGroup[next_unassigned] = currentGroup;
+
+        // the assignments counter is incremented for every point that was assigned an apex group
+        while (assignments < length)
+        {
+            // the loop must iterate until we are certain that no further change will occur
+            bool hasChanged = true;
+            while (hasChanged)
+            {
+                hasChanged = false;
+                // first pass: Assign regressions and update limits accordingly
+                for (size_t p = next_unassigned + 1; p < length; p++)
+                {
+                    if (apexGroup[p] != -1)
+                        continue;
+
+                    double secondApex = validRegressions->at(p).apex_position;
+                    if ((secondApex > apexLeftLim) && (secondApex < apexRightLim))
+                    {
+                        apexGroup[p] = currentGroup;
+                        apexLeftLim = min(apexLeftLim, secondApex - min_apex_dist_d);
+                        apexRightLim = max(apexRightLim, secondApex + min_apex_dist_d);
+                        hasChanged = true;
+                        assignments += 1;
+                    }
+                }
+            }
+
+            // iterate through the data until the next unassigned value is found
+            for (; next_unassigned < length; next_unassigned++)
+            {
+                if (apexGroup[next_unassigned] == -1)
+                    break;
+            }
+            // break must be placed here to avoid bad array access
+            if (next_unassigned == length)
+                break;
+
+            assert(currentGroup < length);
+            currentGroup += 1;
+            currentApex = validRegressions->at(next_unassigned).apex_position;
+            apexLeftLim = currentApex - min_apex_dist_d;
+            apexRightLim = currentApex + min_apex_dist_d;
+            apexGroup[next_unassigned] = currentGroup;
+        }
+
+        return currentGroup + 1;
     }
 
     struct subReg // NOLINT
@@ -1265,7 +1324,7 @@ namespace qAlgorithms
         float DQSB = -1; // = weightedMeanAndVariance_EIC(area_arr, dqsb_arr, peak->length, nullptr);
         float DQSC = weightedMeanAndVariance_EIC(area_arr, dqsc_arr, peak->length, nullptr);
         assert(DQSC > 0);
-        assert(DQSC < 1);
+        assert(DQSC <= 1);
 
         float mz_uncert = 0;
         float mz = weightedMeanAndVariance_EIC(area_arr, mz_arr, peak->length, &mz_uncert);
