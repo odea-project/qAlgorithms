@@ -653,6 +653,16 @@ namespace qAlgorithms
 #pragma region "print functions"
     // @todo use macros to move the boilerplate out of the function body
 
+    // this function exists because fopen does not work on windows
+    static inline FILE *fopen_w_wrapper(const std::filesystem::path *pathOutput)
+    {
+#ifdef _WIN32
+        return _wfopen(pathOutput->c_str(), L"w");
+#else
+        return fopen(pathOutput->c_str(), "w");
+#endif
+    }
+
     static bool stopOverwrite(std::filesystem::path *pathOutput, bool noOverwrite)
     {
         if (std::filesystem::exists(*pathOutput))
@@ -695,14 +705,14 @@ namespace qAlgorithms
         float mz_max = 0;
         std::vector<float> intensity;
 
-        FILE *outfile = fopen(pathOutput.c_str(), "w");
+        FILE *outfile = fopen_w_wrapper(&pathOutput);
         if (outfile != nullptr)
         {
             fprintf(outfile, "idx_spec,rt,mz,intensity\n");
         }
         else
         {
-            fprintf(stderr, "Error: fopen() failed, no data has been written\n");
+            fprintf(stderr, "Error: Could not open destination file, no data has been written\n");
             return;
         }
 
