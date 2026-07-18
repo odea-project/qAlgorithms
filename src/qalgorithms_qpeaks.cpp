@@ -748,7 +748,7 @@ namespace qAlgorithms
             validRegressionsInGroup.reserve(64);
             size_t competitors = 0; // a competitor is a mutually exclusive alternative regression
 
-            Range_i sharedRegion;
+            Range_i sharedRegion = activeReg->regSpan;
 
             for (size_t j = 0; j < i; j++)
             {
