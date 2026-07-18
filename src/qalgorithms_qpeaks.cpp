@@ -6,11 +6,11 @@
 #include "libcerf_reduced.h"
 
 #include <cassert>
-#include <cfloat>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #define _USE_MATH_DEFINES // relevant for windows to have math constants
 #include <math.h>
@@ -267,7 +267,7 @@ namespace qAlgorithms
                               const Range_i *regSpan,
                               const double df);
 
-    static size_t countApexes(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[]);
+    static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[]);
 
     static size_t selectFromGroup(
         const std::vector<RegressionGauss> *validRegressions,
@@ -317,7 +317,7 @@ namespace qAlgorithms
             return;
 
         int16_t apexGroups[256];
-        size_t apexcount = countApexes(&validRegsTmp, apexGroups);
+        size_t apexcount = groupRegsByApex(&validRegsTmp, apexGroups);
 
         size_t chosenOne = 0;
         if (validCount > 1)
@@ -344,7 +344,24 @@ namespace qAlgorithms
             if (validRegressions.at(reg).coeffs.b1 == chosenB1)
                 b1_match = true;
         }
-        assert(b1_match);
+        if (!b1_match)
+        {
+            printf("observed | old prediction | new prediction\n");
+            assert(validRegressions.size() == 1);
+            RegressionGauss *reg_old = validRegressions.data();
+            RegressionGauss *reg_new = validRegsTmp.data() + chosenOne;
+            for (size_t i = 0; i < length; i++)
+            {
+                double x_old = (double)i - (double)reg_old->coeffs.x0;
+                double x_new = (double)i - (double)reg_new->coeffs.x0;
+                printf("%f, %f, %f\n", intensities[i],
+                       exp(regAt(&reg_old->coeffs, x_old)),
+                       exp(regAt(&reg_new->coeffs, x_new)));
+            }
+            printf("Old range: %u to %u\n", reg_old->startIdx, reg_old->startIdx + reg_old->length - 1);
+            printf("New range: %u to %u\n", reg_new->startIdx, reg_new->startIdx + reg_new->length - 1);
+            exit(1);
+        }
 
         retransformPeaks(&validRegressions,
                          x_axis,
@@ -352,7 +369,7 @@ namespace qAlgorithms
                          result);
     }
 
-    static size_t countApexes(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[])
+    static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[])
     {
         const size_t length = validRegressions->size();
 
