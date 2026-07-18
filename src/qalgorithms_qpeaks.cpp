@@ -258,6 +258,8 @@ namespace qAlgorithms
         return validCount;
     }
 
+#pragma endregion "running regression"
+
 #pragma region "Conflict Elimination"
 
     static double calcMSE_exp(const RegCoeffs *coeff,
@@ -265,7 +267,14 @@ namespace qAlgorithms
                               const Range_i *regSpan,
                               const double df);
 
-    size_t countApexes(std::vector<RegressionGauss> *validRegressions);
+    static size_t countApexes(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[]);
+
+    static size_t selectFromGroup(
+        const std::vector<RegressionGauss> *validRegressions,
+        const float *intensities,
+        const size_t length,
+        const int16_t apexGroups[],
+        const int16_t groupNum);
 
     // ----------- old functions -------------//
 
@@ -313,7 +322,15 @@ namespace qAlgorithms
         if (validCount == 0)
             return;
 
-        size_t apexcount = countApexes(&validRegsTmp);
+        int16_t apexGroups[256];
+        size_t apexcount = countApexes(&validRegsTmp, apexGroups);
+
+        size_t chosenOne = 0;
+        if (validCount > 1)
+        {
+            chosenOne = selectFromGroup(&validRegsTmp, intensities, length, apexGroups, 0);
+        }
+        double chosenB1 = validRegsTmp.at(chosenOne).coeffs.b1;
 
         cumMSE(&validRegsTmp, validCount, intensities, length);
 
@@ -329,6 +346,13 @@ namespace qAlgorithms
         mergeRegressionsOverScales(&validRegressions, intensities);
 
         assert(validRegressions.size() == apexcount);
+        bool b1_match = false;
+        for (size_t reg = 0; reg < validRegressions.size(); reg++)
+        {
+            if (validRegressions.at(reg).coeffs.b1 == chosenB1)
+                b1_match = true;
+        }
+        assert(b1_match);
 
         retransformPeaks(&validRegressions,
                          x_axis,
@@ -336,7 +360,7 @@ namespace qAlgorithms
                          result);
     }
 
-    size_t countApexes(std::vector<RegressionGauss> *validRegressions)
+    static size_t countApexes(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[])
     {
         const size_t length = validRegressions->size();
 
@@ -351,9 +375,8 @@ namespace qAlgorithms
 
         // keep a record of which apex group a given peak belongs to. We assume that
         // 256 far exceeds the number of possible groups even for large inputs
-        int16_t apexGroup[256];
         for (size_t i = 0; i < 256; i++)
-            apexGroup[i] = -1;
+            apexGroups[i] = -1;
 
         // assign apex groups
         size_t assignments = 0;
@@ -364,7 +387,7 @@ namespace qAlgorithms
         double currentApex = validRegressions->at(next_unassigned).apex_position;
         double apexLeftLim = currentApex - min_apex_dist_d;
         double apexRightLim = currentApex + min_apex_dist_d;
-        apexGroup[next_unassigned] = currentGroup;
+        apexGroups[next_unassigned] = currentGroup;
 
         // the assignments counter is incremented for every point that was assigned an apex group
         while (assignments < length)
@@ -377,13 +400,13 @@ namespace qAlgorithms
                 // first pass: Assign regressions and update limits accordingly
                 for (size_t p = next_unassigned + 1; p < length; p++)
                 {
-                    if (apexGroup[p] != -1)
+                    if (apexGroups[p] != -1)
                         continue;
 
                     double secondApex = validRegressions->at(p).apex_position;
                     if ((secondApex > apexLeftLim) && (secondApex < apexRightLim))
                     {
-                        apexGroup[p] = currentGroup;
+                        apexGroups[p] = currentGroup;
                         apexLeftLim = min(apexLeftLim, secondApex - min_apex_dist_d);
                         apexRightLim = max(apexRightLim, secondApex + min_apex_dist_d);
                         hasChanged = true;
@@ -395,7 +418,7 @@ namespace qAlgorithms
             // iterate through the data until the next unassigned value is found
             for (; next_unassigned < length; next_unassigned++)
             {
-                if (apexGroup[next_unassigned] == -1)
+                if (apexGroups[next_unassigned] == -1)
                     break;
             }
             // break must be placed here to avoid bad array access
@@ -407,10 +430,76 @@ namespace qAlgorithms
             currentApex = validRegressions->at(next_unassigned).apex_position;
             apexLeftLim = currentApex - min_apex_dist_d;
             apexRightLim = currentApex + min_apex_dist_d;
-            apexGroup[next_unassigned] = currentGroup;
+            apexGroups[next_unassigned] = currentGroup;
         }
 
         return currentGroup + 1;
+    }
+
+    // @todo function that asserts that all regressions within one grouping describe only one apex
+
+    // return the index of the regression that was found to be the best group representative
+    static size_t selectFromGroup(
+        const std::vector<RegressionGauss> *validRegressions,
+        const float *intensities,
+        const size_t length,
+        const int16_t apexGroups[],
+        const int16_t groupNum)
+    {
+        assert(groupNum > -1);
+        size_t regCount = validRegressions->size();
+        assert(regCount > 1);
+
+        // 1) iterate over the groups to find the relevant region over which to compare
+        // the regressions
+        uint16_t lim_L = length;
+        uint16_t lim_R = 0;
+        for (size_t i = 0; i < regCount; i++)
+        {
+            if (apexGroups[i] == groupNum)
+            {
+                const RegressionGauss *reg = validRegressions->data() + i;
+                lim_L = min(reg->startIdx, lim_L);
+                uint16_t lim_R_reg = reg->length + reg->startIdx - 1;
+                lim_R = max(lim_R, lim_R_reg);
+            }
+        }
+        assert(lim_R > 0);
+
+        // calculate SSE in order
+        // We use the SSE instead of the MSE since n is identical for this
+        // comparison
+        double bestSSE = INFINITY;
+        size_t bestRegIdx = regCount;
+
+        for (size_t i = 0; i < regCount; i++)
+        {
+            if (apexGroups[i] != groupNum)
+                continue;
+
+            const RegressionGauss *reg = validRegressions->data() + i;
+
+            double currentSSE = 0;
+            for (size_t xval = lim_L; xval < (size_t)lim_R + 1; xval++)
+            {
+                double observed = intensities[xval];
+                double x = double(xval) - (double)reg->coeffs.x0;
+                double predict = exp(regAt(&reg->coeffs, x));
+                double diff = observed - predict;
+                currentSSE += diff * diff;
+
+                // early termination of mse calculation should save some time on average, not measured!
+                if (currentSSE > bestSSE)
+                    break;
+            }
+            if (currentSSE < bestSSE)
+            {
+                bestSSE = currentSSE;
+                bestRegIdx = i;
+            }
+        }
+        assert(bestRegIdx < regCount);
+        return bestRegIdx;
     }
 
     struct subReg // NOLINT
@@ -654,14 +743,27 @@ namespace qAlgorithms
             double MSE_group = 0;
             int DF_group = 0;
             // only calculate required MSEs since this is one of the performance-critical steps
-            std::vector<float> exponentialMSE(validRegressions->size(), 0);
+            std::vector<double> exponentialMSE(validRegressions->size(), 0);
             std::vector<unsigned int> validRegressionsInGroup; // vector of indices to validRegressions
             validRegressionsInGroup.reserve(64);
             size_t competitors = 0; // a competitor is a mutually exclusive alternative regression
 
+            Range_i sharedRegion;
+
             for (size_t j = 0; j < i; j++)
             {
+
                 RegressionGauss *secondReg = firstReg + j;
+                if (secondReg == activeReg)
+                {
+                    continue; // this should not have been permitted in the first place
+                }
+                // there was a subtle bug here where the MSE was not calculated for the shared region,
+                // resulting in a selection bias for narrow regression windows
+                sharedRegion.startIdx = min(activeReg->startIdx, secondReg->startIdx);
+                sharedRegion.endIdx = max(activeReg->regSpan.endIdx, secondReg->regSpan.endIdx);
+                sharedRegion.length = sharedRegion.endIdx - sharedRegion.startIdx + 1;
+
                 if (!secondReg->isValid) // check is needed because regressions are set to invalid in the outer loop
                     continue;
 
@@ -679,10 +781,10 @@ namespace qAlgorithms
 
                 if (exponentialMSE[j] == 0.0)
                 {
-                    exponentialMSE[j] = (float)calcMSE_exp(
+                    exponentialMSE[j] = calcMSE_exp(
                         &secondReg->coeffs,
                         intensities,
-                        &secondReg->regSpan,
+                        &sharedRegion,
                         secondReg->df);
                 }
                 DF_group += secondReg->df;                      // add the degree of freedom
@@ -703,13 +805,13 @@ namespace qAlgorithms
 
             if (exponentialMSE[i] == 0.0)
             { // calculate the mse of the current peak
-                exponentialMSE[i] = (float)calcMSE_exp(
+                exponentialMSE[i] = calcMSE_exp(
                     &activeReg->coeffs,
                     intensities,
                     &activeReg->regSpan,
                     activeReg->df);
             }
-            if (exponentialMSE[i] < MSE_group)
+            if (exponentialMSE[i] <= MSE_group)
             {
                 // Set isValid to false for the candidates from the group
                 for (size_t it_ref_peak : validRegressionsInGroup)

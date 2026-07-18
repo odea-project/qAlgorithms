@@ -106,6 +106,8 @@ namespace qAlgorithms
     // min and max functions
     size_t min(size_t a, size_t b);
     size_t max(size_t a, size_t b);
+    uint16_t min(uint16_t a, uint16_t b);
+    uint16_t max(uint16_t a, uint16_t b);
     int min(int a, int b);
     int max(int a, int b);
     double min(double a, double b);
