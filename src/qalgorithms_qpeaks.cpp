@@ -278,12 +278,6 @@ namespace qAlgorithms
 
     // ----------- old functions -------------//
 
-    void cumMSE(
-        std::vector<RegressionGauss> *validRegressions,
-        const size_t validCount,
-        const float *intensities,
-        const size_t length);
-
     static void mergeRegsInScale(
         const float *intensities,
         const uint16_t *const df_cum,
@@ -331,8 +325,6 @@ namespace qAlgorithms
             chosenOne = selectFromGroup(&validRegsTmp, intensities, length, apexGroups, 0);
         }
         double chosenB1 = validRegsTmp.at(chosenOne).coeffs.b1;
-
-        cumMSE(&validRegsTmp, validCount, intensities, length);
 
         std::vector<RegressionGauss> validRegressions;
 
@@ -502,48 +494,6 @@ namespace qAlgorithms
         return bestRegIdx;
     }
 
-    struct subReg // NOLINT
-    {
-        RegressionGauss *reg;
-        double *cum_MSE_start;
-        bool valid = true;
-    };
-
-    void cumMSE(
-        std::vector<RegressionGauss> *validRegressions,
-        const size_t validCount,
-        const float *intensities,
-        const size_t length)
-    {
-        // calculate cumulative mse arrays
-        // the vector of cumulative mean square errors is used so that we do
-        // not have to recalculate the MSE for every regression every time we
-        // perform a new comparison. 0 is inserted in front of every value so
-        // the access pattern i - 1 is always correct.
-        std::vector<double> cumulative_mse((length + 1) * validCount, 0);
-        std::vector<subReg> subregs(validCount);
-        for (size_t regnum = 0; regnum < validCount; regnum++)
-        {
-            RegressionGauss *reg = validRegressions->data() + regnum;
-            subregs[regnum].reg = reg;
-            double *cum_mse = cumulative_mse.data() + regnum * (length + 1) + 1; // the +1 means that cum_mse[-1] is always 0
-            subregs[regnum].cum_MSE_start = cum_mse;
-            // poplate the cumulative MSE per regression
-            for (size_t i = 0; i < length; i++)
-            {
-                double observed = intensities[i];
-                double xval = (double)i - (double)reg->coeffs.x0;
-                double predict = exp(regAt(&reg->coeffs, xval));
-                cum_mse[i] = (predict - observed) * (predict - observed);
-            }
-            assert(cum_mse[-1] == 0);
-            for (size_t i = 0; i < length; i++)
-            {
-                cum_mse[i] += cum_mse[i - 1];
-            }
-        }
-    }
-
     // --------------- old functions ---------------- //
     void mergeRegsInScale(
         const float *intensities,
@@ -596,7 +546,7 @@ namespace qAlgorithms
         const float *intensities,
         const std::vector<RegressionGauss> *regressions,
         const uint16_t *const degreesOfFreedom_cum,
-        const Range_i regSpan);
+        const Range_i *regSpan);
 
     void findBestScales(std::vector<RegressionGauss> *validRegressions,
                         std::vector<RegressionGauss> *validRegsTmp,
@@ -663,7 +613,7 @@ namespace qAlgorithms
             else
             { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
                 RegPair bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom_cum,
-                                                        groups[groupIdx]);
+                                                        groups.data() + groupIdx);
 
                 RegressionGauss bestReg = validRegsTmp->at(bestRegIdx.idx);
                 // bestReg.mse = bestRegIdx.mse;
@@ -677,7 +627,7 @@ namespace qAlgorithms
         const float *intensities,
         const std::vector<RegressionGauss> *regressions,
         const uint16_t *const degreesOfFreedom_cum,
-        const Range_i regSpan)
+        const Range_i *regSpan)
     {
         double best_mse = INFINITY;
         unsigned int bestRegIdx = 0;
@@ -685,7 +635,7 @@ namespace qAlgorithms
         // identify left (smallest) and right (largest) limit of the grouped regression windows
         uint16_t left_limit = UINT16_MAX;
         size_t right_limit = 0;
-        for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
+        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
         {
             const RegressionGauss *reg = regressions->data() + i;
             left_limit = min(left_limit, reg->startIdx);
@@ -697,7 +647,7 @@ namespace qAlgorithms
         df_sum -= 4; // four coefficients
         assert(df_sum > 0);
 
-        for (size_t i = regSpan.startIdx; i < regSpan.endIdx + 1; i++)
+        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
         {
             // step 2: calculate the mean squared error (MSE) between the predicted and actual values
             const RegressionGauss *reg = regressions->data() + i;
@@ -1513,7 +1463,7 @@ namespace qAlgorithms
     // @todo find a better way of determining the smallest possible upper scale
     static const size_t maxscale_cen = 10;
 
-    int findCentroids(XML_File *data,
+    int findCentroids(const XML_File *data,
                       const std::vector<unsigned int> *selectedIndices,
                       std::vector<CentroidPeak> *centroids)
     {

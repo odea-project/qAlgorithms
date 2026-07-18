@@ -670,7 +670,7 @@ namespace qAlgorithms
     const char error_open_fail[] = "Error: could not open output path during centroid printing.\n"
                                    "No files have been written.Filename:\n" _STR "\n";
 
-    void printProfileSections(XML_File *infile,
+    void printProfileSections(const XML_File *infile,
                               const UserInputSettings *inargs,
                               const std::vector<unsigned int> *selectedIndices,
                               std::string filename)
