@@ -196,7 +196,7 @@ namespace qAlgorithms
 
     static invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
 
-    static int validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
+    static size_t validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
         const float *intensities,
         const float *intensities_log,
         const float *x_axis,
@@ -269,6 +269,11 @@ namespace qAlgorithms
 
     static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[]);
 
+    static bool groupApexIsStable(
+        const std::vector<RegressionGauss> *validRegressions,
+        const int16_t apexGroups[],
+        const int16_t groupNum);
+
     static size_t selectFromGroup(
         const std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
@@ -306,23 +311,25 @@ namespace qAlgorithms
 
         std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
         validRegsTmp.reserve(coefficients.size() / 2);
-        int validCount = validateRegressions(intensities,
-                                             intensities_log,
-                                             x_axis,
-                                             df,
-                                             &coefficients,
-                                             length,
-                                             &validRegsTmp);
+        size_t validCount = validateRegressions(intensities,
+                                                intensities_log,
+                                                x_axis,
+                                                df,
+                                                &coefficients,
+                                                length,
+                                                &validRegsTmp);
         if (validCount == 0)
             return;
 
-        int16_t apexGroups[256];
+        int16_t apexGroups[max_apex_per_group];
         size_t apexcount = groupRegsByApex(&validRegsTmp, apexGroups);
 
         size_t chosenOne = 0;
-        if (validCount > 1)
+        if (validCount > apexcount)
         {
             chosenOne = selectFromGroup(&validRegsTmp, intensities, length, apexGroups, 0);
+            bool stableApex = groupApexIsStable(&validRegsTmp, apexGroups, 0);
+            assert(stableApex);
         }
         double chosenB1 = validRegsTmp.at(chosenOne).coeffs.b1;
 
@@ -344,10 +351,10 @@ namespace qAlgorithms
             if (validRegressions.at(reg).coeffs.b1 == chosenB1)
                 b1_match = true;
         }
-        if (!b1_match)
+        if (!b1_match && validRegressions.size() == 1)
         {
             printf("observed | old prediction | new prediction\n");
-            assert(validRegressions.size() == 1);
+            // assert(validRegressions.size() == 1);
             RegressionGauss *reg_old = validRegressions.data();
             RegressionGauss *reg_new = validRegsTmp.data() + chosenOne;
             for (size_t i = 0; i < length; i++)
@@ -359,8 +366,8 @@ namespace qAlgorithms
                        exp(regAt(&reg_new->coeffs, x_new)));
             }
             printf("Old range: %u to %u\n", reg_old->startIdx, reg_old->startIdx + reg_old->length - 1);
-            printf("New range: %u to %u\n", reg_new->startIdx, reg_new->startIdx + reg_new->length - 1);
-            exit(1);
+            printf("New range: %u to %u\n\n", reg_new->startIdx, reg_new->startIdx + reg_new->length - 1);
+            // exit(1);
         }
 
         retransformPeaks(&validRegressions,
@@ -373,7 +380,8 @@ namespace qAlgorithms
     {
         const size_t length = validRegressions->size();
 
-        assert(length < 256);
+        assert(length < max_apex_per_group);
+
         if (length < 2)
             return length;
 
@@ -384,7 +392,7 @@ namespace qAlgorithms
 
         // keep a record of which apex group a given peak belongs to. We assume that
         // 256 far exceeds the number of possible groups even for large inputs
-        for (size_t i = 0; i < 256; i++)
+        for (size_t i = 0; i < max_apex_per_group; i++)
             apexGroups[i] = -1;
 
         // assign apex groups
@@ -445,7 +453,32 @@ namespace qAlgorithms
         return currentGroup + 1;
     }
 
-    // @todo function that asserts that all regressions within one grouping describe only one apex
+    // function that asserts that all regressions within one grouping describe only one apex
+    static bool groupApexIsStable(
+        const std::vector<RegressionGauss> *validRegressions,
+        const int16_t apexGroups[],
+        const int16_t groupNum)
+    {
+        const size_t regCount = validRegressions->size();
+        assert(regCount > 1);
+
+        double apex_lim_L = INFINITY;
+        double apex_lim_R = 0;
+
+        for (size_t i = 0; i < regCount; i++)
+        {
+            if (apexGroups[i] != groupNum)
+                continue;
+            const RegressionGauss *reg = validRegressions->data() + i;
+            apex_lim_L = min(apex_lim_L, reg->apex_position);
+            apex_lim_R = max(apex_lim_R, reg->apex_position);
+        }
+        assert(apex_lim_L <= apex_lim_R);
+
+        // if there is a gap >1, it is unlikely that the group contains only
+        // well-formed regressions which describe only one peak
+        return apex_lim_R - apex_lim_L < 1;
+    }
 
     // return the index of the regression that was found to be the best group representative
     static size_t selectFromGroup(
