@@ -423,6 +423,7 @@ namespace qAlgorithms
                     double secondApex = validRegressions->at(p).apex_position;
                     if ((secondApex > apexLeftLim) && (secondApex < apexRightLim))
                     {
+                        @todo do not group peaks if regressions do not overlap, but still set hasChanged (?);
                         apexGroups[p] = currentGroup;
                         apexLeftLim = min(apexLeftLim, secondApex - min_apex_dist_d);
                         apexRightLim = max(apexRightLim, secondApex + min_apex_dist_d);
