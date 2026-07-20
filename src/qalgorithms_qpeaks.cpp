@@ -400,10 +400,13 @@ namespace qAlgorithms
         uint16_t currentGroup = 0;
 
         size_t next_unassigned = 0;
+#define reg validRegressions->at(next_unassigned)
 
-        double currentApex = validRegressions->at(next_unassigned).apex_position;
+        double currentApex = reg.apex_position;
         double apexLeftLim = currentApex - min_apex_dist_d;
         double apexRightLim = currentApex + min_apex_dist_d;
+        size_t outerStart = reg.startIdx; // @todo check if signed type is necessary, this should always be positive
+        size_t outerLength = reg.length;
         apexGroups[next_unassigned] = currentGroup;
 
         // the assignments counter is incremented for every point that was assigned an apex group
@@ -421,9 +424,19 @@ namespace qAlgorithms
                         continue;
 
                     double secondApex = validRegressions->at(p).apex_position;
-                    if ((secondApex > apexLeftLim) && (secondApex < apexRightLim))
+                    size_t innerStart = validRegressions->at(p).startIdx;
+                    size_t innerLength = validRegressions->at(p).length;
+                    // reasoning: while a distance of four points is the logically mandated distance, this is
+                    // preconditioned on both regions having any overlap. Here, one point matching in fit
+                    // region is not considered an overlap. To this end, we check that the defined region
+                    // for the tested regression overlaps to either side with the covered region so far.
+                    // By testing for the inner being enclosed or the outer being enclosed, we also test
+                    // for either region being fully enclosed in the other
+                    bool addToGroup = ((secondApex > apexLeftLim) && (secondApex < apexRightLim)) &&
+                                      (((innerStart <= outerStart) && (outerStart < innerStart + innerLength)) || // L_i ... L_o ... R_i ... R_o
+                                       ((outerStart <= innerStart) && (innerStart < outerStart + outerLength)));  // L_o ... L_i ... R_o ... R_i
+                    if (addToGroup)
                     {
-                        @todo do not group peaks if regressions do not overlap, but still set hasChanged (?);
                         apexGroups[p] = currentGroup;
                         apexLeftLim = min(apexLeftLim, secondApex - min_apex_dist_d);
                         apexRightLim = max(apexRightLim, secondApex + min_apex_dist_d);
@@ -445,12 +458,15 @@ namespace qAlgorithms
 
             assert(currentGroup < length);
             currentGroup += 1;
-            currentApex = validRegressions->at(next_unassigned).apex_position;
+            // @todo this is duplicated from function initialisation, macro?
+            currentApex = reg.apex_position;
             apexLeftLim = currentApex - min_apex_dist_d;
             apexRightLim = currentApex + min_apex_dist_d;
+            outerStart = reg.startIdx;
+            outerLength = reg.length;
             apexGroups[next_unassigned] = currentGroup;
         }
-
+#undef reg
         return currentGroup + 1;
     }
 
@@ -587,13 +603,7 @@ namespace qAlgorithms
         validRegsTmp->pop_back();
     }
 
-    struct RegPair // NOLINT
-    {
-        unsigned int idx;
-        double mse;
-    };
-
-    static RegPair findBestRegression(
+    static uint32_t findBestRegression(
         const float *intensities,
         const std::vector<RegressionGauss> *regressions,
         const uint16_t *const degreesOfFreedom_cum,
@@ -663,10 +673,10 @@ namespace qAlgorithms
             }
             else
             { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                RegPair bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom_cum,
-                                                        groups.data() + groupIdx);
+                uint32_t bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom_cum,
+                                                         groups.data() + groupIdx);
 
-                RegressionGauss bestReg = validRegsTmp->at(bestRegIdx.idx);
+                RegressionGauss bestReg = validRegsTmp->at(bestRegIdx);
                 // bestReg.mse = bestRegIdx.mse;
                 assert(bestReg.isValid);
                 validRegressions->push_back(bestReg);
@@ -674,7 +684,7 @@ namespace qAlgorithms
         }
     }
 
-    RegPair findBestRegression(
+    uint32_t findBestRegression(
         const float *intensities,
         const std::vector<RegressionGauss> *regressions,
         const uint16_t *const degreesOfFreedom_cum,
@@ -714,7 +724,7 @@ namespace qAlgorithms
             }
         }
         assert(regressions->at(bestRegIdx).isValid);
-        return {bestRegIdx, best_mse};
+        return {bestRegIdx};
     }
 
     void mergeRegressionsOverScales(
@@ -786,7 +796,7 @@ namespace qAlgorithms
                         &secondReg->coeffs,
                         intensities,
                         &sharedRegion,
-                        secondReg->df);
+                        secondReg->df); // @todo this is wrong!
                 }
                 DF_group += secondReg->df;                      // add the degree of freedom
                 MSE_group += exponentialMSE[j] * secondReg->df; // add the sum of squared errors
