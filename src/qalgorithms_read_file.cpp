@@ -12,8 +12,7 @@
 #include <string>
 #include <vector>
 
-// zlib-ng should be present on all modern systems, use the __has_include macro
-// and redefine the zng_... functions if this doesn't work
+//  problems linking against zlib-ng with mingw under windows, use this bypass until a proper solution is required
 #if __has_include(<zlib-ng.h>)
     #include <zlib-ng.h>
 #else
@@ -21,7 +20,7 @@
 inline int32_t zng_uncompress(uint8_t *dest, size_t *destLen, const uint8_t *source, size_t sourceLen)
 {
     uLongf destLen2 = *destLen;
-    int z_ret = compress(dest, &destLen2, source, sourceLen);
+    int z_ret = uncompress(dest, &destLen2, source, sourceLen);
     *destLen = destLen2;
     return z_ret;
 }
@@ -32,7 +31,7 @@ inline size_t zng_compressBound(size_t sourceLen)
 inline int32_t zng_compress(uint8_t *dest, size_t *destLen, const uint8_t *source, size_t sourceLen)
 {
     uLongf destLen2 = *destLen;
-    int z_ret = compress(dest, (uLongf *)destLen, source, sourceLen);
+    int z_ret = compress(dest, &destLen2, source, sourceLen);
     *destLen = destLen2;
     return z_ret;
 }
