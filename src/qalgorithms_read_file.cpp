@@ -20,7 +20,10 @@
     #include <zlib.h>
 inline int32_t zng_uncompress(uint8_t *dest, size_t *destLen, const uint8_t *source, size_t sourceLen)
 {
-    return compress(dest, destLen, source, sourceLen);
+    uLongf destLen2 = *destLen;
+    int z_ret = compress(dest, &destLen2, source, sourceLen);
+    *destLen = destLen2;
+    return z_ret;
 }
 inline size_t zng_compressBound(size_t sourceLen)
 {
@@ -28,7 +31,10 @@ inline size_t zng_compressBound(size_t sourceLen)
 }
 inline int32_t zng_compress(uint8_t *dest, size_t *destLen, const uint8_t *source, size_t sourceLen)
 {
-    return compress(dest, destLen, source, sourceLen);
+    uLongf destLen2 = *destLen;
+    int z_ret = compress(dest, (uLongf *)destLen, source, sourceLen);
+    *destLen = destLen2;
+    return z_ret;
 }
 #endif
 // since we care mostly about speed, we want to use the generally faster zlib-ng for decompression.
