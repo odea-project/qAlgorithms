@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <vector>
 
 namespace qAlgorithms
@@ -51,7 +52,7 @@ namespace qAlgorithms
                       const std::vector<unsigned int> *selectedIndices,
                       std::vector<CentroidPeak> *centroids);
 
-    void centroids_to_mzml(const path_char *pathTarget, const path_char *pathSource);
+    void centroids_to_mzml(const std::filesystem::path *pathSource);
 
     /// @param intensity_log logarithmy of the intensity values. This is the y axis of the fit. The x axis is required to be equidistant.
     /// @param maxscale maximum scale of a peak that should be attempted to fit.

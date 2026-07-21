@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #define _USE_MATH_DEFINES // relevant for windows to have math constants
 #include <math.h>
 #include <vector>
@@ -1566,12 +1567,16 @@ namespace qAlgorithms
         return centroids->size();
     }
 
-    void centroids_to_mzml(const path_char *pathTarget, const path_char *pathSource)
+    void centroids_to_mzml(const std::filesystem::path *pathSource)
     {
-        assert(std::strcmp(pathTarget, pathSource) != 0);
+        fprintf(stderr, "Warning: Due to the way processing is handled internally, it is not possible\n"
+                        "to use qAlgorithms for centroiding to mzML and to produce feature lists in one run.\n");
+
+        std::filesystem::path pathTarget = *pathSource;
+        pathTarget.replace_filename(pathSource->stem().string() + "_qcentroid.mzML");
 
         // only work on the copy
-        XML_File source_file(pathSource, mzML);
+        XML_File source_file(pathSource->c_str(), mzML);
         const size_t numSpecs = source_file.number_spectra;
 
         std::vector<float> spectrum_mz;
@@ -1641,7 +1646,7 @@ namespace qAlgorithms
             char_spectrum_mz.clear();
             char_spectrum_int.clear();
         }
-        source_file.mzml_base_document.save_file(pathTarget);
+        source_file.mzml_base_document.save_file(pathTarget.c_str());
         source_file.free_linknodes();
     }
 

@@ -47,16 +47,9 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 #pragma region "centroid to mzml"
         if (userArgs.printCentroidsMZML)
         {
-            fprintf(stderr, "Warning: Due to the way processing is handled internally, it is not possible\n"
-                            "to use qAlgorithms for centroiding to mzML and to produce feature lists in one run.\n");
-
-            // copy the original file for writing into
-            std::filesystem::path pathTarget = pathSource;
-            pathTarget.replace_filename(filename + "_qcentroid.mzML");
-
             // This function handles everything from input validation to processing and file saving.
             // We should probably make it a separate program with its own specialised input validation
-            centroids_to_mzml(pathTarget.c_str(), pathSource.c_str());
+            centroids_to_mzml(&pathSource);
 
             exit(1);
         }
