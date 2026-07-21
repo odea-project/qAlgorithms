@@ -129,19 +129,23 @@ target_include_directories(qalgo_lib PUBLIC
     ${EXTERNAL_DIR}
 )
 
+
+# PROGRAM SOURCE
+add_executable(${PROJECT_NAME} "${SOURCE_DIR}/qalgorithms_main.cpp")
+
 # link against zlib on windows - requires explicit path under mingw for some reason
 if(WIN32 AND (CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"))
     set(ZLIB_ROOT "C:/msys64/ucrt64")
     set(ZLIB_INCLUDE_DIR "${ZLIB_ROOT}/include")
     set(ZLIB_LIBRARY     "${ZLIB_ROOT}/lib/libz.a")
     set(ZLIB_USE_STATIC_LIBS "ON")
+
+    find_package(ZLIB REQUIRED)
+    target_link_libraries(${PROJECT_NAME} qalgo_lib ZLIB::ZLIB) 
+else()
+    find_package(zlib-ng CONFIG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} qalgo_lib zlib-ng::zlib) 
 endif()
-find_package(zlib-ng CONFIG REQUIRED)
-
-# PROGRAM SOURCE
-add_executable(${PROJECT_NAME} "${SOURCE_DIR}/qalgorithms_main.cpp")
-target_link_libraries(${PROJECT_NAME} qalgo_lib zlib-ng::zlib) 
-
 # TESTS
 include(CTest)
 enable_testing()
@@ -166,7 +170,11 @@ foreach(src IN LISTS TESTFILES)
 
     add_executable(${target_name} "${src}")
     set_target_properties(${target_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests_bin)
-    target_link_libraries(${target_name} PRIVATE qalgo_lib test_shared_lib PUBLIC  zlib-ng::zlib)
+    if(WIN32 AND (CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"))
+        target_link_libraries(${target_name} PRIVATE qalgo_lib test_shared_lib PUBLIC ZLIB::ZLIB)
+    else()
+        target_link_libraries(${target_name} PRIVATE qalgo_lib test_shared_lib PUBLIC zlib-ng::zlib)
+    endif()
     add_test(NAME ${target_name} COMMAND ${target_name})
 endforeach()
 
