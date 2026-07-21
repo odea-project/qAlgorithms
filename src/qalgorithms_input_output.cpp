@@ -273,9 +273,9 @@ namespace qAlgorithms
                 }
 
                 char *str = argv[i];
-                char **endptr = &str - 1; // the position one ahead of str is always defined and non-null
-                int skip = strtol(str, endptr, 10);
-                if (*endptr == str)
+                char *endptr = nullptr;
+                int skip = strtol(str, &endptr, 10);
+                if (endptr == str)
                 {
                     fprintf(stderr, "Error: you cannot skip ahead by \"%s\" entries.\n", argv[i]);
                     return args;
