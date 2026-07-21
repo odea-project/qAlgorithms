@@ -14,8 +14,23 @@
 
 // zlib-ng should be present on all modern systems, use the __has_include macro
 // and redefine the zng_... functions if this doesn't work
-#include <zlib-ng.h>
-
+#if __has_include(<zlib-ng.h>)
+    #include <zlib-ng.h>
+#else
+    #include <zlib.h>
+inline int32_t zng_uncompress(uint8_t *dest, size_t *destLen, const uint8_t *source, size_t sourceLen)
+{
+    return compress(dest, destLen, source, sourceLen);
+}
+inline size_t zng_compressBound(size_t sourceLen)
+{
+    return compressBound(sourceLen);
+}
+inline int32_t zng_compress(uint8_t *dest, size_t *destLen, const uint8_t *source, size_t sourceLen)
+{
+    return compress(dest, destLen, source, sourceLen);
+}
+#endif
 // since we care mostly about speed, we want to use the generally faster zlib-ng for decompression.
 // However, we cannot be sure that it exists for a given system. Therefore, it is only included if
 // it can be installed for the host
