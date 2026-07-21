@@ -725,7 +725,7 @@ namespace qAlgorithms
             }
         }
         assert(regressions->at(bestRegIdx).isValid);
-        return {bestRegIdx};
+        return bestRegIdx;
     }
 
     void mergeRegressionsOverScales(

@@ -2,7 +2,6 @@
 #define QALGORITHMS_DATATYPES_H
 
 #include <cstdint>
-#include <qalgorithms_utils.h>
 #include <vector>
 
 // This file includes the structs used for data management in qAlgorithms.

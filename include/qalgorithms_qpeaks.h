@@ -5,7 +5,6 @@
 // internal
 #include "qalgorithms_datatypes.h"
 
-#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <vector>
