@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -133,8 +134,29 @@ namespace qAlgorithms
         mzml_root_node = mzml_root_node.first_child();
         assert(std::strcmp("mzML", mzml_root_node.name()) == 0);
 
-        // qAlgorithms is not designed to process data which consists of more than one sample @todo more graceful erroring
-        assert(mzml_root_node.child("sampleList").attribute("count").value()[0] == '1');
+        // qAlgorithms is not designed to process data which consists of more than one sample
+        volatile bool sampleListExists = !mzml_root_node.child("sampleList").empty();
+        volatile bool sourceFileListExists = !mzml_root_node.child("fileDescription").child("sourceFileList").empty();
+        if (sampleListExists)
+        {
+            if (mzml_root_node.child("sampleList").attribute("count").value()[0] != '1')
+            {
+                // assert();
+                //@todo check for expected conversion tool use
+            }
+        }
+        if (sourceFileListExists)
+        {
+            //@todo see above
+        }
+        if (!(sampleListExists || sourceFileListExists))
+        {
+            defective = true;
+            fprintf(stderr, "Error: the supplied mzML file does not contain only one sample.\n"
+                            "This probably means that a file containing intermediate (aggregated) results is\n"
+                            "supplied instead of raw data. If the file is correct, inspect the conversion pipeline.\n");
+            return;
+        }
 
         assert(mzml_root_node.child("run"));
 

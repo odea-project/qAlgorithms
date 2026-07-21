@@ -9,6 +9,17 @@
 using namespace qAlgorithms;
 
 // @todo test these specific values with qpeaks:
+
+// Note: this is a double peak system in need of deconvolution which i included because
+// the old design for selecting the best entry of a set of regressions eliminated the
+// second, smaller peak despite the apexes being far enough apart. Interesting, at the
+// time of writing, no regression with positive coefficients was taken into consideration
+// 8862.04883, 17619.8887, 23784.2598, 22516.0684, 17171.5332, 14893.7227, 16483.5371, 16239.6406, 11697.918, 5697.0332
+
+// This data contains three peaks, but only the two less intense ones were found.
+// The new apex grouping function marked them as conflicting, which should not be the case.
+// 28913.7539, 15335.7256, 31011.6035, 59799.4961, 30304.0547, 101.776535, 7791.06396, 16737.2637, 7326.88721, 5033.8501, 11136.9746, 12789.5098, 7660.45898, 2526.31592
+
 // std::vector<float> intensity = {16427.9434, 34097.4414, 42639.7266, 102040.758, 264363.312, 486761.125, 909302, 783670.375, 404226.625, 194167.844, 81423.1406, 63319.4688, 62018.1602, 27416.2754};
 // std::vector<float> intensity = {16649.7441, 34118.1367, 46703.2617, 41025.5352, 53125.8086, 140134.125, 402735.812, 689393.625, 907356.938, 728596.75, 432838.844, 156655.438, 43841.4922, 11888.1475, 3812.54126};
 // std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};

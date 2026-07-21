@@ -6,6 +6,7 @@
 #include "libcerf_reduced.h"
 
 #include <cassert>
+#include <cfloat>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -386,10 +387,12 @@ namespace qAlgorithms
         if (length < 2)
             return length;
 
-        // there must be a distance of at least this many points between two apexes
-        // for them to be considered distinct. We use int here so that an apex at
-        // x < min_apex_dist will not be a problem later
-        const double min_apex_dist_d = 2 * GLOBAL_MINSCALE;
+        // there must be a distance of at least 2 * minscale points between
+        // two apexes. This means a distance of three for the concrete implementation
+        // since we also count the two points on the edge of this region:
+        // X -- X -- X -- X is a distance of three (numeric) but covers four
+        // points of distance between apexes
+        const double min_apex_dist_d = 2 * GLOBAL_MINSCALE - 1 + 2 * FLT_EPSILON;
 
         // keep a record of which apex group a given peak belongs to. We assume that
         // 256 far exceeds the number of possible groups even for large inputs
