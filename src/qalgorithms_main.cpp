@@ -208,8 +208,12 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output
         {
-            printFeatureList(&features, userArgs.outputPath, filename, &binnedData, &retentionTimes,
-                             userArgs.silent, userArgs.noOverwrite);
+            printFeatureList(&features,
+                             userArgs.outputPath,
+                             filename,
+                             &binnedData,
+                             userArgs.silent,
+                             userArgs.noOverwrite);
         }
 
         timeEnd = clock();

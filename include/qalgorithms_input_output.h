@@ -114,7 +114,6 @@ namespace qAlgorithms
                           std::filesystem::path pathOutput,
                           std::string filename,
                           const std::vector<EIC> *originalBins,
-                          const std::vector<float> *convertRT,
                           bool silent, bool noOverwrite);
 
     void printFeatureCentroids(const std::vector<FeaturePeak> *peaktable,

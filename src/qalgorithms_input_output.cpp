@@ -860,7 +860,6 @@ namespace qAlgorithms
                           std::filesystem::path pathOutput,
                           std::string filename,
                           const std::vector<EIC> *originalBins,
-                          const std::vector<float> *convertRT,
                           bool silent, bool noOverwrite)
     {
         filename += "_features.csv";
@@ -895,13 +894,11 @@ namespace qAlgorithms
             const FeaturePeak peak = peaktable->at(i);
             unsigned long binID = peak.eic_ID;
             assert(binID < originalBins->size());
-            float RT_start = 0;
-            float RT_end = 0;
 
             char buffer[256];
             snprintf(buffer, 256, "%u,%lu,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%lu,%0.5f,%0.5f,%0.5f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                      ID, binID, peak.mz, peak.mzUncertainty,
-                     peak.retentionTime, peak.RT_Uncertainty, RT_start, RT_end,
+                     peak.retentionTime, peak.RT_Uncertainty, peak.lowerRT, peak.upperRT,
                      peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, (unsigned long)peak.coefficients.scale,
                      peak.DQSC, peak.DQSB, peak.DQSF,
                      // properties relevant for componentisation, remove this later
