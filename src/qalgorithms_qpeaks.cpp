@@ -496,9 +496,21 @@ namespace qAlgorithms
         }
         assert(apex_lim_L <= apex_lim_R);
 
-        // if there is a gap >1, it is unlikely that the group contains only
-        // well-formed regressions which describe only one peak
-        return apex_lim_R - apex_lim_L < 1;
+        // To separate two apexes unabiguously, there must be at least three points
+        // between them. If this condition is not fulfilled for a group, it is still
+        // possible for regressions with high positional uncertainty to be misassigned.
+        // Instead of trying to perform an uncertainty correction, we check if
+        // the suspicious apex is outside of the bounds of the conflicting regression.
+        // If it is, the group was malformed.
+        bool differenceCandidate = apex_lim_R - apex_lim_L < 2 + 2 * FLT_EPSILON;
+        if (differenceCandidate)
+        {
+            // Iterate through all regressions until the two outermost ones are found
+            // and check for compliance. In the case of malcomplience, a separate function
+            // that subsets the groups will have to be called
+        }
+
+        return differenceCandidate;
     }
 
     // return the index of the regression that was found to be the best group representative
