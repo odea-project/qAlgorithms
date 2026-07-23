@@ -835,7 +835,7 @@ namespace qAlgorithms
         }
         // @todo consider if the mz error is relevant when checking individual bins
         output << "binID,cenID,mz,mzUncertainty,retentionTime,number_MS1,area,height,degreesOfFreedom,DQSC\n";
-        for (unsigned long binID = 0; binID < bins->size(); binID++)
+        for (size_t binID = 0; binID < bins->size(); binID++)
         {
             const EIC *bin = bins->data() + binID;
             if (bin->scanNumbers.empty())
@@ -845,7 +845,7 @@ namespace qAlgorithms
             {
                 const CentroidPeak cen = centroids->at(bin->cenID[i]);
                 char buffer[128];
-                snprintf(buffer, 128, "%lu,%u,%0.8f,%0.8f,%0.4f,%u,%0.6f,%0.6f,%u,%0.4f\n", // @todo re-add the dqsb once that works
+                snprintf(buffer, 128, "%zu,%u,%0.8f,%0.8f,%0.4f,%u,%0.6f,%0.6f,%u,%0.4f\n", // @todo re-add the dqsb once that works
                          binID, cen.ID, bin->mz[i], bin->predInterval[i],
                          bin->RT[i], bin->scanNumbers[i], bin->ints_area[i],
                          bin->ints_height[i], bin->df[i], bin->DQSC[i]);
@@ -892,14 +892,14 @@ namespace qAlgorithms
         for (size_t i = 0; i < peaktable->size(); i++)
         {
             const FeaturePeak peak = peaktable->at(i);
-            unsigned long binID = peak.eic_ID;
+            size_t binID = peak.eic_ID;
             assert(binID < originalBins->size());
 
             char buffer[256];
-            snprintf(buffer, 256, "%u,%lu,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%lu,%0.5f,%0.5f,%0.5f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+            snprintf(buffer, 256, "%u,%zu,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%u,%0.5f,%0.5f,%0.5f,%0.8f,%0.8f,%0.8f,%0.8f\n",
                      ID, binID, peak.mz, peak.mzUncertainty,
                      peak.retentionTime, peak.RT_Uncertainty, peak.lowerRT, peak.upperRT,
-                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, (unsigned long)peak.coefficients.scale,
+                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.coefficients.scale,
                      peak.DQSC, peak.DQSB, peak.DQSF,
                      // properties relevant for componentisation, remove this later
                      peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);

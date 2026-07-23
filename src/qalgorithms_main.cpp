@@ -12,8 +12,8 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <ctime>
 #include <filesystem>
-#include <time.h>
 
 using namespace qAlgorithms;
 

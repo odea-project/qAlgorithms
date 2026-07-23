@@ -367,8 +367,8 @@ namespace qAlgorithms
                        exp(regAt(&reg_old->coeffs, x_old)),
                        exp(regAt(&reg_new->coeffs, x_new)));
             }
-            printf("Old range: %u to %u\n", reg_old->startIdx, reg_old->startIdx + reg_old->length - 1);
-            printf("New range: %u to %u\n\n", reg_new->startIdx, reg_new->startIdx + reg_new->length - 1);
+            printf("Old range: %u to %u\n", reg_old->startIdx, (uint16_t)(reg_old->startIdx + reg_old->length - 1));
+            printf("New range: %u to %u\n\n", reg_new->startIdx, (uint16_t)(reg_new->startIdx + reg_new->length - 1));
             // exit(1);
         }
 
@@ -503,11 +503,38 @@ namespace qAlgorithms
         // the suspicious apex is outside of the bounds of the conflicting regression.
         // If it is, the group was malformed.
         bool differenceCandidate = apex_lim_R - apex_lim_L < 2 + 2 * FLT_EPSILON;
-        if (differenceCandidate)
+        if (!differenceCandidate)
         {
             // Iterate through all regressions until the two outermost ones are found
             // and check for compliance. In the case of malcomplience, a separate function
             // that subsets the groups will have to be called
+            size_t bound_reg_L_L = 0;
+            size_t bound_reg_L_R = 0;
+            size_t bound_reg_R_L = 0;
+            size_t bound_reg_R_R = 0;
+            // always iterating everything is inefficient, but this part of the function will not run often
+            for (size_t i = 0; i < regCount; i++)
+            {
+                if (apexGroups[i] != groupNum)
+                    continue;
+                const RegressionGauss *reg = validRegressions->data() + i;
+                if (reg->apex_position == apex_lim_L)
+                {
+                    bound_reg_L_L = reg->startIdx;
+                    bound_reg_L_R = reg->startIdx + reg->length + 1;
+                }
+                if (reg->apex_position == apex_lim_R)
+                {
+                    bound_reg_R_L = reg->startIdx;
+                    bound_reg_R_R = reg->startIdx + reg->length + 1;
+                }
+            }
+            // either regression is fully contained within another
+            if ((bound_reg_L_L >= bound_reg_R_L && bound_reg_L_R <= bound_reg_R_R) ||
+                (bound_reg_R_L >= bound_reg_L_L && bound_reg_R_R <= bound_reg_L_R))
+            {
+                differenceCandidate = true;
+            }
         }
 
         return differenceCandidate;

@@ -118,6 +118,17 @@ Some things to keep in mind:
   The best current usage for quality scores is priorisation of peaks 
   during further analysis.
 
+## Static Analysis
+Code correctness is essential for result correctness and reliability, which is a central goal of
+the `qAlgorithms` project. To this end, we employ different static analysis tools in addition to
+extensive runtime checking. Currently used are:
+* a large number of optional warnings enabled in the G++ compiler. For the concrete list, see [CMakeLists.txt](./CMakeLists.txt)
+* the clang-tidy utility (works as a plugin for most IDEs), configured in [.clang-tidy](./.clang-tidy)
+* compilation with [scan-build](https://clang.llvm.org/docs/analyzer/user-docs/CommandLineUsage.html)
+* [cppcheck](https://github.com/cppcheck-opensource/cppcheck), for which an [execution script](./run_cppcheck.sh) is provided
+
+For all tools, a "no warnings" policy is targeted in releases.
+
 ## Design Philosophy
 
 `qAlgorithms` is free (as in freedom) software licensed under AGPL (see LICENSE).
