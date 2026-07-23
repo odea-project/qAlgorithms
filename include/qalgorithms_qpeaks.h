@@ -5,6 +5,7 @@
 // internal
 #include "qalgorithms_datatypes.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <vector>
@@ -46,10 +47,10 @@ namespace qAlgorithms
         size_t maxscale,
         std::vector<PeakFit> *result);
 
-    class XML_File;                         // forward declaration so at least the header does not couple with read_file
-    int findCentroids(const XML_File *data, // @todo the internal file representation should be more generic
-                      const std::vector<unsigned int> *selectedIndices,
-                      std::vector<CentroidPeak> *centroids);
+    class XML_File;                            // forward declaration so at least the header does not couple with read_file
+    size_t findCentroids(const XML_File *data, // @todo the internal file representation should be more generic
+                         const std::vector<unsigned int> *selectedIndices,
+                         std::vector<CentroidPeak> *centroids);
 
     void centroids_to_mzml(const std::filesystem::path *pathSource);
 
@@ -113,9 +114,9 @@ namespace qAlgorithms
 
     // ### Feature-specific Code ### //
 
-    int findFeatures(const std::vector<EIC> *EICs,
-                     const std::vector<float> *convertRT, // correct RT corresponding to every scan number
-                     std::vector<FeaturePeak> *res);
+    size_t findFeatures(const std::vector<EIC> *EICs,
+                        const std::vector<float> *convertRT, // correct RT corresponding to every scan number
+                        std::vector<FeaturePeak> *res);
 
     // take a jacobian matrix as input and return the transpose at scale
     double matProductReg(const double J[4], const size_t scale);

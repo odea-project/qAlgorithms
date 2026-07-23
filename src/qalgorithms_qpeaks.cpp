@@ -110,7 +110,7 @@ namespace qAlgorithms
         const size_t maxscale,
         std::vector<PeakFit> *result);
 
-    const double minIntensity_global = exp(1);
+    const double minIntensity_global = 2.7182818284590452; // exp(1) == e
 
     int qpeaks_find(
         // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
@@ -384,6 +384,13 @@ namespace qAlgorithms
 
         assert(length < max_apex_per_group);
 
+        // keep a record of which apex group a given peak belongs to. We assume that
+        // 256 far exceeds the number of possible groups even for large inputs
+        // this has been moved here so apexGroups is always initialised after calling
+        // this function, even when it always returns early
+        for (size_t i = 0; i < max_apex_per_group; i++)
+            apexGroups[i] = -1;
+
         if (length < 2)
             return length;
 
@@ -394,14 +401,9 @@ namespace qAlgorithms
         // points of distance between apexes
         const double min_apex_dist_d = 2 * GLOBAL_MINSCALE - 1 + 2 * FLT_EPSILON;
 
-        // keep a record of which apex group a given peak belongs to. We assume that
-        // 256 far exceeds the number of possible groups even for large inputs
-        for (size_t i = 0; i < max_apex_per_group; i++)
-            apexGroups[i] = -1;
-
         // assign apex groups
         size_t assignments = 0;
-        uint16_t currentGroup = 0;
+        int16_t currentGroup = 0;
 
         size_t next_unassigned = 0;
 #define reg validRegressions->at(next_unassigned)
@@ -460,7 +462,7 @@ namespace qAlgorithms
             if (next_unassigned == length)
                 break;
 
-            assert(currentGroup < length);
+            assert((size_t)currentGroup < length);
             currentGroup += 1;
             // @todo this is duplicated from function initialisation, macro?
             currentApex = reg.apex_position;
@@ -683,10 +685,10 @@ namespace qAlgorithms
             if (std::abs(reg1->apex_position - reg2->apex_position) < 4)
                 continue;
 
-            if (reg1->apex_position > reg2->startIdx)
+            if (reg1->apex_position > reg2->startIdx) // NOLINT (this function will be removed soon)
                 continue;
 
-            if (reg1->regSpan.endIdx > reg2->apex_position)
+            if (reg1->regSpan.endIdx > reg2->apex_position) // NOLINT (s.o.)
                 continue;
 
             // the two regressions differ, i.e. create a new group
@@ -821,16 +823,16 @@ namespace qAlgorithms
                 if (!secondReg->isValid) // check is needed because regressions are set to invalid in the outer loop
                     continue;
 
-                if (activeReg->apex_position < secondReg->startIdx)
+                if (activeReg->apex_position < secondReg->startIdx) // NOLINT (this function will be removed soon)
                     continue;
 
-                if (activeReg->apex_position > secondReg->regSpan.endIdx)
+                if (activeReg->apex_position > secondReg->regSpan.endIdx) // NOLINT (s. o.)
                     continue;
 
-                if (secondReg->apex_position < activeReg->startIdx)
+                if (secondReg->apex_position < activeReg->startIdx) // NOLINT (s. o.)
                     continue;
 
-                if (secondReg->apex_position > activeReg->regSpan.endIdx)
+                if (secondReg->apex_position > activeReg->regSpan.endIdx) // NOLINT (s. o.)
                     continue;
 
                 if (exponentialMSE[j] == 0.0)
@@ -917,7 +919,7 @@ namespace qAlgorithms
         // totalRegs = scalediff * length - maxscale * (maxscale + 1) + 2 * minscale - 2)
         const size_t totalRegs = (maxscale - GLOBAL_MINSCALE + 1) * length -
                                  maxscale * (maxscale + 1) +
-                                 2 * GLOBAL_MINSCALE - 2;
+                                 (size_t)2 * GLOBAL_MINSCALE - 2; // typecast here to silence a clang-tidy warning
         coeffs->resize(totalRegs);
 
         // the first and last MINSCALE elements of the data do not need to be checked for x0, since they are invalid by definition
@@ -1324,7 +1326,7 @@ namespace qAlgorithms
         {
             mean += obs[i];
         }
-        mean /= range->length;
+        mean /= (double)range->length;
 
         double RSS = 0;
         for (size_t i = 0; i < range->length; i++)
@@ -1434,23 +1436,18 @@ namespace qAlgorithms
 
         // weighted mean using intensity as weighting factor and left_limit right_limit as range
         size_t realPoints = 0;
-        double mean_weights = 0;
         double sum_weighted_x = 0; // sum of values * weight
         double sum_weight = 0;
         for (size_t j = 0; j < length; j++)
         {
-            // multiplication with one or zero is used instead of a continue so this can be vectorised.
-            // @todo use another method of omitting interpolations
-            unsigned int interpolated = values[j] == 0 ? 0 : 1;
-            mean_weights += weight[j] * interpolated;
-            sum_weighted_x += values[j] * weight[j] * interpolated;
-            sum_weight += weight[j] * interpolated;
-            realPoints += 1 * interpolated; // interpolated points do not count!
+            // multiplication with zero is used instead of a continue so this can be vectorised.
+            bool interpolated = values[j] == 0;
+            float w = interpolated ? 0 : weight[j];
+            sum_weighted_x += values[j] * w;
+            sum_weight += w;
+            realPoints += (size_t)interpolated; // interpolated points do not count!
         }
         double dpoints = (double)realPoints;
-        mean_weights /= dpoints;
-        sum_weighted_x /= mean_weights;
-        sum_weight /= mean_weights;
 
         double weighted_mean = sum_weighted_x / sum_weight;
 
@@ -1507,9 +1504,9 @@ namespace qAlgorithms
             rt_arr[peak->length - 1]};
     }
 
-    int findFeatures(const std::vector<EIC> *EICs,
-                     const std::vector<float> *convertRT, // correct RT corresponding to every scan number
-                     std::vector<FeaturePeak> *res)
+    size_t findFeatures(const std::vector<EIC> *EICs,
+                        const std::vector<float> *convertRT, // correct RT corresponding to every scan number
+                        std::vector<FeaturePeak> *res)
     {
         std::vector<PeakFit> peaks;
 
@@ -1567,9 +1564,9 @@ namespace qAlgorithms
     // @todo find a better way of determining the smallest possible upper scale
     static const size_t maxscale_cen = 10;
 
-    int findCentroids(const XML_File *data,
-                      const std::vector<unsigned int> *selectedIndices,
-                      std::vector<CentroidPeak> *centroids)
+    size_t findCentroids(const XML_File *data,
+                         const std::vector<unsigned int> *selectedIndices,
+                         std::vector<CentroidPeak> *centroids)
     {
         assert(!data->defective);
         assert(centroids->empty());
@@ -1611,8 +1608,8 @@ namespace qAlgorithms
 
     void centroids_to_mzml(const std::filesystem::path *pathSource)
     {
-        fprintf(stderr, "Warning: Due to the way processing is handled internally, it is not possible\n"
-                        "to use qAlgorithms for centroiding to mzML and to produce feature lists in one run.\n");
+        (void)fprintf(stderr, "Warning: Due to the way processing is handled internally, it is not possible\n"
+                              "to use qAlgorithms for centroiding to mzML and to produce feature lists in one run.\n");
 
         std::filesystem::path pathTarget = *pathSource;
         pathTarget.replace_filename(pathSource->stem().string() + "_qcentroid.mzML");
@@ -1876,12 +1873,11 @@ namespace qAlgorithms
 
         double area_F = (area_L + area_R) * b0_exp;
 
-        if (mse <= 0)
+        if (uncert == nullptr) // not calculating the uncertainty means mse can be ignored
         {
-            // it should be possible to calculate the area without supplying a mse
-            assert(uncert == nullptr);
             return area_F * delta_x;
         }
+        assert(mse > 0);
 
         {
             // We cannot directly calculate the uncertainty from the exponential form (true peak area).

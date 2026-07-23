@@ -123,8 +123,8 @@ namespace qAlgorithms
         }
         else
         {
-            fprintf(stderr, "Error: .mzML file could not be opened. Error description:\n%s\n",
-                    loading_result.description());
+            (void)fprintf(stderr, "Error: .mzML file could not be opened. Error description:\n%s\n",
+                          loading_result.description());
             defective = true;
             return;
         }
@@ -152,9 +152,9 @@ namespace qAlgorithms
         if (!(sampleListExists || sourceFileListExists))
         {
             defective = true;
-            fprintf(stderr, "Error: the supplied mzML file does not contain only one sample.\n"
-                            "This probably means that a file containing intermediate (aggregated) results is\n"
-                            "supplied instead of raw data. If the file is correct, inspect the conversion pipeline.\n");
+            (void)fprintf(stderr, "Error: the supplied mzML file does not contain only one sample.\n"
+                                  "This probably means that a file containing intermediate (aggregated) results is\n"
+                                  "supplied instead of raw data. If the file is correct, inspect the conversion pipeline.\n");
             return;
         }
 
@@ -177,7 +177,7 @@ namespace qAlgorithms
             assert(mtd_intensity.data_name_short == "intensity");
 
             if (!(mtd_mz.isDouble && mtd_intensity.isDouble))
-                fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
+                (void)fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
         }
 
         linknodes = new std::vector<pugi::xml_node>(number_spectra);
@@ -275,7 +275,7 @@ namespace qAlgorithms
 
         if (file->linknodes->size() == 0)
         {
-            fprintf(stderr, "Error: no spectra found for index %zu\n", index);
+            (void)fprintf(stderr, "Error: no spectra found for index %zu\n", index);
             return 1;
         }
 
@@ -297,9 +297,9 @@ namespace qAlgorithms
             // error handling
             if (decoded_string.empty())
             {
-                fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 \n"
-                                "correctly. Ensure the input file is not corrupted.\n",
-                        index);
+                (void)fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 \n"
+                                      "correctly. Ensure the input file is not corrupted.\n",
+                              index);
                 return 2;
             }
 
@@ -333,9 +333,9 @@ namespace qAlgorithms
             // error handling
             if (decoded_string.empty())
             {
-                fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 "
-                                "correctly. Ensure the input file is not corrupted.\n",
-                        index);
+                (void)fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 "
+                                      "correctly. Ensure the input file is not corrupted.\n",
+                              index);
                 return 2;
             }
 

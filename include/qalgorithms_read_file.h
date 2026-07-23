@@ -35,6 +35,36 @@ namespace qAlgorithms
         bool polarity = false; // 0 = negative, 1 = positive
     };
 
+    struct mzML_schema
+    {
+        const char accession[11];
+        const char short_name[35];
+    };
+
+    const mzML_schema mzML_fields[] =
+        {
+            {"MS:1000514", "mz"},
+            {"MS:1000515", "intensity"},
+            {"MS:1000516", "charge"},
+            {"MS:1000517", "sn"},
+            {"MS:1000595", "time"},
+            {"MS:1000617", "wavelength"},
+            {"MS:1000786", "other"},
+            {"MS:1000820", "flowrate"},
+            {"MS:1000821", "pressure"},
+            {"MS:1000822", "temperature"},
+            {"MS:1002478", "mean_charge"},
+            {"MS:1002529", "resolution"},
+            {"MS:1002530", "baseline"},
+            {"MS:1002742", "noise"},
+            {"MS:1002743", "sampled_noise_mz"},
+            {"MS:1002744", "sampled_noise_intensity"},
+            {"MS:1002745", "sampled_noise_baseline"},
+            {"MS:1002893", "ion_mobility"},
+            {"MS:1003143", "mass"},
+            {"MS:1003157", "quadrupole_position_lower_bound_mz"},
+            {"MS:1003158", "quadrupole_position_upper_bound_mz"}};
+
     const std::vector<std::string> possible_accessions_binary_data_mzML = {
         "MS:1000514", "MS:1000515", "MS:1000516", "MS:1000517",
         "MS:1000595", "MS:1000617", "MS:1000786", "MS:1000820",

@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         if (inputFile.defective)
         {
             inputFile.free_linknodes();
-            fprintf(stderr, "Error: the file is defective.\n");
+            (void)fprintf(stderr, "Error: the file is defective.\n");
             if (userArgs.skipError)
             {
                 ++errorCount;
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         if (inputFile.isCentroided) // in profile mode sometimes centroided spectra appear as well @todo is 2 a good idea?
         {
-            fprintf(stderr, "Error: centroided data is not supported by qAlgorithms for the time being.\n");
+            (void)fprintf(stderr, "Error: centroided data is not supported by qAlgorithms for the time being.\n");
             continue;
         }
         if (!userArgs.silent)
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         if (selectedIndices.empty())
         {
-            fprintf(stderr, "Error: No valid spectra exist in the source file %s\n", filename.c_str());
+            (void)fprintf(stderr, "Error: No valid spectra exist in the source file %s\n", filename.c_str());
         }
 
         if (!userArgs.silent)
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         assert(centroidCount < UINT32_MAX);
         if (centroidCount == 0)
         {
-            fprintf(stderr, "Error: no centroids found despite valid indices");
+            (void)fprintf(stderr, "Error: no centroids found despite valid indices");
         }
 
         if (userArgs.printCentroids)
@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         if (binnedData.size() == 0)
         {
-            fprintf(stderr, "Error: no bins could be constructed from the data.\n");
+            (void)fprintf(stderr, "Error: no bins could be constructed from the data.\n");
             if (!userArgs.skipError)
             {
                 exit(1);
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         if (features.size() == 0)
         {
-            fprintf(stderr, "Warning: no features were constructed, continuing...\n");
+            (void)fprintf(stderr, "Warning: no features were constructed, continuing...\n");
         }
 
         if (userArgs.printFeatures) // this is here so we can incorporate the component ID into the output

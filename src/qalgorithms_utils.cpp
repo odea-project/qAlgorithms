@@ -40,7 +40,7 @@ namespace qAlgorithms
         return f_ok;
     }
 
-    static size_t hashm(int a, int b)
+    static size_t hashm(uint32_t a, uint32_t b)
     {
         size_t a2 = (size_t)a;
         a2 = a2 << __INT_WIDTH__;
@@ -227,7 +227,7 @@ namespace qAlgorithms
     }
 
     // critical order space of two normally distributed populations
-    double binningCritVal(const int n, const double stdDev)
+    double binningCritVal(const size_t n, const double stdDev)
     {
         // these values are determined empirically (see https://github.com/GeRe87/OS_critVal)
         const double OS_CRIT_A = 0.1443340625173891;

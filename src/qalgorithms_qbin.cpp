@@ -447,7 +447,6 @@ namespace qAlgorithms
         const size_t binSize = pointsInBin.size();
         std::sort(pointsInBin.begin(), pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
                   { return lhs->number_MS1 < rhs->number_MS1; });
-        std::vector<const CentroidPeak *>::iterator newstart = pointsInBin.begin();
         size_t lastpos = 0;
         for (size_t i = 0; i < binSize - 1; i++) // -1 since difference to next data point is checked
         {
@@ -460,7 +459,7 @@ namespace qAlgorithms
                 {
                     for (size_t j = lastpos; j <= i; j++)
                     {
-                        const CentroidPeak *F = *(pointsInBin.begin() + (long)j);
+                        const CentroidPeak *F = pointsInBin[j];
                         notInBins->push_back(F);
                     }
                 }
@@ -472,8 +471,7 @@ namespace qAlgorithms
                     assert(output.pointsInBin.size() > 4);
                     bincontainer->push_back(output);
                 }
-                lastpos = i + 1;                                // sets previous i to the position one i ahead, since
-                newstart = pointsInBin.begin() + (long)lastpos; // for the next split this is the first element
+                lastpos = i + 1; // sets previous i to the position one i ahead, since
             }
             else if (distanceScan == 0)
             {
@@ -500,7 +498,7 @@ namespace qAlgorithms
         {
             for (size_t j = lastpos; j < pointsInBin.size(); j++)
             {
-                const CentroidPeak *F = *(pointsInBin.begin() + (long)j);
+                const CentroidPeak *F = pointsInBin[j];
                 notInBins->push_back(F);
             }
         }

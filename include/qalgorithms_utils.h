@@ -101,7 +101,7 @@ namespace qAlgorithms
      * @param stdDev standard deviation of the distribution
      * @return maximum tolerated order space under the assumption that the data are from one distribution
      */
-    double binningCritVal(const int n, const double stdDev); // critical value for deciding if a bin exists or not
+    double binningCritVal(const size_t n, const double stdDev); // critical value for deciding if a bin exists or not
 
     // min and max functions
     size_t min(size_t a, size_t b);

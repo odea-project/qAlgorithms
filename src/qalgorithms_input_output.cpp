@@ -119,13 +119,13 @@ namespace qAlgorithms
                 ++i;
                 if (i == argc)
                 {
-                    fprintf(stderr, "Error: argument -input was set, but no valid file supplied.\n");
+                    (void)fprintf(stderr, "Error: argument -input was set, but no valid file supplied.\n");
                     return args;
                 }
                 std::string inputString = argv[i];
                 if (inputString[0] == '-')
                 {
-                    fprintf(stderr, "Error: argument -input was set, but no valid file supplied.\n");
+                    (void)fprintf(stderr, "Error: argument -input was set, but no valid file supplied.\n");
                     return args;
                 }
                 for (; i < argc; i++)
@@ -141,20 +141,20 @@ namespace qAlgorithms
             }
             else if ((argument == "-tl") || (argument == "-tasklist"))
             {
-                fprintf(stderr, "Error: tasklist support is not integrated at the moment.\n");
+                (void)fprintf(stderr, "Error: tasklist support is not integrated at the moment.\n");
 
                 args.tasklistSpecified = true;
                 ++i;
                 const char format_err_tl[] = "Error: argument -tasklist was set, but no valid file supplied.\n";
                 if (i == argc)
                 {
-                    fprintf(stderr, format_err_tl);
+                    (void)fprintf(stderr, format_err_tl);
                     return args;
                 }
                 std::string inputString = argv[i];
                 if (inputString[0] == '-')
                 {
-                    fprintf(stderr, format_err_tl);
+                    (void)fprintf(stderr, format_err_tl);
                     return args;
                 }
                 /*@todo
@@ -175,9 +175,9 @@ namespace qAlgorithms
             {
                 if (args.outputPath != "")
                 {
-                    fprintf(stderr, "Error: two output locations specified. For complex "
-                                    "output location structures, it is recommended you use the tasklist"
-                                    " input (not implemented yet).\n");
+                    (void)fprintf(stderr, "Error: two output locations specified. For complex "
+                                          "output location structures, it is recommended you use the tasklist"
+                                          " input (not implemented yet).\n");
                     args.outputPath = "";
                     return args;
                 }
@@ -185,7 +185,7 @@ namespace qAlgorithms
                 ++i;
                 if (i == argc)
                 {
-                    fprintf(stderr, "Error: no output directory specified.\n");
+                    (void)fprintf(stderr, "Error: no output directory specified.\n");
                     return args;
                 }
                 args.outputPath = argv[i];
@@ -260,7 +260,7 @@ namespace qAlgorithms
             }
             else if (argument == "-skip-error")
             {
-                fprintf(stderr, "Warning: processing will ignore defective files.\n");
+                (void)fprintf(stderr, "Warning: processing will ignore defective files.\n");
                 args.skipError = true;
             }
             else if (argument == "-skipAhead" || argument == "-skip-ahead")
@@ -268,28 +268,28 @@ namespace qAlgorithms
                 ++i;
                 if (i == argc)
                 {
-                    fprintf(stderr, "Error: no value to skip ahead specified.\n");
+                    (void)fprintf(stderr, "Error: no value to skip ahead specified.\n");
                     return args;
                 }
 
                 char *str = argv[i];
                 char *endptr = nullptr;
-                int skip = strtol(str, &endptr, 10);
+                int64_t skip = strtol(str, &endptr, 10);
                 if (endptr == str)
                 {
-                    fprintf(stderr, "Error: you cannot skip ahead by \"%s\" entries.\n", argv[i]);
+                    (void)fprintf(stderr, "Error: you cannot skip ahead by \"%s\" entries.\n", argv[i]);
                     return args;
                 }
                 if (skip < 0)
                 {
-                    fprintf(stderr, "Error: you cannot skip ahead a negative number of entries.\n");
+                    (void)fprintf(stderr, "Error: you cannot skip ahead a negative number of entries.\n");
                 }
 
                 args.skipAhead = (size_t)skip;
             }
             else
             {
-                fprintf(stderr, "Error: unknown argument \"%s\".\n", argument.c_str());
+                (void)fprintf(stderr, "Error: unknown argument \"%s\".\n", argument.c_str());
                 exit(1);
             }
         } // end of reading in command line arguments
@@ -356,8 +356,8 @@ namespace qAlgorithms
 
         if (args.inputPaths.empty())
         {
-            fprintf(stderr, "Error: no input file supplied. Specify a file or directory using the -i or "
-                            "-tl flag. Execute qAlgorithms with the -h flag for more information.\n");
+            (void)fprintf(stderr, "Error: no input file supplied. Specify a file or directory using the -i or "
+                                  "-tl flag. Execute qAlgorithms with the -h flag for more information.\n");
             goodInputs = false;
         }
         if (args.outputPath.empty())
@@ -417,34 +417,34 @@ namespace qAlgorithms
 
                 if (prevBad > 1)
                 {
-                    fprintf(stderr, "Error: output flags \"%s\" were set, but no output path supplied.\n",
-                            badOptions.c_str());
+                    (void)fprintf(stderr, "Error: output flags \"%s\" were set, but no output path supplied.\n",
+                                  badOptions.c_str());
                 }
                 else
                 {
-                    fprintf(stderr, "Error: output flag \"%s\" was set, but no output path supplied.\n",
-                            badOptions.c_str());
+                    (void)fprintf(stderr, "Error: output flag \"%s\" was set, but no output path supplied.\n",
+                                  badOptions.c_str());
                 }
                 goodInputs = false;
             }
             else
             {
-                fprintf(stderr, "Warning: no output directory specified. No output files will be written.\n");
+                (void)fprintf(stderr, "Warning: no output directory specified. No output files will be written.\n");
             }
         }
         else if (!std::filesystem::exists(args.outputPath))
         {
-            fprintf(stderr, "Error: the specified output path \"%s\" does not exist.\n", args.outputPath.c_str());
+            (void)fprintf(stderr, "Error: the specified output path \"%s\" does not exist.\n", args.outputPath.c_str());
             goodInputs = false;
         }
         else if (std::filesystem::status(args.outputPath).type() != std::filesystem::file_type::directory)
         {
-            fprintf(stderr, "Error: the output location must be a directory.\n");
+            (void)fprintf(stderr, "Error: the output location must be a directory.\n");
             goodInputs = false;
         }
         if (args.silent && args.verboseProgress)
         {
-            fprintf(stderr, "Warning: -verbose overrides -silent.\n");
+            (void)fprintf(stderr, "Warning: -verbose overrides -silent.\n");
             args.silent = false;
         }
 
@@ -479,19 +479,19 @@ namespace qAlgorithms
 
         if (args.printCentroidsMZML && (args.term != TerminateAfter::never))
         {
-            fprintf(stderr, "Error: Either output a centroided mzML or perform feature construction.\n");
+            (void)fprintf(stderr, "Error: Either output a centroided mzML or perform feature construction.\n");
             goodInputs = false;
         }
         if (args.printCentroidsMZML && !args.outputPath.empty())
         {
-            fprintf(stderr, "Error: Centroiding does not support a custom output directory yet.\n");
+            (void)fprintf(stderr, "Error: Centroiding does not support a custom output directory yet.\n");
             goodInputs = false;
         }
 
         if (args.term == TerminateAfter::never &&
             !(args.outputPath.empty()))
         {
-            fprintf(stderr, "Warning: no output files will be written.\n");
+            (void)fprintf(stderr, "Warning: no output files will be written.\n");
         }
 
         return goodInputs;
@@ -525,7 +525,7 @@ namespace qAlgorithms
             fs::path currentPath{*inputPath};
             if (!fs::exists(currentPath))
             {
-                fprintf(stderr, "Warning: the file \"%s\" does not exist.\n", inputPath->c_str());
+                (void)fprintf(stderr, "Warning: the file \"%s\" does not exist.\n", inputPath->c_str());
                 continue;
             }
             currentPath = fs::canonical(currentPath);
@@ -535,12 +535,12 @@ namespace qAlgorithms
             {
                 if (currentPath.extension() != filetype)
                 {
-                    fprintf(stderr, "Warning: only %s files are supported. The file \"%s\" has been skipped.\n",
-                            filetype.c_str(), inputPath->c_str());
+                    (void)fprintf(stderr, "Warning: only %s files are supported. The file \"%s\" has been skipped.\n",
+                                  filetype.c_str(), inputPath->c_str());
                     if (currentPath.extension() == ".mzml")
                     {
-                        fprintf(stderr, "Warning: qAlgorithms file reading is case-sensitive."
-                                        " Please change the file extension to \".mzML\"");
+                        (void)fprintf(stderr, "Warning: qAlgorithms file reading is case-sensitive."
+                                              " Please change the file extension to \".mzML\"");
                     }
                     continue;
                 }
@@ -560,9 +560,9 @@ namespace qAlgorithms
             }
             else
             {
-                fprintf(stderr, "Warning: \"%s\" is not a supported file or directory."
-                                " The file has been skipped.\n",
-                        inputPath->c_str());
+                (void)fprintf(stderr, "Warning: \"%s\" is not a supported file or directory."
+                                      " The file has been skipped.\n",
+                              inputPath->c_str());
             }
         }
         // remove duplicate files
@@ -570,7 +570,7 @@ namespace qAlgorithms
         unsigned int removedEntries = 0;
         if (tasknumber == 0)
         {
-            fprintf(stderr, "Error: no valid files selected.\n");
+            (void)fprintf(stderr, "Error: no valid files selected.\n");
             exit(1);
         }
         std::sort(tasklist.begin(), tasklist.end(),
@@ -612,8 +612,8 @@ namespace qAlgorithms
         }
         if (removedEntries > 0)
         {
-            fprintf(stderr, "Warning: removed %u duplicate input files from processing queue.\n",
-                    removedEntries);
+            (void)fprintf(stderr, "Warning: removed %u duplicate input files from processing queue.\n",
+                          removedEntries);
         }
         for (size_t task = 0; task < tasklist.size(); task++)
         {
@@ -627,13 +627,13 @@ namespace qAlgorithms
         const size_t skipAhead = args->skipAhead;
         if (tasklist.size() <= skipAhead)
         {
-            fprintf(stderr, "Error: Value supplied to -skipAhead was %zu, but only %zu unique paths were supplied.\n",
-                    skipAhead, tasklist.size());
+            (void)fprintf(stderr, "Error: Value supplied to -skipAhead was %zu, but only %zu unique paths were supplied.\n",
+                          skipAhead, tasklist.size());
             exit(1);
         }
         if (skipAhead != 0)
         {
-            fprintf(stderr, "Warning: removing the first %zu elements from the tasklist.\n", skipAhead);
+            (void)fprintf(stderr, "Warning: removing the first %zu elements from the tasklist.\n", skipAhead);
             if (skipAhead == 1)
             {
                 outputTasks.erase(outputTasks.begin());
@@ -644,7 +644,7 @@ namespace qAlgorithms
             }
         }
 
-        return (outputTasks);
+        return outputTasks;
     }
     // NOLINTEND(concurrency-mt-unsafe)
 
@@ -670,7 +670,7 @@ namespace qAlgorithms
             if (noOverwrite)
             {
                 const char format[] = "Warning: \"" _STR "\" already exists and will not be overwritten\n";
-                fprintf(stderr, format, pathOutput->c_str());
+                (void)fprintf(stderr, format, pathOutput->c_str());
                 return true;
             }
             std::filesystem::remove(*pathOutput);
@@ -712,7 +712,7 @@ namespace qAlgorithms
         }
         else
         {
-            fprintf(stderr, "Error: Could not open destination file, no data has been written\n");
+            (void)fprintf(stderr, "Error: Could not open destination file, no data has been written\n");
             return;
         }
 
@@ -748,11 +748,11 @@ namespace qAlgorithms
         }
         if (totalWritten == 0) // size of the header string is 25
         {
-            fprintf(stderr, "Error: No regions with the specified properties:\n"
-                            "mz range from %f to %f and RT range from %f to %f (min)\n"
-                            "exist in the supplied data.\n",
-                    inargs->prof_lim_mz_lower, inargs->prof_lim_mz_upper,
-                    inargs->prof_lim_rt_lower / 60, inargs->prof_lim_rt_upper / 60);
+            (void)fprintf(stderr, "Error: No regions with the specified properties:\n"
+                                  "mz range from %f to %f and RT range from %f to %f (min)\n"
+                                  "exist in the supplied data.\n",
+                          inargs->prof_lim_mz_lower, inargs->prof_lim_mz_upper,
+                          inargs->prof_lim_rt_lower / 60, inargs->prof_lim_rt_upper / 60);
             return;
         }
 
@@ -780,7 +780,7 @@ namespace qAlgorithms
         if (!file_out.is_open())
         {
 
-            fprintf(stderr, error_open_fail, pathOutput.c_str());
+            (void)fprintf(stderr, error_open_fail, pathOutput.c_str());
             return;
         }
         if (!silent)
@@ -830,7 +830,7 @@ namespace qAlgorithms
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
         {
-            fprintf(stderr, error_open_fail, pathOutput.c_str());
+            (void)fprintf(stderr, error_open_fail, pathOutput.c_str());
             return;
         }
         // @todo consider if the mz error is relevant when checking individual bins
@@ -879,7 +879,7 @@ namespace qAlgorithms
         file_out.open(pathOutput, std::ios::out);
         if (!file_out.is_open())
         {
-            fprintf(stderr, error_open_fail, pathOutput.c_str());
+            (void)fprintf(stderr, error_open_fail, pathOutput.c_str());
             return;
         }
 
