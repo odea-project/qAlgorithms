@@ -109,6 +109,11 @@ namespace qAlgorithms
 
         XML_File(const path_char *filepath, SourceFileType type);
 
+        // copy constructor or assignment could lead to double-free / accessing a dead pointer
+        XML_File(XML_File &) = delete;
+        XML_File(XML_File &&) = delete;
+        XML_File &operator=(XML_File &&) = delete;
+
         // return all indices of spectra that match the required criteria
 
         void free_linknodes();
