@@ -339,14 +339,14 @@ namespace qAlgorithms
     static std::vector<double> makeOrderSpace(const Bin *bin)
     {
         // this function assumes that the centroids are sorted by mz
-        auto points = bin->pointsInBin;
+        const size_t len = bin->pointsInBin.size() - 1;
         std::vector<double> OS;
-        OS.reserve(points.size());
-        for (size_t i = 0; i < points.size() - 1; i++)
+        OS.resize(len + 1);
+        for (size_t i = 0; i < len; i++)
         {
-            OS.push_back((points[i + 1]->mz - points[i]->mz));
+            OS[i] = (bin->pointsInBin[i + 1]->mz - bin->pointsInBin[i]->mz);
         }
-        OS.push_back(NAN);
+        OS.back() = NAN;
         return OS;
     }
 

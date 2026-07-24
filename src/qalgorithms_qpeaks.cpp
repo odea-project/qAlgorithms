@@ -7,14 +7,15 @@
 
 #include <cassert>
 #include <cfloat>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
-#define _USE_MATH_DEFINES // relevant for windows to have math constants
+#if defined(_WIN32) && !defined(_USE_MATH_DEFINES)
+    #define _USE_MATH_DEFINES // relevant for windows to have math constants
+#endif
 #include <math.h>
 #include <vector>
 
@@ -1367,16 +1368,15 @@ namespace qAlgorithms
         // during the tests, the RSS for the regression has already been calculated in calcRSS_log
         assert(RSS_reg > 0);
         const size_t length = range->length;
-        double RSS_H0 = INFINITY;
         bool f_ok = false;
 
-        RSS_H0 = calcRSS_H0_cf1(observed, range); // y = b
-        f_ok = F_test_regs(RSS_reg, RSS_H0, 4, 1, length, 0.05);
+        double RSS_H0_cf1 = calcRSS_H0_cf1(observed, range); // y = b
+        f_ok = F_test_regs(RSS_reg, RSS_H0_cf1, 4, 1, length, 0.05);
         if (!f_ok)
             return false;
 
-        RSS_H0 = calcRSS_H0_cf2(observed, range); // y = b0 + b1 * x
-        f_ok = F_test_regs(RSS_reg, RSS_H0, 4, 1, length, 0.05);
+        double RSS_H0_cf2 = calcRSS_H0_cf2(observed, range); // y = b0 + b1 * x
+        f_ok = F_test_regs(RSS_reg, RSS_H0_cf2, 4, 1, length, 0.05);
 
         return f_ok;
     }
@@ -1410,19 +1410,6 @@ namespace qAlgorithms
     }
 
 #pragma region "Feature Detection"
-
-    double medianVec(const std::vector<float> *vec)
-    {
-        std::vector<float> tmpDiffs = *vec;
-        std::sort(tmpDiffs.begin(), tmpDiffs.end());
-
-        size_t size = tmpDiffs.size();
-        assert(size > 0);
-        double diff = (size % 2 == 0)
-                          ? (tmpDiffs[size / 2 - 1] + tmpDiffs[size / 2]) / 2
-                          : tmpDiffs[size / 2];
-        return diff;
-    }
 
     static float weightedMeanAndVariance_EIC(const float *weight,
                                              const float *values,
@@ -1849,26 +1836,12 @@ namespace qAlgorithms
         double sqrt_b3 = sqrt(abs(b3));
         double b0_exp = exp(b0);
 
-        double area_L = -1;
-        if (b2_neg)
-        {
-            area_L = libcerf::erfcx(b1 / sqrt_b2 / 2) / sqrt_b2 * sqrt_pi_2;
-        }
-        else
-        {
-            area_L = libcerf::dawson(b1 / sqrt_b2 / 2) / sqrt_b2;
-        }
+        double area_L = b2_neg ? libcerf::erfcx(b1 / sqrt_b2 / 2) / sqrt_b2 * sqrt_pi_2
+                               : libcerf::dawson(b1 / sqrt_b2 / 2) / sqrt_b2;
         assert(area_L > 0);
 
-        double area_R = -1;
-        if (b3_neg)
-        {
-            area_R = libcerf::erfcx(-b1 / sqrt_b3 / 2) / sqrt_b3 * sqrt_pi_2;
-        }
-        else
-        {
-            area_R = -libcerf::dawson(b1 / sqrt_b3 / 2) / sqrt_b3;
-        }
+        double area_R = b3_neg ? libcerf::erfcx(-b1 / sqrt_b3 / 2) / sqrt_b3 * sqrt_pi_2
+                               : -libcerf::dawson(b1 / sqrt_b3 / 2) / sqrt_b3;
         assert(area_R > 0);
 
         double area_F = (area_L + area_R) * b0_exp;

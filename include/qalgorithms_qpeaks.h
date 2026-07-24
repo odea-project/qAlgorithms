@@ -131,8 +131,6 @@ namespace qAlgorithms
     // this one does not include b0
     double regExp_fac(const RegCoeffs *coeff, const double x);
 
-    double medianVec(const std::vector<float> *vec);
-
     double peakPositionUncert(const RegCoeffs *c, const double mse);
     double peakHeightUncert(const RegCoeffs *c, const double mse);
 

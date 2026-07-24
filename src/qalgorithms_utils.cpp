@@ -55,9 +55,9 @@ namespace qAlgorithms
         assert(alpha > 0);
         assert(alpha < 1);
 
-        int dfn_int = params_complex - params_simple;
-        int dfd_int = numPoints - params_complex;
-        size_t key = hashm(dfn_int, dfd_int);
+        uint32_t dfn = params_complex - params_simple;
+        uint32_t dfd = numPoints - params_complex;
+        size_t key = hashm(dfn, dfd);
         (alpha = 0.05); // @todo generalise for all alpha
         {
             double Fhash = global_fhash_5perc[key];
@@ -65,7 +65,7 @@ namespace qAlgorithms
                 return Fhash;
         }
 
-        double F = cephes::F_density(dfn_int, dfd_int, alpha);
+        double F = cephes::F_density((int)dfn, (int)dfd, alpha);
 
 #if false
         double F_old = 0; // return value

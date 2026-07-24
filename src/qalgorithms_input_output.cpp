@@ -509,6 +509,7 @@ namespace qAlgorithms
         namespace fs = std::filesystem;
         std::vector<fs::path> outputTasks;
         const size_t inputLen = inputTasks->size();
+        assert(inputLen > 0);
 
         outputTasks.reserve(inputLen);
         struct TaskEntry

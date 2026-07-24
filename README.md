@@ -126,9 +126,10 @@ extensive runtime checking. Currently used are:
 * the clang-tidy utility (works as a plugin for most IDEs), configured in [.clang-tidy](./.clang-tidy)
 * compilation with [scan-build](https://clang.llvm.org/docs/analyzer/user-docs/CommandLineUsage.html)
 * [cppcheck](https://github.com/cppcheck-opensource/cppcheck), for which an [execution script](./run_cppcheck.sh) is provided
-* [CodeChecker](https://codechecker.readthedocs.io/en/latest/) 
+* [CodeChecker](https://codechecker.readthedocs.io/en/latest/), which is used to run Facebooks [infer](https://fbinfer.com/)
 
-For all tools, a "no warnings" policy is targeted in releases.
+For all tools, a "no warnings" policy is targeted in releases, which excludes the used libraries 
+(found in the ["external" directory](./external/)).
 
 ## Design Philosophy
 
