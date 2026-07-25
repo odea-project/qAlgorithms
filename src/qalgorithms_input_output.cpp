@@ -568,7 +568,7 @@ namespace qAlgorithms
         }
         // remove duplicate files
         size_t tasknumber = tasklist.size();
-        unsigned int removedEntries = 0;
+        uint32_t removedEntries = 0;
         if (tasknumber == 0)
         {
             (void)fprintf(stderr, "Error: no valid files selected.\n");
@@ -683,7 +683,7 @@ namespace qAlgorithms
 
     void printProfileSections(const XML_File *infile,
                               const UserInputSettings *inargs,
-                              const std::vector<unsigned int> *selectedIndices,
+                              const std::vector<uint32_t> *selectedIndices,
                               std::string filename)
     {
         filename += "_profspec.csv";
@@ -720,7 +720,7 @@ namespace qAlgorithms
         size_t totalWritten = 0;
         for (size_t i = startIdx; i < length; i++)
         {
-            unsigned int idx = selectedIndices->at(i);
+            uint32_t idx = selectedIndices->at(i);
             float rt_idx = rt.at(i);
             get_spectrum(infile, &mz, &intensity, idx);
             mz_min = (float)min(mz_min, mz[0]);
@@ -889,7 +889,7 @@ namespace qAlgorithms
                                             "scale,DQSC,DQSB,DQSF,b0,b1,b2,b3\n";
         output << header;
 
-        unsigned int ID = 1;
+        uint32_t ID = 1;
         for (size_t i = 0; i < peaktable->size(); i++)
         {
             const FeaturePeak peak = peaktable->at(i);

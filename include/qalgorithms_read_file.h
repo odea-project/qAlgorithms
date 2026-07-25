@@ -99,7 +99,7 @@ namespace qAlgorithms
 
         SourceFileType filetype = unknown_filetype;
 
-        unsigned int number_spectra = 0;
+        uint32_t number_spectra = 0;
 
         Polarities polarityMode = Polarities::unknown_polarity;
 
@@ -125,7 +125,7 @@ namespace qAlgorithms
                                          const bool centroided);
 
     void get_spectra_RT(const XML_File *data,
-                        const std::vector<unsigned int> *indices,
+                        const std::vector<uint32_t> *indices,
                         std::vector<float> *const RTs);
 
     int get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.

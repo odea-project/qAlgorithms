@@ -518,16 +518,16 @@ namespace qAlgorithms
 
         // size_t firstScan = pointsInBin.front()->number_MS1;
         // size_t lastScan = pointsInBin.back()->number_MS1;
-        std::vector<unsigned int> tmp_interpScans(eicsize, 0);
+        std::vector<uint32_t> tmp_interpScans(eicsize, 0);
         // std::iota(tmp_interpScans.begin(), tmp_interpScans.end(), firstScan);
 
-        std::vector<unsigned int> tmp_scanNumbers(eicsize, 0);
+        std::vector<uint32_t> tmp_scanNumbers(eicsize, 0);
         std::vector<float> tmp_mz(eicsize, 0);
         std::vector<float> tmp_mzUncert(eicsize, 0);
         std::vector<float> tmp_ints_area(eicsize, 0);
         std::vector<float> tmp_ints_height(eicsize, 0);
         std::vector<float> tmp_DQSC(eicsize, 0);
-        std::vector<unsigned int> tmp_cenID(eicsize, 0);
+        std::vector<uint32_t> tmp_cenID(eicsize, 0);
         std::vector<uint16_t> tmp_df(eicsize, 0);
         std::vector<float> tmp_rt(eicsize, 0);
 

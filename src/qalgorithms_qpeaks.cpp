@@ -737,7 +737,7 @@ namespace qAlgorithms
         const Range_i *regSpan)
     {
         double best_mse = INFINITY;
-        unsigned int bestRegIdx = 0;
+        uint32_t bestRegIdx = 0;
 
         // identify left (smallest) and right (largest) limit of the grouped regression windows
         uint16_t left_limit = UINT16_MAX;
@@ -801,7 +801,7 @@ namespace qAlgorithms
             int DF_group = 0;
             // only calculate required MSEs since this is one of the performance-critical steps
             std::vector<double> exponentialMSE(validRegressions->size(), 0);
-            std::vector<unsigned int> validRegressionsInGroup; // vector of indices to validRegressions
+            std::vector<uint32_t> validRegressionsInGroup; // vector of indices to validRegressions
             validRegressionsInGroup.reserve(64);
             size_t competitors = 0; // a competitor is a mutually exclusive alternative regression
 
@@ -1454,7 +1454,7 @@ namespace qAlgorithms
         return (float)weighted_mean;
     };
 
-    static FeaturePeak peakToFeat(const PeakFit *peak, const EIC *eic, unsigned int eic_ID)
+    static FeaturePeak peakToFeat(const PeakFit *peak, const EIC *eic, uint32_t eic_ID)
     {
         const float *area_arr = eic->ints_area.data() + peak->startIdx;
         const float *mz_arr = eic->mz.data() + peak->startIdx;
@@ -1485,8 +1485,8 @@ namespace qAlgorithms
             peak->uncert_position,
             mz_uncert,
             eic_ID,
-            (unsigned int)peak->startIdx,
-            (unsigned int)peak->length,
+            (uint32_t)peak->startIdx,
+            (uint32_t)peak->length,
             rt_arr[0],
             rt_arr[peak->length - 1]};
     }
@@ -1552,7 +1552,7 @@ namespace qAlgorithms
     static const size_t maxscale_cen = 10;
 
     size_t findCentroids(const XML_File *data,
-                         const std::vector<unsigned int> *selectedIndices,
+                         const std::vector<uint32_t> *selectedIndices,
                          std::vector<CentroidPeak> *centroids)
     {
         assert(!data->defective);

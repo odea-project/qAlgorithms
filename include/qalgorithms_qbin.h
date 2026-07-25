@@ -53,8 +53,8 @@ namespace qAlgorithms
 
         float mzMin = -1;
         float mzMax = -1;
-        unsigned int scanMin = UINT_MAX;
-        unsigned int scanMax = 0;
+        uint32_t scanMin = UINT32_MAX;
+        uint32_t scanMax = 0;
         float medianMZ = -1; // only used for removing duplicates
 
         bool unchanged = false;     // if this is true after every test has run once, the bin is viable

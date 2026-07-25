@@ -358,7 +358,7 @@ namespace qAlgorithms
         return totalSum / (endIdx - startIdx + 1);
     }
 
-    unsigned int sumOfCumulative(const uint16_t *const cumArray, const size_t startIdx, const size_t length)
+    size_t sumOfCumulative(const uint16_t *const cumArray, const size_t startIdx, const size_t length)
     {
         // if the cumulative array does not exist (== null), assume that
         // the toal df is the length
@@ -366,8 +366,8 @@ namespace qAlgorithms
             return length;
 
         // it is assumed that the range does not violate array bounds
-        unsigned int subtractor = startIdx == 0 ? 0 : cumArray[startIdx - 1];
-        unsigned int totalSum = (cumArray[length + startIdx - 1] - subtractor);
+        size_t subtractor = startIdx == 0 ? 0 : cumArray[startIdx - 1];
+        size_t totalSum = (cumArray[length + startIdx - 1] - subtractor);
         return totalSum;
     }
 

@@ -76,8 +76,8 @@ namespace qAlgorithms
     {
         std::filesystem::path path;
         Polarities polarity = Polarities::unknown_polarity;
-        unsigned int replicateGroup = 0; // @todo
-        unsigned int fileID = 0;         // count upwards after reading everything in @todo produce a unique identifier
+        uint32_t replicateGroup = 0; // @todo
+        uint32_t fileID = 0;         // count upwards after reading everything in @todo produce a unique identifier
     };
 
     std::vector<std::filesystem::path> controlInput(const UserInputSettings *args);
@@ -89,7 +89,7 @@ namespace qAlgorithms
     class XML_File;
     void printProfileSections(const XML_File *infile,
                               const UserInputSettings *inargs,
-                              const std::vector<unsigned int> *selectedIndices,
+                              const std::vector<uint32_t> *selectedIndices,
                               std::string filename);
 
     void printSpectrumAndCens(const std::vector<CentroidPeak> *peaktable,

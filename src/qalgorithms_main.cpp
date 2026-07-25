@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
     //    has horrible readability and requires more variables to handle the switching.
     EVALUATE_MIXED_POLARITY:
         // @todo MS2 support here!
-        const std::vector<unsigned int> selectedIndices = filter_spectra(&inputFile, true, polarity_selected, false);
+        const std::vector<uint32_t> selectedIndices = filter_spectra(&inputFile, true, polarity_selected, false);
 
         if (selectedIndices.empty())
         {

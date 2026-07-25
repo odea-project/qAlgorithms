@@ -74,13 +74,6 @@ namespace qAlgorithms
         float jaccard = 0;
     };
 
-    struct ProfilePos // gives the range of points covered by a centroid and the access index for streamfind
-    {
-        unsigned int ID_spectrum = 0;
-        unsigned int start = 0, end = 0; // start and end into the original MS1 spectrum
-        int start_rel = 0, end_rel = 0;  // start and end in the abstract dimension where a peak is centered on 0
-    };
-
     struct CentroidPeak
     {
         float mz = 0;
@@ -93,8 +86,7 @@ namespace qAlgorithms
         // the binning tolerates at most three non-occurrences of a mass in order, but should not include interpolated spectra for this.
         // for conversion, number_MS1 is also the index into a vector that stores the "corrected" scan numbers after interpolation
         uint16_t number_MS1 = 0;
-        // unsigned int df = 0; // degrees of freedom
-        // ProfilePos trace = {0};
+        // uint32_t df = 0; // degrees of freedom
         uint16_t scale = 0;
         uint8_t numCompetitors = 0;
         // uint8_t interpolations;
@@ -102,7 +94,7 @@ namespace qAlgorithms
 
     struct EIC // Extracted Ion Chromatogram @todo find a better representation that does not involve this many allocations
     {
-        std::vector<unsigned int> scanNumbers = {0};
+        std::vector<uint32_t> scanNumbers = {0};
         std::vector<float> mz = {0};
         std::vector<float> predInterval{0};
         std::vector<float> ints_area{0};
@@ -110,11 +102,11 @@ namespace qAlgorithms
         std::vector<uint16_t> df{0}; // this is required for dealing with interpolations, but should be moved into qPeaks eventually @todo
         // std::vector<float> DQSB{0};
         std::vector<float> DQSC{0};
-        std::vector<unsigned int> cenID{0};
-        std::vector<unsigned int> interpolatedScans{0};
+        std::vector<uint32_t> cenID{0};
+        std::vector<uint32_t> interpolatedScans{0};
         std::vector<float> RT{0};
         // std::vector<float> interpolatedDQSB;
-        unsigned int componentID = 0; // this is only set during componentisation
+        uint32_t componentID = 0; // this is only set during componentisation
         // bool interpolations;          // are there interpolated values?
     };
 
@@ -131,10 +123,10 @@ namespace qAlgorithms
         float mz = 0;
         float RT_Uncertainty = 0;
         float mzUncertainty = 0;
-        unsigned int eic_ID = 0;
+        uint32_t eic_ID = 0;
         // these refer to the EIC
-        unsigned int idxPeakStart = 0;
-        unsigned int length = 0;
+        uint32_t idxPeakStart = 0;
+        uint32_t length = 0;
         float lowerRT = 0;
         float upperRT = 0; // @todo set these during feature construction
     };

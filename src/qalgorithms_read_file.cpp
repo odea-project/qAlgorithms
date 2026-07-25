@@ -283,7 +283,7 @@ namespace qAlgorithms
 
         pugi::xml_node node_binary_list = spectrum_node->child("binaryDataArrayList");
 
-        unsigned int number_traces = spectrum_node->attribute("defaultArrayLength").as_uint();
+        size_t number_traces = spectrum_node->attribute("defaultArrayLength").as_uint();
 
         pugi::xml_named_node_iterator dataArray = node_binary_list.children("binaryDataArray").begin();
         assert(dataArray != node_binary_list.children("binaryDataArray").end());
@@ -376,7 +376,7 @@ namespace qAlgorithms
         return unit_secs ? rt_val : rt_val * 60;
     };
 
-    void get_spectra_RT(const XML_File *data, const std::vector<unsigned int> *indices, std::vector<float> *const RTs)
+    void get_spectra_RT(const XML_File *data, const std::vector<uint32_t> *indices, std::vector<float> *const RTs)
     {
         const size_t idxSize = indices->size();
         assert(!data->defective);

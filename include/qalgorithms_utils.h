@@ -131,7 +131,7 @@ namespace qAlgorithms
 
     double meanOfCumulative(double *const cumArray, const size_t startIdx, const size_t endIdx);
     double meanOfCumulative(const double *const cumArray, const size_t startIdx, const size_t endIdx);
-    unsigned int sumOfCumulative(const uint16_t *const cumArray, const size_t startIdx, const size_t length);
+    size_t sumOfCumulative(const uint16_t *const cumArray, const size_t startIdx, const size_t length);
 
     // standard deviation
     double sdev(double *const array, const size_t n);
