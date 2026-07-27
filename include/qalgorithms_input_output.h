@@ -63,7 +63,7 @@ namespace qAlgorithms
         bool interactive = false;
     };
 
-    UserInputSettings passCliArgs(int argc, char *argv[]);
+    UserInputSettings passCliArgs(const int argc, const char *argv[]);
 
     UserInputSettings interactiveMode();
 

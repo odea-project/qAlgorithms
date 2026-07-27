@@ -43,8 +43,8 @@ inline int32_t zng_compress(uint8_t *dest, size_t *destLen, const uint8_t *sourc
 
 namespace qAlgorithms
 {
-    int bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
-                        std::vector<float> *result)
+    size_t bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
+                           std::vector<float> *result)
     {
         // cast the byte array resulting from zlib decompression to a float array
         const size_t fsize = sizeof(float);
@@ -90,7 +90,7 @@ namespace qAlgorithms
         bool negative = false;
         for (size_t i = 0; i < count; ++i)
         {
-            pugi::xml_node *spec = file->linknodes->data() + i;
+            const pugi::xml_node *spec = file->linknodes->data() + i;
             if (spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr)
             {
                 positive = true;
@@ -387,7 +387,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < idxSize; ++i)
         {
             size_t idx = indices->at(i);
-            pugi::xml_node *spec = data->linknodes->data() + idx;
+            const pugi::xml_node *spec = data->linknodes->data() + idx;
             float RT = extract_scan_RT(spec);
             RTs->at(i) = RT;
         }
@@ -407,7 +407,7 @@ namespace qAlgorithms
 
         for (uint32_t i = 0; i < specnum; i++)
         {
-            pugi::xml_node *spec = data->linknodes->data() + i;
+            const pugi::xml_node *spec = data->linknodes->data() + i;
 
             bool isCentroid = spec->find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
             if (isCentroid != centroided)
@@ -435,7 +435,7 @@ namespace qAlgorithms
 
         for (size_t i = 0; i < file->number_spectra; ++i)
         {
-            pugi::xml_node *spec = file->linknodes->data() + i;
+            const pugi::xml_node *spec = file->linknodes->data() + i;
 
             int level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
             bool isMS1 = 1 == level;

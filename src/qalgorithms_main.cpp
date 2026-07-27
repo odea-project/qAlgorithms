@@ -5,7 +5,6 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_read_file.h"
 
-// other includes are avoided here to reduce header duplication
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -17,7 +16,7 @@
 
 using namespace qAlgorithms;
 
-int main(int argc, char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
+int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 {
     UserInputSettings userArgs = passCliArgs(argc, argv);
 

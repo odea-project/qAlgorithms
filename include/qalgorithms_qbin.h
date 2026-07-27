@@ -2,6 +2,7 @@
 #define _QALGORITHMS_QBIN_INCLUDED
 
 #include <climits>
+#include <cstddef>
 #include <vector>
 
 #include "qalgorithms_datatypes.h"
@@ -87,8 +88,8 @@ namespace qAlgorithms
         std::vector<const CentroidPeak *> notInBins; // this vector contains all points which are not included in bins
         bool readFrom = false;
         // pointers for use during subsetting loop
-        std::vector<Bin> *sourceBins;
-        std::vector<Bin> *targetBins;
+        std::vector<Bin> *sourceBins = nullptr;
+        std::vector<Bin> *targetBins = nullptr;
     };
 
     void switchTarget(BinContainer *bincontainer);

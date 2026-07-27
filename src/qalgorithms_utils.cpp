@@ -31,7 +31,7 @@ namespace qAlgorithms
     }
 
     bool F_test_regs(const double RSS_complex, const double RSS_simple,
-                     const size_t params_complex, const size_t params_simple,
+                     const uint32_t params_complex, const uint32_t params_simple,
                      const size_t n, const double alpha)
     {
         const double fval = F_value(RSS_complex, RSS_simple, params_complex, params_simple, n);
@@ -355,7 +355,7 @@ namespace qAlgorithms
         assert(startIdx <= endIdx);
         double subtractor = startIdx == 0 ? 0 : cumArray[startIdx - 1]; // account for index 0
         double totalSum = cumArray[endIdx] - subtractor;
-        return totalSum / (endIdx - startIdx + 1);
+        return totalSum / double(endIdx - startIdx + 1);
     }
 
     size_t sumOfCumulative(const uint16_t *const cumArray, const size_t startIdx, const size_t length)
@@ -380,12 +380,12 @@ namespace qAlgorithms
         {
             mean += array[i];
         }
-        mean /= n;
+        mean /= (double)n;
         for (size_t i = 0; i < n; i++)
         {
             sdev += (array[i] - mean) * (array[i] - mean);
         }
-        return sqrt(sdev / (n - 1));
+        return sqrt(sdev / double(n - 1));
     }
 
     double calcJaccardIdx(const float *const array1, const float *const array2, const size_t length)

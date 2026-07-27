@@ -680,8 +680,8 @@ namespace qAlgorithms
             // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
             // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
             // the window of the other peak (Overlap of two maxima)
-            RegressionGauss *reg1 = &(validRegsTmp->at(i));
-            RegressionGauss *reg2 = &(validRegsTmp->at(i + 1));
+            const RegressionGauss *reg1 = &(validRegsTmp->at(i));
+            const RegressionGauss *reg2 = &(validRegsTmp->at(i + 1));
 
             if (std::abs(reg1->apex_position - reg2->apex_position) < 4)
                 continue;
@@ -750,7 +750,7 @@ namespace qAlgorithms
         }
 
         Range_i newRange = {left_limit, right_limit, right_limit - left_limit + 1};
-        double df_sum = sumOfCumulative(degreesOfFreedom_cum, left_limit, newRange.length);
+        double df_sum = (double)sumOfCumulative(degreesOfFreedom_cum, left_limit, newRange.length);
         df_sum -= 4; // four coefficients
         assert(df_sum > 0);
 
@@ -1581,7 +1581,7 @@ namespace qAlgorithms
 
             for (size_t p = 0; p < peaksFound; p++)
             {
-                PeakFit *peak = ret.data() + p;
+                const PeakFit *peak = ret.data() + p;
                 size_t id = centroids->size();
                 centroids->push_back(peakToCen(peak, id, specNum));
             }
@@ -1616,7 +1616,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < numSpecs; i++)
         {
             // 1) obtain next spectrum that is MS level 1 and not centroided
-            pugi::xml_node *spec = source_file.linknodes->data() + i;
+            const pugi::xml_node *spec = source_file.linknodes->data() + i;
 
             bool isCentroid = spec->find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
             if (isCentroid)

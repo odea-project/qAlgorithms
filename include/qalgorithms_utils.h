@@ -35,7 +35,7 @@ namespace qAlgorithms
      * @return                Is the complex model better than the simple model (y/n)?
      */
     bool F_test_regs(const double RSS_complex, const double RSS_simple,
-                     const size_t params_complex, const size_t params_simple,
+                     const uint32_t params_complex, const uint32_t params_simple,
                      const size_t n, const double alpha);
 
     /**

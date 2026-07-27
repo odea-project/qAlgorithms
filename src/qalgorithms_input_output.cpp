@@ -86,7 +86,7 @@ namespace qAlgorithms
 #pragma region "command line arguments"
 
     // NOLINTBEGIN(concurrency-mt-unsafe)
-    UserInputSettings passCliArgs(int argc, char *argv[])
+    UserInputSettings passCliArgs(const int argc, const char *argv[])
     {
         UserInputSettings args;
         assert(args.inputPaths.empty());
@@ -272,7 +272,7 @@ namespace qAlgorithms
                     return args;
                 }
 
-                char *str = argv[i];
+                const char *str = argv[i];
                 char *endptr = nullptr;
                 int64_t skip = strtol(str, &endptr, 10);
                 if (endptr == str)
@@ -635,14 +635,8 @@ namespace qAlgorithms
         if (skipAhead != 0)
         {
             (void)fprintf(stderr, "Warning: removing the first %zu elements from the tasklist.\n", skipAhead);
-            if (skipAhead == 1)
-            {
-                outputTasks.erase(outputTasks.begin());
-            }
-            else
-            {
-                outputTasks.erase(outputTasks.begin(), outputTasks.begin() + skipAhead - 1);
-            }
+            int skipNum = (int)skipAhead - 1;
+            outputTasks.erase(outputTasks.begin(), outputTasks.begin() + skipNum);
         }
 
         return outputTasks;
