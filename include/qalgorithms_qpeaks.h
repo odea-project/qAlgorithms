@@ -45,7 +45,7 @@ namespace qAlgorithms
         const uint16_t *DF_cum,
         const size_t length,
         size_t maxscale,
-        std::vector<PeakFit> *result);
+        std::vector<RegressionGauss> *result);
 
     class XML_File;                            // forward declaration so at least the header does not couple with read_file
     size_t findCentroids(const XML_File *data, // @todo the internal file representation should be more generic

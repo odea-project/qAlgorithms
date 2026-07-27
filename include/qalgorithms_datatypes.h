@@ -56,23 +56,6 @@ namespace qAlgorithms
         bool isValid = false;       // flag to indicate if the regression is valid
     };
 
-    // The distinction between centroid and feature is not really sensible as a core part of the project
-    struct PeakFit
-    {
-        RegCoeffs coeffs = {0};
-        uint16_t startIdx = 0;
-        uint16_t length = 0;
-        float position = 0;
-        float position_unc = 0;
-        float height = 0;
-        float height_unc = 0;
-        float fwhm = 0;
-        float area = 0;
-        float area_unc = 0;
-        float dqs = 0;
-        float jaccard = 0;
-    };
-
     struct CentroidPeak
     {
         float mz = 0;

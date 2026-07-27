@@ -53,7 +53,7 @@ namespace qAlgorithms
         const std::vector<RegressionGauss> *peaks,
         const float *x_values,
         const size_t numPeaks,
-        std::vector<PeakFit> *result)
+        std::vector<RegressionGauss> *result)
     {
         assert(numPeaks == peaks->size());
         // retransforming is probably best if the range of x values is as small as necessary
@@ -68,7 +68,7 @@ namespace qAlgorithms
             double apex = apex_raw + double(coeff.x0);
             assert(abs(apex - regression->position) < 10e-6); // this can differ up to 5 * 10e-7 from floating point error
 
-            PeakFit peak;
+            RegressionGauss peak;
 
             // @todo ensure that this is a good way to estimate delta_x for real data
             // we could also use a strategy such as taking the distance closest to the apex.
@@ -131,7 +131,7 @@ namespace qAlgorithms
         const uint16_t *const df,
         const size_t length,
         const size_t maxscale,
-        std::vector<PeakFit> *result);
+        std::vector<RegressionGauss> *result);
 
     const double minIntensity_global = 2.7182818284590452; // exp(1) == e
 
@@ -142,7 +142,7 @@ namespace qAlgorithms
         const uint16_t *DF_cum,
         const size_t length,
         size_t maxscale,
-        std::vector<PeakFit> *result)
+        std::vector<RegressionGauss> *result)
     {
         // control input for nullpointers, mismatching x and y, and fitting maxscale
         if (intensity_base == nullptr || x_values == nullptr || result == nullptr)
@@ -308,7 +308,7 @@ namespace qAlgorithms
         const uint16_t *const df,
         const size_t length,
         const size_t maxscale,
-        std::vector<PeakFit> *result)
+        std::vector<RegressionGauss> *result)
     {
         // coefficients for single-b0 peaks, spans all regressions over a peak window
         // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
@@ -1488,7 +1488,7 @@ size_t chosenOne = 0;
         return (float)weighted_mean;
     };
 
-    static FeaturePeak peakToFeat(const PeakFit *peak, const EIC *eic, uint32_t eic_ID)
+    static FeaturePeak peakToFeat(const RegressionGauss *peak, const EIC *eic, uint32_t eic_ID)
     {
         const float *area_arr = eic->ints_area.data() + peak->startIdx;
         const float *mz_arr = eic->mz.data() + peak->startIdx;
@@ -1529,7 +1529,7 @@ size_t chosenOne = 0;
                         const std::vector<float> *convertRT, // correct RT corresponding to every scan number
                         std::vector<FeaturePeak> *res)
     {
-        std::vector<PeakFit> peaks;
+        std::vector<RegressionGauss> peaks;
 
         // the only relevant change here is that the start point of the x axis (RT) depends on the first scan in an EIC
         // it is already assured that a bin contains continuous data
@@ -1563,7 +1563,7 @@ size_t chosenOne = 0;
 
 #pragma region "find centroids"
 
-    static CentroidPeak peakToCen(const PeakFit *peak, size_t id, size_t specNum)
+    static CentroidPeak peakToCen(const RegressionGauss *peak, size_t id, size_t specNum)
     {
         CentroidPeak cen = {0};
 
@@ -1613,7 +1613,7 @@ size_t chosenOne = 0;
         spectrum_mz.reserve(1000);
         std::vector<float> spectrum_int;
         spectrum_int.reserve(1000);
-        std::vector<PeakFit> ret;
+        std::vector<RegressionGauss> ret;
 
         for (size_t specNum = 0; specNum < selectedIndices->size(); specNum++)
         {
@@ -1633,7 +1633,7 @@ size_t chosenOne = 0;
             for (size_t p = 0; p < peaksFound; p++)
             {
                 // @todo use regToCen function instead
-                const PeakFit *peak = ret.data() + p;
+                const RegressionGauss *peak = ret.data() + p;
                 size_t id = centroids->size();
                 centroids->push_back(peakToCen(peak, id, specNum));
             }
@@ -1659,7 +1659,7 @@ size_t chosenOne = 0;
 
         std::vector<float> spectrum_mz;
         std::vector<float> spectrum_int;
-        std::vector<PeakFit> result;
+        std::vector<RegressionGauss> result;
         std::vector<double> res_spectrum_mz;
         std::vector<double> res_spectrum_int;
         std::vector<char> char_spectrum_mz;

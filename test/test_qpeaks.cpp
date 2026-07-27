@@ -192,13 +192,13 @@ static void control_sim_gauss()
 
     simulate_gauss(&xvals, apex, height, sdev, &yvals);
 
-    std::vector<PeakFit> ret;
+    std::vector<RegressionGauss> ret;
     qpeaks_find(yvals.data(), xvals.data(), nullptr, length, 8, &ret);
 
     assert(ret.size() != 0, "Peak not found\n", NULL);
     assert(ret.size() == 1, "Too many peaks found\n", NULL);
 
-    PeakFit reg = ret.front();
+    RegressionGauss reg = ret.front();
 
     float apex_p = reg.position;
     float height_p = reg.height;
@@ -272,7 +272,7 @@ static void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
         // @todo
     }
 
-    std::vector<PeakFit> ret;
+    std::vector<RegressionGauss> ret;
     qpeaks_find(yvals.data(), xvals.data(), nullptr, length, 20, &ret);
 
     // printf("    Observed values:\n");
@@ -313,7 +313,7 @@ static void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
 
     assert(ret.size() == 1, "Too many peaks found\n", NULL);
 
-    PeakFit reg = ret.front();
+    RegressionGauss reg = ret.front();
 
     float apex_p = reg.position;
     float height_p = reg.height;
@@ -385,7 +385,7 @@ static void test_singlePeak()
 
     simulate_profile(&coeff, &simulated, &simulated_log);
 
-    std::vector<PeakFit> validRegs;
+    std::vector<RegressionGauss> validRegs;
     regression_on_continuum(simulated.data(), x_axis.data(), simulated_log.data(), nullptr, simulated.size(), 5, &validRegs);
 
     assert(validRegs.size() == 1, "incorrect number of regressions found\n", NULL);
