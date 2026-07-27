@@ -24,3 +24,5 @@ CodeChecker analyze $SCRIPT_DIR/build/compile_commands.json --output $SCRIPT_DIR
             --enable profile:security --analyzers infer -e infer
 
 CodeChecker parse --export html --output  $SCRIPT_DIR/build/reports_html  $SCRIPT_DIR/build/reports
+
+rm -r $SCRIPT_DIR/build/reports/*
