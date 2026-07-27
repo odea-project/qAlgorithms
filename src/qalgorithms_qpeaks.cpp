@@ -1563,36 +1563,17 @@ size_t chosenOne = 0;
 
 #pragma region "find centroids"
 
-    static CentroidPeak peakToCen(const RegressionGauss *peak, size_t id, size_t specNum)
-    {
-        CentroidPeak cen = {0};
-
-        cen.area = peak->area;
-        cen.areaUncertainty = peak->area_unc;
-        cen.DQSC = peak->dqs;
-        cen.height = peak->height;
-        cen.heightUncertainty = peak->height_unc;
-        cen.ID = id;
-        cen.mz = peak->position;
-        cen.mzUncertainty = peak->position_unc;
-        cen.number_MS1 = specNum;
-        cen.scale = peak->coeffs.scale;
-        cen.width = peak->fwhm;
-
-        return cen;
-    }
-
     static inline CentroidPeak regToCen(const RegressionGauss *reg, uint16_t id, uint16_t specNum)
     {
         return {
             reg->position,
-            (float)exp(regAt(&reg->coeffs, reg->position)),
+            reg->height,
             reg->area,
-            0,
+            reg->fwhm,
             reg->height_unc,
             reg->area_unc,
             reg->position_unc,
-            0,
+            reg->dqs,
             id,
             specNum,
             reg->coeffs.scale,
@@ -1632,10 +1613,9 @@ size_t chosenOne = 0;
 
             for (size_t p = 0; p < peaksFound; p++)
             {
-                // @todo use regToCen function instead
                 const RegressionGauss *peak = ret.data() + p;
                 size_t id = centroids->size();
-                centroids->push_back(peakToCen(peak, id, specNum));
+                centroids->push_back(regToCen(peak, id, specNum));
             }
 
             spectrum_mz.clear();
