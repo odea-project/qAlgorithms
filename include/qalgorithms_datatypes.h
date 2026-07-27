@@ -42,34 +42,33 @@ namespace qAlgorithms
 
     struct RegressionGauss
     {
-        RegCoeffs coeffs = {0};      // regression coefficients
-        Range_i regSpan = {0, 0, 0}; // limits of the peak regression window
-        float apex_position = 0;     // position of the apex of the peak
-        float area = 0;              // area of the peak (in evenly spaced x dimension, scaled later)
-        float uncert_area = 0, uncert_position = 0, uncert_height = 0;
+        RegCoeffs coeffs = {0};
+        Range_i regSpan = {0, 0, 0};
+        float area = 0, position = 0, height = 0;
+        float area_unc = 0, position_unc = 0, height_unc = 0;
         float jaccard = 0;
+        float fwhm = 0;
+        float dqs = 0;
         uint16_t startIdx = 0;
         uint16_t length = 0;
-        uint16_t df = 0;             // degrees of freedom, interpolated data points will not be considered
-        uint16_t numCompetitors = 0; // number of points that were discarded in favour of this regression
-        bool isValid = false;        // flag to indicate if the regression is valid
+        uint16_t df = 0;            // degrees of freedom, interpolated data points will not be considered
+        uint8_t numCompetitors = 0; // number of points that were discarded in favour of this regression
+        bool isValid = false;       // flag to indicate if the regression is valid
     };
 
     // The distinction between centroid and feature is not really sensible as a core part of the project
     struct PeakFit
     {
         RegCoeffs coeffs = {0};
-        size_t startIdx = 0;
-        size_t length = 0;
+        uint16_t startIdx = 0;
+        uint16_t length = 0;
         float position = 0;
-        float uncert_position = 0;
-        float limit_L = 0;
-        float limit_R = 0;
+        float position_unc = 0;
         float height = 0;
-        float uncert_height = 0;
+        float height_unc = 0;
         float fwhm = 0;
         float area = 0;
-        float uncert_area = 0;
+        float area_unc = 0;
         float dqs = 0;
         float jaccard = 0;
     };

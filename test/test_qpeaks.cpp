@@ -210,7 +210,7 @@ static void control_sim_gauss()
     // float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step);
 
     assert(flt_equal(apex, apex_p, FLT_EPSILON), "inaccurate position\n", NULL);
-    assert(flt_equal(height, height_p, reg.uncert_height), "inaccurate height\n", NULL);
+    assert(flt_equal(height, height_p, reg.height_unc), "inaccurate height\n", NULL);
     assert(flt_equal(fwhm, fwhm_p, 10e-4), "inaccurate width\n", NULL);
     assert(flt_equal(area, area_p, 0.01), "inaccurate area (%f vs. %f), empiric %f\n", area, area_p, area_e);
 }

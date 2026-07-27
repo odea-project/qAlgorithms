@@ -28,7 +28,7 @@ could be moved into a more generic library for mass spectra processing.
 * Optimisation: Ensure that all large computation chains of exponentials / logarithms are vectorised
 * Cleanup: Large parts of the code just pass array pointers downwards, make that part of the code nicer using
 scratch spaces or similar techniques of avoiding a lot of malloc/free
-* use the PeakFit struct and generic additional data instead of having two separate peak output models for centroids and features 
+* use the RegressionGauss struct and generic additional data instead of having two separate peak output models for centroids and features 
 * fully separate filtering based on critical test statistics from the calculation of these statistics for all regressions
 * Binning: make algorithm more flexible by sorting by mass and then only binning the first n points initially. (how is n determined?)
 Then, return all bins with points where the cutting point is within m/z uncertainty (or uncertainty * 2?) to the unbinned values, extract EICs

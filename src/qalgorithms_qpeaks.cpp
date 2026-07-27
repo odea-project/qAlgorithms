@@ -23,6 +23,32 @@
 
 namespace qAlgorithms
 {
+    // --- internal function declarations --- //
+
+    // copy relevant values from regression struct to centroid struct - not all fields supported
+    static inline CentroidPeak regToCen(const RegressionGauss *reg, uint16_t id, uint16_t specNum);
+
+    static double calcMSE_exp(const RegCoeffs *coeff,
+                              const float *observed,
+                              const Range_i *regSpan,
+                              const double df);
+
+    static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[]);
+
+    static bool groupApexIsStable(
+        const std::vector<RegressionGauss> *validRegressions,
+        const int16_t apexGroups[],
+        const int16_t groupNum);
+
+    static size_t selectFromGroup(
+        const std::vector<RegressionGauss> *validRegressions,
+        const float *intensities,
+        const size_t length,
+        const int16_t apexGroups[],
+        const int16_t groupNum);
+
+    // -------------------------------------- //
+
     static void retransformPeaks(
         const std::vector<RegressionGauss> *peaks,
         const float *x_values,
@@ -40,7 +66,7 @@ namespace qAlgorithms
 
             double apex_raw = -coeff.b1 / (b23 * 2);
             double apex = apex_raw + double(coeff.x0);
-            assert(abs(apex - regression->apex_position) < 10e-6); // this can differ up to 5 * 10e-7 from floating point error
+            assert(abs(apex - regression->position) < 10e-6); // this can differ up to 5 * 10e-7 from floating point error
 
             PeakFit peak;
 
@@ -72,28 +98,24 @@ namespace qAlgorithms
             // position is determined relative to the point left of the apex
             float apexFraction = delta_x * float(apex - trunc(apex));
             peak.position = x_values[leftOfApex] + apexFraction;
-            peak.uncert_position = regression->uncert_position * delta_x;
-
-            // left and right limits
-            peak.limit_L = x_values[regression->startIdx];
-            peak.limit_R = x_values[regression->regSpan.endIdx];
+            peak.position_unc = regression->position_unc * delta_x;
 
             peak.startIdx = regression->startIdx;
             peak.length = regression->length;
 
             // peak height = regression at apex position before transformation
             peak.height = (float)exp(regAt(&coeff, apex_raw));
-            peak.uncert_height = regression->uncert_height * peak.height;
+            peak.height_unc = regression->height_unc * peak.height;
 
             peak.area = regression->area;
-            peak.uncert_area = regression->uncert_area * (float)exp(coeff.b0); // @todo this is incorrect, since we have two uncertainty bounds
+            peak.area_unc = regression->area_unc * (float)exp(coeff.b0); // @todo this is incorrect, since we have two uncertainty bounds
             assert(peak.area > 1);
 
             // the empirical peak width is generally estimated at half maximum. Our peak
             // model only has a standard deviation for the apex peak
             peak.fwhm = (float)fullWidthHalfMax(&coeff, peak.height, delta_x);
 
-            peak.dqs = erfc(regression->uncert_area / regression->area);
+            peak.dqs = erfc(regression->area_unc / regression->area);
             peak.jaccard = regression->jaccard;
 
             peak.coeffs = regression->coeffs;
@@ -265,25 +287,6 @@ namespace qAlgorithms
 
 #pragma region "Conflict Elimination"
 
-    static double calcMSE_exp(const RegCoeffs *coeff,
-                              const float *observed,
-                              const Range_i *regSpan,
-                              const double df);
-
-    static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[]);
-
-    static bool groupApexIsStable(
-        const std::vector<RegressionGauss> *validRegressions,
-        const int16_t apexGroups[],
-        const int16_t groupNum);
-
-    static size_t selectFromGroup(
-        const std::vector<RegressionGauss> *validRegressions,
-        const float *intensities,
-        const size_t length,
-        const int16_t apexGroups[],
-        const int16_t groupNum);
-
     // ----------- old functions -------------//
 
     static void mergeRegsInScale(
@@ -323,18 +326,37 @@ namespace qAlgorithms
                                                 &validRegsTmp);
         if (validCount == 0)
             return;
+        if (validCount == 1)
+        {
+            retransformPeaks(&validRegsTmp,
+                             x_axis,
+                             validCount,
+                             result);
+            return;
+        }
 
+        // rework of the apex selection, currently without the ability to interpolate points
         int16_t apexGroups[max_apex_per_group];
         size_t apexcount = groupRegsByApex(&validRegsTmp, apexGroups);
+        assert(apexcount < INT16_MAX);
 
-        size_t chosenOne = 0;
-        if (validCount > apexcount)
+        for (int16_t groupNum = 0; groupNum < (int16_t)apexcount; groupNum++)
         {
-            chosenOne = selectFromGroup(&validRegsTmp, intensities, length, apexGroups, 0);
-            bool stableApex = groupApexIsStable(&validRegsTmp, apexGroups, 0);
-            assert(stableApex);
+            bool stableApex = groupApexIsStable(&validRegsTmp, apexGroups, groupNum);
+            if (stableApex)
+            {
+                // equivalent to only one possible apex being in the data, no complex deconvolution is required
+                size_t chosenOne = selectFromGroup(&validRegsTmp, intensities, length, apexGroups, groupNum);
+                validRegsTmp[chosenOne].isValid = true;
+            }
+            else
+            {
+                // function to split off here @todo
+                groupNum--;
+                printf("looping endlessly ... ");
+                groupRegsByApex(&validRegsTmp, apexGroups);
+            }
         }
-        double chosenB1 = validRegsTmp.at(chosenOne).coeffs.b1;
 
         std::vector<RegressionGauss> validRegressions;
 
@@ -348,6 +370,18 @@ namespace qAlgorithms
         mergeRegressionsOverScales(&validRegressions, intensities);
 
         assert(validRegressions.size() == apexcount);
+
+// this discrepancy is due to the degrees of freedom supplied to the old function being non-
+// uniform when comparing regions and thus being biased towards broader signals
+#if 0
+size_t chosenOne = 0;
+        if (validCount > apexcount)
+        {
+            chosenOne = selectFromGroup(&validRegsTmp, intensities, length, apexGroups, 0);
+            bool stableApex = groupApexIsStable(&validRegsTmp, apexGroups, 0);
+            assert(stableApex);
+        }
+        double chosenB1 = validRegsTmp.at(chosenOne).coeffs.b1;
         bool b1_match = false;
         for (size_t reg = 0; reg < validRegressions.size(); reg++)
         {
@@ -370,8 +404,8 @@ namespace qAlgorithms
             }
             printf("Old range: %u to %u\n", reg_old->startIdx, (uint16_t)(reg_old->startIdx + reg_old->length - 1));
             printf("New range: %u to %u\n\n", reg_new->startIdx, (uint16_t)(reg_new->startIdx + reg_new->length - 1));
-            // exit(1);
         }
+#endif
 
         retransformPeaks(&validRegressions,
                          x_axis,
@@ -409,7 +443,7 @@ namespace qAlgorithms
         size_t next_unassigned = 0;
 #define reg validRegressions->at(next_unassigned)
 
-        double currentApex = reg.apex_position;
+        double currentApex = reg.position;
         double apexLeftLim = currentApex - min_apex_dist_d;
         double apexRightLim = currentApex + min_apex_dist_d;
         size_t outerStart = reg.startIdx; // @todo check if signed type is necessary, this should always be positive
@@ -430,7 +464,7 @@ namespace qAlgorithms
                     if (apexGroups[p] != -1)
                         continue;
 
-                    double secondApex = validRegressions->at(p).apex_position;
+                    double secondApex = validRegressions->at(p).position;
                     size_t innerStart = validRegressions->at(p).startIdx;
                     size_t innerLength = validRegressions->at(p).length;
                     // reasoning: while a distance of four points is the logically mandated distance, this is
@@ -466,7 +500,7 @@ namespace qAlgorithms
             assert((size_t)currentGroup < length);
             currentGroup += 1;
             // @todo this is duplicated from function initialisation, macro?
-            currentApex = reg.apex_position;
+            currentApex = reg.position;
             apexLeftLim = currentApex - min_apex_dist_d;
             apexRightLim = currentApex + min_apex_dist_d;
             outerStart = reg.startIdx;
@@ -494,8 +528,8 @@ namespace qAlgorithms
             if (apexGroups[i] != groupNum)
                 continue;
             const RegressionGauss *reg = validRegressions->data() + i;
-            apex_lim_L = min(apex_lim_L, reg->apex_position);
-            apex_lim_R = max(apex_lim_R, reg->apex_position);
+            apex_lim_L = min(apex_lim_L, reg->position);
+            apex_lim_R = max(apex_lim_R, reg->position);
         }
         assert(apex_lim_L <= apex_lim_R);
 
@@ -521,12 +555,12 @@ namespace qAlgorithms
                 if (apexGroups[i] != groupNum)
                     continue;
                 const RegressionGauss *reg = validRegressions->data() + i;
-                if (reg->apex_position == apex_lim_L)
+                if (reg->position == apex_lim_L)
                 {
                     bound_reg_L_L = reg->startIdx;
                     bound_reg_L_R = reg->startIdx + reg->length + 1;
                 }
-                if (reg->apex_position == apex_lim_R)
+                if (reg->position == apex_lim_R)
                 {
                     bound_reg_R_L = reg->startIdx;
                     bound_reg_R_R = reg->startIdx + reg->length + 1;
@@ -683,13 +717,13 @@ namespace qAlgorithms
             const RegressionGauss *reg1 = &(validRegsTmp->at(i));
             const RegressionGauss *reg2 = &(validRegsTmp->at(i + 1));
 
-            if (std::abs(reg1->apex_position - reg2->apex_position) < 4)
+            if (std::abs(reg1->position - reg2->position) < 4)
                 continue;
 
-            if (reg1->apex_position > reg2->startIdx) // NOLINT (this function will be removed soon)
+            if (reg1->position > reg2->startIdx) // NOLINT (this function will be removed soon)
                 continue;
 
-            if (reg1->regSpan.endIdx > reg2->apex_position) // NOLINT (s.o.)
+            if (reg1->regSpan.endIdx > reg2->position) // NOLINT (s.o.)
                 continue;
 
             // the two regressions differ, i.e. create a new group
@@ -824,16 +858,16 @@ namespace qAlgorithms
                 if (!secondReg->isValid) // check is needed because regressions are set to invalid in the outer loop
                     continue;
 
-                if (activeReg->apex_position < secondReg->startIdx) // NOLINT (this function will be removed soon)
+                if (activeReg->position < secondReg->startIdx) // NOLINT (this function will be removed soon)
                     continue;
 
-                if (activeReg->apex_position > secondReg->regSpan.endIdx) // NOLINT (s. o.)
+                if (activeReg->position > secondReg->regSpan.endIdx) // NOLINT (s. o.)
                     continue;
 
-                if (secondReg->apex_position < activeReg->startIdx) // NOLINT (s. o.)
+                if (secondReg->position < activeReg->startIdx) // NOLINT (s. o.)
                     continue;
 
-                if (secondReg->apex_position > activeReg->regSpan.endIdx) // NOLINT (s. o.)
+                if (secondReg->position > activeReg->regSpan.endIdx) // NOLINT (s. o.)
                     continue;
 
                 if (exponentialMSE[j] == 0.0)
@@ -1216,15 +1250,15 @@ namespace qAlgorithms
 
         double position = -coeffs->b1 / 2 / (coeffs->b1 < 0 ? coeffs->b2 : coeffs->b3);
         float uncert_position = (float)peakPositionUncert(coeffs, mse_log);
-        mutateReg->uncert_position = uncert_position;
+        mutateReg->position_unc = uncert_position;
         float uncert_height = (float)peakHeightUncert(coeffs, mse_log);
-        mutateReg->uncert_height = uncert_height;
+        mutateReg->height_unc = uncert_height;
 
         size_t leftOfApex = (size_t)position;
         float delta_x = x_axis[leftOfApex + 1] - x_axis[leftOfApex];
         double uncertainty = -1;
         mutateReg->area = (float)peakArea(coeffs, delta_x, mse_log, &uncertainty);
-        mutateReg->uncert_area = (float)uncertainty;
+        mutateReg->area_unc = (float)uncertainty;
 
         if (mutateReg->area <= minIntensity_global)
             return invalid_height;
@@ -1253,7 +1287,7 @@ namespace qAlgorithms
         }
 
         mutateReg->df = df_sum;
-        mutateReg->apex_position = (float)coeffs->x0 + (float)peakPosition(coeffs);
+        mutateReg->position = (float)coeffs->x0 + (float)peakPosition(coeffs);
         mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict, length);
 
         if (failstates != 0)
@@ -1475,14 +1509,14 @@ namespace qAlgorithms
             peak->coeffs,
             peak->height,
             peak->area,
-            peak->uncert_height,
-            peak->uncert_area,
+            peak->height_unc,
+            peak->area_unc,
             peak->dqs,
             DQSB,
             DQSC,
             peak->position,
             mz,
-            peak->uncert_position,
+            peak->position_unc,
             mz_uncert,
             eic_ID,
             (uint32_t)peak->startIdx,
@@ -1534,18 +1568,35 @@ namespace qAlgorithms
         CentroidPeak cen = {0};
 
         cen.area = peak->area;
-        cen.areaUncertainty = peak->uncert_area;
+        cen.areaUncertainty = peak->area_unc;
         cen.DQSC = peak->dqs;
         cen.height = peak->height;
-        cen.heightUncertainty = peak->uncert_height;
+        cen.heightUncertainty = peak->height_unc;
         cen.ID = id;
         cen.mz = peak->position;
-        cen.mzUncertainty = peak->uncert_position;
+        cen.mzUncertainty = peak->position_unc;
         cen.number_MS1 = specNum;
         cen.scale = peak->coeffs.scale;
         cen.width = peak->fwhm;
 
         return cen;
+    }
+
+    static inline CentroidPeak regToCen(const RegressionGauss *reg, uint16_t id, uint16_t specNum)
+    {
+        return {
+            reg->position,
+            (float)exp(regAt(&reg->coeffs, reg->position)),
+            reg->area,
+            0,
+            reg->height_unc,
+            reg->area_unc,
+            reg->position_unc,
+            0,
+            id,
+            specNum,
+            reg->coeffs.scale,
+            reg->numCompetitors};
     }
 
     // @todo find a better way of determining the smallest possible upper scale
@@ -1581,6 +1632,7 @@ namespace qAlgorithms
 
             for (size_t p = 0; p < peaksFound; p++)
             {
+                // @todo use regToCen function instead
                 const PeakFit *peak = ret.data() + p;
                 size_t id = centroids->size();
                 centroids->push_back(peakToCen(peak, id, specNum));
