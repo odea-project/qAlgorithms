@@ -47,6 +47,17 @@ namespace qAlgorithms
         const int16_t apexGroups[],
         const int16_t groupNum);
 
+    static void regression_on_continuum(
+        const float *intensities,
+        const float *x_axis,
+        const float *intensities_log,
+        const uint16_t *const df,
+        const size_t length,
+        const size_t maxscale,
+        std::vector<RegressionGauss> *result);
+
+    const double minIntensity_global = 2.7182818284590452; // exp(1) == e
+
     // -------------------------------------- //
 
     static void retransformPeaks(
@@ -123,17 +134,6 @@ namespace qAlgorithms
             result->push_back(peak);
         }
     }
-
-    static void regression_on_continuum(
-        const float *intensities,
-        const float *x_axis,
-        const float *intensities_log,
-        const uint16_t *const df,
-        const size_t length,
-        const size_t maxscale,
-        std::vector<RegressionGauss> *result);
-
-    const double minIntensity_global = 2.7182818284590452; // exp(1) == e
 
     int qpeaks_find(
         // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
@@ -1161,6 +1161,8 @@ size_t chosenOne = 0;
         return ok;
     }
 
+    static double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
+
     /// @brief calculate the residual sum of squares for the log regression / data
     /// @param mutateReg relevant regression
     /// @param observed log data
@@ -1210,20 +1212,14 @@ size_t chosenOne = 0;
         // multiply with matrix U, where first four terms are partial derivative of equation in
         // correctB0 by original coefficients
 
-        /*
-          Apex to Edge Filter:
-          This block of code implements the apex to edge filter. It calculates
-          the ratio of the apex signal to the edge signal and ensures that the
-          ratio is greater than 2. This is a pre-filter for later
-          signal-to-noise ratio checkups.
-          @todo this is not a relevant test
-        */
-        // double apexToEdge = apexToEdgeRatio(mutateReg, intensities);
-        // if (apexToEdge < 2)
-        // {
-        //     failstates += 1;
-        //     // return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
-        // }
+        // @todo test to check the peak changes significantly per half over the
+        // duration of the regression window
+        double apexToEdge = apexToEdgeRatio(mutateReg, intensities);
+        if (apexToEdge < 2)
+        {
+            failstates += 1;
+            // return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
+        }
 
         // @todo differentiate between tests performed in log and exp domain better
         // everything involving the RSS is dependent on b0!
@@ -1417,18 +1413,32 @@ size_t chosenOne = 0;
 
 #pragma endregion calcSSE
 
-    // double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities)
-    // {
-    //     // is the apex at least twice as large as the outermost point?
-    //     // assumption: outermost point is already near base level
-    //     const size_t idxApex = size_t(mutateReg->apex_position) + mutateReg->coeffs.x0;
+    static double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities)
+    {
+        // is the apex at least twice as large as the outermost point?
+        // assumption: outermost point is already near base level
+        // addition: this relation should hold for the observed and predicted  values, also compared
+        // to each other. Without this filter, there are some cases during feature detection where
+        // a given bin contains no peak, but the model is fit to an ascending slope initially and
+        // a short, nearly constant positive-coefficient half on the right. As such, the condition
+        // of signal-to-noise (approximately) has to hold for the worst possible combination of all
+        // candidate values
+        const size_t idxApex = size_t(mutateReg->position) + mutateReg->coeffs.x0;
+        size_t endIdx = mutateReg->length + mutateReg->startIdx - 1;
 
-    //     double left = intensities[mutateReg->startIdx];
-    //     double right = intensities[mutateReg->regSpan.endIdx];
-    //     double minIntensity = min(left, right);
-    //     double apex = intensities[idxApex]; // @todo since this is not the actual apex height, it might be a bad idea to use it
-    //     return apex / minIntensity;
-    // }
+        double maxEdge_O = max(intensities[mutateReg->startIdx], intensities[endIdx]);
+        double apex_O = intensities[idxApex]; // @todo since this is not the actual apex height, it might be a bad idea to use it
+
+        double x_l = mutateReg->startIdx - mutateReg->coeffs.x0;
+        double x_r = x_l + mutateReg->length;
+        double maxEdge_P = max(exp(regAt(&mutateReg->coeffs, x_l)),
+                               exp(regAt(&mutateReg->coeffs, x_r)));
+
+        double apex = min(apex_O, mutateReg->height);
+        double maxEdge = max(maxEdge_O, maxEdge_P);
+
+        return apex / maxEdge;
+    }
 
     bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
     {
