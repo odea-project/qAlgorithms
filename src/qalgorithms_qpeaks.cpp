@@ -1212,8 +1212,8 @@ size_t chosenOne = 0;
         // multiply with matrix U, where first four terms are partial derivative of equation in
         // correctB0 by original coefficients
 
-        // @todo test to check the peak changes significantly per half over the
-        // duration of the regression window
+        // @todo this should be a test for similarity, since we cannot assume factor two is a good
+        // fit for the worst possible combination of apex and edge, t-test instead?
         double apexToEdge = apexToEdgeRatio(mutateReg, intensities);
         if (apexToEdge < 2)
         {
@@ -1434,7 +1434,7 @@ size_t chosenOne = 0;
         double maxEdge_P = max(exp(regAt(&mutateReg->coeffs, x_l)),
                                exp(regAt(&mutateReg->coeffs, x_r)));
 
-        double apex = min(apex_O, mutateReg->height);
+        double apex = min(apex_O, exp(regAt(&mutateReg->coeffs, mutateReg->position)));
         double maxEdge = max(maxEdge_O, maxEdge_P);
 
         return apex / maxEdge;

@@ -129,7 +129,7 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         assert(centroidCount < UINT32_MAX);
         if (centroidCount == 0)
         {
-            (void)fprintf(stderr, "Error: no centroids found despite valid indices");
+            (void)fprintf(stderr, "Error: no centroids found despite valid indices\n");
         }
 
         if (userArgs.printCentroids)
