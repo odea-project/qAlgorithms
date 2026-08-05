@@ -40,10 +40,25 @@ namespace qAlgorithms
         size_t length;
     };
 
+    struct Span_i32
+    {
+        int32_t startIdx = 0;
+        int32_t length = 0;
+        int32_t endIdx() const
+        {
+            return startIdx + length - 1;
+        }
+        void set_endIdx(const int32_t idx)
+        {
+            length = idx - startIdx + 1;
+        }
+    };
+
     struct RegressionGauss
     {
         RegCoeffs coeffs = {0};
         Range_i regSpan = {0, 0, 0};
+        Span_i32 span = {0, 0};
         float area = 0, position = 0, height = 0;
         float area_unc = 0, position_unc = 0, height_unc = 0;
         float jaccard = 0;

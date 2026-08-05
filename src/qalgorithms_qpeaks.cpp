@@ -220,6 +220,8 @@ namespace qAlgorithms
 #pragma region "running regression"
 
     static invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
+    // this is an eventual replacement for the above function:
+    static Span_i32 calcRegSpan(const RegCoeffs *coeffs);
 
     static size_t validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
         const float *intensities,
@@ -234,11 +236,19 @@ namespace qAlgorithms
         std::vector<float> predict(length, 0);
         for (size_t i = 0; i < coefficients->size(); i++)
         {
+            const RegCoeffs *coeffs = coefficients->data() + i;
             Range_i range;
             // sets the range and checks for validity @todo not applicable for dual peak systems
-            invalid failpoint = validRegWidth(&(coefficients->at(i)), &range);
+            Span_i32 span = calcRegSpan(coeffs);
+            invalid failpoint = validRegWidth(coeffs, &range);
+
             if (failpoint != ok)
                 continue;
+
+            bool span_fail = (span.length < 5) || // this is redundant but kept for clarity
+                             (span.startIdx + 2 > (int32_t)coeffs->x0) ||
+                             (span.endIdx() - 2 < (int32_t)coeffs->x0);
+            assert(!span_fail);
 
             size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, range.startIdx, range.length);
             if (df_sum < MINLENGTH)
@@ -247,7 +257,7 @@ namespace qAlgorithms
             df_sum -= 4; // four coefficients, adjust for components
 
             RegressionGauss reg;
-            reg.coeffs = coefficients->at(i);
+            reg.coeffs = *coeffs;
             reg.regSpan = range;
             reg.startIdx = range.startIdx;
             reg.length = range.length;
@@ -1096,6 +1106,43 @@ size_t chosenOne = 0;
         return factor;
     }
 
+    static Span_i32 calcRegSpan(const RegCoeffs *coeffs)
+    {
+        // test regression validity without depending on b0 or the degrees of freedom
+        const bool valley_left = coeffs->b2 >= 0;
+        const bool valley_right = coeffs->b3 >= 0;
+        const bool apexLeft = coeffs->b1 < 0;
+
+        // the peak must have a maximum
+        bool noApex = (valley_left && apexLeft) ||
+                      (valley_right && (!apexLeft));
+        if (noApex)
+            return {0, 0};
+
+        Span_i32 span = {0, 0};
+
+        if (valley_left)
+        {
+            int position_b2 = int(-coeffs->b1 / (2 * coeffs->b2));
+            span.startIdx = (int)coeffs->x0 + position_b2;
+        }
+        else
+        {
+            span.startIdx = (int)coeffs->x0 - (int)coeffs->scale;
+        }
+
+        if (valley_right)
+        {
+            int position_b3 = int(-coeffs->b1 / (2 * coeffs->b3));
+            span.set_endIdx((int)coeffs->x0 + position_b3);
+        }
+        else
+        {
+            span.set_endIdx((int)coeffs->x0 + (int)coeffs->scale);
+        }
+        return span;
+    }
+
     invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range)
     {
         // test regression validity without depending on b0 or the degrees of freedom
@@ -1293,8 +1340,6 @@ size_t chosenOne = 0;
         return ok;
     }
 
-#pragma region calcSSE
-
     double calcRSS_log(const RegressionGauss *mutateReg, const float *observed)
     {
         double RSS = 0;
@@ -1410,8 +1455,6 @@ size_t chosenOne = 0;
 
         return f_ok;
     }
-
-#pragma endregion calcSSE
 
     static double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities)
     {
