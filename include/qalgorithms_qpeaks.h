@@ -66,17 +66,6 @@ namespace qAlgorithms
 
     // mutate b0 so that it is optimal for the exponential case if b1, b2 and b3 are identical
 
-    /// @brief adjust the height of a regression to better fit the exponential data
-    /// @param intensities non-logarithmic intensity values the regression was fitted to
-    /// @param r range of the regression
-    /// @param predicted empty vector that the predicted values for intensity (AFTER correction) are written to
-    /// @param coeff coefficients that should be updated
-    /// @return used correction factor
-    double correctB0(const float *const intensities,
-                     const Range_i *r,
-                     float *predicted,
-                     RegCoeffs *coeff);
-
     enum invalid // NOLINT @todo rework causes for invalidation
     {
         ok = 0,
@@ -97,26 +86,6 @@ namespace qAlgorithms
     size_t findFeatures(const std::vector<EIC> *EICs,
                         const std::vector<float> *convertRT, // correct RT corresponding to every scan number
                         std::vector<FeaturePeak> *res);
-
-    // take a jacobian matrix as input and return the transpose at scale
-    double matProductReg(const double J[4], const size_t scale);
-
-    bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
-
-    // utility functions for calculating regression values
-    double regAt(const RegCoeffs *coeff, const double x);
-
-    double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x);
-
-    // this one does not include b0
-    double regExp_fac(const RegCoeffs *coeff, const double x);
-
-    double peakPositionUncert(const RegCoeffs *c, const double mse);
-    double peakHeightUncert(const RegCoeffs *c, const double mse);
-
-    double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert);
-
-    double peakPosition(const RegCoeffs *c);
 
 #define GLOBAL_MINSCALE 2
 #define MINLENGTH 5

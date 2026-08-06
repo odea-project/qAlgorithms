@@ -33,13 +33,6 @@ namespace qAlgorithms
         uint16_t scale = 0, x0 = 0;
     };
 
-    struct Range_i
-    {
-        size_t startIdx;
-        size_t endIdx;
-        size_t length;
-    };
-
     struct Span_i32
     {
         int32_t startIdx = 0;
@@ -57,15 +50,12 @@ namespace qAlgorithms
     struct RegressionGauss
     {
         RegCoeffs coeffs = {0};
-        Range_i regSpan = {0, 0, 0};
         Span_i32 span = {0, 0};
         float area = 0, position = 0, height = 0;
         float area_unc = 0, position_unc = 0, height_unc = 0;
         float jaccard = 0;
         float fwhm = 0;
         float dqs = 0;
-        uint16_t startIdx = 0;
-        uint16_t length = 0;
         uint16_t df = 0;            // degrees of freedom, interpolated data points will not be considered
         uint8_t numCompetitors = 0; // number of points that were discarded in favour of this regression
         int8_t apexGroup = -1;

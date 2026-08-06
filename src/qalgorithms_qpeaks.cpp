@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <cfloat>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -38,7 +39,6 @@ namespace qAlgorithms
     static size_t selectFromGroup(
         const std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
-        const size_t length,
         const int16_t apexGroups[],
         const int16_t groupNum);
 
@@ -50,6 +50,17 @@ namespace qAlgorithms
         const size_t length,
         const size_t maxscale,
         std::vector<RegressionGauss> *result);
+
+    /// @brief adjust the height of a regression to better fit the exponential data
+    /// @param intensities non-logarithmic intensity values the regression was fitted to
+    /// @param r range of the regression
+    /// @param predicted empty vector that the predicted values for intensity (AFTER correction) are written to
+    /// @param coeff coefficients that should be updated
+    /// @return used correction factor
+    static double correctB0(const float *const intensities,
+                            const Span_i32 r,
+                            float *predicted,
+                            RegCoeffs *coeff);
 
     /// @brief perform various statistical tests to see if a regression describes a valid peak
     /// @param degreesOfFreedom_cum cumulative degrees of freedom (only relevant for interpolated data)
@@ -67,6 +78,26 @@ namespace qAlgorithms
         RegressionGauss *mutateReg);
 
     static void adjustRegression(RegressionGauss *reg, const float *x_values);
+
+    // take a jacobian matrix as input and return the transpose at scale
+    static double matProductReg(const double J[4], const size_t scale);
+
+    static bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
+
+    // utility functions for calculating regression values
+    static double regAt(const RegCoeffs *coeff, const double x);
+
+    static double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x);
+
+    // this one does not include b0
+    static double regExp_fac(const RegCoeffs *coeff, const double x);
+
+    static double peakPositionUncert(const RegCoeffs *c, const double mse);
+    static double peakHeightUncert(const RegCoeffs *c, const double mse);
+
+    static double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert);
+
+    static inline double peakPosition(const RegCoeffs *c);
 
     const double minIntensity_global = 2.7182818284590452; // exp(1) == e
 
@@ -173,8 +204,6 @@ namespace qAlgorithms
 
 #pragma region "running regression"
 
-    static invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range);
-    // this is an eventual replacement for the above function:
     static Span_i32 calcRegSpan(const RegCoeffs *coeffs);
 
     static size_t validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
@@ -191,20 +220,16 @@ namespace qAlgorithms
         for (size_t i = 0; i < coefficients->size(); i++)
         {
             const RegCoeffs *coeffs = coefficients->data() + i;
-            Range_i range;
             // sets the range and checks for validity @todo not applicable for dual peak systems
             Span_i32 span = calcRegSpan(coeffs);
-            invalid failpoint = validRegWidth(coeffs, &range);
-
-            if (failpoint != ok)
-                continue;
-
+            assert(span.startIdx >= 0);
             bool span_fail = (span.length < 5) || // this is redundant but kept for clarity
                              (span.startIdx + 2 > (int32_t)coeffs->x0) ||
                              (span.endIdx() - 2 < (int32_t)coeffs->x0);
-            assert(!span_fail);
+            if (span_fail)
+                continue;
 
-            size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, range.startIdx, range.length);
+            size_t df_sum = sumOfCumulative(degreesOfFreedom_cum, span.startIdx, span.length);
             if (df_sum < MINLENGTH)
                 continue;
 
@@ -212,9 +237,7 @@ namespace qAlgorithms
 
             RegressionGauss reg;
             reg.coeffs = *coeffs;
-            reg.regSpan = range;
-            reg.startIdx = range.startIdx;
-            reg.length = range.length;
+            reg.span = span;
 
             /*
                 Adjustment of b0 coefficient:
@@ -225,9 +248,9 @@ namespace qAlgorithms
                 presumed to be better when using the transformed coefficients in terms of applicability of the results.
                 This function also modifies the "predict" vector supplied as its argument!
             */
-            correctB0(intensities, &range, predict.data(), &reg.coeffs);
+            correctB0(intensities, span, predict.data(), &reg.coeffs);
 
-            failpoint = calcRegressionProperties(
+            invalid failpoint = calcRegressionProperties(
                 intensities,
                 intensities_log,
                 x_axis,
@@ -295,7 +318,7 @@ namespace qAlgorithms
             if (stableApex)
             {
                 // equivalent to only one possible apex being in the data, no complex deconvolution is required
-                size_t chosenOne = selectFromGroup(&validRegressions, intensities, length, apexGroups, groupNum);
+                size_t chosenOne = selectFromGroup(&validRegressions, intensities, apexGroups, groupNum);
                 validRegressions[chosenOne].isValid = true;
             }
             else
@@ -351,8 +374,8 @@ namespace qAlgorithms
         double currentApex = reg.position;
         double apexLeftLim = currentApex - min_apex_dist_d;
         double apexRightLim = currentApex + min_apex_dist_d;
-        size_t outerStart = reg.startIdx; // @todo check if signed type is necessary, this should always be positive
-        size_t outerLength = reg.length;
+        size_t outerStart = reg.span.startIdx; // @todo check if signed type is necessary, this should always be positive
+        size_t outerLength = reg.span.length;
         apexGroups[next_unassigned] = currentGroup;
 
         // the assignments counter is incremented for every point that was assigned an apex group
@@ -370,8 +393,8 @@ namespace qAlgorithms
                         continue;
 
                     double secondApex = validRegressions->at(p).position;
-                    size_t innerStart = validRegressions->at(p).startIdx;
-                    size_t innerLength = validRegressions->at(p).length;
+                    size_t innerStart = validRegressions->at(p).span.startIdx;
+                    size_t innerLength = validRegressions->at(p).span.length;
                     // reasoning: while a distance of four points is the logically mandated distance, this is
                     // preconditioned on both regions having any overlap. Here, one point matching in fit
                     // region is not considered an overlap. To this end, we check that the defined region
@@ -408,8 +431,8 @@ namespace qAlgorithms
             currentApex = reg.position;
             apexLeftLim = currentApex - min_apex_dist_d;
             apexRightLim = currentApex + min_apex_dist_d;
-            outerStart = reg.startIdx;
-            outerLength = reg.length;
+            outerStart = reg.span.startIdx;
+            outerLength = reg.span.length;
             apexGroups[next_unassigned] = currentGroup;
         }
 #undef reg
@@ -462,13 +485,13 @@ namespace qAlgorithms
                 const RegressionGauss *reg = validRegressions->data() + i;
                 if (reg->position == apex_lim_L)
                 {
-                    bound_reg_L_L = reg->startIdx;
-                    bound_reg_L_R = reg->startIdx + reg->length + 1;
+                    bound_reg_L_L = reg->span.startIdx;
+                    bound_reg_L_R = reg->span.endIdx();
                 }
                 if (reg->position == apex_lim_R)
                 {
-                    bound_reg_R_L = reg->startIdx;
-                    bound_reg_R_R = reg->startIdx + reg->length + 1;
+                    bound_reg_R_L = reg->span.startIdx;
+                    bound_reg_R_R = reg->span.endIdx();
                 }
             }
             // either regression is fully contained within another
@@ -486,7 +509,6 @@ namespace qAlgorithms
     static size_t selectFromGroup(
         const std::vector<RegressionGauss> *validRegressions,
         const float *intensities,
-        const size_t length,
         const int16_t apexGroups[],
         const int16_t groupNum)
     {
@@ -496,16 +518,15 @@ namespace qAlgorithms
 
         // 1) iterate over the groups to find the relevant region over which to compare
         // the regressions
-        uint16_t lim_L = length;
-        uint16_t lim_R = 0;
+        int32_t lim_L = INT32_MAX;
+        int32_t lim_R = 0;
         for (size_t i = 0; i < regCount; i++)
         {
             if (apexGroups[i] == groupNum)
             {
                 const RegressionGauss *reg = validRegressions->data() + i;
-                lim_L = min(reg->startIdx, lim_L);
-                uint16_t lim_R_reg = reg->length + reg->startIdx - 1;
-                lim_R = max(lim_R, lim_R_reg);
+                lim_L = min(reg->span.startIdx, lim_L);
+                lim_R = max(lim_R, reg->span.endIdx());
             }
         }
         assert(lim_R > 0);
@@ -647,10 +668,10 @@ namespace qAlgorithms
 
 #pragma region "validate Regression"
 
-    double correctB0(const float *const intensities,
-                     const Range_i *range,
-                     float *predicted,
-                     RegCoeffs *coeff) // @todo also correct the error matrix, assess degree of correction applied
+    static double correctB0(const float *const intensities,
+                            const Span_i32 range,
+                            float *predicted,
+                            RegCoeffs *coeff) // @todo also correct the error matrix, assess degree of correction applied
     {
         // problem: after the log transform, regression residuals are not directly transferable to
         // the retransformed model. This is corrected by adjusting b0 so that the MSE in the
@@ -674,8 +695,8 @@ namespace qAlgorithms
 
         // double b0_old = coeff->b0;
 
-        const size_t start = range->startIdx;
-        const size_t end = range->endIdx + 1;
+        const size_t start = range.startIdx;
+        const size_t end = range.endIdx() + 1;
         assert(start < end);
         double x0 = double(coeff->x0);
         for (size_t i = start; i < end; i++)
@@ -728,8 +749,9 @@ namespace qAlgorithms
 
         if (valley_left)
         {
-            int position_b2 = int(-coeffs->b1 / (2 * coeffs->b2));
-            span.startIdx = (int)coeffs->x0 + position_b2;
+            int position_b2 = (int)coeffs->x0 - int(coeffs->b1 / (2 * coeffs->b2));
+            int position_sc = (int)coeffs->x0 - coeffs->scale;
+            span.startIdx = max(position_b2, position_sc);
         }
         else
         {
@@ -738,79 +760,15 @@ namespace qAlgorithms
 
         if (valley_right)
         {
-            int position_b3 = int(-coeffs->b1 / (2 * coeffs->b3));
-            span.set_endIdx((int)coeffs->x0 + position_b3);
+            int position_b3 = (int)coeffs->x0 + int(-coeffs->b1 / (2 * coeffs->b3));
+            int position_sc = (int)coeffs->x0 + coeffs->scale;
+            span.set_endIdx(min(position_b3, position_sc));
         }
         else
         {
             span.set_endIdx((int)coeffs->x0 + (int)coeffs->scale);
         }
         return span;
-    }
-
-    invalid validRegWidth(const RegCoeffs *coeffs, Range_i *range)
-    {
-        // test regression validity without depending on b0 or the degrees of freedom
-        const bool valley_left = coeffs->b2 >= 0;
-        const bool valley_right = coeffs->b3 >= 0;
-        const bool apexLeft = coeffs->b1 < 0;
-
-        // the peak must have a maximum
-        bool noApex = (valley_left && apexLeft) ||
-                      (valley_right && (!apexLeft));
-        if (noApex)
-            return no_apex;
-
-        // position maximum / minimum of b2 or b3. This is just the frst derivative of the peak half equation
-        // (d of y = b0 + b1 x + b23 x^2 => y b1 + 2 * b23 x) solved for y = 0
-        double position_b2 = -coeffs->b1 / (2 * coeffs->b2);
-        double position_b3 = -coeffs->b1 / (2 * coeffs->b3);
-        double x0d = double(coeffs->x0);
-
-        double apexd = apexLeft ? position_b2 : position_b3;
-
-        // there must be at least two full points to either side of the apex. The truncated apex is
-        // the number of points next to it towards the center
-        bool edge_too_far = 2 + (uint16_t)abs(apexd) > coeffs->scale;
-        if (edge_too_far)
-            return invalid_apex; // apex outside of regression window
-
-        size_t apex = size_t(x0d + apexd);
-        size_t lim_l = coeffs->x0 - coeffs->scale;
-        size_t lim_r = coeffs->x0 + coeffs->scale;
-        *range = {lim_l, lim_r, lim_r - lim_l + 1};
-
-        if (!(valley_left || valley_right))
-            return ok; // all ok by definition
-
-        // it is already established that the apex side of the regression is acceptable.
-        // now, we only need to check that the valley is at least two points away from the apex
-        // since only the difference is relevant, this is independent of the side on which the apex is
-        assert(position_b2 < position_b3);
-        if (position_b3 - position_b2 <= 2)
-            return invalid_apex;
-
-        if (valley_left)
-        {
-            size_t spanLeft = size_t(-position_b2);
-            size_t altLim = coeffs->x0 < spanLeft ? 0 : coeffs->x0 - spanLeft;
-            lim_l = max(lim_l, altLim);
-            if (coeffs->x0 - lim_l < 2)
-                return invalid_apex;
-        }
-        else // if (valley_right)
-        {
-            lim_r = min(lim_r, coeffs->x0 + size_t(position_b3));
-            if (lim_r - coeffs->x0 < 2)
-                return invalid_apex;
-        }
-        assert(lim_l <= apex);
-        assert(lim_r >= apex);
-        assert(lim_l < coeffs->x0);
-        assert(lim_r > coeffs->x0);
-
-        *range = {lim_l, lim_r, lim_r - lim_l + 1};
-        return ok;
     }
 
     static double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
@@ -826,9 +784,9 @@ namespace qAlgorithms
     /// @param RSS_reg previously calculated residual sum of squares of the complex model. Hard assumpion of four coefficients.
     /// @param range range of the regression.
     /// @return true: Regression is significant; false: Regression is not better than either alternative.
-    static bool f_testRegression(const float *observed, double RSS_reg, const Range_i *range);
+    static bool f_testRegression(const float *observed, double RSS_reg, const Span_i32 range);
 
-    static double calcSSE_chisqared(const Range_i *regSpan,
+    static double calcSSE_chisqared(const Span_i32 regSpan,
                                     const float *observed,
                                     const float *predict);
 
@@ -849,7 +807,7 @@ namespace qAlgorithms
         assert(!mutateReg->isValid);
         const size_t scale = mutateReg->coeffs.scale;
         const RegCoeffs *coeffs = &mutateReg->coeffs;
-        const Range_i regSpan = mutateReg->regSpan;
+        const Span_i32 regSpan = mutateReg->span;
 
         assert(scale > 1);
         assert(coeffs->x0 + scale < length);
@@ -887,7 +845,7 @@ namespace qAlgorithms
         fit, even very low intensity signals should be accounted for. The test here has a hard-coded
         alpha of 0.05
         */
-        bool f_ok = f_testRegression(intensities_log, RSS_log, &regSpan);
+        bool f_ok = f_testRegression(intensities_log, RSS_log, regSpan);
         if (!f_ok)
         {
             failstates += 2;
@@ -926,8 +884,7 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid. @todo why?
         */
-        assert(mutateReg->regSpan.length > 0);
-        double chiSquare = calcSSE_chisqared(&mutateReg->regSpan, intensities, predict);
+        double chiSquare = calcSSE_chisqared(mutateReg->span, intensities, predict);
         if (chiSquare > CHI_SQUARES[df_sum])
         {
             failstates += 64;
@@ -937,6 +894,7 @@ namespace qAlgorithms
         mutateReg->df = df_sum;
         mutateReg->position = (float)coeffs->x0 + (float)peakPosition(coeffs);
         mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict, length);
+        mutateReg->height = (float)exp(regAt(coeffs, peakPosition(coeffs)));
 
         if (failstates != 0)
             return invalid::invalid_apex;
@@ -948,10 +906,10 @@ namespace qAlgorithms
     double calcRSS_log(const RegressionGauss *mutateReg, const float *observed)
     {
         double RSS = 0;
-        const size_t start = mutateReg->startIdx;
+        const size_t start = mutateReg->span.startIdx;
         const float *obs = observed + start;
         double x = double(start) - double(mutateReg->coeffs.x0);
-        const size_t len = mutateReg->regSpan.length;
+        const size_t len = mutateReg->span.length;
         for (size_t i = 0; i < len; i++)
         {
             double pred = regAt(&mutateReg->coeffs, x);
@@ -963,14 +921,14 @@ namespace qAlgorithms
         return RSS;
     }
 
-    double calcSSE_chisqared(const Range_i *regSpan,
+    double calcSSE_chisqared(const Span_i32 regSpan,
                              const float *observed,
                              const float *predict)
     {
-        const float *obs = observed + regSpan->startIdx;
-        const float *pred = predict + regSpan->startIdx;
+        const float *obs = observed + regSpan.startIdx;
+        const float *pred = predict + regSpan.startIdx;
         double result = 0.0;
-        for (size_t i = 0; i < regSpan->length; i++)
+        for (int32_t i = 0; i < regSpan.length; i++)
         {
             double diff = obs[i] - pred[i];
             result += diff * diff / pred[i];
@@ -978,19 +936,19 @@ namespace qAlgorithms
         return result;
     }
 
-    static double calcRSS_H0_cf1(const float *observed, const Range_i *range)
+    static double calcRSS_H0_cf1(const float *observed, const Span_i32 range)
     {
         // this function calculates the RSS for H0: y = b0 (a constant value)
         double mean = 0;
-        const float *obs = observed + range->startIdx;
-        for (size_t i = 0; i < range->length; i++)
+        const float *obs = observed + range.startIdx;
+        for (int32_t i = 0; i < range.length; i++)
         {
             mean += obs[i];
         }
-        mean /= (double)range->length;
+        mean /= (double)range.length;
 
         double RSS = 0;
-        for (size_t i = 0; i < range->length; i++)
+        for (int32_t i = 0; i < range.length; i++)
         {
             double difference = obs[i] - mean;
             RSS += difference * difference;
@@ -999,15 +957,15 @@ namespace qAlgorithms
         return RSS;
     }
 
-    static double calcRSS_H0_cf2(const float *observed, const Range_i *range)
+    static double calcRSS_H0_cf2(const float *observed, const Span_i32 range)
     {
         // this function calculates the RSS for H0: y = b0 + x * b1 (no weights)
 
         double slope = NAN;
         double intercept = NAN;
-        size_t length = range->length;
+        size_t length = range.length;
         assert(length > 0);
-        const float *obs = observed + range->startIdx;
+        const float *obs = observed + range.startIdx;
         linReg_intx(obs, length, &slope, &intercept);
 
         double RSS = 0;
@@ -1023,11 +981,11 @@ namespace qAlgorithms
         return RSS;
     }
 
-    bool f_testRegression(const float *observed, double RSS_reg, const Range_i *range)
+    bool f_testRegression(const float *observed, double RSS_reg, const Span_i32 range)
     {
         // during the tests, the RSS for the regression has already been calculated in calcRSS_log
         assert(RSS_reg > 0);
-        const size_t length = range->length;
+        const size_t length = range.length;
         bool f_ok = false;
 
         double RSS_H0_cf1 = calcRSS_H0_cf1(observed, range); // y = b
@@ -1052,13 +1010,13 @@ namespace qAlgorithms
         // of signal-to-noise (approximately) has to hold for the worst possible combination of all
         // candidate values
         const size_t idxApex = size_t(mutateReg->position) + mutateReg->coeffs.x0;
-        size_t endIdx = mutateReg->length + mutateReg->startIdx - 1;
 
-        double maxEdge_O = max(intensities[mutateReg->startIdx], intensities[endIdx]);
+        double maxEdge_O = max(intensities[mutateReg->span.startIdx],
+                               intensities[mutateReg->span.endIdx()]);
         double apex_O = intensities[idxApex]; // @todo since this is not the actual apex height, it might be a bad idea to use it
 
-        double x_l = mutateReg->startIdx - mutateReg->coeffs.x0;
-        double x_r = x_l + mutateReg->length;
+        double x_l = mutateReg->span.startIdx - mutateReg->coeffs.x0;
+        double x_r = x_l + mutateReg->span.length;
         double maxEdge_P = max(exp(regAt(&mutateReg->coeffs, x_l)),
                                exp(regAt(&mutateReg->coeffs, x_r)));
 
@@ -1128,18 +1086,19 @@ namespace qAlgorithms
 
     static FeaturePeak peakToFeat(const RegressionGauss *peak, const EIC *eic, uint32_t eic_ID)
     {
-        const float *area_arr = eic->ints_area.data() + peak->startIdx;
-        const float *mz_arr = eic->mz.data() + peak->startIdx;
-        const float *dqsc_arr = eic->DQSC.data() + peak->startIdx;
-        const float *rt_arr = eic->RT.data() + peak->startIdx;
+        const size_t start = peak->span.startIdx;
+        const float *area_arr = eic->ints_area.data() + start;
+        const float *mz_arr = eic->mz.data() + start;
+        const float *dqsc_arr = eic->DQSC.data() + start;
+        const float *rt_arr = eic->RT.data() + start;
 
         float DQSB = -1; // = weightedMeanAndVariance_EIC(area_arr, dqsb_arr, peak->length, nullptr);
-        float DQSC = weightedMeanAndVariance_EIC(area_arr, dqsc_arr, peak->length, nullptr);
+        float DQSC = weightedMeanAndVariance_EIC(area_arr, dqsc_arr, peak->span.length, nullptr);
         assert(DQSC > 0);
         assert(DQSC <= 1);
 
         float mz_uncert = 0;
-        float mz = weightedMeanAndVariance_EIC(area_arr, mz_arr, peak->length, &mz_uncert);
+        float mz = weightedMeanAndVariance_EIC(area_arr, mz_arr, peak->span.length, &mz_uncert);
         assert(mz > 10);
         assert(mz_uncert > 0);
 
@@ -1157,10 +1116,10 @@ namespace qAlgorithms
             peak->position_unc,
             mz_uncert,
             eic_ID,
-            (uint32_t)peak->startIdx,
-            (uint32_t)peak->length,
+            (uint32_t)peak->span.startIdx,
+            (uint32_t)peak->span.length,
             rt_arr[0],
-            rt_arr[peak->length - 1]};
+            rt_arr[peak->span.length - 1]};
     }
 
     size_t findFeatures(const std::vector<EIC> *EICs,
@@ -1362,6 +1321,7 @@ namespace qAlgorithms
 
     double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x)
     {
+        assert(height > 2);
         // solve height / 2 = exp(b0 + x b1 + x^2 b2)
         double y = log(height / 2);
         // use quadratic formula for a x^2 + b x + c = 0
@@ -1677,7 +1637,7 @@ namespace qAlgorithms
         return uncert;
     }
 
-    double peakPosition(const RegCoeffs *c)
+    inline double peakPosition(const RegCoeffs *c)
     {
         double b23 = c->b1 < 0 ? c->b2 : c->b3;
         return -c->b1 / (2 * b23);

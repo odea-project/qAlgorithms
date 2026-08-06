@@ -144,7 +144,7 @@ namespace qAlgorithms
     static std::vector<double> makeCumError(const std::vector<const CentroidPeak *> *bin);
 
     // returns number of elements added to the stack?
-    static int subsetMZ_stack(std::vector<Range_i> *stack,
+    static int subsetMZ_stack(std::vector<Span_i32> *stack,
                               std::vector<Bin> *bincontainer,
                               std::vector<const CentroidPeak *> *notInBins,
                               const std::vector<const qAlgorithms::CentroidPeak *> *pointsInSourceBin,
@@ -193,10 +193,10 @@ namespace qAlgorithms
 
                 std::sort(processThis.pointsInBin.begin(), processThis.pointsInBin.end(), [](const CentroidPeak *lhs, const CentroidPeak *rhs)
                           { return lhs->mz < rhs->mz; });
-                auto activeOS = makeOrderSpace(&processThis);
-                auto cumError = makeCumError(&processThis.pointsInBin);
+                std::vector<double> activeOS = makeOrderSpace(&processThis);
+                std::vector<double> cumError = makeCumError(&processThis.pointsInBin);
 
-                std::vector<Range_i> rangeStack(1, {0, activeOS.size() - 1, activeOS.size()});
+                std::vector<Span_i32> rangeStack(1, {0, (int32_t)activeOS.size()});
                 subsetMZ_stack(&rangeStack,
                                bincontainer.targetBins,
                                &bincontainer.notInBins,
@@ -363,7 +363,7 @@ namespace qAlgorithms
         return cumError;
     }
 
-    static int subsetMZ_stack(std::vector<Range_i> *stack,
+    static int subsetMZ_stack(std::vector<Span_i32> *stack,
                               std::vector<Bin> *bincontainer,
                               std::vector<const CentroidPeak *> *notInBins,
                               const std::vector<const qAlgorithms::CentroidPeak *> *pointsInSourceBin,
@@ -380,16 +380,15 @@ namespace qAlgorithms
 
         while (!stack->empty())
         {
-            const Range_i range = stack->back();
-            assert(range.length == range.endIdx - range.startIdx + 1);
+            const Span_i32 range = stack->back();
             stack->pop_back();
 
-            const size_t binsizeInOS = range.endIdx - range.startIdx + 1;
+            const size_t binsizeInOS = range.length;
             assert(binsizeInOS <= pointsInSourceBin->size());
 
             if (binsizeInOS < MIN_BIN_SIZE)
             {
-                for (size_t i = range.startIdx; i < range.endIdx + 1; i++)
+                for (int32_t i = range.startIdx; i < range.endIdx() + 1; i++)
                 {
                     notInBins->push_back(pointsInSourceBin->at(i));
                     pointsProcessed += 1;
@@ -407,7 +406,7 @@ namespace qAlgorithms
             assert(cenID != previousID);
             previousID = cenID;
 
-            const double meanError = meanOfCumulative(cumError->data(), range.startIdx, range.endIdx);
+            const double meanError = meanOfCumulative(cumError->data(), range.startIdx, range.endIdx());
 
             const double crit_mz_gap = binningCritVal(binsizeInOS, meanError);
 
@@ -424,16 +423,13 @@ namespace qAlgorithms
                 continue;
             }
 
-            const size_t cutpos = size_t(pointerToMax - pointerToStart);
+            const int32_t cutpos = int32_t(pointerToMax - pointerToStart);
 
-            {
-                assert(cutpos >= range.startIdx);
-                stack->push_back({range.startIdx, cutpos, cutpos - range.startIdx + 1});
-            }
-            {
-                assert(cutpos < range.endIdx);
-                stack->push_back({cutpos + 1, range.endIdx, range.endIdx - cutpos});
-            }
+            assert(cutpos >= range.startIdx);
+            stack->push_back({range.startIdx, cutpos - range.startIdx + 1});
+
+            assert(cutpos < range.endIdx());
+            stack->push_back({cutpos + 1, range.endIdx() - cutpos});
         }
         assert(pointsProcessed == pointsInSourceBin->size());
 
