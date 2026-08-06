@@ -64,11 +64,6 @@ namespace qAlgorithms
         size_t maxscale,
         std::vector<RegCoeffs> *coeffs);
 
-    void findBestScales(std::vector<RegressionGauss> *validRegressions,
-                        std::vector<RegressionGauss> *validRegsTmp,
-                        const float *intensities,
-                        const uint16_t *const degreesOfFreedom_cum);
-
     // mutate b0 so that it is optimal for the exponential case if b1, b2 and b3 are identical
 
     /// @brief adjust the height of a regression to better fit the exponential data
@@ -96,21 +91,6 @@ namespace qAlgorithms
         invalid_chisq = 9,
         none = -1
     };
-
-    /// @brief perform various statistical tests to see if a regression describes a valid peak
-    /// @param degreesOfFreedom_cum cumulative degrees of freedom (only relevant for interpolated data)
-    /// @param intensities measured intensities
-    /// @param intensities_log log of measured intensities - must have same length as intensities
-    /// @param mutateReg regression that should be mutated by this function
-    /// @return 0 if the regression is valid, otherwise the filter step which kicked it out
-    invalid calcRegressionProperties(
-        const float *intensities,
-        const float *intensities_log,
-        const float *x_axis,
-        const float *predict,
-        const size_t df_sum,
-        const size_t length,
-        RegressionGauss *mutateReg);
 
     // ### Feature-specific Code ### //
 

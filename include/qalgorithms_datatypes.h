@@ -68,7 +68,8 @@ namespace qAlgorithms
         uint16_t length = 0;
         uint16_t df = 0;            // degrees of freedom, interpolated data points will not be considered
         uint8_t numCompetitors = 0; // number of points that were discarded in favour of this regression
-        bool isValid = false;       // flag to indicate if the regression is valid
+        int8_t apexGroup = -1;
+        bool isValid = false; // flag to indicate if the regression is valid
     };
 
     struct CentroidPeak

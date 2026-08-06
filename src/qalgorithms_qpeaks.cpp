@@ -28,11 +28,6 @@ namespace qAlgorithms
     // copy relevant values from regression struct to centroid struct - not all fields supported
     static inline CentroidPeak regToCen(const RegressionGauss *reg, uint16_t id, uint16_t specNum);
 
-    static double calcMSE_exp(const RegCoeffs *coeff,
-                              const float *observed,
-                              const Range_i *regSpan,
-                              const double df);
-
     static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[]);
 
     static bool groupApexIsStable(
@@ -56,83 +51,42 @@ namespace qAlgorithms
         const size_t maxscale,
         std::vector<RegressionGauss> *result);
 
+    /// @brief perform various statistical tests to see if a regression describes a valid peak
+    /// @param degreesOfFreedom_cum cumulative degrees of freedom (only relevant for interpolated data)
+    /// @param intensities measured intensities
+    /// @param intensities_log log of measured intensities - must have same length as intensities
+    /// @param mutateReg regression that should be mutated by this function
+    /// @return 0 if the regression is valid, otherwise the filter step which kicked it out
+    static invalid calcRegressionProperties(
+        const float *intensities,
+        const float *intensities_log,
+        const float *x_axis,
+        const float *predict,
+        const size_t df_sum,
+        const size_t length,
+        RegressionGauss *mutateReg);
+
+    static void adjustRegression(RegressionGauss *reg, const float *x_values);
+
     const double minIntensity_global = 2.7182818284590452; // exp(1) == e
 
     // -------------------------------------- //
 
-    static void retransformPeaks(
-        const std::vector<RegressionGauss> *peaks,
-        const float *x_values,
-        const size_t numPeaks,
-        std::vector<RegressionGauss> *result)
+    static void adjustRegression(RegressionGauss *reg, const float *x_values)
     {
-        assert(numPeaks == peaks->size());
-        // retransforming is probably best if the range of x values is as small as necessary
-        for (size_t i = 0; i < numPeaks; i++)
-        {
-            const RegressionGauss *regression = peaks->data() + i;
-            assert(regression->isValid);
-            const RegCoeffs coeff = regression->coeffs;
-            double b23 = coeff.b1 < 0 ? coeff.b2 : coeff.b3;
+        assert(reg->isValid);
 
-            double apex_raw = -coeff.b1 / (b23 * 2);
-            double apex = apex_raw + double(coeff.x0);
-            assert(abs(apex - regression->position) < 10e-6); // this can differ up to 5 * 10e-7 from floating point error
+        double apex_pretransform = reg->position + (double)reg->coeffs.x0;
+        size_t leftOfApex = size_t(apex_pretransform);
+        float delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
+        // position is determined relative to the point left of the apex
+        float apexFraction = delta_x * float(apex_pretransform - trunc(apex_pretransform));
+        reg->position = x_values[leftOfApex] + apexFraction;
+        reg->position_unc *= delta_x;
 
-            RegressionGauss peak;
+        reg->fwhm = (float)fullWidthHalfMax(&reg->coeffs, reg->height, delta_x);
 
-            // @todo ensure that this is a good way to estimate delta_x for real data
-            // we could also use a strategy such as taking the distance closest to the apex.
-            // Also check if the chosen delta_x is acceptable.
-            size_t leftOfApex = size_t(apex);
-            float delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
-
-            // control against all distances in the peak, test if they are equidistant enough
-            // the test below shows that delta x must be considered on a per-peak basis
-
-#if 0
-            double delta_min = delta_x;
-            double delta_max = delta_x;
-            double delta_mean = 0;
-            for (size_t pos = regression->startIdx; pos < regression->regSpan.endIdx; pos++)
-            {
-                double d = x_values[pos + 1] - x_values[pos];
-                delta_min = min(d, delta_min);
-                delta_max = max(d, delta_max);
-                delta_mean += d;
-                printf("%f, ", d);
-            }
-            delta_mean /= regression->regSpan.length - 1;
-            printf(" | mean: %f\n", delta_mean);
-#endif
-
-            // position is determined relative to the point left of the apex
-            float apexFraction = delta_x * float(apex - trunc(apex));
-            peak.position = x_values[leftOfApex] + apexFraction;
-            peak.position_unc = regression->position_unc * delta_x;
-
-            peak.startIdx = regression->startIdx;
-            peak.length = regression->length;
-
-            // peak height = regression at apex position before transformation
-            peak.height = (float)exp(regAt(&coeff, apex_raw));
-            peak.height_unc = regression->height_unc * peak.height;
-
-            peak.area = regression->area;
-            peak.area_unc = regression->area_unc * (float)exp(coeff.b0); // @todo this is incorrect, since we have two uncertainty bounds
-            assert(peak.area > 1);
-
-            // the empirical peak width is generally estimated at half maximum. Our peak
-            // model only has a standard deviation for the apex peak
-            peak.fwhm = (float)fullWidthHalfMax(&coeff, peak.height, delta_x);
-
-            peak.dqs = erfc(regression->area_unc / regression->area);
-            peak.jaccard = regression->jaccard;
-
-            peak.coeffs = regression->coeffs;
-
-            result->push_back(peak);
-        }
+        reg->dqs = erfc(reg->area_unc / reg->area);
     }
 
     int qpeaks_find(
@@ -297,20 +251,6 @@ namespace qAlgorithms
 
 #pragma region "Conflict Elimination"
 
-    // ----------- old functions -------------//
-
-    static void mergeRegsInScale(
-        const float *intensities,
-        const uint16_t *const df_cum,
-        std::vector<RegressionGauss> *validRegsTmp,
-        std::vector<RegressionGauss> *validRegressions);
-
-    static void mergeRegressionsOverScales(
-        std::vector<RegressionGauss> *validRegressions,
-        const float *intensities);
-
-    // -------------------------------------- //
-
     static void regression_on_continuum(
         const float *intensities,
         const float *x_axis,
@@ -325,102 +265,57 @@ namespace qAlgorithms
         std::vector<RegCoeffs> coefficients;
         findCoefficients(intensities_log, length, maxscale, &coefficients);
 
-        std::vector<RegressionGauss> validRegsTmp; // all independently valid regressions regressions
-        validRegsTmp.reserve(coefficients.size() / 2);
+        std::vector<RegressionGauss> validRegressions; // all independently valid regressions regressions
+        validRegressions.reserve(coefficients.size() / 2);
         size_t validCount = validateRegressions(intensities,
                                                 intensities_log,
                                                 x_axis,
                                                 df,
                                                 &coefficients,
                                                 length,
-                                                &validRegsTmp);
+                                                &validRegressions);
         if (validCount == 0)
             return;
         if (validCount == 1)
         {
-            retransformPeaks(&validRegsTmp,
-                             x_axis,
-                             validCount,
-                             result);
+            RegressionGauss *reg = validRegressions.data();
+            adjustRegression(reg, x_axis);
+            result->push_back(*reg);
             return;
         }
 
         // rework of the apex selection, currently without the ability to interpolate points
         int16_t apexGroups[max_apex_per_group];
-        size_t apexcount = groupRegsByApex(&validRegsTmp, apexGroups);
+        size_t apexcount = groupRegsByApex(&validRegressions, apexGroups);
         assert(apexcount < INT16_MAX);
 
         for (int16_t groupNum = 0; groupNum < (int16_t)apexcount; groupNum++)
         {
-            bool stableApex = groupApexIsStable(&validRegsTmp, apexGroups, groupNum);
+            bool stableApex = groupApexIsStable(&validRegressions, apexGroups, groupNum);
             if (stableApex)
             {
                 // equivalent to only one possible apex being in the data, no complex deconvolution is required
-                size_t chosenOne = selectFromGroup(&validRegsTmp, intensities, length, apexGroups, groupNum);
-                validRegsTmp[chosenOne].isValid = true;
+                size_t chosenOne = selectFromGroup(&validRegressions, intensities, length, apexGroups, groupNum);
+                validRegressions[chosenOne].isValid = true;
             }
             else
             {
                 // function to split off here @todo
                 groupNum--;
-                printf("looping endlessly ... ");
-                groupRegsByApex(&validRegsTmp, apexGroups);
+                printf("looping endlessly ... \n");
+                groupRegsByApex(&validRegressions, apexGroups);
             }
         }
 
-        std::vector<RegressionGauss> validRegressions;
-
-        mergeRegsInScale(
-            intensities,
-            df,
-            &validRegsTmp,
-            &validRegressions);
-
-        // there can be 0, 1 or more than one regressions in validRegressions
-        mergeRegressionsOverScales(&validRegressions, intensities);
-
-        assert(validRegressions.size() == apexcount);
-
-// this discrepancy is due to the degrees of freedom supplied to the old function being non-
-// uniform when comparing regions and thus being biased towards broader signals
-#if 0
-size_t chosenOne = 0;
-        if (validCount > apexcount)
+        for (size_t peak = 0; peak < validRegressions.size(); peak++)
         {
-            chosenOne = selectFromGroup(&validRegsTmp, intensities, length, apexGroups, 0);
-            bool stableApex = groupApexIsStable(&validRegsTmp, apexGroups, 0);
-            assert(stableApex);
-        }
-        double chosenB1 = validRegsTmp.at(chosenOne).coeffs.b1;
-        bool b1_match = false;
-        for (size_t reg = 0; reg < validRegressions.size(); reg++)
-        {
-            if (validRegressions.at(reg).coeffs.b1 == chosenB1)
-                b1_match = true;
-        }
-        if (!b1_match && validRegressions.size() == 1)
-        {
-            printf("observed | old prediction | new prediction\n");
-            // assert(validRegressions.size() == 1);
-            RegressionGauss *reg_old = validRegressions.data();
-            RegressionGauss *reg_new = validRegsTmp.data() + chosenOne;
-            for (size_t i = 0; i < length; i++)
+            RegressionGauss *reg = validRegressions.data() + peak;
+            if (reg->isValid)
             {
-                double x_old = (double)i - (double)reg_old->coeffs.x0;
-                double x_new = (double)i - (double)reg_new->coeffs.x0;
-                printf("%f, %f, %f\n", intensities[i],
-                       exp(regAt(&reg_old->coeffs, x_old)),
-                       exp(regAt(&reg_new->coeffs, x_new)));
+                adjustRegression(reg, x_axis);
+                result->push_back(*reg);
             }
-            printf("Old range: %u to %u\n", reg_old->startIdx, (uint16_t)(reg_old->startIdx + reg_old->length - 1));
-            printf("New range: %u to %u\n\n", reg_new->startIdx, (uint16_t)(reg_new->startIdx + reg_new->length - 1));
         }
-#endif
-
-        retransformPeaks(&validRegressions,
-                         x_axis,
-                         validRegressions.size(),
-                         result);
     }
 
     static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[])
@@ -649,296 +544,6 @@ size_t chosenOne = 0;
         }
         assert(bestRegIdx < regCount);
         return bestRegIdx;
-    }
-
-    // --------------- old functions ---------------- //
-    void mergeRegsInScale(
-        const float *intensities,
-        const uint16_t *const df_cum,
-        std::vector<RegressionGauss> *validRegsTmp,
-        std::vector<RegressionGauss> *validRegressions)
-    {
-        std::vector<RegressionGauss> validRegsAtScale;
-        size_t currentScale = GLOBAL_MINSCALE;
-        RegressionGauss tmp;
-        tmp.coeffs.scale = 0;
-        validRegsTmp->push_back(tmp); // doing this avoids a second check for the last scale group @todo still very hacky
-        RegressionGauss *currentReg = validRegsTmp->data();
-
-        while (currentReg->coeffs.scale != 0)
-        {
-        repeat:
-            if (currentReg->coeffs.scale == currentScale)
-            {
-                validRegsAtScale.push_back(*currentReg);
-                currentReg += 1;
-                goto repeat;
-            }
-
-            // nothing happens if the per-scale vector is empty
-            if (validRegsAtScale.size() == 1)
-            {
-                // only one valid regression at scale
-                validRegressions->push_back(validRegsAtScale.front());
-            }
-            else if (validRegsAtScale.size() > 1)
-            {
-                // resolve conflicting regressions
-                findBestScales(validRegressions, &validRegsAtScale, intensities, df_cum);
-            }
-            // regression is not incremented because a toggle was triggered
-            currentScale += 1;
-            validRegsAtScale.clear();
-        }
-        validRegsTmp->pop_back();
-    }
-
-    static uint32_t findBestRegression(
-        const float *intensities,
-        const std::vector<RegressionGauss> *regressions,
-        const uint16_t *const degreesOfFreedom_cum,
-        const Range_i *regSpan);
-
-    void findBestScales(std::vector<RegressionGauss> *validRegressions,
-                        std::vector<RegressionGauss> *validRegsTmp,
-                        const float *intensities,
-                        const uint16_t *const degreesOfFreedom_cum)
-    {
-        /*
-            Grouping:
-            This block of code implements the grouping. It groups the valid peaks based
-            on the apex positions. Peaks are defined as similar, i.e., members of the
-            same group, if they fullfill at least one of the following conditions:
-            - The difference between two peak apexes is less than 4. (Nyquist Shannon
-            Sampling Theorem, separation of two maxima)
-            - At least one apex of a pair of peaks is within the window of the other peak.
-            (Overlap of two maxima)
-        */
-        std::vector<Range_i> groups;
-        groups.reserve(validRegsTmp->size());
-
-        size_t prev_i = 0;
-
-        for (size_t i = 0; i < validRegsTmp->size() - 1; i++)
-        {
-            // check if the difference between two peak apexes is less than 4 (Nyquist Shannon
-            // Sampling Theorem, separation of two maxima), or if the apex of a peak is within
-            // the window of the other peak (Overlap of two maxima)
-            const RegressionGauss *reg1 = &(validRegsTmp->at(i));
-            const RegressionGauss *reg2 = &(validRegsTmp->at(i + 1));
-
-            if (std::abs(reg1->position - reg2->position) < 4)
-                continue;
-
-            if (reg1->position > reg2->startIdx) // NOLINT (this function will be removed soon)
-                continue;
-
-            if (reg1->regSpan.endIdx > reg2->position) // NOLINT (s.o.)
-                continue;
-
-            // the two regressions differ, i.e. create a new group
-            groups.push_back({prev_i, i, i - prev_i + 1});
-            prev_i = i + 1;
-        }
-        groups.push_back({prev_i,
-                          validRegsTmp->size() - 1,
-                          validRegsTmp->size() - prev_i}); // last group ends with index of the last element
-
-        /*
-          Survival of the Fittest Filter:
-          This block of code implements the survival of the fittest filter. It selects the peak with
-          the lowest mean squared error (MSE) as the representative of the group. If the group contains
-          only one peak, the peak is directly pushed to the valid regressions. If the group contains
-          multiple peaks, the peak with the lowest MSE is selected as the representative of the group
-          and pushed to the valid regressions.
-        */
-        for (size_t groupIdx = 0; groupIdx < groups.size(); groupIdx++)
-        {
-            if (groups[groupIdx].startIdx == groups[groupIdx].endIdx)
-            { // already isolated peak => push to valid regressions
-                size_t regIdx = groups[groupIdx].startIdx;
-                auto onlyReg = validRegsTmp->at(regIdx);
-                assert(onlyReg.isValid);
-                validRegressions->push_back(onlyReg);
-            }
-            else
-            { // survival of the fittest based on mse between original data and reconstructed (exp transform of regression)
-                uint32_t bestRegIdx = findBestRegression(intensities, validRegsTmp, degreesOfFreedom_cum,
-                                                         groups.data() + groupIdx);
-
-                RegressionGauss bestReg = validRegsTmp->at(bestRegIdx);
-                // bestReg.mse = bestRegIdx.mse;
-                assert(bestReg.isValid);
-                validRegressions->push_back(bestReg);
-            }
-        }
-    }
-
-    uint32_t findBestRegression(
-        const float *intensities,
-        const std::vector<RegressionGauss> *regressions,
-        const uint16_t *const degreesOfFreedom_cum,
-        const Range_i *regSpan)
-    {
-        double best_mse = INFINITY;
-        uint32_t bestRegIdx = 0;
-
-        // identify left (smallest) and right (largest) limit of the grouped regression windows
-        uint16_t left_limit = UINT16_MAX;
-        size_t right_limit = 0;
-        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
-        {
-            const RegressionGauss *reg = regressions->data() + i;
-            left_limit = min(left_limit, reg->startIdx);
-            right_limit = max(right_limit, reg->regSpan.endIdx);
-        }
-
-        Range_i newRange = {left_limit, right_limit, right_limit - left_limit + 1};
-        double df_sum = (double)sumOfCumulative(degreesOfFreedom_cum, left_limit, newRange.length);
-        df_sum -= 4; // four coefficients
-        assert(df_sum > 0);
-
-        for (size_t i = regSpan->startIdx; i < regSpan->endIdx + 1; i++)
-        {
-            // step 2: calculate the mean squared error (MSE) between the predicted and actual values
-            const RegressionGauss *reg = regressions->data() + i;
-            Range_i range = {left_limit, right_limit, right_limit - left_limit + 1};
-            double mse = calcMSE_exp(&reg->coeffs,
-                                     intensities,
-                                     &range,
-                                     df_sum);
-            if (mse < best_mse)
-            {
-                best_mse = mse;
-                bestRegIdx = i;
-            }
-        }
-        assert(regressions->at(bestRegIdx).isValid);
-        return bestRegIdx;
-    }
-
-    void mergeRegressionsOverScales(
-        std::vector<RegressionGauss> *validRegressions,
-        const float *intensities)
-    {
-        if (validRegressions->size() < 2)
-        {
-            return;
-        }
-
-        /*
-          Grouping Over Scales:
-          This block of code implements the grouping over scales. It groups the valid
-          peaks based on the apex positions. Peaks are defined as similar, i.e.,
-          members of the same group, if they fullfill at least one of the following conditions:
-          - The difference between two peak apexes is less than 4. (Nyquist Shannon Sampling Theorem, separation of two maxima)
-          - At least one apex of a pair of peaks is within the window of the other peak. (Overlap of two maxima)
-        */
-
-        // iterate over the validRegressions vector
-        RegressionGauss *firstReg = validRegressions->data();
-        for (size_t i = 0; i < validRegressions->size(); i++)
-        {
-            RegressionGauss *activeReg = firstReg + i;
-            assert(activeReg->isValid);
-            double MSE_group = 0;
-            int DF_group = 0;
-            // only calculate required MSEs since this is one of the performance-critical steps
-            std::vector<double> exponentialMSE(validRegressions->size(), 0);
-            std::vector<uint32_t> validRegressionsInGroup; // vector of indices to validRegressions
-            validRegressionsInGroup.reserve(64);
-            size_t competitors = 0; // a competitor is a mutually exclusive alternative regression
-
-            Range_i sharedRegion = activeReg->regSpan;
-
-            for (size_t j = 0; j < i; j++)
-            {
-
-                RegressionGauss *secondReg = firstReg + j;
-                if (secondReg == activeReg)
-                {
-                    continue; // this should not have been permitted in the first place
-                }
-                // there was a subtle bug here where the MSE was not calculated for the shared region,
-                // resulting in a selection bias for narrow regression windows
-                sharedRegion.startIdx = min(activeReg->startIdx, secondReg->startIdx);
-                sharedRegion.endIdx = max(activeReg->regSpan.endIdx, secondReg->regSpan.endIdx);
-                sharedRegion.length = sharedRegion.endIdx - sharedRegion.startIdx + 1;
-
-                if (!secondReg->isValid) // check is needed because regressions are set to invalid in the outer loop
-                    continue;
-
-                if (activeReg->position < secondReg->startIdx) // NOLINT (this function will be removed soon)
-                    continue;
-
-                if (activeReg->position > secondReg->regSpan.endIdx) // NOLINT (s. o.)
-                    continue;
-
-                if (secondReg->position < activeReg->startIdx) // NOLINT (s. o.)
-                    continue;
-
-                if (secondReg->position > activeReg->regSpan.endIdx) // NOLINT (s. o.)
-                    continue;
-
-                if (exponentialMSE[j] == 0.0)
-                {
-                    exponentialMSE[j] = calcMSE_exp(
-                        &secondReg->coeffs,
-                        intensities,
-                        &sharedRegion,
-                        secondReg->df); // @todo this is wrong!
-                }
-                DF_group += secondReg->df;                      // add the degree of freedom
-                MSE_group += exponentialMSE[j] * secondReg->df; // add the sum of squared errors
-                // add the iterator of the ref peak to a vector of iterators
-                validRegressionsInGroup.push_back(j);
-                competitors += secondReg->numCompetitors + 1; // a regression can have beaten a previous one
-
-            } // after this loop, validRegressionsInGroup contains all regressions that are still valid and contend with the regression at position i
-
-            if (validRegressionsInGroup.empty()) // no competing regressions exist
-            {
-                assert(DF_group < 1);
-                continue;
-            }
-
-            MSE_group /= DF_group;
-
-            if (exponentialMSE[i] == 0.0)
-            { // calculate the mse of the current peak
-                exponentialMSE[i] = calcMSE_exp(
-                    &activeReg->coeffs,
-                    intensities,
-                    &activeReg->regSpan,
-                    activeReg->df);
-            }
-            if (exponentialMSE[i] <= MSE_group)
-            {
-                // Set isValid to false for the candidates from the group
-                for (size_t it_ref_peak : validRegressionsInGroup)
-                {
-                    firstReg[it_ref_peak].isValid = false;
-                }
-                // only advance competitor count if regression is actually better
-                activeReg->numCompetitors = competitors;
-            }
-            else
-            { // Set isValid to false for the current peak
-                activeReg->isValid = false;
-            }
-        }
-
-        // remove invalid regressions
-        size_t accessID = 0;
-        for (size_t i = 0; i < validRegressions->size(); i++)
-        {
-            if (validRegressions->at(i).isValid)
-            {
-                validRegressions->at(accessID) = validRegressions->at(i);
-                accessID += 1;
-            }
-        }
-        validRegressions->resize(accessID);
     }
 
 #pragma endregion "eliminate conflicting regs"
@@ -1232,7 +837,7 @@ size_t chosenOne = 0;
     // outcome (refer to bonferroni correction). Instead, a correct version of this function
     // should only perform one test (if any) and resolve regressions primarily via decision
     // rules founded in logical necessities for the peak model
-    invalid calcRegressionProperties( // returns the number of the failed test
+    static invalid calcRegressionProperties( // returns the number of the failed test
         const float *intensities,
         const float *intensities_log,
         const float *x_axis,
@@ -1356,26 +961,6 @@ size_t chosenOne = 0;
         }
         assert(RSS > 0);
         return RSS;
-    }
-
-    double calcMSE_exp(const RegCoeffs *coeff,
-                       const float *observed,
-                       const Range_i *regSpan,
-                       const double df)
-    {
-        double mse = 0;
-        double x = double(regSpan->startIdx) - double(coeff->x0);
-        const float *obs = observed + regSpan->startIdx;
-        for (size_t i = 0; i < regSpan->length; i++)
-        {
-            double pred = exp(regAt(coeff, x));
-            double diff = obs[i] - pred;
-            mse += diff * diff;
-            x += 1.0;
-        }
-        mse /= df;
-        assert(mse > 0);
-        return mse;
     }
 
     double calcSSE_chisqared(const Range_i *regSpan,
