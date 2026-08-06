@@ -1026,17 +1026,20 @@ namespace qAlgorithms
         return apex / maxEdge;
     }
 
-    bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
+    static bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
     {
-        // @todo explain
-        // checks if both quadratic terms are significant - should we only check the apex coeff?
+        // If the coefficient for the peak half containing the apex is not significantly
+        // different from 0, the produced regression does not reliably describe a system
+        // that actually has an apex. On the other hand, the non-apex half can approach
+        // zero without impacting the regression correctness. Significance here uses a
+        // one-sided t-Test against zero.
+
         assert(mse > 0);
+        double testCoeff = coeffs->b1 < 0 ? coeffs->b2 : coeffs->b3 * -1; // absolute difference counts
         const double inv_E = qalgo_matInverse[coeffs->scale].E;
         double divisor = sqrt(inv_E * mse);
-        double abs2 = abs(coeffs->b2);
-        double abs3 = abs(coeffs->b3);
-        double tValue = max(abs2, abs3);
-        return tValue / divisor > T_VALUES[df_sum] * divisor; // statistical significance of the quadratic term
+        double t_value = testCoeff / divisor; // test against mean 0
+        return t_value > T_VALUES[df_sum];    // @todo this is one-sided, so tvals for alpha' = alpha * 2 are needed
     }
 
 #pragma region "Feature Detection"
