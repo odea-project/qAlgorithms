@@ -82,7 +82,7 @@ namespace qAlgorithms
     // take a jacobian matrix as input and return the transpose at scale
     static double matProductReg(const double J[4], const size_t scale);
 
-    static bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
+    static bool insignificantCoefficient(const RegCoeffs *coeffs, const double mse, const size_t df_sum);
 
     // utility functions for calculating regression values
     static double regAt(const RegCoeffs *coeff, const double x);
@@ -840,6 +840,13 @@ namespace qAlgorithms
         // double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
 
+        bool badCoeff = insignificantCoefficient(coeffs, mse_log, df_sum);
+        if (badCoeff)
+        {
+            failstates += 4;
+            return invalid::invalid_quadratic;
+        }
+
         /*
         We use an F-test instead of a normal height threshold. If the peak shape is a good enough
         fit, even very low intensity signals should be accounted for. The test here has a hard-coded
@@ -1026,7 +1033,7 @@ namespace qAlgorithms
         return apex / maxEdge;
     }
 
-    static bool isValidQuadraticTerm(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
+    static bool insignificantCoefficient(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
     {
         // If the coefficient for the peak half containing the apex is not significantly
         // different from 0, the produced regression does not reliably describe a system
@@ -1039,7 +1046,7 @@ namespace qAlgorithms
         const double inv_E = qalgo_matInverse[coeffs->scale].E;
         double divisor = sqrt(inv_E * mse);
         double t_value = testCoeff / divisor; // test against mean 0
-        return t_value > T_VALUES[df_sum];    // @todo this is one-sided, so tvals for alpha' = alpha * 2 are needed
+        return t_value > T_VALUES[df_sum];
     }
 
 #pragma region "Feature Detection"
