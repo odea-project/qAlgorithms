@@ -436,9 +436,9 @@ static void test_singlePeak()
     double diff_b3 = abs(coeff.b3 - validRegs.front().coeffs.b3);
 
     assert(diff_b0 < abs(coeff.b0) * 0.05, "> 5%% Error in b0 estimate\n", NULL);
-    assert(diff_b1 < abs(coeff.b1) * 0.05, "> 5%% Error in b0 estimate\n", NULL);
-    assert(diff_b2 < abs(coeff.b2) * 0.05, "> 5%% Error in b0 estimate\n", NULL);
-    assert(diff_b3 < abs(coeff.b3) * 0.05, "> 5%% Error in b0 estimate\n", NULL);
+    assert(diff_b1 < abs(coeff.b1) * 0.05, "> 5%% Error in b1 estimate\n", NULL);
+    assert(diff_b2 < abs(coeff.b2) * 0.05, "> 5%% Error in b2 estimate\n", NULL);
+    assert(diff_b3 < abs(coeff.b3) * 0.05, "> 5%% Error in b3 estimate\n", NULL);
 }
 
 static int simulate_stepwise(

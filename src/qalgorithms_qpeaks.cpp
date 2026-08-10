@@ -861,7 +861,7 @@ namespace qAlgorithms
 
         // uncertainty calculation and t-tests against peak properties
 
-        double position = (float)peakPosition(coeffs);
+        float position = (float)peakPosition(coeffs);
         float uncert_position = (float)peakPositionUncert(coeffs, mse_log);
         mutateReg->position_unc = uncert_position;
         float uncert_height = (float)peakHeightUncert(coeffs, mse_log);
@@ -907,7 +907,7 @@ namespace qAlgorithms
         if (failstates != 0)
             return invalid::invalid_apex;
 
-        mutateReg->isValid = true;
+        mutateReg->isValid = false; // note: this field is only required later on for eliminating regressions
         return ok;
     }
 
