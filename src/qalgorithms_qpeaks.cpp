@@ -107,11 +107,11 @@ namespace qAlgorithms
     {
         assert(reg->isValid);
 
-        double apex_pretransform = reg->position + (double)reg->coeffs.x0;
-        size_t leftOfApex = size_t(apex_pretransform);
+        float position = reg->position;
+        size_t leftOfApex = size_t(position);
         float delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
         // position is determined relative to the point left of the apex
-        float apexFraction = delta_x * float(apex_pretransform - trunc(apex_pretransform));
+        float apexFraction = delta_x * position - trunc(position);
         reg->position = x_values[leftOfApex] + apexFraction;
         reg->position_unc *= delta_x;
 
@@ -825,11 +825,11 @@ namespace qAlgorithms
         // @todo this should be a test for similarity, since we cannot assume factor two is a good
         // fit for the worst possible combination of apex and edge, t-test instead?
         double apexToEdge = apexToEdgeRatio(mutateReg, intensities);
-        if (apexToEdge < 2)
-        {
-            failstates += 1;
-            // return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
-        }
+        // if (apexToEdge < 2)
+        // {
+        //     failstates += 1;
+        //     // return invalid_apexToEdge; // invalid apex to edge ratio // b0 independent
+        // }
 
         // @todo differentiate between tests performed in log and exp domain better
         // everything involving the RSS is dependent on b0!
@@ -861,7 +861,7 @@ namespace qAlgorithms
 
         // uncertainty calculation and t-tests against peak properties
 
-        double position = -coeffs->b1 / 2 / (coeffs->b1 < 0 ? coeffs->b2 : coeffs->b3);
+        double position = (float)peakPosition(coeffs);
         float uncert_position = (float)peakPositionUncert(coeffs, mse_log);
         mutateReg->position_unc = uncert_position;
         float uncert_height = (float)peakHeightUncert(coeffs, mse_log);
@@ -899,9 +899,10 @@ namespace qAlgorithms
         }
 
         mutateReg->df = df_sum;
-        mutateReg->position = (float)coeffs->x0 + (float)peakPosition(coeffs);
+        mutateReg->position = (float)coeffs->x0 + position;
         mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict, length);
         mutateReg->height = (float)exp(regAt(coeffs, peakPosition(coeffs)));
+        assert(mutateReg->position > 1);
 
         if (failstates != 0)
             return invalid::invalid_apex;
@@ -1160,7 +1161,7 @@ namespace qAlgorithms
         }
 
         // peaks are sorted here so they can be treated as const throughout the rest of the program
-        std::sort(res->begin(), res->end(), [](FeaturePeak lhs, FeaturePeak rhs)
+        std::sort(res->begin(), res->end(), [](const FeaturePeak &lhs, const FeaturePeak &rhs)
                   { return lhs.retentionTime < rhs.retentionTime; });
 
         return res->size();

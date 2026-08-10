@@ -1,4 +1,7 @@
 #include "qalgorithms_datatypes.h"
+#include "qalgorithms_qpeaks.h"
+#include <cstddef>
+#include <vector>
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wvariadic-macro-arguments-omitted"
@@ -9,12 +12,6 @@
 using namespace qAlgorithms;
 
 // @todo test these specific values with qpeaks:
-
-// Note: this is a double peak system in need of deconvolution which i included because
-// the old design for selecting the best entry of a set of regressions eliminated the
-// second, smaller peak despite the apexes being far enough apart. Interesting, at the
-// time of writing, no regression with positive coefficients was taken into consideration
-// 8862.04883, 17619.8887, 23784.2598, 22516.0684, 17171.5332, 14893.7227, 16483.5371, 16239.6406, 11697.918, 5697.0332
 
 // This data contains three peaks, but only the two less intense ones were found.
 // The new apex grouping function marked them as conflicting, which should not be the case.
@@ -36,6 +33,44 @@ using namespace qAlgorithms;
 // std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
 // std::vector<float> intensity = {157.883072, 1325.722046, 2188.603760, 5415.137695, 12294.484375, 16239.560547, 13575.218750, 9618.787109, 7654.178223, 20002.025391, 69383.062500, 147876.296875, 233001.171875, 244286.796875, 162216.375000, 82337.882812, 23717.978516, 5968.742676, 2921.130859, 945.386047};
 // std::vector<float> intensity = {1274.10596, 5653.32959, 19341.3398, 51021.3789, 103777.039, 162754.797, 179871.859, 128027.453, 58688.5547, 17326.6309, 3294.46802};
+
+struct PeakTest // NOLINT
+{
+    std::vector<float> intensity = {0};
+    size_t expect_count = 0;
+};
+
+PeakTest pt_01 = { // NOLINT
+    // Note: this is a double peak system in need of deconvolution which i included because
+    // the old design for selecting the best entry of a set of regressions eliminated the
+    // second, smaller peak despite the apexes being far enough apart. Interesting, at the
+    // time of writing, no regression with positive coefficients was taken into consideration
+    {8862.04883, 17619.8887, 23784.2598, 22516.0684, 17171.5332, 14893.7227, 16483.5371, 16239.6406, 11697.918, 5697.0332},
+    2};
+
+static int test_qpeaks_find(const PeakTest *test)
+{
+    const size_t len = test->intensity.size();
+    std::vector<RegressionGauss> result;
+    std::vector<float> data_x = {0};
+    for (size_t i = 0; i < len; i++)
+        data_x.push_back((float)i * 0.6F);
+
+    size_t count = qpeaks_find(test->intensity.data(),
+                               data_x.data(),
+                               nullptr,
+                               len,
+                               QALGORITHMS_MAXSCALE_PRECOMPILED,
+                               &result);
+    assert(count == test->expect_count, "Expected %zu peaks, found %zu", test->expect_count, count);
+    return 0;
+}
+
+static int test_qpeaks_set(void)
+{
+    test_qpeaks_find(&pt_01);
+    return 0;
+}
 
 static float peakVal_gauss(double x, double apex, double height, double sdev)
 {
@@ -386,7 +421,13 @@ static void test_singlePeak()
     simulate_profile(&coeff, &simulated, &simulated_log);
 
     std::vector<RegressionGauss> validRegs;
-    regression_on_continuum(simulated.data(), x_axis.data(), simulated_log.data(), nullptr, simulated.size(), 5, &validRegs);
+    regression_on_continuum(simulated.data(),
+                            x_axis.data(),
+                            simulated_log.data(),
+                            nullptr,
+                            simulated.size(),
+                            20,
+                            &validRegs);
 
     assert(validRegs.size() == 1, "incorrect number of regressions found\n", NULL);
     double diff_b0 = abs(coeff.b0 - validRegs.front().coeffs.b0);
@@ -501,6 +542,8 @@ int main()
     test_singlePeak();
     test_areaPrediction();
     control_sim_gauss();
+
+    test_qpeaks_set();
     // survey_EMG();
 
     return 0;
