@@ -302,6 +302,7 @@ namespace qAlgorithms
         if (validCount == 1)
         {
             RegressionGauss *reg = validRegressions.data();
+            reg->isValid = true;
             adjustRegression(reg, x_axis);
             result->push_back(*reg);
             return;
@@ -822,6 +823,14 @@ namespace qAlgorithms
         // multiply with matrix U, where first four terms are partial derivative of equation in
         // correctB0 by original coefficients
 
+        float position = (float)peakPosition(coeffs);
+        // to prevent potential errors, reject those regressions which do not have the apex in the
+        // regression window with at least one point tp the side.
+        if ((int)abs(position) + 2 > coeffs->scale)
+        {
+            failstates += 1;
+        }
+
         // @todo this should be a test for similarity, since we cannot assume factor two is a good
         // fit for the worst possible combination of apex and edge, t-test instead?
         double apexToEdge = apexToEdgeRatio(mutateReg, intensities);
@@ -861,7 +870,6 @@ namespace qAlgorithms
 
         // uncertainty calculation and t-tests against peak properties
 
-        float position = (float)peakPosition(coeffs);
         float uncert_position = (float)peakPositionUncert(coeffs, mse_log);
         mutateReg->position_unc = uncert_position;
         float uncert_height = (float)peakHeightUncert(coeffs, mse_log);
@@ -1047,7 +1055,7 @@ namespace qAlgorithms
         const double inv_E = qalgo_matInverse[coeffs->scale].E;
         double divisor = sqrt(inv_E * mse);
         double t_value = testCoeff / divisor; // test against mean 0
-        return t_value > T_VALUES[df_sum];
+        return t_value < T_VALUES[df_sum];
     }
 
 #pragma region "Feature Detection"

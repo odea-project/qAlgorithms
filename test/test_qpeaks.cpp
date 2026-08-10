@@ -52,9 +52,9 @@ static int test_qpeaks_find(const PeakTest *test)
 {
     const size_t len = test->intensity.size();
     std::vector<RegressionGauss> result;
-    std::vector<float> data_x = {0};
+    std::vector<float> data_x(len, 0);
     for (size_t i = 0; i < len; i++)
-        data_x.push_back((float)i * 0.6F);
+        data_x[i] = ((float)(i + 1) * 0.6F);
 
     size_t count = qpeaks_find(test->intensity.data(),
                                data_x.data(),
