@@ -165,6 +165,14 @@ All currently existing documentation can be found in the `./docs` directory of t
 It is incomplete as of now and focuses on the theoretical considerations behind implemented
 methods rather than the implementation. For those details, refer to the commented code.
 
+The peak model used throughout the program is illustrated in the following three links:
+
+[1. Fully closed asymmetric model](https://www.desmos.com/calculator/1y5tjcrtaz)
+
+[2. Left peak half does not trend towards zero](https://www.desmos.com/calculator/sffpqrujoh)
+
+[3. Right peak half does not trend towards zero](https://www.desmos.com/calculator/pgac3buccd)
+
 ## Current Offerings
 
 ### qPeaks Algorithm
