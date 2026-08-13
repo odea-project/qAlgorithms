@@ -1051,7 +1051,7 @@ namespace qAlgorithms
         // one-sided t-Test against zero.
 
         assert(mse > 0);
-        double testCoeff = coeffs->b1 < 0 ? coeffs->b2 : coeffs->b3 * -1; // absolute difference counts
+        double testCoeff = abs(coeffs->b1 < 0 ? coeffs->b2 : coeffs->b3); // absolute difference counts
         const double inv_E = qalgo_matInverse[coeffs->scale].E;
         double divisor = sqrt(inv_E * mse);
         double t_value = testCoeff / divisor; // test against mean 0
