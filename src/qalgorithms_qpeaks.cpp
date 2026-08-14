@@ -899,12 +899,14 @@ namespace qAlgorithms
           the exponential domain. If the chi-square value is less than the corresponding
           value in the CHI_SQUARES, the regression is invalid. @todo why?
         */
-        double chiSquare = calcSSE_chisqared(mutateReg->span, intensities, predict);
-        if (chiSquare > CHI_SQUARES[df_sum])
-        {
-            failstates += 64;
-            // return invalid_chisq; // statistical insignificance of the chi-square value
-        }
+        // double chiSquare = calcSSE_chisqared(mutateReg->span, intensities, predict);
+        // if (chiSquare > CHI_SQUARES[df_sum])
+        // {
+        //     failstates += 64;
+        //     // return invalid_chisq; // statistical insignificance of the chi-square value
+        // }
+        // @todo cramer-von-mises test / modification of KS statistic instead. The property of interest
+        // is correctness of the peak shape as a volume, not strictly the fitted curve
 
         mutateReg->df = df_sum;
         mutateReg->position = (float)coeffs->x0 + position;

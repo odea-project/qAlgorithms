@@ -28,7 +28,6 @@ using namespace qAlgorithms;
 //   249.507401, 242.797043, 183.200607, 280.93985, 254.288147, 229.075333, 258.677795, 218.803909, 225.112, 216.144104, 248.790497, 236.507645, 228.74855,
 //   261.456085, 217.647079, 254.565613, 240.973572, 266.561127, 234.288925, 231.6884, 282.011963
 
-// std::vector<float> intensity = {16427.9434, 34097.4414, 42639.7266, 102040.758, 264363.312, 486761.125, 909302, 783670.375, 404226.625, 194167.844, 81423.1406, 63319.4688, 62018.1602, 27416.2754};
 // std::vector<float> intensity = {16649.7441, 34118.1367, 46703.2617, 41025.5352, 53125.8086, 140134.125, 402735.812, 689393.625, 907356.938, 728596.75, 432838.844, 156655.438, 43841.4922, 11888.1475, 3812.54126};
 // std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
 // std::vector<float> intensity = {157.883072, 1325.722046, 2188.603760, 5415.137695, 12294.484375, 16239.560547, 13575.218750, 9618.787109, 7654.178223, 20002.025391, 69383.062500, 147876.296875, 233001.171875, 244286.796875, 162216.375000, 82337.882812, 23717.978516, 5968.742676, 2921.130859, 945.386047};
@@ -47,6 +46,13 @@ PeakTest pt_01 = { // NOLINT
     // time of writing, no regression with positive coefficients was taken into consideration
     {8862.04883, 17619.8887, 23784.2598, 22516.0684, 17171.5332, 14893.7227, 16483.5371, 16239.6406, 11697.918, 5697.0332},
     2};
+
+PeakTest pt_02 = { // NOLINT
+    // Peak with slightly increased baseline on the right tail that proved difficult to detect
+    // in beta versions of the program. This was due to the Chi-square filter not functioning for
+    // the data after reversing the log transform
+    {16427.9434, 34097.4414, 42639.7266, 102040.758, 264363.312, 486761.125, 909302, 783670.375, 404226.625, 194167.844, 81423.1406, 63319.4688, 62018.1602, 27416.2754},
+    1};
 
 static int test_qpeaks_find(const PeakTest *test)
 {
@@ -68,7 +74,8 @@ static int test_qpeaks_find(const PeakTest *test)
 
 static int test_qpeaks_set(void)
 {
-    test_qpeaks_find(&pt_01);
+    // test_qpeaks_find(&pt_01); // removed until deconvolution is introduced, second apex is only four distinct points
+    test_qpeaks_find(&pt_02);
     return 0;
 }
 
@@ -539,11 +546,12 @@ int main()
     // initialise seed for noise generating funtions
     srand(1234); // NOLINT
 
+    test_qpeaks_set();
+
     test_singlePeak();
     test_areaPrediction();
     control_sim_gauss();
 
-    test_qpeaks_set();
     // survey_EMG();
 
     return 0;
