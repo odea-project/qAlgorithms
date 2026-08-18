@@ -772,7 +772,7 @@ namespace qAlgorithms
         return span;
     }
 
-    static double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
+    // static double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities);
 
     /// @brief calculate the residual sum of squares for the log regression / data
     /// @param mutateReg relevant regression
@@ -787,15 +787,17 @@ namespace qAlgorithms
     /// @return true: Regression is significant; false: Regression is not better than either alternative.
     static bool f_testRegression(const float *observed, double RSS_reg, const Span_i32 range);
 
-    static double calcSSE_chisqared(const Span_i32 regSpan,
-                                    const float *observed,
-                                    const float *predict);
-
-    // @todo rework: Currently, we are trying to determine the validity of a given regression
-    // using multiple tests. This is wrong, since this way we get uneven p-values of the final
-    // outcome (refer to bonferroni correction). Instead, a correct version of this function
-    // should only perform one test (if any) and resolve regressions primarily via decision
-    // rules founded in logical necessities for the peak model
+    /// @brief Assign the regression area, height, uncertaincies and similar. further, statistical
+    /// tests are used to determine if the given regression is a valid peak description
+    /// @param intensities The initially measured data
+    /// @param intensities_log log transform of the above
+    /// @param x_axis what the name implies
+    /// @param predict regression evaluated at all points of the integer-transformed x
+    /// @param df_sum total degrees of freedom for the considered regression
+    /// @param length number of elements in intensities(_log), x_axis and predict
+    /// @param mutateReg the regression being evaluated. It is only fully initialised if the
+    /// function returns OK
+    /// @return success or type of failure of the executed tests
     static invalid calcRegressionProperties( // returns the number of the failed test
         const float *intensities,
         const float *intensities_log,
@@ -833,7 +835,7 @@ namespace qAlgorithms
 
         // @todo this should be a test for similarity, since we cannot assume factor two is a good
         // fit for the worst possible combination of apex and edge, t-test instead?
-        double apexToEdge = apexToEdgeRatio(mutateReg, intensities);
+        // double apexToEdge = apexToEdgeRatio(mutateReg, intensities);
         // if (apexToEdge < 2)
         // {
         //     failstates += 1;
@@ -939,6 +941,7 @@ namespace qAlgorithms
         return RSS;
     }
 
+#if 0
     double calcSSE_chisqared(const Span_i32 regSpan,
                              const float *observed,
                              const float *predict)
@@ -953,6 +956,7 @@ namespace qAlgorithms
         }
         return result;
     }
+#endif
 
     static double calcRSS_H0_cf1(const float *observed, const Span_i32 range)
     {
@@ -1017,6 +1021,7 @@ namespace qAlgorithms
         return f_ok;
     }
 
+#if 0
     static double apexToEdgeRatio(const RegressionGauss *mutateReg, const float *intensities)
     {
         // is the apex at least twice as large as the outermost point?
@@ -1043,6 +1048,7 @@ namespace qAlgorithms
 
         return apex / maxEdge;
     }
+#endif
 
     static bool insignificantCoefficient(const RegCoeffs *coeffs, const double mse, const size_t df_sum)
     {
@@ -1442,12 +1448,12 @@ namespace qAlgorithms
         // apply erf(-x) = -erf(x); erfc(-x) = erf(x) + 1:
         // left:  erf_b2_0 - erf_b2_-inf =    -erf(b1 / (2 sqrt(-b2)) + 1 = erfc( b1 / sqrt(-b2))
         // right: erf_b3_inf - erf_b3_0  = 1 + erf(b1 / (2 sqrt(-b3))     = erfc(-b1 / sqrt(-b3))
-        // A = b0_exp * sqrt(pi) / 2 * (
+        // A = b0_exp * (sqrt(pi) / 2) * (
         //      e^(-b1^2/(4 b2)) * erfc( b1 / (2 sqrt(-b2)) ) / sqrt(-b2) +
         //      e^(-b1^2/(4 b3)) * erfc(-b1 / (2 sqrt(-b3)) ) / sqrt(-b3)
         // )
         // erfcx(x) = e^(x^2) * erfc(x); (b1 / (2 sqrt(-b2)))^2 = -b1^2 / (4 b2); (-b1 / (2 sqrt(-b2)))^2 = -b1^2 / (4 b2)
-        // A = b0_exp * sqrt(pi) / 2 * (
+        // A = b0_exp * (sqrt(pi) / 2) * (
         //      erfcx( b1 / (2 sqrt(-b2)) ) / sqrt(-b2) +
         //      erfcx(-b1 / (2 sqrt(-b3)) ) / sqrt(-b3)
         // )
@@ -1464,6 +1470,12 @@ namespace qAlgorithms
         // A_L = e^(b0) * D(b1 / (2 sqrt(b2))) / sqrt(b2)
         // The same transformation applies to b3. Depending on left / right valley position,
         // we calculate the partial area as A_L - 0 or 0 - A_R
+
+        // further consideration has to be made for the case of a peak with the non-apex coefficient
+        // being effectively zero. This is determined to be the case if the peak area of that half
+        // is infinity - as can be seen above, the error function of a very large number is divided
+        // by a very small number for b2 or b3 close to zero. No compensation in the code here since
+        // there never were any cases of this occuring, add in case it happens
 
         const double b0 = c->b0;
         const double b1 = c->b1;
@@ -1489,11 +1501,11 @@ namespace qAlgorithms
 
         double area_L = b2_neg ? libcerf::erfcx(b1 / sqrt_b2 / 2) / sqrt_b2 * sqrt_pi_2
                                : libcerf::dawson(b1 / sqrt_b2 / 2) / sqrt_b2;
-        assert(area_L > 0);
+        assert(area_L > 0 && area_L < INFINITY);
 
         double area_R = b3_neg ? libcerf::erfcx(-b1 / sqrt_b3 / 2) / sqrt_b3 * sqrt_pi_2
                                : -libcerf::dawson(b1 / sqrt_b3 / 2) / sqrt_b3;
-        assert(area_R > 0);
+        assert(area_R > 0 && area_R < INFINITY);
 
         double area_F = (area_L + area_R) * b0_exp;
 
