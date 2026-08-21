@@ -785,7 +785,7 @@ namespace qAlgorithms
     /// @param RSS_reg previously calculated residual sum of squares of the complex model. Hard assumpion of four coefficients.
     /// @param range range of the regression.
     /// @return true: Regression is significant; false: Regression is not better than either alternative.
-    static bool f_testRegression(const float *observed, double RSS_reg, const Span_i32 range);
+    static bool f_testRegression(const float *intensities_log, double RSS_reg, const Span_i32 range);
 
     /// @brief Assign the regression area, height, uncertaincies and similar. further, statistical
     /// tests are used to determine if the given regression is a valid peak description
@@ -881,27 +881,6 @@ namespace qAlgorithms
         if (mutateReg->area <= minIntensity_global)
             return invalid_height;
 
-        // this is also nonsensical since we care about the validity of the exponential
-        // area only.
-        // if (mutateReg->area / mutateReg->uncert_area <= T_VALUES[df_sum])
-        // {
-        //     failstates += 32;
-        //     // return invalid_area; // statistical insignificance of the area
-        // }
-
-        /*
-          Chi-Square Filter:
-          This block of code implements the chi-square filter. It calculates the chi-square
-          value based on the weighted chi squared sum of expected and measured y values in
-          the exponential domain. If the chi-square value is less than the corresponding
-          value in the CHI_SQUARES, the regression is invalid. @todo why?
-        */
-        // double chiSquare = calcSSE_chisqared(mutateReg->span, intensities, predict);
-        // if (chiSquare > CHI_SQUARES[df_sum])
-        // {
-        //     failstates += 64;
-        //     // return invalid_chisq; // statistical insignificance of the chi-square value
-        // }
         // @todo cramer-von-mises test / modification of KS statistic instead. The property of interest
         // is correctness of the peak shape as a volume, not strictly the fitted curve
 
@@ -933,44 +912,6 @@ namespace qAlgorithms
         return RSS;
     }
 
-#if 0
-    double calcSSE_chisqared(const Span_i32 regSpan,
-                             const float *observed,
-                             const float *predict)
-    {
-        const float *obs = observed + regSpan.startIdx;
-        const float *pred = predict + regSpan.startIdx;
-        double result = 0.0;
-        for (int32_t i = 0; i < regSpan.length; i++)
-        {
-            double diff = obs[i] - pred[i];
-            result += diff * diff / pred[i];
-        }
-        return result;
-    }
-#endif
-
-    static double calcRSS_H0_cf1(const float *observed, const Span_i32 range)
-    {
-        // this function calculates the RSS for H0: y = b0 (a constant value)
-        double mean = 0;
-        const float *obs = observed + range.startIdx;
-        for (int32_t i = 0; i < range.length; i++)
-        {
-            mean += obs[i];
-        }
-        mean /= (double)range.length;
-
-        double RSS = 0;
-        for (int32_t i = 0; i < range.length; i++)
-        {
-            double difference = obs[i] - mean;
-            RSS += difference * difference;
-        }
-        assert(RSS > 0);
-        return RSS;
-    }
-
     static double calcRSS_H0_cf2(const float *observed, const Span_i32 range)
     {
         // this function calculates the RSS for H0: y = b0 + x * b1 (no weights)
@@ -995,20 +936,27 @@ namespace qAlgorithms
         return RSS;
     }
 
-    bool f_testRegression(const float *observed, double RSS_reg, const Span_i32 range)
+    bool f_testRegression(const float *intensities_log, double RSS_reg_log, const Span_i32 range)
     {
         // during the tests, the RSS for the regression has already been calculated in calcRSS_log
-        assert(RSS_reg > 0);
+        assert(RSS_reg_log > 0);
         const size_t length = range.length;
-        bool f_ok = false;
+        /*
+            The following code was initially intended to speed up the f test by performing a simple
+            calculation first and then skipping if the result is invalid. Obviously, it is actually
+            incorrect to test the same property twice. Further, due to the massive difference in
+            degrees of freedom between both cases for regressions of size 5 (that being 3), sometimes
+            the constant model was preferable despite the intended linear model being worse than a fit
 
-        double RSS_H0_cf1 = calcRSS_H0_cf1(observed, range); // y = b
-        f_ok = F_test_regs(RSS_reg, RSS_H0_cf1, 4, 1, length, 0.05);
-        if (!f_ok)
-            return false;
+            bool f_ok = false;
+            double RSS_H0_cf1 = calcRSS_H0_cf1(intensities_log, range); // y = b
+            f_ok = F_test_regs(RSS_reg_log, RSS_H0_cf1, 4, 1, length, 0.05);
+            if (!f_ok)
+                return false;
+        */
 
-        double RSS_H0_cf2 = calcRSS_H0_cf2(observed, range); // y = b0 + b1 * x
-        f_ok = F_test_regs(RSS_reg, RSS_H0_cf2, 4, 2, length, 0.05);
+        double RSS_H0_cf2 = calcRSS_H0_cf2(intensities_log, range); // y = b0 + b1 * x
+        bool f_ok = F_test_regs(RSS_reg_log, RSS_H0_cf2, 4, 2, length, 0.05);
 
         return f_ok;
     }
