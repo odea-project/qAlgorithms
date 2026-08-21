@@ -815,12 +815,6 @@ namespace qAlgorithms
         assert(scale > 1);
         assert(coeffs->x0 + scale < length);
 
-        int failstates = 0;
-
-        // this is the error term for the corrected regression. Of the original 4 x 4 matrix,
-        // only the first row is needed
-        // double errorMat[4] = {0};
-
         // @todo new error correction here. Previous covariance matrix was mse (log) * (XtX)^-1,
         // multiply with matrix U, where first four terms are partial derivative of equation in
         // correctB0 by original coefficients
@@ -830,7 +824,7 @@ namespace qAlgorithms
         // regression window with at least one point tp the side.
         if ((int)abs(position) + 2 > coeffs->scale)
         {
-            failstates += 1;
+            return invalid_apex;
         }
 
         // @todo this should be a test for similarity, since we cannot assume factor two is a good
@@ -854,7 +848,6 @@ namespace qAlgorithms
         bool badCoeff = insignificantCoefficient(coeffs, mse_log, df_sum);
         if (badCoeff)
         {
-            failstates += 4;
             return invalid::invalid_quadratic;
         }
 
@@ -866,8 +859,7 @@ namespace qAlgorithms
         bool f_ok = f_testRegression(intensities_log, RSS_log, regSpan);
         if (!f_ok)
         {
-            failstates += 2;
-            // return f_test_fail; // H0 holds, the two distributions are not noticeably different
+            return f_test_fail; // H0 holds, the two distributions are not noticeably different
         }
 
         // uncertainty calculation and t-tests against peak properties
@@ -883,6 +875,9 @@ namespace qAlgorithms
         mutateReg->area = (float)peakArea(coeffs, delta_x, mse_log, &uncertainty);
         mutateReg->area_unc = (float)uncertainty;
 
+        // Note: This is not a satistically reasoned limit, but rather the number e regardless of
+        // scaling. We introduce this limit here to prevent cases where the log operation introduces
+        // negative intensities
         if (mutateReg->area <= minIntensity_global)
             return invalid_height;
 
@@ -915,9 +910,6 @@ namespace qAlgorithms
         mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict, length);
         mutateReg->height = (float)exp(regAt(coeffs, peakPosition(coeffs)));
         assert(mutateReg->position > 1);
-
-        if (failstates != 0)
-            return invalid::invalid_apex;
 
         mutateReg->isValid = false; // note: this field is only required later on for eliminating regressions
         return ok;
@@ -1016,7 +1008,7 @@ namespace qAlgorithms
             return false;
 
         double RSS_H0_cf2 = calcRSS_H0_cf2(observed, range); // y = b0 + b1 * x
-        f_ok = F_test_regs(RSS_reg, RSS_H0_cf2, 4, 1, length, 0.05);
+        f_ok = F_test_regs(RSS_reg, RSS_H0_cf2, 4, 2, length, 0.05);
 
         return f_ok;
     }

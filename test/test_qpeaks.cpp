@@ -13,10 +13,6 @@ using namespace qAlgorithms;
 
 // @todo test these specific values with qpeaks:
 
-// This data contains three peaks, but only the two less intense ones were found.
-// The new apex grouping function marked them as conflicting, which should not be the case.
-// 28913.7539, 15335.7256, 31011.6035, 59799.4961, 30304.0547, 101.776535, 7791.06396, 16737.2637, 7326.88721, 5033.8501, 11136.9746, 12789.5098, 7660.45898, 2526.31592
-
 // std::vector<float> intensity = {16649.7441, 34118.1367, 46703.2617, 41025.5352, 53125.8086, 140134.125, 402735.812, 689393.625, 907356.938, 728596.75, 432838.844, 156655.438, 43841.4922, 11888.1475, 3812.54126};
 // std::vector<float> intensity = {32, 475, 711, 472, 207, 132, 57, 14};
 // std::vector<float> intensity = {157.883072, 1325.722046, 2188.603760, 5415.137695, 12294.484375, 16239.560547, 13575.218750, 9618.787109, 7654.178223, 20002.025391, 69383.062500, 147876.296875, 233001.171875, 244286.796875, 162216.375000, 82337.882812, 23717.978516, 5968.742676, 2921.130859, 945.386047};
@@ -57,6 +53,13 @@ PeakTest pt_03 = { // NOLINT
      261.456085, 217.647079, 254.565613, 240.973572, 266.561127, 234.288925, 231.6884, 282.011963},
     0};
 
+PeakTest pt_04 = { // NOLINT
+
+    // This data contains three peaks, but only the two less intense ones were found.
+    // The new apex grouping function marked them as conflicting, which should not be the case.
+    {28913.7539, 15335.7256, 31011.6035, 59799.4961, 30304.0547, 101.776535, 7791.06396, 16737.2637, 7326.88721, 5033.8501, 11136.9746, 12789.5098, 7660.45898, 2526.31592},
+    3};
+
 static int test_qpeaks_find(const PeakTest *test)
 {
     const size_t len = test->intensity.size();
@@ -71,13 +74,15 @@ static int test_qpeaks_find(const PeakTest *test)
                                len,
                                QALGORITHMS_MAXSCALE_PRECOMPILED,
                                &result);
-    assert(count == test->expect_count, "Expected %zu peaks, found %zu", test->expect_count, count);
+    size_t expect = test->expect_count;
+    assert(count == expect, "Expected %zu peaks, found %zu", expect, count);
     return 0;
 }
 
 static int test_qpeaks_set(void)
 {
     // test_qpeaks_find(&pt_01); // removed until deconvolution is introduced, second apex is only four distinct points
+    test_qpeaks_find(&pt_04);
     test_qpeaks_find(&pt_03);
     test_qpeaks_find(&pt_02);
     return 0;
