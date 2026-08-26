@@ -18,6 +18,9 @@ typedef char path_char;
 
 namespace qAlgorithms
 {
+    // try to use semantic versioning
+    const char qAlgorithms_version_number[] = "v1.0.0-beta";
+
     // handle polarity switching
     enum Polarities : uint8_t
     {

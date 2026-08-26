@@ -42,7 +42,7 @@ namespace qAlgorithms
         const int16_t apexGroups[],
         const int16_t groupNum);
 
-    static void regression_on_continuum(
+    static int regression_on_continuum(
         const float *intensities,
         const float *x_axis,
         const float *intensities_log,
@@ -126,7 +126,7 @@ namespace qAlgorithms
         const float *x_values,
         const uint16_t *DF_cum,
         const size_t length,
-        size_t maxscale,
+        size_t maxscale, // @todo this should probably not be a static parameter
         std::vector<RegressionGauss> *result)
     {
         // control input for nullpointers, mismatching x and y, and fitting maxscale
@@ -151,12 +151,14 @@ namespace qAlgorithms
         // found, the missing values are interpolated assuming an exponential rate of change.
         // this should happen before calling this function (?)
 
-        // core operation: identify best-fit regressions for the input data
+        // logging is done to stdout at this point, but support for a dedicated logging operation
+        // should be added further into the future.
+        FILE *log_output = stdout;
 
         /*
         The fitting routine assumes that all present peaks have a modified gaussian base function.
         This means that no baseline exists. Baseline substraction, if appropriate, has to be performed
-        before calling the qpeaks_find.
+        before calling the qpeaks_find function.
         */
         std::vector<float> intensity_base_log(length + 1);
 
@@ -274,7 +276,7 @@ namespace qAlgorithms
 
 #pragma region "Conflict Elimination"
 
-    static void regression_on_continuum(
+    static int regression_on_continuum(
         const float *intensities,
         const float *x_axis,
         const float *intensities_log,
@@ -298,14 +300,14 @@ namespace qAlgorithms
                                                 length,
                                                 &validRegressions);
         if (validCount == 0)
-            return;
+            return 0;
         if (validCount == 1)
         {
             RegressionGauss *reg = validRegressions.data();
             reg->isValid = true;
             adjustRegression(reg, x_axis);
             result->push_back(*reg);
-            return;
+            return 0;
         }
 
         // rework of the apex selection, currently without the ability to interpolate points
@@ -340,6 +342,7 @@ namespace qAlgorithms
                 result->push_back(*reg);
             }
         }
+        return 0;
     }
 
     static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[])
