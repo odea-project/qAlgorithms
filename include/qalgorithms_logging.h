@@ -3,15 +3,10 @@
 
 #include "qalgorithms_datatypes.h"
 #include <cstdint>
-#include <cstdio>
 #include <vector>
 
 namespace qAlgorithms
 {
-    bool writeToLogfile = false;
-
-    FILE *log_output_global = stdout;
-
     // despite the name, this function records all data needed to fully replicate a failed run of
     // qpeaks including the relevant
     void log_qpeaks(const float *intensities,
