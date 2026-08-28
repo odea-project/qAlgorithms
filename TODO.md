@@ -14,15 +14,11 @@ Abbreviations (sorted alphabetically):
 Reduce code complexity of existing modules and find generic operations that
 could be moved into a more generic library for mass spectra processing.
 
-* clean up the main loop to be less LoC
+* clean up the main loop to be less LoC -> factor out processing of a single file into its own function
 * change binning to utilise an index vector and use arrays per property as centroiding output
-* generic print method for centroids / bins / features, move all three to SoA
 * add more raw formats besides mzML (mzXML is similar, that should have priority)
 * find a way to multithread parts of the application
-* extract the long matrix multiplication chains where present and show the concrete calculation in the code as a comment
 * improve file reading performance, check if https://doi.org/10.1371/journal.pone.0125108 can be used partially or fully
-* general performance improvements
-* ensure clang-tidy conditions are fulfilled
 * ensure uniform terminology throughout the codebase (keep a record of correct terms somewhere?)
 * expand the regression-local delta_x estimation introduced in the retransformPeaks function to other parts of the program
 * Optimisation: Ensure that all large computation chains of exponentials / logarithms are vectorised
@@ -40,7 +36,6 @@ Additional functionality of the core library that should be added at some point.
 * Support fragment spectra
 * fully functional componentisation
 * component-based matching of repeat injections
-* automated estimation of the upper limit of the regression search window
 * conceptual compatibility with retention indices for comparing multiple injections
 * add post-hoc correction for binning falsely separating mass traces
 * design a qAlgorithms-specific binary storage format for mass spectra 
@@ -63,6 +58,10 @@ in the centroid dimension. Problem: m/z variation
 * Instead of doing a 2D-2D fit, immediately employ a three-dimensional model and fit a somehow selected region with local maximum nonlinearly
 * Consider using a simplified filesystem library (maybe https://github.com/BraedonWooding/cpath/tree/master ?) to be C++11 compatible.
   In that case also consider https://softwarefreedom.org/resources/2007/gpl-non-gpl-collaboration.html for potential changes
+* add a task list where the basic structure is an array of structs following the pattern
+  {task type, task output parameters, task input data}. This could then have uniform support for normal
+  processing, centroiding and debug code reconstruction. Also include the ability to write a task file
+  for some GUI program to plug into.
 
 ## Interface to high-level languages
 * Expose core functions to R, python, java, julia (?), C# (?)
