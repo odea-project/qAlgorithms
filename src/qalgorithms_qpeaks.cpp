@@ -151,10 +151,6 @@ namespace qAlgorithms
         // found, the missing values are interpolated assuming an exponential rate of change.
         // this should happen before calling this function (?)
 
-        // logging is done to stdout at this point, but support for a dedicated logging operation
-        // should be added further into the future.
-        FILE *log_output = stdout;
-
         /*
         The fitting routine assumes that all present peaks have a modified gaussian base function.
         This means that no baseline exists. Baseline substraction, if appropriate, has to be performed

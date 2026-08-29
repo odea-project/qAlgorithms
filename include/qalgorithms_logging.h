@@ -10,9 +10,9 @@ namespace qAlgorithms
 {
     struct QPeaks_log_mapping
     {
-        size_t length;
-        size_t maxscale;
-        size_t resultSize;
+        size_t length = 0;
+        size_t maxscale = 0;
+        size_t resultSize = 0;
         float *intensities = nullptr;
         float *x_axis = nullptr;
         float *intensities_log = nullptr;
