@@ -701,15 +701,14 @@ namespace qAlgorithms
         std::vector<float> intensity;
 
         FILE *outfile = fopen_w_wrapper(&pathOutput);
-        if (outfile != nullptr)
-        {
-            fprintf(outfile, "idx_spec,rt,mz,intensity\n");
-        }
-        else
+        if (outfile == nullptr)
         {
             (void)fprintf(stderr, "Error: Could not open destination file, no data has been written\n");
             return;
         }
+        const char header[] = "idx_spec,rt,mz,intensity\n";
+        size_t printLen = fprintf(outfile, "%s", header);
+        assert(printLen == sizeof(header));
 
         size_t totalWritten = 0;
         for (size_t i = startIdx; i < length; i++)
@@ -734,7 +733,8 @@ namespace qAlgorithms
             intensity.clear();
         }
 
-        fclose(outfile);
+        size_t closeResult = fclose(outfile);
+        assert(closeResult == 0);
 
         if (!inargs->silent)
         {
@@ -789,11 +789,12 @@ namespace qAlgorithms
         {
             const CentroidPeak peak = peaktable->at(j);
             char buffer[256];
-            snprintf(buffer, 256, "%u,%0.6f,%0.6f,%u,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%u,%0.5f,%u\n",
-                     peak.ID, peak.mz, peak.mzUncertainty, peak.number_MS1, convertRT->at(peak.number_MS1),
-                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.DQSC,
-                     //  peak.interpolations,
-                     peak.numCompetitors);
+            size_t printLen = snprintf(buffer, 256, "%u,%0.6f,%0.6f,%u,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%u,%0.5f,%u\n",
+                                       peak.ID, peak.mz, peak.mzUncertainty, peak.number_MS1, convertRT->at(peak.number_MS1),
+                                       peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.scale, peak.DQSC,
+                                       //  peak.interpolations,
+                                       peak.numCompetitors);
+            assert(printLen < 256);
             output << buffer;
         }
 
@@ -840,10 +841,11 @@ namespace qAlgorithms
             {
                 const CentroidPeak cen = centroids->at(bin->cenID[i]);
                 char buffer[128];
-                snprintf(buffer, 128, "%zu,%u,%0.8f,%0.8f,%0.4f,%u,%0.6f,%0.6f,%u,%0.4f\n", // @todo re-add the dqsb once that works
-                         binID, cen.ID, bin->mz[i], bin->predInterval[i],
-                         bin->RT[i], bin->scanNumbers[i], bin->ints_area[i],
-                         bin->ints_height[i], bin->df[i], bin->DQSC[i]);
+                size_t printLen = snprintf(buffer, 128, "%zu,%u,%0.8f,%0.8f,%0.4f,%u,%0.6f,%0.6f,%u,%0.4f\n", // @todo re-add the dqsb once that works
+                                           binID, cen.ID, bin->mz[i], bin->predInterval[i],
+                                           bin->RT[i], bin->scanNumbers[i], bin->ints_area[i],
+                                           bin->ints_height[i], bin->df[i], bin->DQSC[i]);
+                assert(printLen < 128);
                 output << buffer;
             }
         }
@@ -891,13 +893,14 @@ namespace qAlgorithms
             assert(binID < originalBins->size());
 
             char buffer[256];
-            snprintf(buffer, 256, "%u,%zu,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%u,%0.5f,%0.5f,%0.5f,%0.8f,%0.8f,%0.8f,%0.8f\n",
-                     ID, binID, peak.mz, peak.mzUncertainty,
-                     peak.retentionTime, peak.RT_Uncertainty, peak.lowerRT, peak.upperRT,
-                     peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.coefficients.scale,
-                     peak.DQSC, peak.DQSB, peak.DQSF,
-                     // properties relevant for componentisation, remove this later
-                     peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+            size_t printLen = snprintf(buffer, 256, "%u,%zu,%0.6f,%0.6f,%0.4f,%0.4f,%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%u,%0.5f,%0.5f,%0.5f,%0.8f,%0.8f,%0.8f,%0.8f\n",
+                                       ID, binID, peak.mz, peak.mzUncertainty,
+                                       peak.retentionTime, peak.RT_Uncertainty, peak.lowerRT, peak.upperRT,
+                                       peak.area, peak.areaUncertainty, peak.height, peak.heightUncertainty, peak.coefficients.scale,
+                                       peak.DQSC, peak.DQSB, peak.DQSF,
+                                       // properties relevant for componentisation, remove this later
+                                       peak.coefficients.b0, peak.coefficients.b1, peak.coefficients.b2, peak.coefficients.b3);
+            assert(printLen < 256);
             output << buffer;
             ++ID;
         }

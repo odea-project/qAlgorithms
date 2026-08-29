@@ -1,7 +1,6 @@
 #ifndef _QALGORITHMS_QBIN_INCLUDED
 #define _QALGORITHMS_QBIN_INCLUDED
 
-#include <climits>
 #include <cstddef>
 #include <vector>
 
