@@ -81,8 +81,10 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         filename = pathSource.stem().string();
 
         // start with positive scans when evaluating mixed mode spectra
-        bool polarity_selected = (inputFile.polarityMode == Polarities::positive) ||
-                                 (inputFile.polarityMode == Polarities::mixed);
+        Polarities currentPolarity = inputFile.polarityMode;
+        if (currentPolarity == Polarities::mixed)
+            currentPolarity = Polarities::positive;
+        assert(currentPolarity != Polarities::unknown_polarity);
 
     // because there are only three cases, the logic is handled like this:
     // 1) negative or positive only: set the argument for filter_spectra correctly and proceed. There is no looping.
@@ -91,7 +93,7 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
     //    has horrible readability and requires more variables to handle the switching.
     EVALUATE_MIXED_POLARITY:
         // @todo MS2 support here!
-        const std::vector<uint32_t> selectedIndices = filter_spectra(&inputFile, true, polarity_selected, false);
+        const std::vector<uint32_t> selectedIndices = filter_spectra(&inputFile, true, currentPolarity, false);
 
         if (selectedIndices.empty())
         {
@@ -100,11 +102,11 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         if (!userArgs.silent)
         {
-            printf("    Processing %s peaks\n", polarity_selected ? "positive" : "negative");
+            printf("    Processing %s peaks\n", currentPolarity == Polarities::positive ? "positive" : "negative");
         }
         if (inputFile.polarityMode == Polarities::mixed)
         {
-            filename += (polarity_selected ? "_positive" : "_negative");
+            filename += (currentPolarity == Polarities::positive ? "_positive" : "_negative");
         }
 
         if (userArgs.printProfileSection)
@@ -242,8 +244,8 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 #endif
         if (inputFile.polarityMode == Polarities::mixed)
         {
-            assert(polarity_selected);
-            polarity_selected = false;
+            assert(currentPolarity == Polarities::positive);
+            currentPolarity = Polarities::negative;
             goto EVALUATE_MIXED_POLARITY;
         }
 

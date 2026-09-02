@@ -21,7 +21,7 @@
 inline int32_t zng_uncompress(uint8_t *dest, size_t *destLen, const uint8_t *source, size_t sourceLen)
 {
     uLongf destLen2 = *destLen;
-    int z_ret = uncompress(dest, &destLen2, source, sourceLen);
+    uint32_t z_ret = uncompress(dest, &destLen2, source, sourceLen);
     *destLen = destLen2;
     return z_ret;
 }
@@ -32,7 +32,7 @@ inline size_t zng_compressBound(size_t sourceLen)
 inline int32_t zng_compress(uint8_t *dest, size_t *destLen, const uint8_t *source, size_t sourceLen)
 {
     uLongf destLen2 = *destLen;
-    int z_ret = compress(dest, &destLen2, source, sourceLen);
+    uint32_t z_ret = compress(dest, &destLen2, source, sourceLen);
     *destLen = destLen2;
     return z_ret;
 }
@@ -265,10 +265,10 @@ namespace qAlgorithms
         return mtd;
     }
 
-    int get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
-                     std::vector<float> *const spectrum_mz,
-                     std::vector<float> *const spectrum_int,
-                     size_t index)
+    int32_t get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
+                         std::vector<float> *const spectrum_mz,
+                         std::vector<float> *const spectrum_int,
+                         size_t index)
     {
         assert(spectrum_mz->empty() && spectrum_int->empty());
         assert(!file->defective);
@@ -395,13 +395,15 @@ namespace qAlgorithms
 
     std::vector<uint32_t> filter_spectra(const XML_File *data,
                                          const bool ms1,
-                                         const bool polarity,
+                                         const Polarities polarity,
                                          const bool centroided)
     {
         // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
         assert(!data->defective);
         const size_t specnum = data->number_spectra;
         assert(specnum > 0);
+        assert(polarity == Polarities::positive || polarity == Polarities::negative);
+        bool polarity_bool = polarity == Polarities::positive;
         std::vector<uint32_t> indices;
         indices.reserve(specnum);
 
@@ -410,14 +412,15 @@ namespace qAlgorithms
             const pugi::xml_node *spec = data->linknodes->data() + i;
 
             bool isCentroid = spec->find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
-            if (isCentroid != centroided)
-                continue; // this does not allow for processing of partially centroided data
-
-            bool polarityPos = spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr;
-            if (polarityPos != polarity)
+            if (isCentroid != centroided) // this does not allow for processing of partially centroided data - change?
                 continue;
 
-            int level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
+            // @todo this is  difficult to read, make a separate function (?)
+            bool polarityPos = spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr;
+            if (polarityPos != polarity_bool)
+                continue;
+
+            uint32_t level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
             bool isMS1 = 1 == level;
             if (isMS1 != ms1)
                 continue; // only ms1 or msn data can be retrieved at once.
@@ -437,7 +440,7 @@ namespace qAlgorithms
         {
             const pugi::xml_node *spec = file->linknodes->data() + i;
 
-            int level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
+            uint32_t level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
             bool isMS1 = 1 == level;
             if (!isMS1)
                 continue;

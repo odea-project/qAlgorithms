@@ -30,8 +30,8 @@ namespace qAlgorithms
     {
         size_t spectrum_index = 0;     // start at 1
         size_t spectrum_numPoints = 0; // profile points or centroids in this spectrum
-        int mode = 0;                  // 1 = profile, 2 = centroid
-        int MS_level = 0;
+        uint32_t mode = 0;             // 1 = profile, 2 = centroid
+        uint32_t MS_level = 0;
         bool polarity = false; // 0 = negative, 1 = positive
     };
 
@@ -121,17 +121,17 @@ namespace qAlgorithms
 
     std::vector<uint32_t> filter_spectra(const XML_File *data,
                                          const bool ms1,
-                                         const bool polarity,
+                                         const Polarities polarity,
                                          const bool centroided);
 
     void get_spectra_RT(const XML_File *data,
                         const std::vector<uint32_t> *indices,
                         std::vector<float> *const RTs);
 
-    int get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
-                     std::vector<float> *const spectrum_mz,
-                     std::vector<float> *const spectrum_int,
-                     size_t index);
+    int32_t get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
+                         std::vector<float> *const spectrum_mz,
+                         std::vector<float> *const spectrum_int,
+                         size_t index);
 
     // functions exposed for testing
     std::vector<char> decode_base64(const std::string &encoded_string);
