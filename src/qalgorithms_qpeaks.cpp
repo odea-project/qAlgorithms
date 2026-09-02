@@ -42,7 +42,7 @@ namespace qAlgorithms
         const int16_t apexGroups[],
         const int16_t groupNum);
 
-    static int regression_on_continuum(
+    static int32_t regression_on_continuum(
         const float *intensities,
         const float *x_axis,
         const float *intensities_log,
@@ -120,7 +120,7 @@ namespace qAlgorithms
         reg->dqs = erfc(reg->area_unc / reg->area);
     }
 
-    int qpeaks_find(
+    int32_t qpeaks_find(
         // SOME_IMPLEMENTATION_OF_LINEAR_ALLOCATOR_HERE
         const float *intensity_base,
         const float *x_values,
@@ -197,7 +197,7 @@ namespace qAlgorithms
             rangeStart = pointIdx + 1;
         }
 
-        return (int)result->size();
+        return (int32_t)result->size();
     }
 
 #pragma region "running regression"
@@ -272,7 +272,7 @@ namespace qAlgorithms
 
 #pragma region "Conflict Elimination"
 
-    static int regression_on_continuum(
+    static int32_t regression_on_continuum(
         const float *intensities,
         const float *x_axis,
         const float *intensities_log,
@@ -749,24 +749,24 @@ namespace qAlgorithms
 
         if (valley_left)
         {
-            int position_b2 = (int)coeffs->x0 - int(coeffs->b1 / (2 * coeffs->b2));
-            int position_sc = (int)coeffs->x0 - coeffs->scale;
+            int32_t position_b2 = (int32_t)coeffs->x0 - int32_t(coeffs->b1 / (2 * coeffs->b2));
+            int32_t position_sc = (int32_t)coeffs->x0 - coeffs->scale;
             span.startIdx = max(position_b2, position_sc);
         }
         else
         {
-            span.startIdx = (int)coeffs->x0 - (int)coeffs->scale;
+            span.startIdx = (int32_t)coeffs->x0 - (int32_t)coeffs->scale;
         }
 
         if (valley_right)
         {
-            int position_b3 = (int)coeffs->x0 + int(-coeffs->b1 / (2 * coeffs->b3));
-            int position_sc = (int)coeffs->x0 + coeffs->scale;
+            int32_t position_b3 = (int32_t)coeffs->x0 + int32_t(-coeffs->b1 / (2 * coeffs->b3));
+            int32_t position_sc = (int32_t)coeffs->x0 + coeffs->scale;
             span.set_endIdx(min(position_b3, position_sc));
         }
         else
         {
-            span.set_endIdx((int)coeffs->x0 + (int)coeffs->scale);
+            span.set_endIdx((int32_t)coeffs->x0 + (int32_t)coeffs->scale);
         }
         return span;
     }
@@ -821,7 +821,7 @@ namespace qAlgorithms
         float position = (float)peakPosition(coeffs);
         // to prevent potential errors, reject those regressions which do not have the apex in the
         // regression window with at least one point tp the side.
-        if ((int)abs(position) + 2 > coeffs->scale)
+        if ((int32_t)abs(position) + 2 > coeffs->scale)
         {
             return invalid_apex;
         }
@@ -1161,10 +1161,10 @@ namespace qAlgorithms
 
         for (size_t specNum = 0; specNum < selectedIndices->size(); specNum++)
         {
-            int ok = get_spectrum(data,
-                                  &spectrum_mz,
-                                  &spectrum_int,
-                                  selectedIndices->at(specNum));
+            int32_t ok = get_spectrum(data,
+                                      &spectrum_mz,
+                                      &spectrum_int,
+                                      selectedIndices->at(specNum));
             assert(ok == 0);
 
             const size_t peaksFound = qpeaks_find(spectrum_int.data(),
@@ -1208,28 +1208,28 @@ namespace qAlgorithms
         std::vector<char> char_spectrum_mz;
         std::vector<char> char_spectrum_int;
 
-        for (size_t i = 0; i < numSpecs; i++)
+        for (size_t specNum = 0; specNum < numSpecs; specNum++)
         {
             // 1) obtain next spectrum that is MS level 1 and not centroided
-            const pugi::xml_node *spec = source_file.linknodes->data() + i;
+            const pugi::xml_node *spec = source_file.linknodes->data() + specNum;
 
-            bool isCentroid = spec->find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
-            if (isCentroid)
-                continue; // this does not allow for processing of partially centroided data
+            bool isProfile = spectrum_is_profile(&source_file, specNum);
+            if (!isProfile)
+                continue;
 
-            int ms_level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
+            int32_t ms_level = spectrum_ms_level(&source_file, specNum);
             if (ms_level != 1)
                 continue; // centroiding only makes sense for ms level 1
 
-            get_spectrum(&source_file, &spectrum_mz, &spectrum_int, i);
+            get_spectrum(&source_file, &spectrum_mz, &spectrum_int, specNum);
 
             // 3) extract spectum data, process with qpeaks_find
-            int numPeaks = qpeaks_find(spectrum_int.data(),
-                                       spectrum_mz.data(),
-                                       nullptr,
-                                       spectrum_mz.size(),
-                                       40,
-                                       &result);
+            int32_t numPeaks = qpeaks_find(spectrum_int.data(),
+                                           spectrum_mz.data(),
+                                           nullptr,
+                                           spectrum_mz.size(),
+                                           40,
+                                           &result);
             assert(numPeaks > 0);
             const size_t numPeaks_u = (size_t)numPeaks;
 
@@ -1600,7 +1600,7 @@ namespace qAlgorithms
         bool apex_left = c->b1 < 0;
         double b23 = apex_left ? c->b2 : c->b3;
         J[1] = -1 / (2 * b23); // dx d b1
-        int idx = apex_left ? 2 : 3;
+        int32_t idx = apex_left ? 2 : 3;
         J[idx] = c->b1 / (2 * b23 * b23); // -b1 * -1
 
         double u = matProductReg(J, c->scale);

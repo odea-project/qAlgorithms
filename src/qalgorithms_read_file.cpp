@@ -461,6 +461,30 @@ namespace qAlgorithms
         return false;
     }
 
+    bool spectrum_is_profile(const XML_File *file, const size_t specNum)
+    {
+        assert(specNum < file->number_spectra);
+        const pugi::xml_node *spec = file->linknodes->data() + specNum;
+        // values taken from https://peptideatlas.org/tmp/mzML1.1.0.html
+        bool isProfile = spec->find_child_by_attribute("cvParam",
+                                                       "accession",
+                                                       "MS:1000128") != nullptr;
+        return isProfile;
+    }
+
+    int32_t spectrum_ms_level(const XML_File *file, const size_t specNum)
+    {
+        assert(specNum < file->number_spectra);
+        const pugi::xml_node *spec = file->linknodes->data() + specNum;
+        // values taken from https://peptideatlas.org/tmp/mzML1.1.0.html
+        int32_t ms_lvl = spec->find_child_by_attribute("cvParam",
+                                                       "name",
+                                                       "ms level")
+                             .attribute("value")
+                             .as_int();
+        return ms_lvl;
+    }
+
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
     // (https://github.com/simdutf/simdutf/tree/master?tab=readme-ov-file#single-header-version-with-limited-features).
     std::vector<char> decode_base64(const std::string &encoded_string)

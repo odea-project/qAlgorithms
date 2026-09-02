@@ -2,6 +2,8 @@
 #define QALGORITHMS_READ_FILE_H
 
 #include "qalgorithms_datatypes.h"
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -132,6 +134,10 @@ namespace qAlgorithms
                          std::vector<float> *const spectrum_mz,
                          std::vector<float> *const spectrum_int,
                          size_t index);
+
+    bool spectrum_is_profile(const XML_File *file, const size_t specNum);
+
+    int32_t spectrum_ms_level(const XML_File *file, const size_t specNum);
 
     // functions exposed for testing
     std::vector<char> decode_base64(const std::string &encoded_string);

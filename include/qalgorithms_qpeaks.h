@@ -39,7 +39,7 @@ namespace qAlgorithms
     /// x and degreesOfFreedom_cum increase monotonically.
     /// y has equal variance at every point
     /// there is enough space to write the results
-    int qpeaks_find(
+    int32_t qpeaks_find(
         const float *intensity_base,
         const float *x_values,
         const uint16_t *DF_cum,
