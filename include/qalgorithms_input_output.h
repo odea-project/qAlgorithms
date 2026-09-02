@@ -2,6 +2,7 @@
 #define QALGORITHMS_INPUT_OUTPUT
 
 #include "qalgorithms_datatypes.h"
+#include "qalgorithms_logging.h"
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -31,7 +32,7 @@ namespace qAlgorithms
     struct UserInputSettings
     {
         // user input for input and output
-        std::vector<std::string> inputPaths;
+        std::vector<std::string> inputPaths; // @todo move in and out path outside of the basic settings
         std::string outputPath;
         size_t skipAhead = 0;        // this is intended to make testing over many files more time efficient
         TerminateAfter term = never; // continue loop execution after the desired result has been printed
@@ -65,19 +66,43 @@ namespace qAlgorithms
 
     UserInputSettings passCliArgs(const int argc, const char *argv[]);
 
-    UserInputSettings interactiveMode();
-
     bool inputsAreSensible(UserInputSettings &args);
 
 #pragma endregion "command line arguments"
 
 #pragma region "file reading"
+
+    enum TaskType : uint8_t
+    {
+        tt_error,
+        tt_normal_processing,
+        tt_centroid_to_mzml,
+        tt_restore_error
+    };
+
+    struct ProcessTask
+    {
+        // input path
+        // output path
+        // filetype enum in
+        // filetype enum out
+    };
+
+    struct CentroidTask
+    {
+        // input path
+        // output dir
+        // filetype enum in
+    };
+
     struct TaskItem
     {
-        std::filesystem::path path;
-        Polarities polarity = Polarities::unknown_polarity;
-        uint32_t replicateGroup = 0; // @todo
-        uint32_t fileID = 0;         // count upwards after reading everything in @todo produce a unique identifier
+        const ProcessTask *const process = nullptr;
+        const CentroidTask *const centroid = nullptr;
+        const QPeaks_log_mapping *const errorRestoreTask = nullptr;
+
+        const UserInputSettings *const settings = nullptr;
+        TaskType type = tt_error;
     };
 
     std::vector<std::filesystem::path> controlInput(const UserInputSettings *args);

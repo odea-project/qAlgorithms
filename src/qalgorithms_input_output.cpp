@@ -99,12 +99,6 @@ namespace qAlgorithms
         assert(args.inputPaths.empty());
         assert(args.outputPath.empty());
 
-        volatile bool debug = false;
-        if (argc == 1 && !debug)
-        {
-            args = interactiveMode();
-        }
-
         for (int i = 1; i < argc; i++)
         {
             std::string argument = argv[i];
@@ -315,51 +309,6 @@ namespace qAlgorithms
         return args;
     }
     // NOLINTEND(concurrency-mt-unsafe)
-
-    UserInputSettings interactiveMode() // @todo this should be replaced by a better debug interface
-    {
-        // this function is called if qAlgorithms is executed without arguments
-        printf("    ### qAlgorithms interactive terminal interface ###\n"
-               "relative paths are not supported in this mode\n"
-               "drag the folder or file you want to process into this window and press \"enter\" to continue:\n");
-        std::string inputPath;
-        while (true)
-        {
-            std::cin >> inputPath; // @todo replace this
-            if (std::filesystem::exists(inputPath))
-            {
-                break;
-            }
-            printf("Error: The path does not exist.\n");
-        }
-
-        UserInputSettings res = UserInputSettings{
-            std::vector<std::string>{inputPath},
-            ".",
-            0,
-            never,
-            0,
-            0,
-            0,
-            0,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            true};
-
-        return res;
-    }
 
     bool inputsAreSensible(UserInputSettings &args)
     {
