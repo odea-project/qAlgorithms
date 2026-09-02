@@ -14,7 +14,6 @@ namespace qAlgorithms
 {
     struct BinaryMetadata // @todo there is no need for a file-specific metadata object. Is it possible for different spectra and properties to be compressed / uncompressed?
     {
-        std::string data_name_short;
         bool compressed = false;
         bool isDouble = false;
     };
@@ -67,22 +66,6 @@ namespace qAlgorithms
             {"MS:1003157", "quadrupole_position_lower_bound_mz"},
             {"MS:1003158", "quadrupole_position_upper_bound_mz"}};
 
-    const std::vector<std::string> possible_accessions_binary_data_mzML = {
-        "MS:1000514", "MS:1000515", "MS:1000516", "MS:1000517",
-        "MS:1000595", "MS:1000617", "MS:1000786", "MS:1000820",
-        "MS:1000821", "MS:1000822", "MS:1002478", "MS:1002529",
-        "MS:1002530", "MS:1002742", "MS:1002743", "MS:1002744",
-        "MS:1002745", "MS:1002893", "MS:1003143", "MS:1003157",
-        "MS:1003158"};
-
-    const std::vector<std::string> possible_short_name_binary_data_mzML = {
-        "mz", "intensity", "charge", "sn",
-        "time", "wavelength", "other", "flowrate",
-        "pressure", "temperature", "mean_charge", "resolution",
-        "baseline", "noise", "sampled_noise_mz", "sampled_noise_intensity",
-        "sampled_noise_baseline", "ion_mobility", "mass", "quadrupole_position_lower_bound_mz",
-        "quadrupole_position_upper_bound_mz"};
-
     /* ### WARNING: THIS CONSTRUCTOR ALLOCATES A SEPARATE ARRAY ### */
     class XML_File
     {
@@ -109,6 +92,8 @@ namespace qAlgorithms
 
         bool isCentroided = false;
 
+        bool spectra_compressed = true; // i have never seen an uncompressed file
+
         XML_File(const path_char *filepath, SourceFileType type);
 
         // copy constructor or assignment could lead to double-free / accessing a dead pointer
@@ -134,6 +119,10 @@ namespace qAlgorithms
                          std::vector<float> *const spectrum_mz,
                          std::vector<float> *const spectrum_int,
                          size_t index);
+
+    bool spectrum_is_compressed(const XML_File *file, const size_t specNum);
+
+    bool spectrum_is_float64(const XML_File *file, const size_t specNum);
 
     bool spectrum_is_profile(const XML_File *file, const size_t specNum);
 

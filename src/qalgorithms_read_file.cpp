@@ -78,7 +78,7 @@ namespace qAlgorithms
         return lengthDecoded;
     };
 
-    static BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin);
+    static BinaryMetadata extract_metadata(const pugi::xml_node &bin);
     static bool isCentroided_fun(const XML_File *file);
 
     static Polarities get_polarity_mode(const XML_File *file)
@@ -169,12 +169,12 @@ namespace qAlgorithms
         {
             auto range = spec_list.first_child().child("binaryDataArrayList").children("binaryDataArray");
             auto iterator = range.begin();
-            this->mtd_mz = extract_binary_metadata(*iterator);
-            assert(mtd_mz.data_name_short == "mz");
+            this->mtd_mz = extract_metadata(*iterator);
+            // assert(mtd_mz.data_name_short == "mz");
             iterator++;
             // assert(iterator == range.end());
-            this->mtd_intensity = extract_binary_metadata(*iterator);
-            assert(mtd_intensity.data_name_short == "intensity");
+            this->mtd_intensity = extract_metadata(*iterator);
+            // assert(mtd_intensity.data_name_short == "intensity");
 
             if (!(mtd_mz.isDouble && mtd_intensity.isDouble))
                 (void)fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
@@ -200,12 +200,12 @@ namespace qAlgorithms
         defective = true;
     };
 
-    static BinaryMetadata extract_binary_metadata(const pugi::xml_node &bin)
+    static BinaryMetadata extract_metadata(const pugi::xml_node &spectrum)
     {
         // extract type of number representation in binary data
         bool type_double = false, type_float = false, type_int32 = false, type_int64 = false;
 
-        for (pugi::xml_node cvParam = bin.child("cvParam"); cvParam != nullptr; cvParam = cvParam.next_sibling("cvParam"))
+        for (pugi::xml_node cvParam = spectrum.child("cvParam"); cvParam != nullptr; cvParam = cvParam.next_sibling("cvParam"))
         {
             std::string val = cvParam.attribute("accession").value();
             if (val == "MS:1000523")
@@ -233,7 +233,7 @@ namespace qAlgorithms
 
         mtd.isDouble = type_double;
 
-        pugi::xml_node node_comp = bin.find_child_by_attribute("cvParam", "accession", "MS:1000574");
+        pugi::xml_node node_comp = spectrum.find_child_by_attribute("cvParam", "accession", "MS:1000574");
         if (node_comp != nullptr)
         {
             const char *compression = node_comp.attribute("name").as_string();
@@ -244,23 +244,6 @@ namespace qAlgorithms
         {
             mtd.compressed = false;
         }
-
-        bool has_bin_data_type = false;
-        for (size_t i = 0; 1 < possible_accessions_binary_data_mzML.size(); ++i)
-        {
-            pugi::xml_node node_data_type = bin.find_child_by_attribute(
-                "cvParam", "accession",
-                possible_accessions_binary_data_mzML[i].c_str());
-
-            if (node_data_type != nullptr)
-            {
-                has_bin_data_type = true;
-                mtd.data_name_short = possible_short_name_binary_data_mzML[i];
-                break;
-            }
-        }
-        assert(has_bin_data_type); // Encoded data type could not be found matching the mzML official vocabulary
-        assert(mtd.data_name_short != "other");
 
         return mtd;
     }
@@ -459,6 +442,30 @@ namespace qAlgorithms
             return true;
         }
         return false;
+    }
+
+    bool spectrum_is_compressed(const XML_File *file, const size_t specNum)
+    {
+        assert(specNum < file->number_spectra);
+        const pugi::xml_node *spec = file->linknodes->data() + specNum;
+
+        bool isCompressed = spec->find_child_by_attribute("cvParam",
+                                                          "accession",
+                                                          "MS:1000574") != nullptr;
+
+        return isCompressed;
+    }
+
+    bool spectrum_is_float64(const XML_File *file, const size_t specNum)
+    {
+        assert(specNum < file->number_spectra);
+        const pugi::xml_node *spec = file->linknodes->data() + specNum;
+
+        bool isDouble = spec->find_child_by_attribute("cvParam",
+                                                      "accession",
+                                                      "MS:1000523") != nullptr;
+
+        return isDouble;
     }
 
     bool spectrum_is_profile(const XML_File *file, const size_t specNum)
