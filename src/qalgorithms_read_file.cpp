@@ -70,7 +70,6 @@ namespace qAlgorithms
         }
         else
         {
-            // encountered one relevant file "in the wild", but this is still rare enough to warrant a warning
             const void *src = bytes->data();
             memcpy(res, src, lengthDecoded * sizeof(float));
         }
@@ -182,6 +181,66 @@ namespace qAlgorithms
         defective = true;
     };
 
+    static int32_t decodeSpectrum(const char *const binaryData,
+                                  std::vector<float> *spectrum,
+                                  const size_t finalSize,
+                                  bool compression, bool f64)
+    {
+        std::vector<char> decoded_string = decode_base64(binaryData); // @todo work directly with the char stream
+        if (decoded_string.empty())
+            return 1;
+
+        spectrum->resize(finalSize); // as per standard, the uncompressed size of the spectrum must be known
+
+        if (f64)
+        {
+            if (compression)
+            {
+                // The final spectrum is of type float, but often the encoding will be double.
+                // In these cases, we need a separate buffer to write into.
+                std::vector<double> buffer(finalSize);
+                size_t bufferSize = finalSize * sizeof(double);
+
+                zng_uncompress((uint8_t *)buffer.data(), &bufferSize,
+                               (uint8_t *)decoded_string.data(), decoded_string.size());
+                assert(bufferSize == finalSize * sizeof(double));
+
+                // copy values into spectrum
+                float *spec = spectrum->data();
+                for (size_t i = 0; i < finalSize; i++)
+                    spec[i] = (float)buffer[i];
+            }
+            else
+            {
+                // the decoded buffer is already an array of doubles and can be reinterpreted as such
+                assert(decoded_string.size() % sizeof(double) == 0);
+                // cppcheck-suppress invalidPointerCast
+                const double *buffer = (double *)decoded_string.data(); // NOLINT
+                float *spec = spectrum->data();
+                for (size_t i = 0; i < finalSize; i++)
+                    spec[i] = (float)buffer[i];
+            }
+        }
+        else
+        {
+            if (compression)
+            {
+                // no buffer needed, write directly into the spectrum
+                size_t bufferSize = finalSize * sizeof(float);
+
+                zng_uncompress((uint8_t *)spectrum->data(), &bufferSize,
+                               (uint8_t *)decoded_string.data(), decoded_string.size());
+                assert(bufferSize == finalSize * sizeof(float));
+            }
+            else
+            {
+                // the decoded string is the desired spectrum, use memcpy
+                memcpy(spectrum->data(), decoded_string.data(), finalSize * sizeof(float));
+            }
+        }
+        return 0;
+    }
+
     int32_t get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
                          std::vector<float> *const spectrum_mz,
                          std::vector<float> *const spectrum_int,
@@ -191,12 +250,6 @@ namespace qAlgorithms
 
         assert(spectrum_mz->empty() && spectrum_int->empty());
         assert(!file->defective);
-
-        if (file->linknodes->size() == 0)
-        {
-            (void)fprintf(stderr, "Error: no spectra found for index %zu\n", index);
-            return 1;
-        }
 
         const pugi::xml_node *spectrum_node = file->linknodes->data() + index;
 
