@@ -47,7 +47,7 @@ namespace qAlgorithms
         size_t maxscale,
         std::vector<RegressionGauss> *result);
 
-    class XML_File;                            // forward declaration so at least the header does not couple with read_file
+    struct XML_File;                           // forward declaration so at least the header does not couple with read_file
     size_t findCentroids(const XML_File *data, // @todo the internal file representation should be more generic
                          const std::vector<uint32_t> *selectedIndices,
                          std::vector<CentroidPeak> *centroids);

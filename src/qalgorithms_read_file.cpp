@@ -78,35 +78,21 @@ namespace qAlgorithms
         return lengthDecoded;
     };
 
-    static BinaryMetadata extract_metadata(const pugi::xml_node &bin);
     static bool isCentroided_fun(const XML_File *file);
 
     static Polarities get_polarity_mode(const XML_File *file)
     {
-        assert(file->linknodes->size() > 1);
-        size_t count = file->linknodes->size();
+        const size_t count = file->linknodes->size();
+        assert(count > 1);
 
-        bool positive = false;
-        bool negative = false;
-        for (size_t i = 0; i < count; ++i)
+        Polarities polarity_prev = spectrum_polarity(file, 0);
+        for (size_t specNum = 1; specNum < count; ++specNum)
         {
-            const pugi::xml_node *spec = file->linknodes->data() + i;
-            if (spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr)
-            {
-                positive = true;
-            }
-            else
-            {
-                assert(spec->find_child_by_attribute("cvParam", "accession", "MS:1000129"));
-                negative = true;
-            }
-
-            if (positive && negative)
-            {
+            Polarities polarity = spectrum_polarity(file, specNum);
+            if (polarity != polarity_prev)
                 return Polarities::mixed;
-            }
         }
-        return positive ? Polarities::positive : Polarities::negative;
+        return polarity_prev;
     };
 
     XML_File::XML_File(const path_char *file, const SourceFileType type)
@@ -152,7 +138,7 @@ namespace qAlgorithms
         if (!(sampleListExists || sourceFileListExists))
         {
             defective = true;
-            (void)fprintf(stderr, "Error: the supplied mzML file does not contain only one sample.\n"
+            (void)fprintf(stderr, "Error: the supplied mzML file contains more than one sample.\n"
                                   "This probably means that a file containing intermediate (aggregated) results is\n"
                                   "supplied instead of raw data. If the file is correct, inspect the conversion pipeline.\n");
             return;
@@ -165,19 +151,11 @@ namespace qAlgorithms
 
         number_spectra = spec_list.attribute("count").as_uint();
 
-        if (number_spectra > 0)
+        if (number_spectra == 0)
         {
-            auto range = spec_list.first_child().child("binaryDataArrayList").children("binaryDataArray");
-            auto iterator = range.begin();
-            this->mtd_mz = extract_metadata(*iterator);
-            // assert(mtd_mz.data_name_short == "mz");
-            iterator++;
-            // assert(iterator == range.end());
-            this->mtd_intensity = extract_metadata(*iterator);
-            // assert(mtd_intensity.data_name_short == "intensity");
-
-            if (!(mtd_mz.isDouble && mtd_intensity.isDouble))
-                (void)fprintf(stderr, "Warning: it is unexpected that data is stored as 32-bit float.\n");
+            defective = true;
+            (void)fprintf(stderr, "Error: the supplied mzML file does not contain any spectra.\n");
+            return;
         }
 
         linknodes = new std::vector<pugi::xml_node>(number_spectra);
@@ -187,6 +165,10 @@ namespace qAlgorithms
             linknodes->push_back(child);
         }
         assert(linknodes->size() == number_spectra);
+
+        zlib_compression = spectrum_is_compressed(this, 0);
+
+        precision_f64 = spectrum_is_float64(this, 0);
 
         isCentroided = isCentroided_fun(this);
 
@@ -200,59 +182,13 @@ namespace qAlgorithms
         defective = true;
     };
 
-    static BinaryMetadata extract_metadata(const pugi::xml_node &spectrum)
-    {
-        // extract type of number representation in binary data
-        bool type_double = false, type_float = false, type_int32 = false, type_int64 = false;
-
-        for (pugi::xml_node cvParam = spectrum.child("cvParam"); cvParam != nullptr; cvParam = cvParam.next_sibling("cvParam"))
-        {
-            std::string val = cvParam.attribute("accession").value();
-            if (val == "MS:1000523")
-            {
-                type_double = true;
-            }
-            if (val == "MS:1000521")
-            {
-                type_float = true;
-            }
-            if (val == "MS:1000519")
-            {
-                type_int32 = true;
-            }
-            if (val == "MS:1000522")
-            {
-                type_int64 = true;
-            }
-        }
-        assert(type_double != type_float);
-        assert(!type_int32);
-        assert(!type_int64);
-
-        BinaryMetadata mtd;
-
-        mtd.isDouble = type_double;
-
-        pugi::xml_node node_comp = spectrum.find_child_by_attribute("cvParam", "accession", "MS:1000574");
-        if (node_comp != nullptr)
-        {
-            const char *compression = node_comp.attribute("name").as_string();
-            mtd.compressed = (std::strcmp(compression, "zlib") == 0) ||
-                             (std::strcmp(compression, "zlib compression") == 0);
-        }
-        else
-        {
-            mtd.compressed = false;
-        }
-
-        return mtd;
-    }
-
     int32_t get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
                          std::vector<float> *const spectrum_mz,
                          std::vector<float> *const spectrum_int,
                          size_t index)
     {
+        // @todo the entire function needs a rework
+
         assert(spectrum_mz->empty() && spectrum_int->empty());
         assert(!file->defective);
 
@@ -286,7 +222,7 @@ namespace qAlgorithms
                 return 2;
             }
 
-            if (file->mtd_mz.compressed)
+            if (file->zlib_compression)
             {
                 size_t expectedSize = decoded_string.size() * 6;
                 buffer.resize(expectedSize);
@@ -296,11 +232,11 @@ namespace qAlgorithms
                 // check that less characters have been written than fit into the buffer
                 assert(buffer.size() > expectedSize);
                 buffer.resize(expectedSize);
-                bytesToFloatVec(&buffer, file->mtd_mz.isDouble, spectrum_mz);
+                bytesToFloatVec(&buffer, file->precision_f64, spectrum_mz);
             }
             else
             {
-                bytesToFloatVec(&decoded_string, file->mtd_mz.isDouble, spectrum_mz);
+                bytesToFloatVec(&decoded_string, file->precision_f64, spectrum_mz);
             }
 
             assert(spectrum_mz->size() == number_traces); // this happens if an index is tried which does not exist in the data
@@ -322,7 +258,7 @@ namespace qAlgorithms
                 return 2;
             }
 
-            if (file->mtd_intensity.compressed)
+            if (file->zlib_compression)
             {
                 size_t expectedSize = decoded_string.size() * 6;
                 buffer.resize(expectedSize);
@@ -332,11 +268,11 @@ namespace qAlgorithms
                 // check that less characters have been written than fit into the buffer
                 assert(buffer.size() > expectedSize);
                 buffer.resize(expectedSize);
-                bytesToFloatVec(&buffer, file->mtd_intensity.isDouble, spectrum_int);
+                bytesToFloatVec(&buffer, file->precision_f64, spectrum_int);
             }
             else
             {
-                bytesToFloatVec(&decoded_string, file->mtd_intensity.isDouble, spectrum_int);
+                bytesToFloatVec(&decoded_string, file->precision_f64, spectrum_int);
             }
 
             assert(spectrum_int->size() == number_traces); // this happens if an index is tried which does not exist in the data
@@ -376,39 +312,34 @@ namespace qAlgorithms
         }
     };
 
-    std::vector<uint32_t> filter_spectra(const XML_File *data,
+    std::vector<uint32_t> filter_spectra(const XML_File *file,
                                          const bool ms1,
                                          const Polarities polarity,
-                                         const bool centroided)
+                                         const bool profile_mode)
     {
         // return a vector of all indices that are relevant to the query. Properties are checked in order of regularity.
-        assert(!data->defective);
-        const size_t specnum = data->number_spectra;
-        assert(specnum > 0);
-        assert(polarity == Polarities::positive || polarity == Polarities::negative);
-        bool polarity_bool = polarity == Polarities::positive;
+        assert(!file->defective);
+        const size_t numSpectra = file->number_spectra;
+        assert(numSpectra > 0);
         std::vector<uint32_t> indices;
-        indices.reserve(specnum);
+        indices.reserve(numSpectra);
 
-        for (uint32_t i = 0; i < specnum; i++)
+        for (uint32_t specNum = 0; specNum < numSpectra; specNum++)
         {
-            const pugi::xml_node *spec = data->linknodes->data() + i;
-
-            bool isCentroid = spec->find_child_by_attribute("cvParam", "accession", "MS:1000127") != nullptr;
-            if (isCentroid != centroided) // this does not allow for processing of partially centroided data - change?
+            bool isProfile = spectrum_is_profile(file, specNum);
+            if (isProfile != profile_mode) // this does not allow for processing of partially centroided data - change?
                 continue;
 
-            // @todo this is  difficult to read, make a separate function (?)
-            bool polarityPos = spec->find_child_by_attribute("cvParam", "accession", "MS:1000130") != nullptr;
-            if (polarityPos != polarity_bool)
+            Polarities polarity_spec = spectrum_polarity(file, specNum);
+            if (polarity_spec != polarity)
                 continue;
 
-            uint32_t level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
+            uint32_t level = spectrum_ms_level(file, specNum);
             bool isMS1 = 1 == level;
             if (isMS1 != ms1)
                 continue; // only ms1 or msn data can be retrieved at once.
 
-            indices.push_back(i);
+            indices.push_back(specNum);
         }
         indices.shrink_to_fit();
         return indices;
@@ -419,21 +350,20 @@ namespace qAlgorithms
         size_t centroided = 0;
         size_t profile = 0;
 
-        for (size_t i = 0; i < file->number_spectra; ++i)
+        for (size_t specNum = 0; specNum < file->number_spectra; ++specNum)
         {
-            const pugi::xml_node *spec = file->linknodes->data() + i;
-
-            uint32_t level = spec->find_child_by_attribute("cvParam", "name", "ms level").attribute("value").as_int();
-            bool isMS1 = 1 == level;
-            if (!isMS1)
+            uint32_t level = spectrum_ms_level(file, specNum);
+            if (level != 1)
                 continue;
 
-            if (spec->find_child_by_attribute("cvParam", "accession", "MS:1000128") != nullptr)
+            if (spectrum_is_profile(file, specNum))
             {
                 profile += 1;
-                continue; // profile mode
             }
-            centroided += 1;
+            else
+            {
+                centroided += 1;
+            }
         }
 
         if (centroided > 0)
@@ -448,24 +378,46 @@ namespace qAlgorithms
     {
         assert(specNum < file->number_spectra);
         const pugi::xml_node *spec = file->linknodes->data() + specNum;
+        // Per standard, the compression should be specified at the binaryDataArrayList level.
+        // Going by actual output files, this is not the case.
+        const pugi::xml_node binaryDataArrayNode = spec->child("binaryDataArrayList")
+                                                       .child("binaryDataArray");
 
-        bool isCompressed = spec->find_child_by_attribute("cvParam",
-                                                          "accession",
-                                                          "MS:1000574") != nullptr;
+        bool isCompressed = !binaryDataArrayNode.find_child_by_attribute("cvParam",
+                                                                         "accession",
+                                                                         "MS:1000574")
+                                 .empty();
+        if (isCompressed)
+            return true;
 
-        return isCompressed;
+        bool isNotCompressed = !binaryDataArrayNode.find_child_by_attribute("cvParam",
+                                                                            "accession",
+                                                                            "MS:1000576")
+                                    .empty();
+        assert(isNotCompressed);
+        return false;
     }
 
     bool spectrum_is_float64(const XML_File *file, const size_t specNum)
     {
         assert(specNum < file->number_spectra);
         const pugi::xml_node *spec = file->linknodes->data() + specNum;
+        const pugi::xml_node binaryDataArrayNode = spec->child("binaryDataArrayList")
+                                                       .child("binaryDataArray");
 
-        bool isDouble = spec->find_child_by_attribute("cvParam",
-                                                      "accession",
-                                                      "MS:1000523") != nullptr;
+        bool isDouble = !binaryDataArrayNode.find_child_by_attribute("cvParam",
+                                                                     "accession",
+                                                                     "MS:1000523")
+                             .empty();
+        if (isDouble)
+            return true;
 
-        return isDouble;
+        bool isFloat = !binaryDataArrayNode.find_child_by_attribute("cvParam",
+                                                                    "accession",
+                                                                    "MS:1000521")
+                            .empty();
+        assert(isFloat);
+        return false;
     }
 
     bool spectrum_is_profile(const XML_File *file, const size_t specNum)
@@ -473,9 +425,10 @@ namespace qAlgorithms
         assert(specNum < file->number_spectra);
         const pugi::xml_node *spec = file->linknodes->data() + specNum;
         // values taken from https://peptideatlas.org/tmp/mzML1.1.0.html
-        bool isProfile = spec->find_child_by_attribute("cvParam",
-                                                       "accession",
-                                                       "MS:1000128") != nullptr;
+        bool isProfile = !spec->find_child_by_attribute("cvParam",
+                                                        "accession",
+                                                        "MS:1000128")
+                              .empty();
         return isProfile;
     }
 
@@ -490,6 +443,28 @@ namespace qAlgorithms
                              .attribute("value")
                              .as_int();
         return ms_lvl;
+    }
+
+    Polarities spectrum_polarity(const XML_File *file, const size_t specNum)
+    {
+        assert(specNum < file->number_spectra);
+        const pugi::xml_node *spec = file->linknodes->data() + specNum;
+
+        bool positive_scan = !spec->find_child_by_attribute("cvParam",
+                                                            "accession",
+                                                            "MS:1000130")
+                                  .empty();
+        if (positive_scan)
+            return Polarities::positive;
+
+        bool negative_scan = !spec->find_child_by_attribute("cvParam",
+                                                            "accession",
+                                                            "MS:1000129")
+                                  .empty();
+        if (negative_scan)
+            return Polarities::negative;
+
+        return Polarities::unknown_polarity;
     }
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'

@@ -88,12 +88,13 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
     // because there are only three cases, the logic is handled like this:
     // 1) negative or positive only: set the argument for filter_spectra correctly and proceed. There is no looping.
-    // 2) mixed mode: start with positive scans, then set polarity to negative and goto the the next line.
+    // 2) mixed mode: start with positive scans, then set polarity to negative and goto EVALUATE_MIXED_POLARITY.
     //    This is a bit messy, but everything else i can think of involves an abused loop construct that
-    //    has horrible readability and requires more variables to handle the switching.
+    //    has horrible readability and requires more variables to handle the switching. do ... while would
+    //    serve the same purpose, but is less obvious about only happening once.
     EVALUATE_MIXED_POLARITY:
         // @todo MS2 support here!
-        const std::vector<uint32_t> selectedIndices = filter_spectra(&inputFile, true, currentPolarity, false);
+        const std::vector<uint32_t> selectedIndices = filter_spectra(&inputFile, true, currentPolarity, true);
 
         if (selectedIndices.empty())
         {

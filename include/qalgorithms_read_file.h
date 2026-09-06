@@ -12,12 +12,6 @@
 
 namespace qAlgorithms
 {
-    struct BinaryMetadata // @todo there is no need for a file-specific metadata object. Is it possible for different spectra and properties to be compressed / uncompressed?
-    {
-        bool compressed = false;
-        bool isDouble = false;
-    };
-
     enum SourceFileType // NOLINT (performance-enum-size)
     {
         unknown_filetype,
@@ -36,43 +30,40 @@ namespace qAlgorithms
         bool polarity = false; // 0 = negative, 1 = positive
     };
 
-    struct mzML_schema
-    {
-        const char accession[11];
-        const char short_name[35];
-    };
+    // struct mzML_schema
+    // {
+    //     const char accession[11];
+    //     const char short_name[35];
+    // };
 
-    const mzML_schema mzML_fields[] =
-        {
-            {"MS:1000514", "mz"},
-            {"MS:1000515", "intensity"},
-            {"MS:1000516", "charge"},
-            {"MS:1000517", "sn"},
-            {"MS:1000595", "time"},
-            {"MS:1000617", "wavelength"},
-            {"MS:1000786", "other"},
-            {"MS:1000820", "flowrate"},
-            {"MS:1000821", "pressure"},
-            {"MS:1000822", "temperature"},
-            {"MS:1002478", "mean_charge"},
-            {"MS:1002529", "resolution"},
-            {"MS:1002530", "baseline"},
-            {"MS:1002742", "noise"},
-            {"MS:1002743", "sampled_noise_mz"},
-            {"MS:1002744", "sampled_noise_intensity"},
-            {"MS:1002745", "sampled_noise_baseline"},
-            {"MS:1002893", "ion_mobility"},
-            {"MS:1003143", "mass"},
-            {"MS:1003157", "quadrupole_position_lower_bound_mz"},
-            {"MS:1003158", "quadrupole_position_upper_bound_mz"}};
+    // const mzML_schema mzML_fields[] =
+    //     {
+    //         {"MS:1000514", "mz"},
+    //         {"MS:1000515", "intensity"},
+    //         {"MS:1000516", "charge"},
+    //         {"MS:1000517", "sn"},
+    //         {"MS:1000595", "time"},
+    //         {"MS:1000617", "wavelength"},
+    //         {"MS:1000786", "other"},
+    //         {"MS:1000820", "flowrate"},
+    //         {"MS:1000821", "pressure"},
+    //         {"MS:1000822", "temperature"},
+    //         {"MS:1002478", "mean_charge"},
+    //         {"MS:1002529", "resolution"},
+    //         {"MS:1002530", "baseline"},
+    //         {"MS:1002742", "noise"},
+    //         {"MS:1002743", "sampled_noise_mz"},
+    //         {"MS:1002744", "sampled_noise_intensity"},
+    //         {"MS:1002745", "sampled_noise_baseline"},
+    //         {"MS:1002893", "ion_mobility"},
+    //         {"MS:1003143", "mass"},
+    //         {"MS:1003157", "quadrupole_position_lower_bound_mz"},
+    //         {"MS:1003158", "quadrupole_position_upper_bound_mz"}};
 
     /* ### WARNING: THIS CONSTRUCTOR ALLOCATES A SEPARATE ARRAY ### */
-    class XML_File
+    struct XML_File
     {
         // @todo change this to a generalised XML document interface for mass spec data
-      public:
-        // std::vector<BinaryMetadata> spectra_binary_metadata;
-        BinaryMetadata mtd_mz{}, mtd_intensity{};
 
         pugi::xml_document mzml_base_document;
 
@@ -92,7 +83,9 @@ namespace qAlgorithms
 
         bool isCentroided = false;
 
-        bool spectra_compressed = true; // i have never seen an uncompressed file
+        bool zlib_compression = true; // per standard, only zlib is possible (note: i have never seen an uncompressed file)
+
+        bool precision_f64 = false;
 
         XML_File(const path_char *filepath, SourceFileType type);
 
@@ -106,10 +99,10 @@ namespace qAlgorithms
         void free_linknodes();
     };
 
-    std::vector<uint32_t> filter_spectra(const XML_File *data,
+    std::vector<uint32_t> filter_spectra(const XML_File *file,
                                          const bool ms1,
                                          const Polarities polarity,
-                                         const bool centroided);
+                                         const bool profile_mode);
 
     void get_spectra_RT(const XML_File *data,
                         const std::vector<uint32_t> *indices,
@@ -127,6 +120,8 @@ namespace qAlgorithms
     bool spectrum_is_profile(const XML_File *file, const size_t specNum);
 
     int32_t spectrum_ms_level(const XML_File *file, const size_t specNum);
+
+    Polarities spectrum_polarity(const XML_File *file, const size_t specNum);
 
     // functions exposed for testing
     std::vector<char> decode_base64(const std::string &encoded_string);

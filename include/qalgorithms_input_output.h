@@ -111,7 +111,7 @@ namespace qAlgorithms
 
 #pragma region "print functions"
 
-    class XML_File;
+    struct XML_File;
     void printProfileSections(const XML_File *infile,
                               const UserInputSettings *inargs,
                               const std::vector<uint32_t> *selectedIndices,
