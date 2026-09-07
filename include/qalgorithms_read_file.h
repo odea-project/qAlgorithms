@@ -21,15 +21,6 @@ namespace qAlgorithms
         json,
     };
 
-    struct SpectrumData // this information is required by qAlgorithms to function
-    {
-        size_t spectrum_index = 0;     // start at 1
-        size_t spectrum_numPoints = 0; // profile points or centroids in this spectrum
-        uint32_t mode = 0;             // 1 = profile, 2 = centroid
-        uint32_t MS_level = 0;
-        bool polarity = false; // 0 = negative, 1 = positive
-    };
-
     // struct mzML_schema
     // {
     //     const char accession[11];
@@ -65,9 +56,7 @@ namespace qAlgorithms
     {
         // @todo change this to a generalised XML document interface for mass spec data
 
-        pugi::xml_document mzml_base_document;
-
-        pugi::xml_parse_result loading_result;
+        pugi::xml_document mzml_base_document; // 208 bytes in size
 
         std::vector<pugi::xml_node> *linknodes = nullptr; // allocation during initialisation, has to be deallocated manually with the supplied function
 
@@ -93,8 +82,6 @@ namespace qAlgorithms
         XML_File(XML_File &) = delete;
         XML_File(XML_File &&) = delete;
         XML_File &operator=(XML_File &&) = delete;
-
-        // return all indices of spectra that match the required criteria
 
         void free_linknodes();
     };

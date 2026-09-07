@@ -65,7 +65,7 @@ namespace qAlgorithms
         filetype = type;
         assert(filetype == mzML);
 
-        loading_result = mzml_base_document.load_file(file, pugi::parse_default | pugi::parse_declaration | pugi::parse_pi);
+        pugi::xml_parse_result loading_result = mzml_base_document.load_file(file);
 
         if (loading_result)
         {
