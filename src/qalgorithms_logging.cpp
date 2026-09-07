@@ -69,8 +69,8 @@ namespace qAlgorithms
             sizeof(length) + sizeof(maxscale) +
             resultLen + sizeof(size_t); // also include size of result
 
-        std::vector<char> logged_state(byteLen, 0);
-        char *access_log = logged_state.data();
+        std::vector<uint8_t> logged_state(byteLen, 0);
+        uint8_t *access_log = logged_state.data();
         assert(access_log);
 
         // statically sized members
@@ -112,7 +112,7 @@ namespace qAlgorithms
         // with email / plaintext fields (base64 encoded) and written to the logfile. To avoid
         // a very large text dump, the data is compressed beforehand using zlib.
         std::vector<char> buffer_out;
-        compress_and_encode(&logged_state, &buffer_out);
+        compress_and_encode(logged_state.data(), logged_state.size(), &buffer_out);
         const size_t written = fprintf(log_output_global, "qpeaks:\n%s\n", buffer_out.data());
         assert(written == buffer_out.size());
     }

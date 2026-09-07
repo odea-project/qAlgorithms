@@ -1242,9 +1242,13 @@ namespace qAlgorithms
                 res_spectrum_mz[peak] = result[peak].position;
             }
 
-            // 5) compress arrays to char *
-            compress_and_encode_dbl(&res_spectrum_int, &char_spectrum_int);
-            compress_and_encode_dbl(&res_spectrum_mz, &char_spectrum_mz);
+            // 5) compress arrays to byte vector
+            compress_and_encode((uint8_t *)res_spectrum_int.data(),
+                                numPeaks * sizeof(float),
+                                &char_spectrum_int);
+            compress_and_encode((uint8_t *)res_spectrum_mz.data(),
+                                numPeaks * sizeof(float),
+                                &char_spectrum_int);
 
             // 6) set spectrum mode to centroided. This means replacing the attribute name and value
             spec->find_child_by_attribute("cvParam", "name", "profile spectrum").set_value("centroid spectrum");

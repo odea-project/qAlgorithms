@@ -485,35 +485,10 @@ namespace qAlgorithms
         output_string->resize(outSize);
     };
 
-    void compress_and_encode_dbl(std::vector<double> *input_dbl, std::vector<char> *output_string)
+    void compress_and_encode(const uint8_t *input_arr,
+                             const size_t length,
+                             std::vector<char> *output_string)
     {
-        // cast double array to char array for transform
-        const size_t length = input_dbl->size() * sizeof(double);
-        const char *input = (const char *)input_dbl->data();
-
-        // compress using zlib-ng
-        std::vector<char> buffer(zng_compressBound(length));
-        size_t outSize = length;
-        zng_compress((Bytef *)buffer.data(), &outSize,
-                     (Bytef *)input, length);
-        assert(outSize <= buffer.size());
-
-        // encode as base64
-        size_t base64_size = simdutf::base64_length_from_binary(outSize);
-        output_string->resize(base64_size);
-        const size_t written = simdutf::binary_to_base64(buffer.data(), outSize, output_string->data());
-        assert(written == base64_size);
-    }
-
-    template <typename T>
-    void compress_and_encode(const std::vector<T> *input, std::vector<char> *output_string)
-    {
-        static_assert(std::is_trivially_copyable_v<T>);
-
-        // cast double array to char array for transform
-        const size_t length = input->size() * sizeof(T);
-        const char *input_arr = (const char *)input->data();
-
         // compress using zlib-ng
         const size_t compressionBound = zng_compressBound(length);
         std::vector<char> buffer(compressionBound);
