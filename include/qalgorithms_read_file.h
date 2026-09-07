@@ -128,9 +128,6 @@ namespace qAlgorithms
 
     std::vector<char> encode_base64_dbl(const double *input_dbl, const size_t in_len_dbl);
 
-    size_t bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
-                           std::vector<float> *result);
-
     void compress_zlib(const std::vector<char> *uncompressed_string, std::vector<char> *output_string);
 
     void compress_and_encode_dbl(std::vector<double> *input_dbl, std::vector<char> *output_string);

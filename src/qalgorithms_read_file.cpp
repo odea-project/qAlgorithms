@@ -43,40 +43,6 @@ inline int32_t zng_compress(uint8_t *dest, size_t *destLen, const uint8_t *sourc
 
 namespace qAlgorithms
 {
-    size_t bytesToFloatVec(const std::vector<char> *bytes, const bool isDouble,
-                           std::vector<float> *result)
-    {
-        // cast the byte array resulting from zlib decompression to a float array
-        const size_t fsize = sizeof(float);
-        const size_t dsize = sizeof(double);
-        assert(bytes->size() % (isDouble ? dsize : fsize) == 0);
-        size_t lengthDecoded = bytes->size() / (isDouble ? dsize : fsize);
-
-        result->resize(lengthDecoded);
-        float *res = result->data();
-
-// for only this block, ignore the alignment change. It is intended behavouir.
-#pragma GCC diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wcast-align"
-        if (isDouble)
-        {
-            // cppcheck-suppress invalidPointerCast
-            const double *dbl = (const double *)bytes->data();
-            for (size_t i = 0; i < lengthDecoded; i++)
-            {
-                res[i] = (float)dbl[i]; // result must be cast to float individually
-            }
-        }
-        else
-        {
-            const void *src = bytes->data();
-            memcpy(res, src, lengthDecoded * sizeof(float));
-        }
-#pragma clang diagnostic pop
-        return lengthDecoded;
-    };
-
     static bool isCentroided_fun(const XML_File *file);
 
     static Polarities get_polarity_mode(const XML_File *file)
@@ -246,89 +212,51 @@ namespace qAlgorithms
                          std::vector<float> *const spectrum_int,
                          size_t index)
     {
-        // @todo the entire function needs a rework
-
         assert(spectrum_mz->empty() && spectrum_int->empty());
         assert(!file->defective);
+        assert(index < file->number_spectra);
 
         const pugi::xml_node *spectrum_node = file->linknodes->data() + index;
 
-        pugi::xml_node node_binary_list = spectrum_node->child("binaryDataArrayList");
+        const size_t spectrum_size = spectrum_node->attribute("defaultArrayLength").as_uint();
 
-        size_t number_traces = spectrum_node->attribute("defaultArrayLength").as_uint();
+        pugi::xml_node spectrum_node_mz = spectrum_node->child("binaryDataArrayList")
+                                              .child("binaryDataArray");
 
-        pugi::xml_named_node_iterator dataArray = node_binary_list.children("binaryDataArray").begin();
-        assert(dataArray != node_binary_list.children("binaryDataArray").end());
+        {
+            // @todo the mzML defines the encoded length of a spectrum, we should use this here
+            // instead of stack allocating a potentially large number of elements.
+            const char *binaryData = spectrum_node_mz.child("binary").child_value();
 
-        std::vector<char> buffer;
-        { // extract mz values
-            pugi::xml_node node_binary = dataArray->child("binary");
-            const char *encoded_string = node_binary.child_value();
-            std::vector<char> decoded_string = decode_base64(encoded_string);
+            int32_t error = decodeSpectrum(binaryData, spectrum_mz, spectrum_size,
+                                           file->zlib_compression, file->precision_f64);
 
-            // error handling
-            if (decoded_string.empty())
+            if (error != 0)
             {
                 (void)fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 \n"
                                       "correctly. Ensure the input file is not corrupted.\n",
                               index);
                 return 2;
             }
-
-            if (file->zlib_compression)
-            {
-                size_t expectedSize = decoded_string.size() * 6;
-                buffer.resize(expectedSize);
-                zng_uncompress((uint8_t *)buffer.data(), &expectedSize,
-                               (uint8_t *)decoded_string.data(), decoded_string.size());
-                // decompress_zlib(&decoded_string, &buffer);
-                // check that less characters have been written than fit into the buffer
-                assert(buffer.size() > expectedSize);
-                buffer.resize(expectedSize);
-                bytesToFloatVec(&buffer, file->precision_f64, spectrum_mz);
-            }
-            else
-            {
-                bytesToFloatVec(&decoded_string, file->precision_f64, spectrum_mz);
-            }
-
-            assert(spectrum_mz->size() == number_traces); // this happens if an index is tried which does not exist in the data
         }
 
-        dataArray++; // array pointer is incremented since both spectra are stored at the same node
+        pugi::xml_node spectrum_node_intensity = spectrum_node_mz.next_sibling();
 
         { // extract intensity values
-            pugi::xml_node node_binary = dataArray->child("binary");
-            std::string encoded_string = node_binary.child_value();
-            std::vector<char> decoded_string = decode_base64(encoded_string);
+            const char *binaryData = spectrum_node_intensity.child("binary").child_value();
 
-            // error handling
-            if (decoded_string.empty())
+            std::vector<float> spectrum_intensity;
+
+            int32_t error = decodeSpectrum(binaryData, &spectrum_intensity, spectrum_size,
+                                           file->zlib_compression, file->precision_f64);
+
+            if (error != 0)
             {
                 (void)fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 "
                                       "correctly. Ensure the input file is not corrupted.\n",
                               index);
                 return 2;
             }
-
-            if (file->zlib_compression)
-            {
-                size_t expectedSize = decoded_string.size() * 6;
-                buffer.resize(expectedSize);
-                zng_uncompress((uint8_t *)buffer.data(), &expectedSize,
-                               (uint8_t *)decoded_string.data(), decoded_string.size());
-                // decompress_zlib(&decoded_string, &buffer);
-                // check that less characters have been written than fit into the buffer
-                assert(buffer.size() > expectedSize);
-                buffer.resize(expectedSize);
-                bytesToFloatVec(&buffer, file->precision_f64, spectrum_int);
-            }
-            else
-            {
-                bytesToFloatVec(&decoded_string, file->precision_f64, spectrum_int);
-            }
-
-            assert(spectrum_int->size() == number_traces); // this happens if an index is tried which does not exist in the data
         }
         return 0;
     };

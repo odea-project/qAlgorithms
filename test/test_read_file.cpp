@@ -13,9 +13,11 @@ static void test_base64_decode()
     const char encoded[] = "jiZEAKNgwT+WGDInAAsGQGOGDPv0h/s/KLQiljFalj/72H+cKHH6P7SXNGkTauQ//qRKReO8oz/uG/9JXpvRP2MAwvHVYPs/ugWHusGFwz8=";
     const size_t encode_len = 108; // 109 above includes null terminator
 
-    std::vector<char> decoded_string = decode_base64(encoded);
     std::vector<float> result;
-    bytesToFloatVec(&decoded_string, true, &result);
+    decodeSpectrum(encoded, &result, 10, false, true);
+
+    // @todo also test for the other three combinations that are possible, as well as errors
+
     assert(result.size() == 10, "Incorrect number of Elements decoded\n", NULL);
     for (size_t i = 0; i < 10; i++)
     {

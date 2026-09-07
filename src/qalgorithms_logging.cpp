@@ -71,6 +71,7 @@ namespace qAlgorithms
 
         std::vector<char> logged_state(byteLen, 0);
         char *access_log = logged_state.data();
+        assert(access_log);
 
         // statically sized members
         *access_log = df == nullptr ? 0 : 1;
