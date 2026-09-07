@@ -220,8 +220,8 @@ namespace qAlgorithms
 
         const size_t spectrum_size = spectrum_node->attribute("defaultArrayLength").as_uint();
 
-        pugi::xml_node spectrum_node_mz = spectrum_node->child("binaryDataArrayList")
-                                              .child("binaryDataArray");
+        const pugi::xml_node spectrum_node_mz = spectrum_node->child("binaryDataArrayList")
+                                                    .child("binaryDataArray");
 
         {
             // @todo the mzML defines the encoded length of a spectrum, we should use this here
@@ -240,14 +240,12 @@ namespace qAlgorithms
             }
         }
 
-        pugi::xml_node spectrum_node_intensity = spectrum_node_mz.next_sibling();
+        const pugi::xml_node spectrum_node_intensity = spectrum_node_mz.next_sibling();
 
-        { // extract intensity values
+        {
             const char *binaryData = spectrum_node_intensity.child("binary").child_value();
 
-            std::vector<float> spectrum_intensity;
-
-            int32_t error = decodeSpectrum(binaryData, &spectrum_intensity, spectrum_size,
+            int32_t error = decodeSpectrum(binaryData, spectrum_int, spectrum_size,
                                            file->zlib_compression, file->precision_f64);
 
             if (error != 0)
