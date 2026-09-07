@@ -4,7 +4,6 @@
 #include "qalgorithms_datatypes.h"
 #include <cstddef>
 #include <cstdint>
-#include <string>
 #include <vector>
 
 #define PUGIXML_HEADER_ONLY
@@ -109,9 +108,6 @@ namespace qAlgorithms
     int32_t spectrum_ms_level(const XML_File *file, const size_t specNum);
 
     Polarities spectrum_polarity(const XML_File *file, const size_t specNum);
-
-    // functions exposed for testing
-    std::vector<char> decode_base64(const std::string &encoded_string);
 
     std::vector<char> encode_base64_dbl(const double *input_dbl, const size_t in_len_dbl);
 

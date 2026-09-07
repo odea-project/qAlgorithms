@@ -10,7 +10,6 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
-#include <string>
 #include <vector>
 
 //  problems linking against zlib-ng with mingw under windows, use this bypass until a proper solution is required
@@ -44,6 +43,8 @@ inline int32_t zng_compress(uint8_t *dest, size_t *destLen, const uint8_t *sourc
 namespace qAlgorithms
 {
     static bool isCentroided_fun(const XML_File *file);
+
+    static std::vector<char> decode_base64(const char *encoded_string);
 
     static Polarities get_polarity_mode(const XML_File *file)
     {
@@ -448,12 +449,13 @@ namespace qAlgorithms
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
     // (https://github.com/simdutf/simdutf/tree/master?tab=readme-ov-file#single-header-version-with-limited-features).
-    std::vector<char> decode_base64(const std::string &encoded_string)
+    static std::vector<char> decode_base64(const char *encoded_string)
     {
-        size_t length = encoded_string.size() / 4 * 3;
-        std::vector<char> output(length);
-        simdutf::result simd_res = simdutf::base64_to_binary(encoded_string.c_str(),
-                                                             encoded_string.size(),
+        const size_t encoded_length = strlen(encoded_string);
+        const size_t decoded_length = encoded_length / 4 * 3;
+        std::vector<char> output(decoded_length);
+        simdutf::result simd_res = simdutf::base64_to_binary(encoded_string,
+                                                             encoded_length,
                                                              output.data());
 
         if (simd_res.error != 0) // [[unlikely]]
