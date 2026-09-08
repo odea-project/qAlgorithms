@@ -60,6 +60,11 @@ PeakTest pt_04 = { // NOLINT
     {28913.7539, 15335.7256, 31011.6035, 59799.4961, 30304.0547, 101.776535, 7791.06396, 16737.2637, 7326.88721, 5033.8501, 11136.9746, 12789.5098, 7660.45898, 2526.31592},
     3};
 
+PeakTest pt_05 = { // NOLINT
+    // this peak lead to unresolvable regression conflicts in a version of the new regression elimination
+    {1566.37317, 6721.91357, 10333.0713, 12963.7285, 18588.1035, 23554.9043, 26401.1895, 27222.6621, 27128.6387, 18343.3789, 9999.44727, 823.102112},
+    1};
+
 static int test_qpeaks_find(const PeakTest *test)
 {
     const size_t len = test->intensity.size();
