@@ -86,10 +86,11 @@ static int test_qpeaks_find(const PeakTest *test)
 
 static int test_qpeaks_set(void)
 {
-    // test_qpeaks_find(&pt_01); // removed until deconvolution is introduced, second apex is only four distinct points
+    test_qpeaks_find(&pt_05);
     test_qpeaks_find(&pt_04);
     test_qpeaks_find(&pt_03);
     test_qpeaks_find(&pt_02);
+    // test_qpeaks_find(&pt_01); // removed until deconvolution is introduced, second apex is only four distinct points
     return 0;
 }
 

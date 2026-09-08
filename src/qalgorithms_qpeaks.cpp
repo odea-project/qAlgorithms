@@ -451,6 +451,8 @@ namespace qAlgorithms
         double apex_lim_L = INFINITY;
         double apex_lim_R = 0;
 
+        bool differenceCandidate = false;
+
         for (size_t i = 0; i < regCount; i++)
         {
             if (apexGroups[i] != groupNum)
@@ -458,51 +460,64 @@ namespace qAlgorithms
             const RegressionGauss *reg = validRegressions->data() + i;
             apex_lim_L = min(apex_lim_L, reg->position);
             apex_lim_R = max(apex_lim_R, reg->position);
+
+            // To separate two apexes unabiguously, there must be at least three points
+            // between them. If this condition is not fulfilled for a group, the individual
+            // apexes cannot be separated even if more than one group exists as a ground truth.
+            differenceCandidate = apex_lim_R - apex_lim_L > 3 + 2 * FLT_EPSILON;
+            if (differenceCandidate)
+                break;
         }
         assert(apex_lim_L <= apex_lim_R);
 
-        // To separate two apexes unabiguously, there must be at least three points
-        // between them. If this condition is not fulfilled for a group, it is still
-        // possible for regressions with high positional uncertainty to be misassigned.
-        // Instead of trying to perform an uncertainty correction, we check if
-        // the suspicious apex is outside of the bounds of the conflicting regression.
-        // If it is, the group was malformed.
-        bool differenceCandidate = apex_lim_R - apex_lim_L < 2 + 2 * FLT_EPSILON;
         if (!differenceCandidate)
+            return true;
+
+        // even if more than one apex could exist in the given data, the assignment of different
+        // groups only makes sense if the regressions in question do not have total overlap.
+        // The reasoning here is that one regression was fit over a subset of another regression,
+        // the discrepancy between the two indicates a suboptimal fit resulting from not
+        // observing the entire relevant data. One blindspot of a check just testing the two
+        // outermost apexes is that (hypothetically) another pair violating this condition could
+        // exist and describe two separate regressions, even if the checked pair is not sufficiently
+        // different to demonstrate this. A potential cause for such a situation is present if a
+        // small apex to the side of a larger one is clearly defined, but the very large regression
+        // window next to it fully covers the fit region. Here, it helps that we know that all
+        // regressions are sorted by scale when being processed: If we stop comparing after finding
+        // the first potential conflict, by definition we are comparing the two smallest possible
+        // cases of describing distinct peaks with each other, so inaccurate full overlap is unlikely.
+
+        // Iterate through all regressions until the two outermost ones are found
+        // always iterating everything is inefficient, but this part of the function will not run often
+        size_t bound_reg_L_L = 0;
+        size_t bound_reg_L_R = 0;
+        size_t bound_reg_R_L = 0;
+        size_t bound_reg_R_R = 0;
+        for (size_t i = 0; i < regCount; i++)
         {
-            // Iterate through all regressions until the two outermost ones are found
-            // and check for compliance. In the case of malcomplience, a separate function
-            // that subsets the groups will have to be called
-            size_t bound_reg_L_L = 0;
-            size_t bound_reg_L_R = 0;
-            size_t bound_reg_R_L = 0;
-            size_t bound_reg_R_R = 0;
-            // always iterating everything is inefficient, but this part of the function will not run often
-            for (size_t i = 0; i < regCount; i++)
+            if (apexGroups[i] != groupNum)
+                continue;
+            const RegressionGauss *reg = validRegressions->data() + i;
+            if (reg->position == apex_lim_L)
             {
-                if (apexGroups[i] != groupNum)
-                    continue;
-                const RegressionGauss *reg = validRegressions->data() + i;
-                if (reg->position == apex_lim_L)
-                {
-                    bound_reg_L_L = reg->span.startIdx;
-                    bound_reg_L_R = reg->span.endIdx();
-                }
-                if (reg->position == apex_lim_R)
-                {
-                    bound_reg_R_L = reg->span.startIdx;
-                    bound_reg_R_R = reg->span.endIdx();
-                }
+                bound_reg_L_L = reg->span.startIdx;
+                bound_reg_L_R = reg->span.endIdx();
             }
-            // either regression is fully contained within another
-            if ((bound_reg_L_L >= bound_reg_R_L && bound_reg_L_R <= bound_reg_R_R) ||
-                (bound_reg_R_L >= bound_reg_L_L && bound_reg_R_R <= bound_reg_L_R))
+            if (reg->position == apex_lim_R)
             {
-                differenceCandidate = true;
+                bound_reg_R_L = reg->span.startIdx;
+                bound_reg_R_R = reg->span.endIdx();
             }
         }
 
-        return differenceCandidate;
+        // check that either regression is fully contained within another, meaning its bounds
+        // are always closer to the center than those of the competing regression. If either is
+        // the case, the two apexes in question cannot be separated and the group apex is stable.
+        bool left_in_right = bound_reg_L_L >= bound_reg_R_L && bound_reg_L_R <= bound_reg_R_R;
+        bool right_in_left = bound_reg_L_L <= bound_reg_R_L && bound_reg_L_R >= bound_reg_R_R;
+        bool stableApex = left_in_right || right_in_left;
+
+        return !stableApex;
     }
 
     // return the index of the regression that was found to be the best group representative
