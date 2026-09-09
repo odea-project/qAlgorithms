@@ -65,6 +65,17 @@ PeakTest pt_05 = { // NOLINT
     {1566.37317, 6721.91357, 10333.0713, 12963.7285, 18588.1035, 23554.9043, 26401.1895, 27222.6621, 27128.6387, 18343.3789, 9999.44727, 823.102112},
     1};
 
+PeakTest pt_06 = { // NOLINT
+    // This peak system produced groups that did not correctly group apexes before eliminating regressions.
+    // Some of the offending regressions were poorly fitting and could probably be removed by a goodness-of-fit filter.
+    // This problem only occurs for one of the three peaks present in the data. The test case was
+    // taken from a failing check of group coherence, but the group is generally correct - the only
+    // problem is that no real peaks are describved by the two conflicting apexes.
+    {629.24292, 1937.10291, 3530.98169, 4416.47412, 3860.57593, 2283.37793, 1097.28284, 1384.93604,
+     2879.35815, 4468.28662, 5404.12451, 5281.40186, 2488.4541, 234.448563, 522.505859, 3366.85596,
+     10939.0303, 18904.9043, 24883.1719, 19762.5625, 11631.5967, 4173.91699, 858.461609},
+    3};
+
 static int test_qpeaks_find(const PeakTest *test)
 {
     const size_t len = test->intensity.size();
@@ -86,6 +97,7 @@ static int test_qpeaks_find(const PeakTest *test)
 
 static int test_qpeaks_set(void)
 {
+    test_qpeaks_find(&pt_06);
     test_qpeaks_find(&pt_05);
     test_qpeaks_find(&pt_04);
     test_qpeaks_find(&pt_03);

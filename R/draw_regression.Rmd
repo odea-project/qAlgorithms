@@ -1,0 +1,113 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r function}
+# function that takes the gdb output format as string and produces an r data object (LLM-generated)
+parse_coeffs <- function(output) {
+  x <- str_c(output, collapse = " ")
+
+  number <- "[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?"
+
+  # Extract the contents of coeffs = { ... }
+  coeffs_text <- str_match(
+    x,
+    "coeffs\\s*=\\s*\\{([^}]*)\\}"
+  )[, 2]
+
+  if (is.na(coeffs_text)) {
+    stop("Could not find the coeffs struct.")
+  }
+
+  # Extract name/value pairs from coeffs
+  coeffs <- str_match_all(
+    coeffs_text,
+    str_c("(\\w+)\\s*=\\s*(", number, ")")
+  )[[1]]
+
+  result <- set_names(
+    as.list(as.numeric(coeffs[, 3])),
+    coeffs[, 2]
+  )
+
+  # Extract top-level position, excluding position_unc
+  position <- str_match(
+    x,
+    str_c("\\bposition\\s*=\\s*(", number, ")")
+  )[, 2]
+
+  if (!is.na(position)) {
+    result$position <- as.numeric(position)
+  }
+
+  return(result)
+}
+
+# batch access for the above function, also llm generated
+parse_gdb_batch <- function(x) {
+  # Split before each "(gdb) print ..."
+  blocks <- str_split(
+    str_c(x, collapse = "\n"),
+    "(?=\\(gdb\\)\\s+print)",
+    simplify = FALSE
+  )[[1]]
+
+  blocks <- blocks[str_detect(blocks, "\\$\\d+\\s*=\\s*\\{")]
+
+  # Extract the index from validRegressions.at(n)
+  indices <- str_match(
+    blocks,
+     "validRegressions(?:\\.|->)at\\((\\d+)\\)"
+  )[, 2]
+
+  result <- map(
+    blocks,
+    parse_coeffs
+  )
+
+  names(result) <- paste0("reg_", indices)
+
+  result
+}
+
+# peak fit function
+q_reg = function(coeffs, x){
+    x = x - coeffs$x0
+    b0 = coeffs$b0
+    b1 = coeffs$b1
+    b23 = 0
+    if(coeffs$b1 < 0){
+        b23 = coeffs$b2
+    } else {
+        b23 = coeffs$b3
+    }
+    exp(b0 + b1 * x + b23 * x * x)
+}
+
+# batch transform all the above regressions into geoms for ggplot
+
+# function that takes in y-values and a regression and produces a relevant plot
+
+
+```
+
+```{r test functions}
+output = r"($3 = {coeffs = {b0 = 8.3972098089056235, b1 = 0.048124432563781405, b2 = -0.18287953308651339, b3 = -0.18988832405636202, scale = 2, x0 = 3}, span = {startIdx = 1, length = 5}, area = 5.1501193,
+  position = 3.12671781, height = 4448.21826, area_unc = 4.24673453e-06, position_unc = 0.0202412214, height_unc = 0.0395446308, jaccard = 0.121595472, fwhm = 0, dqs = 0, df = 1, numCompetitors = 0 '\000',
+  apexGroup = -1 '\377', isValid = false})"
+
+coeffs = parse_coeffs(output)
+
+y_axis = c(629.24292, 1937.10291, 3530.98169, 4416.47412, 3860.57593, 2283.37793, 1097.28284, 1384.93604, 2879.35815, 4468.28662, 5404.12451, 5281.40186, 2488.4541, 234.448563, 522.505859, 3366.85596, 10939.0303,
+  18904.9043, 24883.1719, 19762.5625, 11631.5967, 4173.91699, 858.461609)
+
+x_axis = 0:(length(y_axis)-1)
+
+ggplot()+
+    aes(x = x_axis, y = y_axis)+
+    geom_point()+
+    geom_function(fun = q_reg, args = list(coeffs = coeffs),
+    inherit.aes = FALSE,
+    xlim = range(x_axis, na.rm = TRUE))
+```
