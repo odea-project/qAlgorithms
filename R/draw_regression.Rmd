@@ -1,6 +1,7 @@
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(RColorBrewer)
 ```
 
 ```{r function}
@@ -76,16 +77,65 @@ q_reg = function(coeffs, x){
     x = x - coeffs$x0
     b0 = coeffs$b0
     b1 = coeffs$b1
-    b23 = 0
-    if(coeffs$b1 < 0){
-        b23 = coeffs$b2
-    } else {
-        b23 = coeffs$b3
-    }
+
+    bool_b2 = (x < 0) * 1
+    bool_b3 = (x >= 0) * 1
+    b23 = coeffs$b2 * bool_b2 + coeffs$b3 * bool_b3
+    
     exp(b0 + b1 * x + b23 * x * x)
 }
 
-# batch transform all the above regressions into geoms for ggplot
+# colour palette for up to 25 different regressions in one plot
+c25 <- c(
+  "dodgerblue2", "#E31A1C", # red
+  "green4",
+  "#6A3D9A", # purple
+  "#FF7F00", # orange
+  "black", "gold1",
+  "skyblue2", "#FB9A99", # lt pink
+  "palegreen2",
+  "#CAB2D6", # lt purple
+  "#FDBF6F", # lt orange
+  "gray70", "khaki2",
+  "maroon", "orchid1", "deeppink1", "blue1", "steelblue4",
+  "darkturquoise", "green1", "yellow4", "yellow3",
+  "darkorange4", "brown"
+)
+
+# use single regression to produce a function plot element
+plot_coeff = function(coeffs, x_axis, colour){
+  geom_function(fun = q_reg, args = list(coeffs = coeffs),
+    inherit.aes = FALSE,
+    xlim = range(x_axis, na.rm = TRUE), 
+    colour = colour)
+}
+
+# batch transform a list of regressions into a list of geoms
+geom_qreg_batch = function(batch, x_axis){
+  
+  # max of 25 colours
+  if(length(batch) > 25){
+    stop("Error: At most 25 regressions can be plotted at once")
+  }
+
+  regNames = names(batch)
+
+  # index into c25
+  i = 1
+
+  # modify return list
+  ret = list()
+
+  for(reg in batch){
+    funcFit = plot_coeff(reg, x_axis, c25[i])
+    name = regNames[i]
+    
+    i = i + 1
+
+    ret[[regNames[i]]] <- funcFit
+  }
+  return(ret)
+}
 
 # function that takes in y-values and a regression and produces a relevant plot
 
@@ -107,7 +157,37 @@ x_axis = 0:(length(y_axis)-1)
 ggplot()+
     aes(x = x_axis, y = y_axis)+
     geom_point()+
-    geom_function(fun = q_reg, args = list(coeffs = coeffs),
-    inherit.aes = FALSE,
-    xlim = range(x_axis, na.rm = TRUE))
+    plot_coeff(coeffs = coeffs, x_axis = x_axis, colour = "red")
+```
+
+```{r testdata}
+testdata = r"((gdb) print validRegressions.at(0)
+$3 = {coeffs = {b0 = 8.3972098089056235, b1 = 0.048124432563781405, b2 = -0.18287953308651339, b3 = -0.18988832405636202, scale = 2, x0 = 3}, span = {startIdx = 1, length = 5}, area = 5.1501193,
+  position = 3.12671781, height = 4448.21826, area_unc = 4.24673453e-06, position_unc = 0.0202412214, height_unc = 0.0395446308, jaccard = 0.121595472, fwhm = 0, dqs = 0, df = 1, numCompetitors = 0 '\000',
+  apexGroup = -1 '\377', isValid = false}
+(gdb) print validRegressions.at(1)
+$4 = {coeffs = {b0 = 8.2401083231412873, b1 = -0.36750078201293768, b2 = -0.20221546718053318, b3 = -0.12689951487950424, scale = 2, x0 = 4}, span = {startIdx = 2, length = 5}, area = 5.19692373,
+  position = 3.09131384, height = 4478.6626, area_unc = 4.26529004e-05, position_unc = 0.0368918404, height_unc = 0.460795581, jaccard = 0.12924926, fwhm = 0, dqs = 0, df = 1, numCompetitors = 0 '\000',
+  apexGroup = -1 '\377', isValid = false}
+(gdb) print validRegressions.at(2)
+$5 = {coeffs = {b0 = 8.3967810590049297, b1 = -0.017087503483421473, b2 = -0.22170067311528463, b3 = -0.15045514082848754, scale = 3, x0 = 3}, span = {startIdx = 0, length = 7}, area = 5.19348717,
+  position = 2.96146274, height = 4434.23486, area_unc = 1.11277977e-05, position_unc = 0.0548202358, height_unc = 0.288263947, jaccard = 0.990664542, fwhm = 0, dqs = 0, df = 3, numCompetitors = 0 '\000',
+  apexGroup = -1 '\377', isValid = false}
+(gdb) print validRegressions.at(3)
+$6 = {coeffs = {b0 = 8.110450055343982, b1 = -0.60268929130152626, b2 = -0.26689039555408556, b3 = 0.09065176789324525, scale = 3, x0 = 4}, span = {startIdx = 1, length = 7}, area = 5.28271246,
+  position = 2.87090492, height = 4678.33154, area_unc = 0.000516470871, position_unc = 0.129805461, height_unc = 1.80232167, jaccard = 0.978864849, fwhm = 0, dqs = 0, df = 3, numCompetitors = 0 '\000',
+  apexGroup = -1 '\377', isValid = false}
+(gdb) print validRegressions.at(10)
+$7 = {coeffs = {b0 = 8.0159779038391985, b1 = -0.6949333283209026, b2 = -0.27687441665122581, b3 = 0.16087995289990964, scale = 4, x0 = 4}, span = {startIdx = 0, length = 7}, area = 4.82350016,
+  position = 2.74503875, height = 4684.59668, area_unc = 8.69887663e-05, position_unc = 0.113294274, height_unc = 1.38006592, jaccard = 0.924721003, fwhm = 0, dqs = 0, df = 3, numCompetitors = 0 '\000',
+  apexGroup = -1 '\377', isValid = false})"
+
+batch = parse_gdb_batch(testdata)
+
+# this will plot the data as intended
+ggplot()+
+    aes(x = x_axis, y = y_axis)+
+    geom_point()+
+    geom_qreg_batch(batch = batch, x_axis = x_axis)+
+    ylim(0, max(y_axis * 1.1))
 ```
