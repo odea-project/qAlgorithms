@@ -137,30 +137,14 @@ geom_qreg_batch = function(batch, x_axis){
   return(ret)
 }
 
-# function that takes in y-values and a regression and produces a relevant plot
-
-
 ```
 
-```{r test functions}
-output = r"($3 = {coeffs = {b0 = 8.3972098089056235, b1 = 0.048124432563781405, b2 = -0.18287953308651339, b3 = -0.18988832405636202, scale = 2, x0 = 3}, span = {startIdx = 1, length = 5}, area = 5.1501193,
-  position = 3.12671781, height = 4448.21826, area_unc = 4.24673453e-06, position_unc = 0.0202412214, height_unc = 0.0395446308, jaccard = 0.121595472, fwhm = 0, dqs = 0, df = 1, numCompetitors = 0 '\000',
-  apexGroup = -1 '\377', isValid = false})"
-
-coeffs = parse_coeffs(output)
-
+```{r testdata}
 y_axis = c(629.24292, 1937.10291, 3530.98169, 4416.47412, 3860.57593, 2283.37793, 1097.28284, 1384.93604, 2879.35815, 4468.28662, 5404.12451, 5281.40186, 2488.4541, 234.448563, 522.505859, 3366.85596, 10939.0303,
   18904.9043, 24883.1719, 19762.5625, 11631.5967, 4173.91699, 858.461609)
 
 x_axis = 0:(length(y_axis)-1)
 
-ggplot()+
-    aes(x = x_axis, y = y_axis)+
-    geom_point()+
-    plot_coeff(coeffs = coeffs, x_axis = x_axis, colour = "red")
-```
-
-```{r testdata}
 testdata = r"((gdb) print validRegressions.at(0)
 $3 = {coeffs = {b0 = 8.3972098089056235, b1 = 0.048124432563781405, b2 = -0.18287953308651339, b3 = -0.18988832405636202, scale = 2, x0 = 3}, span = {startIdx = 1, length = 5}, area = 5.1501193,
   position = 3.12671781, height = 4448.21826, area_unc = 4.24673453e-06, position_unc = 0.0202412214, height_unc = 0.0395446308, jaccard = 0.121595472, fwhm = 0, dqs = 0, df = 1, numCompetitors = 0 '\000',
@@ -180,6 +164,14 @@ $6 = {coeffs = {b0 = 8.110450055343982, b1 = -0.60268929130152626, b2 = -0.26689
 (gdb) print validRegressions.at(10)
 $7 = {coeffs = {b0 = 8.0159779038391985, b1 = -0.6949333283209026, b2 = -0.27687441665122581, b3 = 0.16087995289990964, scale = 4, x0 = 4}, span = {startIdx = 0, length = 7}, area = 4.82350016,
   position = 2.74503875, height = 4684.59668, area_unc = 8.69887663e-05, position_unc = 0.113294274, height_unc = 1.38006592, jaccard = 0.924721003, fwhm = 0, dqs = 0, df = 3, numCompetitors = 0 '\000',
+  apexGroup = -1 '\377', isValid = false}
+(gdb) print validRegressions.at(19)
+$12 = {coeffs = {b0 = 8.2849558474642091, b1 = 0.14334729839774019, b2 = 0.0010809389020425275, b3 = -0.06502415837978992, scale = 7, x0 = 7}, span = {startIdx = 0, length = 15}, area = 31082.6484,
+  position = 8.10226154, height = 4289.64355, area_unc = 28.8637562, position_unc = 0.982253373, height_unc = 1.53024447, jaccard = 0.81863898, fwhm = 0, dqs = 0, df = 11, numCompetitors = 0 '\000',
+  apexGroup = -1 '\377', isValid = false}
+(gdb) print validRegressions.at(20)
+$13 = {coeffs = {b0 = 7.7273448619979499, b1 = -0.30477745516520738, b2 = -0.042307973513030728, b3 = 0.06534227806464421, scale = 9, x0 = 9}, span = {startIdx = 0, length = 12}, area = 19842.1074,
+  position = 5.39810848, height = 3929.36255, area_unc = 1.03730845, position_unc = 0.796521425, height_unc = 1.05588782, jaccard = 0.631237447, fwhm = 0, dqs = 0, df = 8, numCompetitors = 0 '\000',
   apexGroup = -1 '\377', isValid = false})"
 
 batch = parse_gdb_batch(testdata)
