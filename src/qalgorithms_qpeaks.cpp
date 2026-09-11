@@ -31,7 +31,7 @@ namespace qAlgorithms
 
     static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[]);
 
-    static bool groupApexIsStable(
+    static int32_t groupApexIsStable(
         const std::vector<RegressionGauss> *validRegressions,
         const int16_t apexGroups[],
         const int16_t groupNum);
@@ -300,6 +300,13 @@ namespace qAlgorithms
         if (validCount == 1)
         {
             RegressionGauss *reg = validRegressions.data();
+
+            // @todo this is not the correct approach! Especially when the data is very large,
+            // a singular regression should be viewed with suspicion. The only exception is made
+            // for data which is fully covered by the regression (up to +1), since tests on
+            // expansion only make sense when this is possible
+            bool fullCoverage = length - reg->span.length <= 1;
+
             reg->isValid = true;
             adjustRegression(reg, x_axis);
             result->push_back(*reg);
@@ -313,8 +320,8 @@ namespace qAlgorithms
 
         for (int16_t groupNum = 0; groupNum < (int16_t)apexcount; groupNum++)
         {
-            bool stableApex = groupApexIsStable(&validRegressions, apexGroups, groupNum);
-            if (stableApex)
+            int32_t stableApex = groupApexIsStable(&validRegressions, apexGroups, groupNum);
+            if (stableApex == -1)
             {
                 // equivalent to only one possible apex being in the data, no complex deconvolution is required
                 size_t chosenOne = selectFromGroup(&validRegressions, intensities, apexGroups, groupNum);
@@ -440,11 +447,12 @@ namespace qAlgorithms
     }
 
     // function that asserts that all regressions within one grouping describe only one apex
-    static bool groupApexIsStable(
+    static int32_t groupApexIsStable(
         const std::vector<RegressionGauss> *validRegressions,
         const int16_t apexGroups[],
         const int16_t groupNum)
     {
+        const int32_t no_difference = -1;
         const size_t regCount = validRegressions->size();
         assert(regCount > 1);
 
@@ -471,7 +479,7 @@ namespace qAlgorithms
         assert(apex_lim_L <= apex_lim_R);
 
         if (!differenceCandidate)
-            return true;
+            return no_difference;
 
         // even if more than one apex could exist in the given data, the assignment of different
         // groups only makes sense if the regressions in question do not have total overlap.
@@ -489,6 +497,8 @@ namespace qAlgorithms
 
         // Iterate through all regressions until the two outermost ones are found
         // always iterating everything is inefficient, but this part of the function will not run often
+
+        double apex_mean = 0;
         size_t bound_reg_L_L = 0;
         size_t bound_reg_L_R = 0;
         size_t bound_reg_R_L = 0;
@@ -508,6 +518,7 @@ namespace qAlgorithms
                 bound_reg_R_L = reg->span.startIdx;
                 bound_reg_R_R = reg->span.endIdx();
             }
+            apex_mean += reg->position;
         }
 
         // check that either regression is fully contained within another, meaning its bounds
@@ -517,7 +528,13 @@ namespace qAlgorithms
         bool right_in_left = bound_reg_L_L <= bound_reg_R_L && bound_reg_L_R >= bound_reg_R_R;
         bool stableApex = left_in_right || right_in_left;
 
-        return !stableApex;
+        if (stableApex)
+            return no_difference;
+
+        // next step: refine the grouping by deciding which of the two conflicting apexes should
+        // be moved into its own group on basis of distance to the mean / median apex
+
+        return 0; // this will be the ID of the peak that violates the total group apex estimate the most @todo
     }
 
     // return the index of the regression that was found to be the best group representative
