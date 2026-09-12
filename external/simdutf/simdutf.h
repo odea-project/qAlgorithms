@@ -1,4 +1,4 @@
-/* auto-generated on 2026-04-21 17:01:59 -0400. Do not edit! */
+/* auto-generated on 2026-09-10 22:41:45 -0400. Do not edit! */
 /* begin file include/simdutf.h */
 #ifndef SIMDUTF_H
 #define SIMDUTF_H
@@ -172,7 +172,7 @@
 #elif defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
   #define SIMDUTF_IS_ARM64 1
 #elif defined(__PPC64__) || defined(_M_PPC64)
-  #if defined(__VEC__) && defined(__ALTIVEC__)
+  #if defined(__VEC__) && defined(__ALTIVEC__) && defined(__POWER8_VECTOR__)
     #define SIMDUTF_IS_PPC64 1
   #endif
 #elif defined(__s390__)
@@ -432,6 +432,7 @@
 // Sometimes logging is useful, but we want it disabled by default
 // and free of any logging code in release builds.
 #ifdef SIMDUTF_LOGGING
+  #include <cstdlib>
   #include <iostream>
   #define simdutf_log(msg)                                                     \
     std::cout << "[" << __FUNCTION__ << "]: " << msg << std::endl              \
@@ -449,6 +450,10 @@
   #define simdutf_log_assert(cond, msg)
 #endif
 
+#if SIMDUTF_CPLUSPLUS17
+  #define simdutf_unused [[maybe_unused]]
+#endif // SIMDUTF_CPLUSPLUS17
+
 #if defined(SIMDUTF_REGULAR_VISUAL_STUDIO)
   #define SIMDUTF_DEPRECATED __declspec(deprecated)
 
@@ -456,7 +461,9 @@
   #define simdutf_always_inline __forceinline // always inline, no matter what
   #define simdutf_never_inline __declspec(noinline)
 
-  #define simdutf_unused
+  #ifndef simdutf_unused
+    #define simdutf_unused
+  #endif // simdutf_unused
   #define simdutf_warn_unused
 
   #ifndef simdutf_likely
@@ -499,8 +506,9 @@
     inline __attribute__((always_inline)) // always inline, no matter what
   #define SIMDUTF_DEPRECATED __attribute__((deprecated))
   #define simdutf_never_inline inline __attribute__((noinline))
-
-  #define simdutf_unused __attribute__((unused))
+  #ifndef simdutf_unused
+    #define simdutf_unused __attribute__((unused))
+  #endif // simdutf_unused
   #define simdutf_warn_unused __attribute__((warn_unused_result))
 
   #ifndef simdutf_likely
@@ -654,7 +662,7 @@ namespace BOM {
 
 /**
  * Checks for a BOM. If not, returns unspecified
- * @param input         the string to process
+ * @param byte          the string to process
  * @param length        the length of the string in code units
  * @return the corresponding encoding
  */
@@ -814,7 +822,7 @@ SIMDUTF_DISABLE_UNDESIRED_WARNINGS
 #define SIMDUTF_SIMDUTF_VERSION_H
 
 /** The version of simdutf being used (major.minor.revision) */
-#define SIMDUTF_VERSION "9.0.0"
+#define SIMDUTF_VERSION "9.1.2"
 
 namespace simdutf {
 enum {
@@ -825,11 +833,11 @@ enum {
   /**
    * The minor version (major.MINOR.revision) of simdutf being used.
    */
-  SIMDUTF_VERSION_MINOR = 0,
+  SIMDUTF_VERSION_MINOR = 1,
   /**
    * The revision (major.minor.REVISION) of simdutf being used.
    */
-  SIMDUTF_VERSION_REVISION = 0
+  SIMDUTF_VERSION_REVISION = 2
 };
 } // namespace simdutf
 
@@ -897,8 +905,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <cstdlib>
 #if defined(_MSC_VER)
   #include <intrin.h>
-#elif defined(HAVE_GCC_GET_CPUID) && defined(USE_GCC_GET_CPUID)
+#elif (defined(HAVE_GCC_GET_CPUID) && defined(USE_GCC_GET_CPUID)) ||           \
+    defined(__FILC__)
   #include <cpuid.h>
+#endif
+
+#ifdef __FILC__
+  #include <stdfil.h>
 #endif
 
 
@@ -1048,7 +1061,8 @@ static inline void cpuid(uint32_t *eax, uint32_t *ebx, uint32_t *ecx,
   *ebx = cpu_info[1];
   *ecx = cpu_info[2];
   *edx = cpu_info[3];
-  #elif defined(HAVE_GCC_GET_CPUID) && defined(USE_GCC_GET_CPUID)
+  #elif (defined(HAVE_GCC_GET_CPUID) && defined(USE_GCC_GET_CPUID)) ||         \
+      defined(__FILC__)
   uint32_t level = *eax;
   __get_cpuid(level, eax, ebx, ecx, edx);
   #else
@@ -1064,6 +1078,8 @@ static inline void cpuid(uint32_t *eax, uint32_t *ebx, uint32_t *ecx,
 static inline uint64_t xgetbv() {
   #if defined(_MSC_VER)
   return _xgetbv(0);
+  #elif defined(__FILC__)
+  return zxgetbv();
   #else
   uint32_t xcr0_lo, xcr0_hi;
   asm volatile("xgetbv\n\t" : "=a"(xcr0_lo), "=d"(xcr0_hi) : "c"(0));
@@ -1195,6 +1211,20 @@ static inline uint32_t detect_supported_architectures() {
 #define SIMDUTF_FEATURE_UTF16 0
 #define SIMDUTF_FEATURE_UTF32 0
 #define SIMDUTF_FEATURE_BASE64 1
+
+/// helpers placed in namespace detail are not a part of the public API
+namespace simdutf {
+namespace detail {
+namespace {
+// this is to avoid including <algorithm> just for min
+constexpr std::size_t min(std::size_t a, std::size_t b) {
+  return a < b ? a : b;
+}
+template <typename T, typename U>
+constexpr std::size_t min(const T &a, const U &b) = delete;
+} // namespace
+} // namespace detail
+} // namespace simdutf
 
 #if SIMDUTF_CPLUSPLUS23
 /* begin file include/simdutf/constexpr_ptr.h */
@@ -2458,7 +2488,6 @@ static_assert(to_base64_url_value[uint8_t('_')] == 63,
 #ifndef SIMDUTF_BASE64_H
 #define SIMDUTF_BASE64_H
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -3102,9 +3131,8 @@ simdutf_constexpr23 size_t tail_encode_base64_impl(
 
 // Returns the number of bytes written. The destination buffer must be large
 // enough. It will add padding (=) if needed.
-inline simdutf_constexpr23 size_t tail_encode_base64(char *dst, const char *src,
-                                                     size_t srclen,
-                                                     base64_options options) {
+simdutf_unused inline simdutf_constexpr23 size_t tail_encode_base64(
+    char *dst, const char *src, size_t srclen, base64_options options) {
   return tail_encode_base64_impl(dst, src, srclen, options);
 }
 
@@ -3618,6 +3646,7 @@ base64_to_binary(
  * Provide the base64 length in bytes given the length of a binary input.
  *
  * @param length        the length of the input in bytes
+ * @param options       the base64 options to use (default: base64_default)
  * @return number of base64 bytes
  */
 inline simdutf_warn_unused simdutf_constexpr23 size_t base64_length_from_binary(
@@ -3630,6 +3659,7 @@ inline simdutf_warn_unused simdutf_constexpr23 size_t base64_length_from_binary(
  * taking into account line breaks.
  *
  * @param length        the length of the input in bytes
+ * @param options       the base64 options to use (default: base64_default)
  * @param line_length   the length of lines, must be at least 4 (otherwise it is
  * interpreted as 4),
  * @return number of base64 bytes
@@ -4129,6 +4159,10 @@ base64_valid_or_padding(char16_t input,
  *
  * https://tc39.es/proposal-arraybuffer-base64/spec/#sec-frombase64
  *
+ * The base64_to_binary_safe function has negligible overhead compared with
+ * base64_to_binary in the absence of ignorable characters; however, on short
+ * inputs containing ignorable characters, it can be up to three times slower.
+ *
  * @param input         the base64 string to process, in ASCII stored as 8-bit
  * or 16-bit units
  * @param length        the length of the string in 8-bit or 16-bit units.
@@ -4404,6 +4438,7 @@ public:
    * bytes long).
    * @param options       the base64 options to use, can be base64_default or
    * base64_url, is base64_default by default.
+   * @param last_chunk_options the handling of the last chunk (default: loose)
    * @return a result pair struct (of type simdutf::result containing the two
    * fields error and count) with an error code and either position of the error
    * (in the input in bytes) if any, or the number of bytes written if
@@ -4443,6 +4478,7 @@ public:
    * bytes long).
    * @param options       the base64 options to use, can be base64_default or
    * base64_url, is base64_default by default.
+   * @param last_chunk_options the handling of the last chunk (default: loose)
    * @return a full_result pair struct (of type simdutf::result containing the
    * three fields error, input_count and output_count).
    */
@@ -4480,6 +4516,7 @@ public:
    * bytes long).
    * @param options       the base64 options to use, can be base64_default or
    * base64_url, is base64_default by default.
+   * @param last_chunk_options the handling of the last chunk (default: loose)
    * @return a result pair struct (of type simdutf::result containing the two
    * fields error and count) with an error code and position of the
    * INVALID_BASE64_CHARACTER error (in the input in units) if any, or the
@@ -4519,6 +4556,7 @@ public:
    * bytes long).
    * @param options       the base64 options to use, can be base64_default or
    * base64_url, is base64_default by default.
+   * @param last_chunk_options the handling of the last chunk (default: loose)
    * @return a full_result pair struct (of type simdutf::result containing the
    * three fields error, input_count and output_count).
    */
@@ -4631,7 +4669,12 @@ public:
 
 protected:
   /** @private Construct an implementation with the given name and description.
-   * For subclasses. */
+   * For subclasses.
+   * @param name the name of this implementation
+   * @param description a description of this implementation
+   * @param required_instruction_sets the instruction sets this implementation
+   * requires
+   */
   simdutf_really_inline implementation(const char *name,
                                        const char *description,
                                        uint32_t required_instruction_sets)
@@ -4781,6 +4824,8 @@ get_active_implementation();
 
 // this is not part of the public api
 
+#include <type_traits> // for is_same
+
 namespace simdutf {
 
 template <typename chartype>
@@ -4846,7 +4891,7 @@ simdutf_warn_unused simdutf_constexpr23 result base64_to_binary_safe_impl(
   size_t output_position = 0;
 
   // We also do a first pass using the fast path to decode as much as possible
-  size_t safe_input = (std::min)(
+  size_t safe_input = detail::min(
       remaining_input_length,
       base64_length_from_binary(remaining_output_length / 3 * 3, options));
   bool done_with_partial = (safe_input == remaining_input_length);
@@ -5042,7 +5087,12 @@ consteval auto base64_decode_literal(const char *str) {
   auto r = scalar::base64::base64_to_binary_details_impl(
       str, InputLen, result.buffer.data(), base64_default, loose);
   if (r.error != error_code::SUCCESS) {
+  #if __cpp_lib_unreachable >= 202202L
     std::unreachable(); // invalid base64 input in _base64 literal
+  #else
+    // workaround for older stdlib
+    throw "invalid base64 input in _base64 literal";
+  #endif
   }
   result.output_count = r.output_count;
   return result;
