@@ -90,7 +90,7 @@ namespace qAlgorithms
                                          const Polarities polarity,
                                          const bool profile_mode);
 
-    void get_spectra_RT(const XML_File *data,
+    void get_spectra_RT(const XML_File *file,
                         const std::vector<uint32_t> *indices,
                         std::vector<float> *const RTs);
 
@@ -108,6 +108,8 @@ namespace qAlgorithms
     int32_t spectrum_ms_level(const XML_File *file, const size_t specNum);
 
     Polarities spectrum_polarity(const XML_File *file, const size_t specNum);
+
+    float spectrum_rt(const XML_File *file, const size_t specNum);
 
     std::vector<char> encode_base64_dbl(const double *input_dbl, const size_t in_len_dbl);
 

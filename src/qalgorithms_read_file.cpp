@@ -260,35 +260,19 @@ namespace qAlgorithms
         return 0;
     };
 
-    static float extract_scan_RT(const pugi::xml_node *spec)
-    {
-        pugi::xml_node rt_node = spec->child("scanList").child("scan").find_child_by_attribute("cvParam", "name", "scan start time");
-
-        float rt_val = rt_node.attribute("value").as_float();
-        const char *rt_unit = rt_node.attribute("unitName").as_string();
-        bool unit_secs = strcmp(rt_unit, "second") == 0; // strcmp returns 0 for equal strings
-        if (!unit_secs)
-        {
-            assert(strcmp(rt_unit, "minute") == 0);
-        }
-
-        return unit_secs ? rt_val : rt_val * 60;
-    };
-
-    void get_spectra_RT(const XML_File *data, const std::vector<uint32_t> *indices, std::vector<float> *const RTs)
+    void get_spectra_RT(const XML_File *file, const std::vector<uint32_t> *indices, std::vector<float> *const RTs)
     {
         const size_t idxSize = indices->size();
-        assert(!data->defective);
+        assert(!file->defective);
         assert(idxSize > 0);
 
         RTs->resize(idxSize);
+        float *RT_data = RTs->data();
 
-        for (size_t i = 0; i < idxSize; ++i)
+        for (size_t specNum = 0; specNum < idxSize; ++specNum)
         {
-            size_t idx = indices->at(i);
-            const pugi::xml_node *spec = data->linknodes->data() + idx;
-            float RT = extract_scan_RT(spec);
-            RTs->at(i) = RT;
+            float RT = spectrum_rt(file, specNum);
+            RT_data[specNum] = RT;
         }
     };
 
@@ -445,6 +429,29 @@ namespace qAlgorithms
             return Polarities::negative;
 
         return Polarities::unknown_polarity;
+    }
+
+    float spectrum_rt(const XML_File *file, const size_t specNum)
+    {
+        assert(specNum < file->number_spectra);
+        const pugi::xml_node *spec = file->linknodes->data() + specNum;
+
+        const pugi::xml_node rt_node = spec->child("scanList")
+                                           .child("scan")
+                                           .find_child_by_attribute("cvParam",
+                                                                    "name",
+                                                                    "scan start time");
+
+        float rt_val = rt_node.attribute("value").as_float();
+        const char *rt_unit = rt_node.attribute("unitName").as_string();
+        bool unit_minutes = strcmp(rt_unit, "minute") == 0; // strcmp returns 0 for equal strings
+        if (!unit_minutes)
+        {
+            assert(strcmp(rt_unit, "second") == 0);
+        }
+
+        float timescale = unit_minutes ? 60 : 1; // output is always in seconds -> * 60 if time is minutes
+        return rt_val * timescale;
     }
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
