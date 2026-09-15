@@ -1,3 +1,7 @@
+#include "qalgorithms_read_file.h"
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 #pragma GCC diagnostic ignored "-Wfloat-conversion"
 
 #include "../src/qalgorithms_read_file.cpp" // NOLINT
@@ -5,7 +9,7 @@
 
 using namespace qAlgorithms;
 
-static void test_base64_decode()
+static void test_spec_decode_nocomp_double()
 {
     const double arr_D[10] = {0.135761618738162, 2.75537138578063, 1.72069261613833, 0.0218284366498446, 1.65262662060337,
                               0.637948708991408, 0.0385504743656586, 0.275107929479815, 1.71114153324745, 0.152519432142112};
@@ -35,9 +39,57 @@ static void test_base64_decode()
     }
 }
 
+static void test_spec_decode_iscomp_double()
+{
+    const double arr_D[10] = {0.135761618738162, 2.75537138578063, 1.72069261613833, 0.0218284366498446, 1.65262662060337,
+                              0.637948708991408, 0.0385504743656586, 0.275107929479815, 1.71114153324745, 0.152519432142112};
+
+    const uint8_t *arr_char = (uint8_t *)arr_D;
+    const size_t arr_char_len = 10 * sizeof(double);
+    std::vector<char> intermediate;
+
+    compress_and_encode(arr_char, arr_char_len, &intermediate);
+
+    std::vector<float> result;
+    decodeSpectrum(intermediate.data(), &result, 10, true, true);
+
+    assert(result.size() == 10, "Incorrect number of Elements decoded\n", NULL);
+    for (size_t i = 0; i < 10; i++)
+    {
+        assert(flt_equal(arr_D[i], result[i], FLT_EPSILON),
+               "Element %d was decoded incorrectly (difference: %f)",
+               i, abs(arr_D[i] - result[i]));
+    }
+}
+
+static void test_spec_decode_iscomp_float()
+{
+    const float arr_F[10] = {0.135761618738162, 2.75537138578063, 1.72069261613833, 0.0218284366498446, 1.65262662060337,
+                             0.637948708991408, 0.0385504743656586, 0.275107929479815, 1.71114153324745, 0.152519432142112};
+
+    const uint8_t *arr_char = (uint8_t *)arr_F;
+    const size_t arr_char_len = 10 * sizeof(float);
+    std::vector<char> intermediate;
+
+    compress_and_encode(arr_char, arr_char_len, &intermediate);
+
+    std::vector<float> result;
+    decodeSpectrum(intermediate.data(), &result, 10, true, false);
+
+    assert(result.size() == 10, "Incorrect number of Elements decoded\n", NULL);
+    for (size_t i = 0; i < 10; i++)
+    {
+        assert(flt_equal(arr_F[i], result[i], FLT_EPSILON),
+               "Element %d was decoded incorrectly (difference: %f)",
+               i, abs(arr_F[i] - result[i]));
+    }
+}
+
 int main()
 {
-    test_base64_decode();
+    test_spec_decode_nocomp_double();
+    test_spec_decode_iscomp_double();
+    test_spec_decode_iscomp_float();
     return 0;
 }
 
