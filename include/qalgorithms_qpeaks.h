@@ -33,8 +33,6 @@ namespace qAlgorithms
     ///  0 = no valid peaks were found (this is not an error per se, when supplying ex. a constant y this is the expected result)
     /// -1 = one of y_values, x_values or detectedPeaks was nullptr
     /// -2 = lenght is smaller than minimum required
-    /// -3 = maxscale is < 2
-    /// -4 = maxscale exceeds maxscale determined by implementation
     /// ### Assumptions: ###  these are not tested @todo
     /// x and degreesOfFreedom_cum increase monotonically.
     /// y has equal variance at every point
@@ -44,7 +42,6 @@ namespace qAlgorithms
         const float *x_values,
         const uint16_t *DF_cum,
         const size_t length,
-        size_t maxscale,
         std::vector<RegressionGauss> *result);
 
     struct XML_File;                           // forward declaration so at least the header does not couple with read_file
@@ -95,6 +92,8 @@ namespace qAlgorithms
 #ifndef QALGORITHMS_MAXSCALE_PRECOMPILED
     #error Required array of matrix inverses not defined. Ensure that qalgorithms_matinverse.h exists. You can try regenerating it by going into the "external" directory and running 'cc qalgorithms_matinverse.c -o a.exe && ./a.exe'.
 #endif
+
+    const size_t maxscale_global = QALGORITHMS_MAXSCALE_PRECOMPILED;
 
     // the maximum possible number of apexes that can be present in one continuous section
     // we assume a small number for stack allocation

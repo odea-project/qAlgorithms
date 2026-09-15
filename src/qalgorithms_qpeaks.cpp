@@ -20,7 +20,7 @@
 #include <math.h>
 #include <vector>
 
-#include <algorithm> // sorting @todo get rid of this
+#include <algorithm> // sorting - consider removing dependence on the STL here
 
 namespace qAlgorithms
 {
@@ -126,7 +126,6 @@ namespace qAlgorithms
         const float *x_values,
         const uint16_t *DF_cum,
         const size_t length,
-        size_t maxscale, // @todo this should probably not be a static parameter
         std::vector<RegressionGauss> *result)
     {
         // control input for nullpointers, mismatching x and y, and fitting maxscale
@@ -137,14 +136,6 @@ namespace qAlgorithms
         if (length < MINLENGTH)
         {
             return -2;
-        }
-        if (maxscale < GLOBAL_MINSCALE)
-        {
-            return -3;
-        }
-        if (maxscale > QALGORITHMS_MAXSCALE_PRECOMPILED)
-        {
-            return -4;
         }
 
         // @todo the assumtion that all values of x are equidistant is conrolled. If gaps are
@@ -178,7 +169,7 @@ namespace qAlgorithms
             const size_t newLen = pointIdx - rangeStart;
             if (newLen >= MINLENGTH)
             {
-                const size_t newMaxscale = min(maxscale, (newLen - 1) / 2);
+                const size_t newMaxscale = min(maxscale_global, (newLen - 1) / 2);
                 const float *intensities = intensity_base + rangeStart;
                 const float *intensities_log = intensity_base_log.data() + rangeStart;
                 const float *x_axis = x_values + rangeStart;
@@ -1137,7 +1128,7 @@ namespace qAlgorithms
             qpeaks_find(bin->ints_area.data(),
                         rt,
                         bin->df.data(),
-                        binLen, 30, // @todo dynamic maxscale
+                        binLen,
                         &peaks);
             for (size_t peak = 0; peak < peaks.size(); peak++)
             {
@@ -1175,9 +1166,6 @@ namespace qAlgorithms
             reg->numCompetitors};
     }
 
-    // @todo find a better way of determining the smallest possible upper scale
-    static const size_t maxscale_cen = 10;
-
     size_t findCentroids(const XML_File *data,
                          const std::vector<uint32_t> *selectedIndices,
                          std::vector<CentroidPeak> *centroids)
@@ -1203,7 +1191,6 @@ namespace qAlgorithms
                                                   spectrum_mz.data(),
                                                   nullptr,
                                                   spectrum_int.size(),
-                                                  maxscale_cen,
                                                   &ret);
 
             for (size_t p = 0; p < peaksFound; p++)
@@ -1260,7 +1247,6 @@ namespace qAlgorithms
                                            spectrum_mz.data(),
                                            nullptr,
                                            spectrum_mz.size(),
-                                           40,
                                            &result);
             assert(numPeaks > 0);
             const size_t numPeaks_u = (size_t)numPeaks;

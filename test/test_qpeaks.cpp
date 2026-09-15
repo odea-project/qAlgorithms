@@ -88,7 +88,6 @@ static int test_qpeaks_find(const PeakTest *test)
                                data_x.data(),
                                nullptr,
                                len,
-                               QALGORITHMS_MAXSCALE_PRECOMPILED,
                                &result);
     size_t expect = test->expect_count;
     assert(count == expect, "Expected %zu peaks, found %zu", expect, count);
@@ -262,7 +261,7 @@ static void control_sim_gauss()
     simulate_gauss(&xvals, apex, height, sdev, &yvals);
 
     std::vector<RegressionGauss> ret;
-    qpeaks_find(yvals.data(), xvals.data(), nullptr, length, 8, &ret);
+    qpeaks_find(yvals.data(), xvals.data(), nullptr, length, &ret);
 
     assert(ret.size() != 0, "Peak not found\n", NULL);
     assert(ret.size() == 1, "Too many peaks found\n", NULL);
@@ -342,7 +341,7 @@ static void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     }
 
     std::vector<RegressionGauss> ret;
-    qpeaks_find(yvals.data(), xvals.data(), nullptr, length, 20, &ret);
+    qpeaks_find(yvals.data(), xvals.data(), nullptr, length, &ret);
 
     // printf("    Observed values:\n");
     // for (size_t i = 0; i < length; i++)
