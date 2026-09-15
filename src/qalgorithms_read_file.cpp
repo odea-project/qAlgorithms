@@ -224,39 +224,30 @@ namespace qAlgorithms
         const pugi::xml_node spectrum_node_mz = spectrum_node->child("binaryDataArrayList")
                                                     .child("binaryDataArray");
 
-        {
-            // @todo the mzML defines the encoded length of a spectrum, we should use this here
-            // instead of stack allocating a potentially large number of elements.
-            const char *binaryData = spectrum_node_mz.child("binary").child_value();
+        // @todo the mzML defines the encoded length of a spectrum, we should use this here
+        // instead of stack allocating a potentially large number of elements.
+        const char *binaryData_mz = spectrum_node_mz.child("binary").child_value();
 
-            int32_t error = decodeSpectrum(binaryData, spectrum_mz, spectrum_size,
-                                           file->zlib_compression, file->precision_f64);
-
-            if (error != 0)
-            {
-                (void)fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 \n"
-                                      "correctly. Ensure the input file is not corrupted.\n",
-                              index);
-                return 2;
-            }
-        }
+        int32_t error_mz = decodeSpectrum(binaryData_mz,
+                                          spectrum_mz, spectrum_size,
+                                          file->zlib_compression, file->precision_f64);
 
         const pugi::xml_node spectrum_node_intensity = spectrum_node_mz.next_sibling();
 
-        {
-            const char *binaryData = spectrum_node_intensity.child("binary").child_value();
+        const char *binaryData_int = spectrum_node_intensity.child("binary").child_value();
 
-            int32_t error = decodeSpectrum(binaryData, spectrum_int, spectrum_size,
+        int32_t error_int = decodeSpectrum(binaryData_int,
+                                           spectrum_int, spectrum_size,
                                            file->zlib_compression, file->precision_f64);
 
-            if (error != 0)
-            {
-                (void)fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 "
-                                      "correctly. Ensure the input file is not corrupted.\n",
-                              index);
-                return 2;
-            }
+        if (error_mz + error_int != 0)
+        {
+            (void)fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 "
+                                  "correctly. Ensure the input file is not corrupted.\n",
+                          index);
+            return 2;
         }
+
         return 0;
     };
 
