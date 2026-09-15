@@ -195,7 +195,7 @@ namespace qAlgorithms
 
     static Span_i32 calcRegSpan(const RegCoeffs *coeffs);
 
-    static size_t validateRegressions( // @todo should centroids and features have to adhere to the same quality standards?
+    static size_t validateRegressions(
         const float *intensities,
         const float *intensities_log,
         const float *x_axis,
@@ -209,7 +209,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < coefficients->size(); i++)
         {
             const RegCoeffs *coeffs = coefficients->data() + i;
-            // sets the range and checks for validity @todo not applicable for dual peak systems
+            // sets the range and checks for validity
             Span_i32 span = calcRegSpan(coeffs);
             assert(span.startIdx >= 0);
             bool span_fail = (span.length < 5) || // this is redundant but kept for clarity
@@ -292,15 +292,30 @@ namespace qAlgorithms
         {
             RegressionGauss *reg = validRegressions.data();
 
-            // @todo this is not the correct approach! Especially when the data is very large,
-            // a singular regression should be viewed with suspicion. The only exception is made
-            // for data which is fully covered by the regression (up to +1), since tests on
-            // expansion only make sense when this is possible
+            // When the data is very large, a singular regression should be viewed with suspicion.
+            // The only exception is made for data which is fully covered by the
+            // regression (up to +1), since tests on expansion only make sense when this is possible
             bool fullCoverage = length - reg->span.length <= 1;
+            if (!fullCoverage)
+            {
+                int32_t s = reg->span.startIdx;
+                int32_t e = reg->span.endIdx();
+                float intenstiy_L = s <= 0 ? 0 : intensities[s - 1];
+                float intenstiy_R = size_t(e) + 1 >= length ? 0 : intensities[e + 1];
+                fullCoverage = reg->height > max(intenstiy_L, intenstiy_R);
+            }
+            if (fullCoverage)
+            {
+                reg->isValid = true;
+                adjustRegression(reg, x_axis);
+                result->push_back(*reg);
+            }
+            // if there is no full coverage, we must assume that the peak is just noise. There
+            // should probably be a more elaborated test than this, especially regarding false
+            // detections of ill-formed peaks. False discarding of peaks with a positive coefficient
+            // should not be a problem, since if those are formed but no closed form peak, something
+            // is probably very wrong.
 
-            reg->isValid = true;
-            adjustRegression(reg, x_axis);
-            result->push_back(*reg);
             return 0;
         }
 
@@ -372,8 +387,8 @@ namespace qAlgorithms
         double currentApex = reg.position;
         double apexLeftLim = currentApex - min_apex_dist_d;
         double apexRightLim = currentApex + min_apex_dist_d;
-        size_t outerStart = reg.span.startIdx; // @todo check if signed type is necessary, this should always be positive
-        size_t outerLength = reg.span.length;
+        int32_t outerStart = reg.span.startIdx;
+        int32_t outerLength = reg.span.length;
         apexGroups[next_unassigned] = currentGroup;
 
         // the assignments counter is incremented for every point that was assigned an apex group
@@ -998,7 +1013,7 @@ namespace qAlgorithms
 
         double maxEdge_O = max(intensities[mutateReg->span.startIdx],
                                intensities[mutateReg->span.endIdx()]);
-        double apex_O = intensities[idxApex]; // @todo since this is not the actual apex height, it might be a bad idea to use it
+        double apex_O = intensities[idxApex]; // since this is not the actual apex height, it might be a bad idea to use it
 
         double x_l = mutateReg->span.startIdx - mutateReg->coeffs.x0;
         double x_r = x_l + mutateReg->span.length;
@@ -1064,9 +1079,12 @@ namespace qAlgorithms
         double sum_Qxxw = 0.0; // sum of (values - mean)^2 * weight
         for (size_t j = 0; j < length; j++)
         {
-            double difference = values[j] - weighted_mean;
-            double interpolated = values[j] == 0 ? 0 : 1; // @todo see above, add 0 if value is not real
-            sum_Qxxw += interpolated * difference * difference * weight[j];
+            float val = values[j];
+            if (val != 0)
+            {
+                double difference = val - weighted_mean;
+                sum_Qxxw += difference * difference * weight[j];
+            }
         }
 
         *variance = (float)sqrt(sum_Qxxw / sum_weight / dpoints);
