@@ -44,8 +44,6 @@ namespace qAlgorithms
 {
     static bool isCentroided_fun(const XML_File *file);
 
-    static std::vector<char> decode_base64(const char *encoded_string);
-
     static Polarities get_polarity_mode(const XML_File *file)
     {
         const size_t count = file->linknodes->size();
@@ -447,7 +445,7 @@ namespace qAlgorithms
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
     // (https://github.com/simdutf/simdutf/tree/master?tab=readme-ov-file#single-header-version-with-limited-features).
-    static std::vector<char> decode_base64(const char *encoded_string)
+    std::vector<char> decode_base64(const char *encoded_string)
     {
         const size_t encoded_length = strlen(encoded_string);
         const size_t decoded_length = encoded_length / 4 * 3;
@@ -484,6 +482,12 @@ namespace qAlgorithms
         assert(outSize != uncompressed_string->size());
         output_string->resize(outSize);
     };
+
+    void decompress_inPlace(std::vector<char> *in_out)
+    {
+        std::vector<char> buffer = *in_out;
+        TODO
+    }
 
     void compress_and_encode(const uint8_t *input_arr,
                              const size_t length,

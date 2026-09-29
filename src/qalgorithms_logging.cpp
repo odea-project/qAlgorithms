@@ -16,7 +16,14 @@ namespace qAlgorithms
 
     static bool errorLogStarted = false;
 
+    static bool isInReplayMode = false;
+
     static FILE *log_output_global = stdout;
+
+    void setReplay(bool on)
+    {
+        isInReplayMode = on;
+    }
 
     static void init_log(void)
     {
@@ -47,7 +54,7 @@ namespace qAlgorithms
         assert(written == sizeof(yy_1) + sizeof(aa_2) + sizeof(oo_3) + sizeof(log_message_header) + sizeof(format) - 8 - 5);
     }
 
-    void log_qpeaks(const float *intensities,
+    bool log_qpeaks(const float *intensities,
                     const float *x_axis,
                     const float *intensities_log,
                     const uint16_t *const df,
@@ -56,7 +63,10 @@ namespace qAlgorithms
                     const std::vector<RegressionGauss> *result)
     {
         if (doNotLog)
-            return;
+            return true;
+
+        if (isInReplayMode)
+            return false;
 
         assert(log_output_global != nullptr);
 
@@ -116,24 +126,29 @@ namespace qAlgorithms
         std::vector<char> buffer_out;
         compress_and_encode(logged_state.data(), logged_state.size(), &buffer_out);
         buffer_out.push_back(0);
-        const size_t written = fprintf(log_output_global, "qpeaks:\n%s\n", buffer_out.data());
+
+        // @todo this must contain the length of the buffer
+        const size_t written = fprintf(log_output_global, "qpeaks: %zu\n%s\n",
+                                       logged_state.size(), buffer_out.data());
         // two null terminators, one added through the push_back and one inherent in a c string
         assert(written == buffer_out.size() + sizeof("qpeaks:\n\n") - 2);
+
+        return true;
     }
 
-    QPeaks_log_mapping read_log_qpeaks(const std::vector<char> *internal_arrays)
+    QPeaks_log_mapping read_log_qpeaks(const char *compressed_data)
     {
-        // decompress data
+        // decompress data into the returned struct. Performance is not that relevant to
+        // a debug mode implementation
+        QPeaks_log_mapping res;
+        res.internal_arrays = decode_base64(compressed_data);
 
         // the minimal size is all optional fields at 0 and five elements in the problematic data
         const size_t sst = sizeof(size_t);
         const size_t log_minsize = sizeof(char) + 2 * sst + 15 * sizeof(float);
-        assert(log_minsize <= internal_arrays->size());
+        assert(log_minsize <= res.internal_arrays.size());
 
-        QPeaks_log_mapping res;
-        res.internal_arrays = *internal_arrays;
-
-        const char *data = internal_arrays->data();
+        const char *data = res.internal_arrays.data();
         const bool has_df = (bool)data[0];
         data += sizeof(char);
         memcpy(&res.length, data, sst);
@@ -145,42 +160,19 @@ namespace qAlgorithms
         memcpy(&res.resultSize, data, sst);
         data += sst;
 
-        // the one vector contains all relevant bytes, just point the pointers in the struct to the
-        // correct address. It is important that the order in which the object was initially
-        // serialised is preserved (see the above function)
+        // after the three initial values are set, the offsets are easily determined.
+        // for the write order, refer to the above function.
+        const size_t sf = sizeof(float);
+        size_t offset = sizeof(char) + 3 * sst;
+        res.intensities_offset = offset;
+        res.x_axis_offset = offset + res.length * sf;
+        res.intensities_log_offset = offset + 2 * res.length * sf;
 
-#pragma GCC diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic push // since we just reverse the
-#pragma clang diagnostic ignored "-Wcast-align"
-
-        size_t advance_arr_flt = sizeof(float) * res.length;
-        res.intensities = (float *)data; // cppcheck-suppress invalidPointerCast
-        data += advance_arr_flt;
-        res.x_axis = (float *)data; // cppcheck-suppress invalidPointerCast
-        data += advance_arr_flt;
-        res.intensities_log = (float *)data; // cppcheck-suppress invalidPointerCast
-        data += advance_arr_flt;
-
-        // these pointers are not always set
-        if (res.resultSize > 0)
-        {
-            res.result = (RegressionGauss *)data;
-            data += sizeof(RegressionGauss) * res.resultSize;
-        }
-        else
-        {
-            res.result = nullptr;
-        }
+        if (res.resultSize != 0)
+            res.returns_offset = offset + 3 * res.length * sf;
 
         if (has_df)
-        {
-            res.df = (uint16_t *)data;
-        }
-        else
-        {
-            res.df = nullptr;
-        }
-#pragma clang diagnostic pop
+            res.df_offset = res.returns_offset + sizeof(RegressionGauss) * res.resultSize;
 
         return res;
     }

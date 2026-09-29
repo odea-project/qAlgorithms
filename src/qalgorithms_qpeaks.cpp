@@ -336,8 +336,8 @@ namespace qAlgorithms
             }
             else
             {
-                log_qpeaks(intensities, x_axis, intensities_log, df, length, maxscale, result);
-                exit(1); // NOLINT
+                if (log_qpeaks(intensities, x_axis, intensities_log, df, length, maxscale, result))
+                    exit(1); // NOLINT
                 // function to split off here @todo
                 // groupNum--;
                 // printf("looping endlessly ... \n");
