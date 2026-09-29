@@ -1,5 +1,6 @@
 #include "qalgorithms_qpeaks.h"
 #include "qalgorithms_datatypes.h"
+#include "qalgorithms_logging.h"
 #include "qalgorithms_read_file.h"
 #include "qalgorithms_utils.h"
 
@@ -335,10 +336,12 @@ namespace qAlgorithms
             }
             else
             {
+                log_qpeaks(intensities, x_axis, intensities_log, df, length, maxscale, result);
+                exit(1); // NOLINT
                 // function to split off here @todo
-                groupNum--;
-                printf("looping endlessly ... \n");
-                groupRegsByApex(&validRegressions, apexGroups);
+                // groupNum--;
+                // printf("looping endlessly ... \n");
+                // groupRegsByApex(&validRegressions, apexGroups);
             }
         }
 
@@ -406,8 +409,8 @@ namespace qAlgorithms
                         continue;
 
                     double secondApex = validRegressions->at(p).position;
-                    size_t innerStart = validRegressions->at(p).span.startIdx;
-                    size_t innerLength = validRegressions->at(p).span.length;
+                    int32_t innerStart = validRegressions->at(p).span.startIdx;
+                    int32_t innerLength = validRegressions->at(p).span.length;
                     // reasoning: while a distance of four points is the logically mandated distance, this is
                     // preconditioned on both regions having any overlap. Here, one point matching in fit
                     // region is not considered an overlap. To this end, we check that the defined region
