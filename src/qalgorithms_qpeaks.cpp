@@ -337,11 +337,8 @@ namespace qAlgorithms
             else
             {
                 if (log_qpeaks(intensities, x_axis, intensities_log, df, length, maxscale, result))
-                    exit(1); // NOLINT
-                // function to split off here @todo
-                // groupNum--;
-                // printf("looping endlessly ... \n");
-                // groupRegsByApex(&validRegressions, apexGroups);
+                    exit(1); // NOLINT @todo this could actually be a target for parallelising someday
+                return -1;
             }
         }
 

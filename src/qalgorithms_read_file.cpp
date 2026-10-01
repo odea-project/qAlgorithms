@@ -483,10 +483,18 @@ namespace qAlgorithms
         output_string->resize(outSize);
     };
 
-    void decompress_inPlace(std::vector<char> *in_out)
+    void decompress_inPlace(std::vector<char> *in_out, const size_t decompressedSize)
     {
-        std::vector<char> buffer = *in_out;
-        TODO
+        assert(in_out->size() > 1);
+        assert(decompressedSize > in_out->size());
+        std::vector<char> buffer(*in_out);
+        in_out->clear();
+        in_out->resize(decompressedSize);
+
+        size_t outSize = decompressedSize;
+        zng_uncompress((Bytef *)in_out->data(), &outSize,
+                       (Bytef *)buffer.data(), buffer.size());
+        assert(outSize == decompressedSize);
     }
 
     void compress_and_encode(const uint8_t *input_arr,

@@ -4,11 +4,13 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <vector>
 
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_logging.h"
 #include "qalgorithms_read_file.h"
+#include "qalgorithms_utils.h"
 
 namespace qAlgorithms
 {
@@ -130,18 +132,37 @@ namespace qAlgorithms
         // @todo this must contain the length of the buffer
         const size_t written = fprintf(log_output_global, "qpeaks: %zu\n%s\n",
                                        logged_state.size(), buffer_out.data());
+
         // two null terminators, one added through the push_back and one inherent in a c string
-        assert(written == buffer_out.size() + sizeof("qpeaks:\n\n") - 2);
+        assert(written == buffer_out.size() + sizeof("qpeaks: \n\n") - 2 + n_digits(logged_state.size()));
 
         return true;
     }
 
     QPeaks_log_mapping read_log_qpeaks(const char *compressed_data)
     {
+        QPeaks_log_mapping res;
         // decompress data into the returned struct. Performance is not that relevant to
         // a debug mode implementation
-        QPeaks_log_mapping res;
+
+        while ((*compressed_data != ':') && (*compressed_data != '\n'))
+            compressed_data += 1;
+
+        if (*compressed_data != ':')
+        {
+            (void)fprintf(stderr, "Error: could not find decompressed size in input\n");
+            return res;
+        }
+        compressed_data += 2;
+
+        size_t decompressedSize = std::stoul(compressed_data);
+
+        compressed_data += n_digits(decompressedSize);
+        assert(*compressed_data == '\n');
+        compressed_data += 1;
+
         res.internal_arrays = decode_base64(compressed_data);
+        decompress_inPlace(&res.internal_arrays, decompressedSize);
 
         // the minimal size is all optional fields at 0 and five elements in the problematic data
         const size_t sst = sizeof(size_t);

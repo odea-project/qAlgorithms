@@ -120,6 +120,8 @@ namespace qAlgorithms
     void compress_and_encode(const uint8_t *input_arr,
                              const size_t length,
                              std::vector<char> *output_string);
+
+    void decompress_inPlace(std::vector<char> *in_out, const size_t decompressedSize);
 }; // namespace qAlgorithms
 
 #endif // QALGORITHMS_READ_FILE_H
