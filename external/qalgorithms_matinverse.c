@@ -17,22 +17,22 @@ The reason for that is that the last inverse contains values < 10e-10, which is 
 down the program. Until an arbitrary-precision implementation is required, this is a sensible upper limit.
 */
 
-typedef struct
+typedef struct // NOLINT
 {
     double A, B, C, D, E, F;
 } MatInverse;
 
 // these stay the same during function call
-double XtX_00 = 1;
-double XtX_02 = 0;
-double XtX_11 = 0;
-double XtX_12 = 0;
-double XtX_13 = 0;
-double XtX_22 = 0;
+static double XtX_00 = 1;
+static double XtX_02 = 0;
+static double XtX_11 = 0;
+static double XtX_12 = 0;
+static double XtX_13 = 0;
+static double XtX_22 = 0;
 
-int prevScale = 0;
+static int prevScale = 0;
 
-MatInverse inverseForScale(int scale)
+static MatInverse inverseForScale(int scale)
 {
     assert(scale - 1 == prevScale);
 
@@ -76,9 +76,8 @@ MatInverse inverseForScale(int scale)
     return inv;
 }
 
-int main(int argc, char const *argv[]) // the only permitted argument is the highest pre-calculated scale
+int main(void) 
 {
-    assert(argc == 1);
     const int maxscale = 215;
 
     // const int maxscale = atoi(argv[1]);
@@ -133,19 +132,19 @@ int main(int argc, char const *argv[]) // the only permitted argument is the hig
 
     // process last element
     MatInverse inv = inverseForScale(maxscale);
-    charCount += sprintf(line, "{%0.16f,%0.16f,%0.16f,%0.16f,%0.16f,%0.16f}};", // no comma and second closing brace / semicolon
+    charCount += sprintf(line, "{%0.16f,%0.16f,%0.16f,%0.16f,%0.16f,%0.16f},\n};", // no comma and second closing brace / semicolon
                          inv.A, inv.B, inv.C, inv.D, inv.E, inv.F);
 
     const char end[27] = "\n#endif\n// clang-format on";
     charCount += 27;
 
-    char merge[charCount];
-    sprintf(merge, "%s%s%s%s%s%s%s%s", comment, maxscale_def, struct_def, arrayDef, firstline, block, line, end);
+    char merge[charCount]; // NOLINT
+    (void)sprintf(merge, "%s%s%s%s%s%s%s%s", comment, maxscale_def, struct_def, arrayDef, firstline, block, line, end);
 
     // paste all parts together and write to file
     FILE *f = fopen("./qalgorithms_matinverse.h", "w");
-    fprintf(f, "%s", merge);
-    fclose(f);
+    (void)fprintf(f, "%s", merge);
+    (void)fclose(f);
     printf("Successfully generated file qalgorithms_matinverse.h with a maxscale of 215\n");
     return 0;
 }

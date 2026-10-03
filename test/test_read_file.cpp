@@ -11,8 +11,7 @@ using namespace qAlgorithms;
 
 static void test_spec_decode_nocomp_double()
 {
-    const double arr_D[10] = {0.135761618738162, 2.75537138578063, 1.72069261613833, 0.0218284366498446, 1.65262662060337,
-                              0.637948708991408, 0.0385504743656586, 0.275107929479815, 1.71114153324745, 0.152519432142112};
+    const double arr_D[10] = {0.135761618738162, 2.75537138578063, 1.72069261613833, 0.0218284366498446, 1.65262662060337, 0.637948708991408, 0.0385504743656586, 0.275107929479815, 1.71114153324745, 0.152519432142112};
     // reference string encoded using python script (see end of file)
     const char encoded[] = "jiZEAKNgwT+WGDInAAsGQGOGDPv0h/s/KLQiljFalj/72H+cKHH6P7SXNGkTauQ//qRKReO8oz/uG/9JXpvRP2MAwvHVYPs/ugWHusGFwz8=";
     const size_t encode_len = 108; // 109 above includes null terminator
@@ -41,8 +40,7 @@ static void test_spec_decode_nocomp_double()
 
 static void test_spec_decode_iscomp_double()
 {
-    const double arr_D[10] = {0.135761618738162, 2.75537138578063, 1.72069261613833, 0.0218284366498446, 1.65262662060337,
-                              0.637948708991408, 0.0385504743656586, 0.275107929479815, 1.71114153324745, 0.152519432142112};
+    const double arr_D[10] = {0.135761618738162, 2.75537138578063, 1.72069261613833, 0.0218284366498446, 1.65262662060337, 0.637948708991408, 0.0385504743656586, 0.275107929479815, 1.71114153324745, 0.152519432142112};
 
     const uint8_t *arr_char = (uint8_t *)arr_D;
     const size_t arr_char_len = 10 * sizeof(double);
@@ -64,8 +62,7 @@ static void test_spec_decode_iscomp_double()
 
 static void test_spec_decode_iscomp_float()
 {
-    const float arr_F[10] = {0.135761618738162, 2.75537138578063, 1.72069261613833, 0.0218284366498446, 1.65262662060337,
-                             0.637948708991408, 0.0385504743656586, 0.275107929479815, 1.71114153324745, 0.152519432142112};
+    const float arr_F[10] = {0.135761618738162, 2.75537138578063, 1.72069261613833, 0.0218284366498446, 1.65262662060337, 0.637948708991408, 0.0385504743656586, 0.275107929479815, 1.71114153324745, 0.152519432142112};
 
     const uint8_t *arr_char = (uint8_t *)arr_F;
     const size_t arr_char_len = 10 * sizeof(float);

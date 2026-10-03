@@ -12,14 +12,12 @@ Checks: '*,
        -llvmlibc-*,
        -altera-unroll-loops,
        -altera-struct-pack-align,
-       altera-id-dependent-backward-branch,
        -bugprone-easily-swappable-parameters,
        -cppcoreguidelines-*,
        cppcoreguidelines-init-variables,
        cppcoreguidelines-misleading-capture-default-by-value,
        -misc-const-correctness,
        -misc-use-anonymous-namespace,
-
        -misc-non-private-member-variables-in-classes,
        -misc-static-assert,
        -readability-braces-around-statements,
@@ -36,7 +34,6 @@ Checks: '*,
        -cert-msc51-cpp,
        -cert-dcl50-cpp'
        
-CheckOptions: [{ key: misc-non-private-member-variables-in-classes, value: IgnoreClassesWithAllMemberVariablesBeingPublic }]
 WarningsAsErrors: ''
 HeaderFilterRegex: '^(src|include|test)/'
 FormatStyle: none

@@ -24,16 +24,19 @@ namespace qAlgorithms
         size_t intensities_offset = 0;
         float *get_intensities_ptr(void)
         {
+            // cppcheck-suppress invalidPointerCast
             return (float *)(internal_arrays.data() + intensities_offset);
         }
         size_t x_axis_offset = 0;
         float *get_x_axis_ptr(void)
         {
+            // cppcheck-suppress invalidPointerCast
             return (float *)(internal_arrays.data() + x_axis_offset);
         }
         size_t intensities_log_offset = 0;
         float *get_intensities_log_ptr(void)
         {
+            // cppcheck-suppress invalidPointerCast
             return (float *)(internal_arrays.data() + intensities_log_offset);
         }
         size_t df_offset = 0;

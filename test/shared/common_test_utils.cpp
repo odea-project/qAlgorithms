@@ -7,7 +7,7 @@
 #include "pugixml/pugixml.hpp"
 
 #include <math.h>
-#define _USE_MATH_DEFINES
+#define USE_MATH_DEFINES
 #include <stdint.h> // printing
 
 static const float *maxVal(const float *const arrayStart, const size_t length)
@@ -20,7 +20,7 @@ static const float *maxVal(const float *const arrayStart, const size_t length)
     return ret;
 }
 
-float ran0(long *idum)
+float ran0(int64_t *idum)
 {
     // function taken from numerical recepies, second edition, page 279
 #define IA 16807
@@ -31,20 +31,20 @@ float ran0(long *idum)
 #define MASK 123459876
 
     *idum ^= MASK;
-    long k = (*idum) / IQ;
+    int64_t k = (*idum) / IQ;
     *idum = IA * (*idum - k * IQ) - IR * k;
     if (*idum < 0)
         *idum += IM;
-    float ans = (float)AM * (*idum);
+    float ans = (float)AM * (float)(*idum);
     *idum ^= MASK;
     return ans;
 }
 
 // produce a random double value in the range (lower, upper). If no seed is supplied, the seed is also random
-double randRange_d(double lower, double upper, long seed)
+double randRange_d(double lower, double upper, int64_t seed)
 {
     verify(lower < upper);
-    long randint = seed;
+    int64_t randint = seed;
     if (seed == 0)
         randint = nanoseconds();
     double randDouble = ran0(&randint); // random number between 0 and 1
@@ -65,8 +65,7 @@ double roundTo_d(double x, size_t digits)
     const size_t maxPrec = 17;
     verify(digits < maxPrec);
 
-    static const double powers[maxPrec]{1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
-                                        1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16};
+    static const double powers[maxPrec]{1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16};
 
     double pow = powers[digits];
 
@@ -103,8 +102,8 @@ double gauss_rand(const double mean, const double sdev)
     {
         do
         {
-            double U1 = (double)rand() / RAND_MAX;
-            double U2 = (double)rand() / RAND_MAX;
+            double U1 = (double)rand() / RAND_MAX; // NOLINT
+            double U2 = (double)rand() / RAND_MAX; // NOLINT
 
             V1 = 2 * U1 - 1;
             V2 = 2 * U2 - 1;

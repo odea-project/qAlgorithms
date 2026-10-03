@@ -75,7 +75,7 @@ namespace qAlgorithms
         invalid_area = 7,
         invalid_height = 8,
         invalid_chisq = 9,
-        none = -1
+        none = -1,
     };
 
     // ### Feature-specific Code ### //

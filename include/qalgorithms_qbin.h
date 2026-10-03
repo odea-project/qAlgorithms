@@ -1,5 +1,5 @@
-#ifndef _QALGORITHMS_QBIN_INCLUDED
-#define _QALGORITHMS_QBIN_INCLUDED
+#ifndef QALGORITHMS_QBIN_H
+#define QALGORITHMS_QBIN_H
 
 #include <cstddef>
 #include <vector>

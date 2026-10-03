@@ -1126,7 +1126,8 @@ namespace qAlgorithms
             (uint32_t)peak->span.startIdx,
             (uint32_t)peak->span.length,
             rt_arr[0],
-            rt_arr[peak->span.length - 1]};
+            rt_arr[peak->span.length - 1],
+        };
     }
 
     size_t findFeatures(const std::vector<EIC> *EICs,
@@ -1181,7 +1182,8 @@ namespace qAlgorithms
             id,
             specNum,
             reg->coeffs.scale,
-            reg->numCompetitors};
+            reg->numCompetitors,
+        };
     }
 
     size_t findCentroids(const XML_File *data,

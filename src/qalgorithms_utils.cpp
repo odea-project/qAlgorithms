@@ -1,7 +1,7 @@
 #include "qalgorithms_utils.h"
 #include <cstddef>
 #include <cstdint>
-#define _USE_MATH_DEFINES
+#define USE_MATH_DEFINES
 #include "cephes.h"
 #include <cassert>
 #include <math.h>

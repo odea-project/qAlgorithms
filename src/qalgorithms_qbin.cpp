@@ -24,7 +24,7 @@ namespace qAlgorithms
         for (size_t i = 0; i < centroidedData->size(); i++)
         {
             if (centroidedData->at(i).mz > 0)
-                firstBin.pointsInBin.push_back(&(centroidedData->at(i)));
+                firstBin.pointsInBin.push_back(&centroidedData->at(i));
         }
         activeBins.processBinsF.push_back(firstBin);
 
@@ -557,7 +557,8 @@ namespace qAlgorithms
             tmp_DQSC,
             tmp_cenID,
             tmp_interpScans,
-            tmp_rt};
+            tmp_rt,
+        };
 
         return returnVal;
     }

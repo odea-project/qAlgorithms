@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <vector>
-#define _USE_MATH_DEFINES
+#define USE_MATH_DEFINES
 #include <cfloat> // placing this here instead of in every individual test
 #include <math.h>
 
@@ -35,9 +35,9 @@ inline void default_assertion_handler(const char *assertion_as_cstring, const ch
     /* set breakpoint here! */
     volatile int a = 3;
 #if defined(__i386__) || defined(__x86_64__)
-    __asm__ volatile("int $3");
+    __asm__ volatile("int $3"); // NOLINT
 #elif defined(__arm__) || defined(__aarch64__)
-    __asm__ volatile("brk #0");
+    __asm__ volatile("brk #0"); // NOLINT
 #else
     // cppcheck-suppress preprocessorErrorDirective
     #error "Unsupported architecture for breakpoint trap"

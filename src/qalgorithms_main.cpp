@@ -167,17 +167,13 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 
         timeEnd = clock();
 
-        if (binnedData.size() == 0)
+        if (binnedData.empty())
         {
             (void)fprintf(stderr, "Error: no bins could be constructed from the data.\n");
             if (!userArgs.skipError)
-            {
                 exit(1);
-            }
-            else
-            {
-                ++errorCount;
-            }
+
+            errorCount += 1;
         }
 
         if (!userArgs.silent)
@@ -203,7 +199,7 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         std::vector<FeaturePeak> features;
         findFeatures(&binnedData, &retentionTimes, &features);
 
-        if (features.size() == 0)
+        if (features.empty())
         {
             (void)fprintf(stderr, "Warning: no features were constructed, continuing...\n");
         }

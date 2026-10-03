@@ -1,6 +1,7 @@
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_qpeaks.h"
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
@@ -18,13 +19,14 @@ using namespace qAlgorithms;
 // std::vector<float> intensity = {157.883072, 1325.722046, 2188.603760, 5415.137695, 12294.484375, 16239.560547, 13575.218750, 9618.787109, 7654.178223, 20002.025391, 69383.062500, 147876.296875, 233001.171875, 244286.796875, 162216.375000, 82337.882812, 23717.978516, 5968.742676, 2921.130859, 945.386047};
 // std::vector<float> intensity = {1274.10596, 5653.32959, 19341.3398, 51021.3789, 103777.039, 162754.797, 179871.859, 128027.453, 58688.5547, 17326.6309, 3294.46802};
 
-struct PeakTest // NOLINT
+// NOLINTBEGIN
+struct PeakTest
 {
     std::vector<float> intensity = {0};
     size_t expect_count = 0;
 };
 
-PeakTest pt_01 = { // NOLINT
+PeakTest pt_01 = {
     // Note: this is a double peak system in need of deconvolution which i included because
     // the old design for selecting the best entry of a set of regressions eliminated the
     // second, smaller peak despite the apexes being far enough apart. Interesting, at the
@@ -32,14 +34,14 @@ PeakTest pt_01 = { // NOLINT
     {8862.04883, 17619.8887, 23784.2598, 22516.0684, 17171.5332, 14893.7227, 16483.5371, 16239.6406, 11697.918, 5697.0332},
     2};
 
-PeakTest pt_02 = { // NOLINT
+PeakTest pt_02 = {
     // Peak with slightly increased baseline on the right tail that proved difficult to detect
     // in beta versions of the program. This was due to the Chi-square filter not functioning for
     // the data after reversing the log transform
     {16427.9434, 34097.4414, 42639.7266, 102040.758, 264363.312, 486761.125, 909302, 783670.375, 404226.625, 194167.844, 81423.1406, 63319.4688, 62018.1602, 27416.2754},
     1};
 
-PeakTest pt_03 = { // NOLINT
+PeakTest pt_03 = {
 
     // Data for a malformed bin which should not contain any features, but still allowed for
     // peaks to be constructed: (multi-line)
@@ -53,19 +55,19 @@ PeakTest pt_03 = { // NOLINT
      261.456085, 217.647079, 254.565613, 240.973572, 266.561127, 234.288925, 231.6884, 282.011963},
     0};
 
-PeakTest pt_04 = { // NOLINT
+PeakTest pt_04 = {
 
     // This data contains three peaks, but only the two less intense ones were found.
     // The new apex grouping function marked them as conflicting, which should not be the case.
     {28913.7539, 15335.7256, 31011.6035, 59799.4961, 30304.0547, 101.776535, 7791.06396, 16737.2637, 7326.88721, 5033.8501, 11136.9746, 12789.5098, 7660.45898, 2526.31592},
     3};
 
-PeakTest pt_05 = { // NOLINT
+PeakTest pt_05 = {
     // this peak lead to unresolvable regression conflicts in a version of the new regression elimination
     {1566.37317, 6721.91357, 10333.0713, 12963.7285, 18588.1035, 23554.9043, 26401.1895, 27222.6621, 27128.6387, 18343.3789, 9999.44727, 823.102112},
     1};
 
-PeakTest pt_06 = { // NOLINT
+PeakTest pt_06 = {
     // This peak system produced groups that did not correctly group apexes before eliminating regressions.
     // Some of the offending regressions were poorly fitting and could probably be removed by a goodness-of-fit filter.
     // This problem only occurs for one of the three peaks present in the data. The test case was
@@ -75,6 +77,7 @@ PeakTest pt_06 = { // NOLINT
      2879.35815, 4468.28662, 5404.12451, 5281.40186, 2488.4541, 234.448563, 522.505859, 3366.85596,
      10939.0303, 18904.9043, 24883.1719, 19762.5625, 11631.5967, 4173.91699, 858.461609},
     3};
+// NOLINTEND
 
 static int test_qpeaks_find(const PeakTest *test)
 {
@@ -149,6 +152,53 @@ static void simulate_gauss(
     }
 }
 
+static void control_sim_gauss()
+{
+    // generate data using a standard gaussian on an equidistant x axis
+    float x_start = 100;
+    float x_step = 1;
+    float apex = 115;
+    uint16_t length = 30;
+    double sdev = 2.5;
+    double height = 1000;
+
+    double fwhm = fwhm_gauss(sdev);
+    double area = area_gauss(height, sdev);
+
+    std::vector<float> xvals(length, 0);
+    std::vector<float> yvals(length, 0);
+    for (uint16_t i = 0; i < length; i++)
+    {
+        xvals[i] = x_start + x_step * (float)i;
+    }
+
+    simulate_gauss(&xvals, apex, height, sdev, &yvals);
+
+    std::vector<RegressionGauss> ret;
+    qpeaks_find(yvals.data(), xvals.data(), nullptr, length, &ret);
+
+    assert(!ret.empty(), "Peak not found\n", NULL);
+    assert(ret.size() == 1, "Too many peaks found\n", NULL);
+
+    RegressionGauss reg = ret.front();
+
+    float apex_p = reg.position;
+    float height_p = reg.height;
+    float fwhm_p = reg.fwhm;
+    float area_p = reg.area; // wrong result
+
+    float area_e = (float)area_empiric(&xvals, &yvals);
+    // RegCoeffs c = reg.coeffs;
+    // float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step);
+
+    assert(flt_equal(apex, apex_p, FLT_EPSILON), "inaccurate position\n", NULL);
+    assert(flt_equal(height, height_p, reg.height_unc), "inaccurate height\n", NULL);
+    assert(flt_equal(fwhm, fwhm_p, 10e-4), "inaccurate width\n", NULL);
+    assert(flt_equal(area, area_p, 0.01), "inaccurate area (%f vs. %f), empiric %f\n", area, area_p, area_e);
+}
+
+#if 0
+
 static double peakVal_EMG(double x, double apex, double height, double sdev, double tau)
 {
     // implements the exponentially modified gaussian fit as a generative model
@@ -168,49 +218,6 @@ static double peakVal_EMG(double x, double apex, double height, double sdev, dou
     if (!(y < INFINITY))
         return -1;
     return (float)y;
-}
-
-static double fwhm_EMG(double sdev, double tau)
-{
-    // z = 1/sqrt(2) * ( (x_0 - x) / s + s / t )
-    // since FWHM is position-independent, we can set x_0 = 0
-    // z = 1/sqrt(2) * (-x / s + s / t)
-    // z = x * -(1/(sqrt(2) * s)) + (1/sqrt(2) * s / t)
-    // z_1 = -(1/(sqrt(2) * s)), z_2 = (1/sqrt(2) * s / t)
-    // z == x * z_1 + z_2
-
-    // c_1 = (s/t) * sqrt(pi/2), c_2 = -1 / (2 * s^2)
-    // 0.5 * h = h * exp( x^2 * c_2 ) * c_1 * exp(z^2) * erfc(z)
-    // 0 = x^2 * c_2 + log(c_1) + z^2 + log(erfc(z)) - log(0.5)
-    // log(erfc(z)) = log(1 - erf(z)) = log(1) / log(erf(z)) == 0
-
-    // z^2 = x^2 * z_1^2 + 2 * x * z_1 * z_2 + z_2^2
-    // c_3 = log(c_1) - log(0.5) + z_2^2
-    // 0 = x^2 * c_2 + x^2 * z_1^2 + 2 * x * z_1 * z_2 + c_3
-    // z_3 = 2 * z_1 * z_2 ; c_4 = c_2 + z_1^2
-
-    // 0 = c_4 * x^2 + z_3 * x + c_3
-
-    // however, c_4 == 0 (error in calculation?)
-    // -> only one intersect with height?
-
-    // The final form is just a quadratic equation!
-    // since the function is asymmetric, we require both values for x
-
-    double c_2 = -1 / (2 * sdev * sdev);
-    double z_1 = -(1 / (sqrt(2) * sdev));
-    double c_4 = c_2 + z_1 * z_1;
-
-    double z_2 = (1 / sqrt(2) * sdev / tau);
-    double z_3 = 2 * z_1 * z_2;
-
-    double c_1 = (sdev / tau) * sqrt(M_PI_2);
-    double c_3 = log(c_1) - log(0.5) + z_2 * z_2;
-
-    double x1 = 0, x2 = 0;
-    solveQuadratic(c_4, z_3, c_3, &x1, &x2); // @todo this will fail
-
-    return x2 - x1;
 }
 
 static void simulate_EMG(
@@ -233,54 +240,11 @@ static void simulate_EMG(
             peakDone = true;
         }
         else if (peakDone)
+        {
             break;
+        }
         x += x_step;
     }
-}
-
-static void control_sim_gauss()
-{
-    // generate data using a standard gaussian on an equidistant x axis
-    float x_start = 100;
-    float x_step = 1;
-    float apex = 115;
-    size_t length = 30;
-    double sdev = 2.5;
-    double height = 1000;
-
-    double fwhm = fwhm_gauss(sdev);
-    double area = area_gauss(height, sdev);
-
-    std::vector<float> xvals(length, 0);
-    std::vector<float> yvals(length, 0);
-    for (size_t i = 0; i < length; i++)
-    {
-        xvals[i] = x_start + x_step * i;
-    }
-
-    simulate_gauss(&xvals, apex, height, sdev, &yvals);
-
-    std::vector<RegressionGauss> ret;
-    qpeaks_find(yvals.data(), xvals.data(), nullptr, length, &ret);
-
-    assert(ret.size() != 0, "Peak not found\n", NULL);
-    assert(ret.size() == 1, "Too many peaks found\n", NULL);
-
-    RegressionGauss reg = ret.front();
-
-    float apex_p = reg.position;
-    float height_p = reg.height;
-    float fwhm_p = reg.fwhm;
-    float area_p = reg.area; // wrong result
-
-    float area_e = (float)area_empiric(&xvals, &yvals);
-    // RegCoeffs c = reg.coeffs;
-    // float area_c = peakArea(c.b0, c.b1, c.b2, c.b3, x_step);
-
-    assert(flt_equal(apex, apex_p, FLT_EPSILON), "inaccurate position\n", NULL);
-    assert(flt_equal(height, height_p, reg.height_unc), "inaccurate height\n", NULL);
-    assert(flt_equal(fwhm, fwhm_p, 10e-4), "inaccurate width\n", NULL);
-    assert(flt_equal(area, area_p, 0.01), "inaccurate area (%f vs. %f), empiric %f\n", area, area_p, area_e);
 }
 
 // void print_regFit(const RegCoeffs *coeff, const std::vector<float> *x, const float delta_x)
@@ -411,6 +375,7 @@ static void control_sim_EMG(float x_start, float x_step, ErrorEMG *in_out)
     in_out->dqs = reg.dqs;
     in_out->jaccard = reg.jaccard;
 }
+#endif
 
 static int simulate_profile(
     const RegCoeffs *coeff,
@@ -483,7 +448,7 @@ static int simulate_stepwise(
     verify(coeff->x0 > 1);
 
     delta_x /= 20;
-    float x = -delta_x * coeff->x0;
+    float x = -delta_x * (float)coeff->x0;
     for (size_t i = 0; i < coeff->x0; i++)
     {
         xvec->push_back(x);

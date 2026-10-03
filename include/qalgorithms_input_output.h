@@ -26,7 +26,7 @@ namespace qAlgorithms
         binning,
         features,
         components,
-        never_override
+        never_override,
     };
 
     struct UserInputSettings
@@ -77,7 +77,7 @@ namespace qAlgorithms
         tt_error,
         tt_normal_processing,
         tt_centroid_to_mzml,
-        tt_restore_error
+        tt_restore_error,
     };
 
     struct ProcessTask

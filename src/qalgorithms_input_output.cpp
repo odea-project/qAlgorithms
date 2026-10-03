@@ -107,12 +107,14 @@ namespace qAlgorithms
                 printf("%s%s", VERSION, helpinfo);
                 exit(0);
             }
-            else if ((argument == "-v") || (argument == "--version"))
+
+            if ((argument == "-v") || (argument == "--version"))
             {
                 printf("%s", VERSION);
                 exit(0);
             }
-            else if ((argument == "-s") || (argument == "--silent"))
+
+            if ((argument == "-s") || (argument == "--silent"))
             {
                 args.silent = true;
             }
@@ -179,7 +181,7 @@ namespace qAlgorithms
 
             else if ((argument == "-o") || (argument == "--output"))
             {
-                if (args.outputPath != "")
+                if (!args.outputPath.empty())
                 {
                     (void)fprintf(stderr, "Error: two output locations specified. For complex "
                                           "output location structures, it is recommended you use the tasklist"
@@ -449,8 +451,7 @@ namespace qAlgorithms
             goodInputs = false;
         }
 
-        if (args.term == TerminateAfter::never &&
-            !(args.outputPath.empty()))
+        if (args.term == TerminateAfter::never && !args.outputPath.empty())
         {
             (void)fprintf(stderr, "Warning: no output files will be written.\n");
         }
