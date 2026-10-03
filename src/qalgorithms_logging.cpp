@@ -139,29 +139,34 @@ namespace qAlgorithms
         return true;
     }
 
-    QPeaks_log_mapping read_log_qpeaks(const char *compressed_data)
+    QPeaks_log_mapping read_log_qpeaks(const char *compressed_data, const size_t in_length)
     {
         QPeaks_log_mapping res;
         // decompress data into the returned struct. Performance is not that relevant to
         // a debug mode implementation
+        size_t index = 0;
+        for (; index < in_length; index++)
+        {
+            if (compressed_data[index] == ':') // ':' is not used in base64 encoded text
+                break;
+        }
 
-        while ((*compressed_data != ':') && (*compressed_data != '\n'))
-            compressed_data += 1;
-
-        if (*compressed_data != ':')
+        if (compressed_data[index] != ':')
         {
             (void)fprintf(stderr, "Error: could not find decompressed size in input\n");
             return res;
         }
-        compressed_data += 2;
+        index += 2;
 
-        size_t decompressedSize = std::stoul(compressed_data);
+        size_t decompressedSize = std::stoul(compressed_data + index);
 
-        compressed_data += n_digits(decompressedSize);
-        assert(*compressed_data == '\n');
-        compressed_data += 1;
+        index += n_digits(decompressedSize);
+        assert(compressed_data[index] == '\n');
+        index += 1;
+        assert(index < in_length);
 
-        res.internal_arrays = decode_base64(compressed_data);
+        res.internal_arrays = decode_base64(compressed_data + index,
+                                            strlen(compressed_data + index));
         decompress_inPlace(&res.internal_arrays, decompressedSize);
 
         // the minimal size is all optional fields at 0 and five elements in the problematic data

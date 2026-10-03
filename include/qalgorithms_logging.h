@@ -66,6 +66,6 @@ namespace qAlgorithms
                     const size_t maxscale,
                     const std::vector<RegressionGauss> *result);
 
-    QPeaks_log_mapping read_log_qpeaks(const char *compressed_data);
+    QPeaks_log_mapping read_log_qpeaks(const char *compressed_data, const size_t in_length);
 } // namespace qAlgorithms
 #endif

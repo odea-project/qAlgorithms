@@ -111,7 +111,7 @@ namespace qAlgorithms
 
     float spectrum_rt(const XML_File *file, const size_t specNum);
 
-    std::vector<char> decode_base64(const char *encoded_string);
+    std::vector<char> decode_base64(const char *encoded_string, const size_t encoded_length);
 
     std::vector<char> encode_base64_dbl(const double *input_dbl, const size_t in_len_dbl);
 

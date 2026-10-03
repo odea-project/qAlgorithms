@@ -12,7 +12,7 @@ namespace qAlgorithms
 
     static void test_logger_recovery()
     {
-        QPeaks_log_mapping testRecover = read_log_qpeaks(errorState);
+        QPeaks_log_mapping testRecover = read_log_qpeaks(errorState, sizeof(errorState));
         assert(testRecover.length == obs_length, "length parsed incorrectly\n", NULL);
 
         float *intensities = testRecover.get_intensities_ptr();

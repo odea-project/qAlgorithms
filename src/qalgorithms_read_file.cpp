@@ -151,7 +151,9 @@ namespace qAlgorithms
                                   const size_t finalSize,
                                   bool compression, bool f64)
     {
-        std::vector<char> decoded_string = decode_base64(binaryData); // @todo work directly with the char stream
+        // @todo work directly with the char stream
+        std::vector<char> decoded_string = decode_base64(binaryData,
+                                                         strlen(binaryData));
         if (decoded_string.empty())
             return 1;
 
@@ -445,9 +447,8 @@ namespace qAlgorithms
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
     // (https://github.com/simdutf/simdutf/tree/master?tab=readme-ov-file#single-header-version-with-limited-features).
-    std::vector<char> decode_base64(const char *encoded_string)
+    std::vector<char> decode_base64(const char *encoded_string, const size_t encoded_length)
     {
-        const size_t encoded_length = strlen(encoded_string);
         const size_t decoded_length = encoded_length / 4 * 3;
         std::vector<char> output(decoded_length);
         simdutf::result simd_res = simdutf::base64_to_binary(encoded_string,
