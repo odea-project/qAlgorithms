@@ -3,6 +3,7 @@
 
 #include "../external/pugixml/pugixml.hpp"
 #include "../external/simdutf/simdutf.h" // use a fast base64 decode function that makes proper use of SIMD
+#include "qalgorithms_utils.h"
 
 // #include <filesystem>
 #include <cassert>
@@ -113,7 +114,9 @@ namespace qAlgorithms
         pugi::xml_node spec_list = mzml_root_node.child("run").child("spectrumList");
         assert(spec_list);
 
-        number_spectra = spec_list.attribute("count").as_uint();
+        bool fail = false;
+        number_spectra = parse_uint64(spec_list.attribute("count").value(), &fail);
+        assert(!fail);
 
         if (number_spectra == 0)
         {
@@ -219,7 +222,11 @@ namespace qAlgorithms
 
         const pugi::xml_node *spectrum_node = file->linknodes->data() + index;
 
-        const size_t spectrum_size = spectrum_node->attribute("defaultArrayLength").as_uint();
+        bool fail = false;
+        const size_t spectrum_size = parse_uint64(
+            spectrum_node->attribute("defaultArrayLength").value(),
+            &fail);
+        assert(!fail);
 
         const pugi::xml_node spectrum_node_mz = spectrum_node->child("binaryDataArrayList")
                                                     .child("binaryDataArray");
@@ -387,16 +394,20 @@ namespace qAlgorithms
         return isProfile;
     }
 
-    int32_t spectrum_ms_level(const XML_File *file, const size_t specNum)
+    uint32_t spectrum_ms_level(const XML_File *file, const size_t specNum)
     {
         assert(specNum < file->number_spectra);
         const pugi::xml_node *spec = file->linknodes->data() + specNum;
         // values taken from https://peptideatlas.org/tmp/mzML1.1.0.html
-        int32_t ms_lvl = spec->find_child_by_attribute("cvParam",
-                                                       "name",
-                                                       "ms level")
-                             .attribute("value")
-                             .as_int();
+        bool fail = false;
+        uint32_t ms_lvl = parse_uint64(
+            spec->find_child_by_attribute("cvParam",
+                                          "name",
+                                          "ms level")
+                .attribute("value")
+                .value(),
+            &fail);
+        assert(!fail);
         return ms_lvl;
     }
 

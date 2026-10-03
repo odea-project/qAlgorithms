@@ -105,7 +105,7 @@ namespace qAlgorithms
 
     bool spectrum_is_profile(const XML_File *file, const size_t specNum);
 
-    int32_t spectrum_ms_level(const XML_File *file, const size_t specNum);
+    uint32_t spectrum_ms_level(const XML_File *file, const size_t specNum);
 
     Polarities spectrum_polarity(const XML_File *file, const size_t specNum);
 

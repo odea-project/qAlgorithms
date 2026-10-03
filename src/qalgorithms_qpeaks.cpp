@@ -1254,7 +1254,7 @@ namespace qAlgorithms
             if (!isProfile)
                 continue;
 
-            int32_t ms_level = spectrum_ms_level(&source_file, specNum);
+            uint32_t ms_level = spectrum_ms_level(&source_file, specNum);
             if (ms_level != 1)
                 continue; // centroiding only makes sense for ms level 1
 
