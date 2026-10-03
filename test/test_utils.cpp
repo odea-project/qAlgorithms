@@ -1,3 +1,4 @@
+#include "qalgorithms_utils.h"
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wfloat-conversion" // added because of manually defined arrays
 #pragma clang diagnostic push
@@ -132,6 +133,53 @@ void test_erfs()
     }
 }
 
+void test_parse_uint64(void)
+{
+    bool fail = false;
+    uint64_t result = 0;
+
+    // Test 1: Single digit
+    result = parse_uint64("5", 1, &fail);
+    verify(result == 5 && !fail);
+
+    // Test 2: Multi-digit (9 digits)
+    result = parse_uint64("123456789", 9, &fail);
+    verify(result == 123456789 && !fail);
+
+    // Test 3: UINT64_MAX boundary (20 digits, valid)
+    result = parse_uint64("18446744073709551615", 20, &fail);
+    verify(result == UINT64_MAX && !fail);
+
+    // Test 4: Overflow (20 digits, last digit > 5)
+    result = parse_uint64("18446744073709551616", 20, &fail);
+    verify(fail);
+
+    result = parse_uint64("98449744073709551616", 20, &fail);
+    verify(fail);
+
+    // Test 5: Invalid character
+    result = parse_uint64("12a45", 5, &fail);
+    verify(fail);
+
+    // Test 6: Leading zeros
+    result = parse_uint64("0000042", 7, &fail);
+    verify(result == 42 && !fail);
+
+    // Test 7: One negative number
+    result = parse_uint64("-42", 3, &fail);
+    verify(fail);
+
+    // wrapper where lenght is unspecified
+    result = parse_uint64("18446744073709551615fakebakfjbakf", &fail);
+    verify(result == UINT64_MAX && !fail);
+
+    result = parse_uint64("       18446744073709551616", &fail);
+    verify(fail);
+
+    result = parse_uint64("   0", &fail);
+    verify(result == 0 && !fail);
+}
+
 int main()
 {
     srand(1234); // NOLINT
@@ -143,6 +191,7 @@ int main()
     test_quadraticSolve();
     test_erfs();
     test_clamping();
+    test_parse_uint64();
     // test_normalDist(50000);
 }
 // NOLINTEND(misc-use-internal-linkage)

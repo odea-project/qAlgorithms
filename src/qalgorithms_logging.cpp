@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
-#include <string>
 #include <vector>
 
 #include "qalgorithms_datatypes.h"
@@ -158,7 +157,9 @@ namespace qAlgorithms
         }
         index += 2;
 
-        size_t decompressedSize = std::stoul(compressed_data + index);
+        bool fail = false;
+        size_t decompressedSize = parse_uint64(compressed_data + index, &fail);
+        assert(!fail);
 
         index += n_digits(decompressedSize);
         assert(compressed_data[index] == '\n');

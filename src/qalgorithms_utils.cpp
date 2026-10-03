@@ -461,4 +461,55 @@ namespace qAlgorithms
             return 9;
         return 10; // Extend for larger size_t values
     }
+
+    uint64_t parse_uint64(const char *c, const size_t length, bool *fail)
+    {
+        static_assert(UINT64_MAX == 18446744073709551615UL, "platform mismatch");
+        assert(length <= 20);
+
+        int fail_local = 0;
+        uint64_t res = 0;
+
+        // this is 19 if length is 20 and length otherwise. Since we do not
+        // risk overflow here, the only required check is for invalid characters
+        const size_t length_n = length - (size_t)(length == 20);
+        // GCC does not currently vectorise here
+        for (size_t i = 0; i < length_n; i++)
+        {
+            const char ci = c[i];
+            fail_local += (int)(ci < '0' || '9' < ci);
+            uint8_t digit = ci - '0';
+            res = res * 10 + digit;
+        }
+
+        if (length == 20)
+        {
+            const char ci = c[19];
+            // here we check against 5 instead of 9 since anything else would be UB
+            fail_local += (int)(ci < '0' || '5' < ci);
+            uint8_t digit = ci - '0';
+
+            // include error checking for overflow
+            const uint64_t maxDiv10 = UINT64_MAX / 10;
+            fail_local += (int)(res > maxDiv10);
+            res = res * 10 + digit;
+        }
+
+        *fail = fail_local != 0;
+        return res;
+    }
+
+    uint64_t parse_uint64(const char *c, bool *fail)
+    {
+        // remove preceding whitespace
+        while (*c == ' ')
+            c++;
+
+        size_t length = 0;
+        while ('0' <= c[length] && c[length] <= '9')
+            length++;
+
+        return parse_uint64(c, length, fail);
+    }
+
 } // namespace qAlgorithms

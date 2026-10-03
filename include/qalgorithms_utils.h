@@ -139,7 +139,10 @@ namespace qAlgorithms
 
     double calcJaccardIdx(const float *const array1, const float *const array2, const size_t length);
 
+    // things related to working with string / integer conversions
     size_t n_digits(size_t x);
+    uint64_t parse_uint64(const char *c, const size_t length, bool *fail);
+    uint64_t parse_uint64(const char *c, bool *fail);
 
     // @todo get rid of these by putting them into a function
     // first element is -1 so the correct access is T_VALS[df]
