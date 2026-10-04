@@ -489,8 +489,8 @@ namespace qAlgorithms
 
         // even if more than one apex could exist in the given data, the assignment of different
         // groups only makes sense if the regressions in question do not have total overlap.
-        // The reasoning here is that one regression was fit over a subset of another regression,
-        // the discrepancy between the two indicates a suboptimal fit resulting from not
+        // The reasoning here is that one regression was fit over the partial range of another
+        // regression, the discrepancy between the two indicates a suboptimal fit resulting from not
         // observing the entire relevant data. One blindspot of a check just testing the two
         // outermost apexes is that (hypothetically) another pair violating this condition could
         // exist and describe two separate regressions, even if the checked pair is not sufficiently
@@ -501,14 +501,21 @@ namespace qAlgorithms
         // the first potential conflict, by definition we are comparing the two smallest possible
         // cases of describing distinct peaks with each other, so inaccurate full overlap is unlikely.
 
-        // Iterate through all regressions until the two outermost ones are found
-        // always iterating everything is inefficient, but this part of the function will not run often
+        // Note on resolving the conflict:
+        // If we determine that the group contains at least two more accurate groups, two things have
+        // to be observed. Firstly, all present apexes must be assigned to one or the other group -
+        // it should be reasonable to weight them the same and assign based on smallest absolute
+        // distance. Secondly, determine if a regression range needs to be adjusted in order to
+        // prevent selecting an optimal group representative based on profiles containing two apexes.
+        // This should be fulfilled by truncating all regions of definition so they at most extend
+        // to the point that leaves two observations to the apex.
 
-        double apex_mean = 0;
         size_t bound_reg_L_L = 0;
         size_t bound_reg_L_R = 0;
         size_t bound_reg_R_L = 0;
         size_t bound_reg_R_R = 0;
+        // Iterate through all regressions until the two outermost ones are found
+        // always iterating everything is inefficient, but this part of the function will not run often
         for (size_t i = 0; i < regCount; i++)
         {
             if (apexGroups[i] != groupNum)
@@ -524,7 +531,6 @@ namespace qAlgorithms
                 bound_reg_R_L = reg->span.startIdx;
                 bound_reg_R_R = reg->span.endIdx();
             }
-            apex_mean += reg->position;
         }
 
         // check that either regression is fully contained within another, meaning its bounds
