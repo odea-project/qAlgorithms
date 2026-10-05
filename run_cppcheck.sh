@@ -8,6 +8,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 mkdir -p $SCRIPT_DIR/cppcheck_cache
 # 
 cppcheck --project="$SCRIPT_DIR/build/compile_commands.json" --cppcheck-build-dir="$SCRIPT_DIR/cppcheck_cache" \
-         --inline-suppr --enable=all --suppress=*:*/external/* --suppress=postfixOperator \
+         --inline-suppr --enable=all --suppress=*:*/external/* \
          --suppress=dangerousTypeCast --suppress=cstyleCast --suppress=unusedFunction \
          --suppress=missingIncludeSystem --check-level=exhaustive -j 4
