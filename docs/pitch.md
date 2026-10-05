@@ -27,8 +27,8 @@ In its most general form, such a *peak detection* algorithm can be expressed as:
 
 However, a number of publications have demonstrated that the specific processing
 tool used has a major influence on the detected features. This effect comes from
-both different choices in how data is processed between tool and user parameters
-used to tune them based on observed results by the operator. This means the 
+both different choices in how data is processed between tools and different values 
+for the user parameters set by the operator based on observed results. This means the 
 results of data processing depend strongly on **how** and **who**, even if the
 exact same measurement file is processed. Obviously, this makes it difficult
 to compare the results of non-target screening between labs.
@@ -42,7 +42,7 @@ most complete extent possible. Firsty, the user of the software is no longer
 responsible for setting optimal parameters. Instead, the limit values normally
 determined through these parameters are replaced by established statistical 
 methods and operate with complete determinism. Where required, decisions are made
-using the battle-tested approach of accepting a $5\%$ false positive rate for 
+using the battle-tested approach of accepting a $`5\%`$ false positive rate for 
 elimination ($\alpha = 0.05$). To give a concrete example, where usually a fixed
 or relative minimum intensity is used to filter feature candidates, qAlgorithms
 test whether the peak is significantly different from the baseline. 
