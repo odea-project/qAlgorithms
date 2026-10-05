@@ -176,21 +176,22 @@ namespace qAlgorithms
         assert(log_minsize <= res.internal_arrays.size());
 
         const char *data = res.internal_arrays.data();
-        const bool has_df = (bool)data[0];
-        data += sizeof(char);
-        memcpy(&res.length, data, sst);
+        size_t offset = 0;
+
+        const bool has_df = (bool)data[offset];
+        offset += sizeof(char);
+        memcpy(&res.length, data + offset, sst);
         assert(res.length >= 5);
-        data += sst;
-        memcpy(&res.maxscale, data, sst);
+        offset += sst;
+        memcpy(&res.maxscale, data + offset, sst);
         assert(res.maxscale >= 2);
-        data += sst;
-        memcpy(&res.resultSize, data, sst);
-        data += sst;
+        offset += sst;
+        memcpy(&res.resultSize, data + offset, sst);
+        offset += sst;
 
         // after the three initial values are set, the offsets are easily determined.
         // for the write order, refer to the above function.
         const size_t sf = sizeof(float);
-        size_t offset = sizeof(char) + 3 * sst;
         res.intensities_offset = offset;
         res.x_axis_offset = offset + res.length * sf;
         res.intensities_log_offset = offset + 2 * res.length * sf;
