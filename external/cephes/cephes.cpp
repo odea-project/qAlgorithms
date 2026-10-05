@@ -60,9 +60,9 @@ namespace cephes
         assert(df2 > 0);
         assert((0 < p) && (p <= 1));
 
-        double df1_d = df1;
-        double df2_d = df2;
-        double ret;
+        const double df1_d = df1;
+        const double df2_d = df2;
+        double ret = 0;
 
         /* Compute probability for x = 0.5.  */
         double w = incbeta(0.5 * df2_d, 0.5 * df1_d, 0.5);
@@ -119,9 +119,15 @@ namespace cephes
             return INFINITY; // modification due to https://github.com/codeplea/incbeta/issues/2
 
         /*The continued fraction converges nicely for x < (a+1)/(a+b+2)*/
-        if (x > (a + 1.0) / (a + b + 2.0))
+        bool is_inverted = x > (a + 1.0) / (a + b + 2.0);
+        if (is_inverted)
         {
-            return (1.0 - incbeta(b, a, 1.0 - x)); /*Use the fact that beta is symmetrical.*/
+            double c = a;
+            a = b;
+            b = c;
+            x = 1.0 - x;
+
+            // return (1.0 - incbeta(b, a, 1.0 - x)); /*Use the fact that beta is symmetrical.*/
         }
 
         /*Find the first part before the continued fraction.*/
@@ -131,12 +137,11 @@ namespace cephes
         /*Use Lentz's algorithm to evaluate the continued fraction.*/
         double f = 1.0, c = 1.0, d = 0.0;
 
-        int i, m;
-        for (i = 0; i <= 200; ++i)
+        for (int i = 0; i <= 200; ++i)
         {
-            m = i / 2;
+            const int m = i / 2;
 
-            double numerator;
+            double numerator = 0;
             if (i == 0)
             {
                 numerator = 1.0; /*First numerator is 1.0.*/
@@ -166,7 +171,10 @@ namespace cephes
             /*Check for stop.*/
             if (fabs(1.0 - cd) < STOP)
             {
-                return front * (f - 1.0);
+                double res = front * (f - 1.0);
+                if (is_inverted)
+                    res = 1.0 - res;
+                return res;
             }
         }
 
@@ -181,13 +189,12 @@ namespace cephes
         return prob;
     }
 
-    double incbi(double aa, double bb, double yy0)
+    double incbi(const double aa, const double bb, const double yy0)
     {
         double a, b, y0, d, y, x, x0, x1, lgm, yp, di, dithresh, yl, yh, xt;
-        int i, dir;
+        int dir;
         bool rflag, nflag;
 
-        i = 0;
         if (yy0 <= 0)
             return (0.0);
         if (yy0 >= 1.0)
@@ -238,9 +245,9 @@ namespace cephes
         d = yp * sqrt(x + lgm) / x - (1.0 / (2.0 * b - 1.0) - 1.0 / (2.0 * a - 1.0)) * (lgm + 5.0 / 6.0 - 2.0 / (3.0 * x));
         d = 2.0 * d;
         if (d < MINLOG)
-        {
-            x = 1.0;
-            goto under;
+        { // underflow
+            x = 0.0;
+            goto done;
         }
         x = a / (a + b * exp(d));
         y = incbeta(a, b, x);
@@ -253,7 +260,7 @@ namespace cephes
 
         dir = 0;
         di = 0.5;
-        for (i = 0; i < 100; i++)
+        for (int i = 0; i < 100; i++)
         {
             if (i != 0)
             {
@@ -265,7 +272,7 @@ namespace cephes
                     di = 0.5;
                     x = x0 + di * (x1 - x0);
                     if (x == 0.0)
-                        goto under;
+                        goto done; // underflow
                 }
                 y = incbeta(a, b, x);
                 yp = (x1 - x0) / (x1 + x0);
@@ -346,9 +353,7 @@ namespace cephes
             goto done;
         }
         if (x <= 0.0)
-        {
-        under:
-            // mtherr("incbi", UNDERFLOW);
+        { // 2026-10-05: I removed the "under" goto label here to silence a warning from the infer static analyzer
             x = 0.0;
             goto done;
         }
@@ -360,7 +365,7 @@ namespace cephes
         nflag = true;
         lgm = lgamma(a + b) - lgamma(a) - lgamma(b);
 
-        for (i = 0; i < 8; i++)
+        for (int i = 0; i < 8; i++)
         {
             /* Compute the function at this point. */
             if (i != 0)

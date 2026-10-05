@@ -1,4 +1,5 @@
 #include "qalgorithms_utils.h"
+#include <cstdio>
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wfloat-conversion" // added because of manually defined arrays
 #pragma clang diagnostic push
@@ -180,9 +181,19 @@ void test_parse_uint64(void)
     verify(result == 0 && !fail);
 }
 
+void test_mathlib(void)
+{
+    double w = cephes::incbi(0.5 * 1, 0.5 * 2, 0.5);
+    assert(w == 0.25, "change in cephes behaviour", NULL);
+
+    double b = cephes::incbeta(2, 3, 0.9);
+    assert(b == 0.996300, "change in cephes behaviour", NULL);
+}
+
 int main()
 {
     srand(1234); // NOLINT
+    test_mathlib();
     test_rounding();
     test_min_max();
     test_array_min_max();
