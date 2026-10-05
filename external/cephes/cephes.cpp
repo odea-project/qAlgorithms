@@ -113,7 +113,7 @@ namespace cephes
     {
         // modification due to https://github.com/codeplea/incbeta/issues/3
         assert(a > 0);
-        assert(a > 0);
+        assert(b > 0);
 
         if (x < 0.0 || x > 1.0)
             return INFINITY; // modification due to https://github.com/codeplea/incbeta/issues/2
@@ -131,7 +131,8 @@ namespace cephes
         }
 
         /*Find the first part before the continued fraction.*/
-        const double lbeta_ab = lgamma(a) + lgamma(b) - lgamma(a + b);
+        int sign = 0;
+        const double lbeta_ab = lgamma_r(a, &sign) + lgamma_r(b, &sign) - lgamma_r(a + b, &sign);
         const double front = exp(log(x) * a + log(1.0 - x) * b - lbeta_ab) / a;
 
         /*Use Lentz's algorithm to evaluate the continued fraction.*/
@@ -363,7 +364,10 @@ namespace cephes
         if (nflag)
             goto done;
         nflag = true;
-        lgm = lgamma(a + b) - lgamma(a) - lgamma(b);
+        {
+            int sign = 0;
+            lgm = lgamma_r(a + b, &sign) - lgamma_r(a, &sign) - lgamma_r(b, &sign);
+        }
 
         for (int i = 0; i < 8; i++)
         {
@@ -516,39 +520,38 @@ namespace cephes
     };
     const double s2pi = 2.50662827463100050242E0;
 
-    double ndtri(double y0)
+    double ndtri(double y)
     {
-        assert((0 <= y0) && (y0 <= 1));
+        assert((0 <= y) && (y <= 1));
 
-        double x, y, z, y2, x0, x1;
-        int code = 1;
+        bool code = true;
 
-        y = y0;
         if (y > (1.0 - 0.13533528323661269189)) /* 0.135... = exp(-2) */
         {
             y = 1.0 - y;
-            code = 0;
+            code = false;
         }
 
         if (y > 0.13533528323661269189)
         {
             y = y - 0.5;
-            y2 = y * y;
-            x = y + y * (y2 * polevl(y2, P0, 4) / p1evl(y2, Q0, 8));
+            double y2 = y * y;
+            double x = y + y * (y2 * polevl(y2, P0, 4) / p1evl(y2, Q0, 8));
             x = x * s2pi;
             return (x);
         }
 
-        x = sqrt(-2.0 * log(y));
-        x0 = x - log(x) / x;
+        double x = sqrt(-2.0 * log(y));
+        double x0 = x - log(x) / x;
+        double x1 = 0;
 
-        z = 1.0 / x;
+        double z = 1.0 / x;
         if (x < 8.0) /* y > exp(-32) = 1.2664165549e-14 */
             x1 = z * polevl(z, P1, 8) / p1evl(z, Q1, 8);
         else
             x1 = z * polevl(z, P2, 8) / p1evl(z, Q2, 8);
         x = x0 - x1;
-        if (code != 0)
+        if (code)
             x = -x;
         return (x);
     }
