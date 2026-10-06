@@ -487,6 +487,14 @@ namespace qAlgorithms
         if (!differenceCandidate)
             return no_difference;
 
+        // @todo a difference is very likely if there is a regression with positive
+        // coeff in the data. In such a case, all regressions that are primarily (what does that mean?)
+        // outside of that region must be reconsidered. Observed problem: decent regressions in
+        // group, but two problematic ones with an apex beyond the first limit
+
+        // also todo: eliminations based on statitics (currently only f test) should be done
+        // only after the opinionated grouping step
+
         // even if more than one apex could exist in the given data, the assignment of different
         // groups only makes sense if the regressions in question do not have total overlap.
         // The reasoning here is that one regression was fit over the partial range of another
