@@ -65,6 +65,10 @@ in the centroid dimension. Problem: m/z variation
 
 ## Interface to high-level languages
 * Expose core functions to R, python, java, julia (?), C# (?)
+  -> Python: https://nanobind.readthedocs.io/en/latest/basics.html#basics
+  -> R:      RCPP (comes with base R)
+  C# would be relevant for MS-Dial and Skyline, java for MZmine and OpenMS
+* compile to WASM: https://emscripten.org/docs/getting_started/index.html - this is especially relevant for producing an easy to distribute demo
 * potentially also add an interface for openMS (probably too compilcated)
 * Function to process a single spectrum with non-equidistant x axis and potential gaps
 * Function to process a complete file based on a filepath and returns a feature list
