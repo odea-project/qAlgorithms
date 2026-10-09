@@ -49,7 +49,6 @@ namespace qAlgorithms
         const float *intensities_log,
         const uint16_t *const df,
         const size_t length,
-        const size_t maxscale,
         std::vector<RegressionGauss> *result);
 
     /// @brief adjust the height of a regression to better fit the exponential data
@@ -159,18 +158,21 @@ namespace qAlgorithms
         // treated in the program will be > 1. This reduces the risk of high floating point
         // errors when multiplying a number << 1 with one >> 1.
 
+        // advance so the next loop has less iterations on ranges that are too small
         size_t rangeStart = 0;
-        for (size_t pointIdx = 0; pointIdx < length; pointIdx++)
+        while ((intensity_base[rangeStart] > minIntensity_global) && (rangeStart < length - 1))
+            rangeStart += 1;
+
+        for (size_t pointIdx = rangeStart; pointIdx < length; pointIdx++)
         {
             // expand the region while y values are large enough
-            if ((intensity_base[pointIdx] > minIntensity_global) && (pointIdx != length - 1))
-                continue;
+            while ((intensity_base[pointIdx] > minIntensity_global) && (pointIdx < length - 1))
+                pointIdx += 1;
 
             // since the current point is out-of-range at this point, there is no +1 for the range
             const size_t newLen = pointIdx - rangeStart;
             if (newLen >= MINLENGTH)
             {
-                const size_t newMaxscale = min(maxscale_global, (newLen - 1) / 2);
                 const float *intensities = intensity_base + rangeStart;
                 const float *intensities_log = intensity_base_log.data() + rangeStart;
                 const float *x_axis = x_values + rangeStart;
@@ -183,7 +185,6 @@ namespace qAlgorithms
                                         intensities_log,
                                         df,
                                         newLen,
-                                        newMaxscale,
                                         result);
             }
             rangeStart = pointIdx + 1;
@@ -270,13 +271,13 @@ namespace qAlgorithms
         const float *intensities_log,
         const uint16_t *const df,
         const size_t length,
-        const size_t maxscale,
         std::vector<RegressionGauss> *result)
     {
+
         // coefficients for single-b0 peaks, spans all regressions over a peak window
         // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
         std::vector<RegCoeffs> coefficients;
-        findCoefficients(intensities_log, length, maxscale, &coefficients);
+        findCoefficients(intensities_log, length, &coefficients);
 
         std::vector<RegressionGauss> validRegressions; // all independently valid regressions regressions
         validRegressions.reserve(coefficients.size() / 2);
@@ -336,7 +337,7 @@ namespace qAlgorithms
             }
             else
             {
-                if (log_qpeaks(intensities, x_axis, intensities_log, df, length, maxscale, result))
+                if (log_qpeaks(intensities, x_axis, intensities_log, df, length, result))
                     exit(1); // NOLINT @todo this could actually be a target for parallelising someday
                 return -1;
             }
@@ -624,14 +625,13 @@ namespace qAlgorithms
     void findCoefficients(
         const float *intensity_log,
         const size_t length,
-        size_t maxscale,
         std::vector<RegCoeffs> *coeffs)
     {
+        const size_t maxscale = min(maxscale_global, (length - 1) / 2);
         assert(maxscale >= GLOBAL_MINSCALE);
         assert(maxscale <= QALGORITHMS_MAXSCALE_PRECOMPILED);
 
         assert(length > 4);
-        maxscale = min(maxscale, (length - 1) / 2);
 
         // for every checked scale, there are length - 2 scale regressions performed
         // totalRegs = sum_i from minscale to maxscale (length - 2 * scale_i)
@@ -1077,7 +1077,7 @@ namespace qAlgorithms
         {
             // multiplication with zero is used instead of a continue so this can be vectorised.
             bool interpolated = values[j] == 0;
-            float w = interpolated ? 0 : weight[j];
+            float w = (float)interpolated * weight[j];
             sum_weighted_x += values[j] * w;
             sum_weight += w;
             realPoints += (size_t)interpolated; // interpolated points do not count!
@@ -1094,11 +1094,8 @@ namespace qAlgorithms
         for (size_t j = 0; j < length; j++)
         {
             float val = values[j];
-            if (val != 0)
-            {
-                double difference = val - weighted_mean;
-                sum_Qxxw += difference * difference * weight[j];
-            }
+            double difference = val - weighted_mean;
+            sum_Qxxw += difference * difference * weight[j] * float(val != 0);
         }
 
         *variance = (float)sqrt(sum_Qxxw / sum_weight / dpoints);

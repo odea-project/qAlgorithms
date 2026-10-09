@@ -4,6 +4,7 @@
 #include "qalgorithms_datatypes.h"
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <vector>
 
 namespace qAlgorithms
@@ -12,6 +13,10 @@ namespace qAlgorithms
     // from the user option that just omits errors and fails silently. It is intended
     // only for use with the replay feature during debugging.
     void setReplay(bool on);
+
+    // change the output stream used for printing the error log
+    bool setOutstream(FILE *new_out);
+    void resetOutstream(void);
 
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
@@ -66,7 +71,6 @@ namespace qAlgorithms
                     const float *intensities_log,
                     const uint16_t *const df,
                     const size_t length,
-                    const size_t maxscale,
                     const std::vector<RegressionGauss> *result);
 
     QPeaks_log_mapping read_log_qpeaks(const char *compressed_data, const size_t in_length);

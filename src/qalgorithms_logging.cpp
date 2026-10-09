@@ -8,6 +8,7 @@
 
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_logging.h"
+#include "qalgorithms_qpeaks.h"
 #include "qalgorithms_read_file.h"
 #include "qalgorithms_utils.h"
 
@@ -24,6 +25,17 @@ namespace qAlgorithms
     void setReplay(bool on)
     {
         isInReplayMode = on;
+    }
+
+    bool setOutstream(FILE *new_out)
+    {
+        log_output_global = new_out;
+        return log_output_global != nullptr;
+    }
+
+    void resetOutstream(void)
+    {
+        log_output_global = stdout;
     }
 
     static void init_log(void)
@@ -60,7 +72,6 @@ namespace qAlgorithms
                     const float *intensities_log,
                     const uint16_t *const df,
                     const size_t length,
-                    const size_t maxscale,
                     const std::vector<RegressionGauss> *result)
     {
         if (doNotLog)
@@ -72,8 +83,8 @@ namespace qAlgorithms
         assert(log_output_global != nullptr);
 
         init_log();
-
         // calculate the number of bytes needed to record the entire contents of the function.
+        size_t maxscale = min(maxscale_global, (length - 1) / 2);
         size_t arrayLen_byte = sizeof(intensities[0]) * length;
         size_t resultLen = sizeof(RegressionGauss) * result->size();
         size_t byteLen =
@@ -128,12 +139,12 @@ namespace qAlgorithms
         compress_and_encode(logged_state.data(), logged_state.size(), &buffer_out);
         buffer_out.push_back(0);
 
-        // @todo this must contain the length of the buffer
+        // two null terminators, one added through the push_back and one inherent in a c string
+        const size_t expect_written = buffer_out.size() + sizeof("qpeaks: \n\n") - 2 + n_digits(logged_state.size());
+
         const size_t written = fprintf(log_output_global, "qpeaks: %zu\n%s\n",
                                        logged_state.size(), buffer_out.data());
-
-        // two null terminators, one added through the push_back and one inherent in a c string
-        assert(written == buffer_out.size() + sizeof("qpeaks: \n\n") - 2 + n_digits(logged_state.size()));
+        assert(written == expect_written);
 
         return true;
     }

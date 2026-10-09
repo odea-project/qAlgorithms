@@ -58,7 +58,6 @@ namespace qAlgorithms
     void findCoefficients(
         const float *intensity_log,
         const size_t length,
-        size_t maxscale,
         std::vector<RegCoeffs> *coeffs);
 
     // mutate b0 so that it is optimal for the exponential case if b1, b2 and b3 are identical
