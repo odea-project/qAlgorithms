@@ -30,7 +30,9 @@ namespace qAlgorithms
     // copy relevant values from regression struct to centroid struct - not all fields supported
     static inline CentroidPeak regToCen(const RegressionGauss *reg, uint16_t id, uint16_t specNum);
 
-    static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[]);
+    static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions,
+                                  int16_t apexGroups[],
+                                  size_t groupSize);
 
     static int32_t groupApexIsStable(
         const std::vector<RegressionGauss> *validRegressions,
@@ -324,7 +326,9 @@ namespace qAlgorithms
         // rework of the apex selection, currently without the ability to interpolate points
         std::vector<int32_t> apexGroups(length, -1);
         int16_t apexGroups_arr[max_apex_per_group];
-        size_t apexcount = groupRegsByApex(&validRegressions, apexGroups_arr);
+        size_t apexcount = groupRegsByApex(&validRegressions,
+                                           apexGroups_arr,
+                                           max_apex_per_group);
         assert(apexcount < INT16_MAX);
 
         for (int16_t groupNum = 0; groupNum < (int16_t)apexcount; groupNum++)
@@ -362,11 +366,11 @@ namespace qAlgorithms
 
     static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions,
                                   int16_t apexGroups[],
-                                  size_t groupSize)
+                                  size_t groupingArraySize)
     {
         const size_t length = validRegressions->size();
 
-        assert(length <= groupSize);
+        assert(length <= groupingArraySize);
 
         // keep a record of which apex group a given peak belongs to. We assume that
         // 256 far exceeds the number of possible groups even for large inputs

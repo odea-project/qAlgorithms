@@ -284,12 +284,12 @@ namespace qAlgorithms
         assert(idxSize > 0);
 
         tic_vec->resize(idxSize);
-        float *RT_data = tic_vec->data();
+        float *tic_data = tic_vec->data();
 
         for (size_t specNum = 0; specNum < idxSize; ++specNum)
         {
-            float RT = spectrum_tic(file, specNum);
-            RT_data[specNum] = RT;
+            float tic_val = spectrum_tic(file, specNum);
+            tic_data[specNum] = tic_val;
         }
     }
 
@@ -482,8 +482,7 @@ namespace qAlgorithms
 
         const pugi::xml_node tic_node = spec->find_child_by_attribute("cvParam",
                                                                       "accession",
-                                                                      "1000285");
-
+                                                                      "MS:1000285");
         return tic_node.attribute("value").as_float();
     }
 
