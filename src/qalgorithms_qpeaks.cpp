@@ -322,24 +322,29 @@ namespace qAlgorithms
         }
 
         // rework of the apex selection, currently without the ability to interpolate points
-        int16_t apexGroups[max_apex_per_group];
-        size_t apexcount = groupRegsByApex(&validRegressions, apexGroups);
+        std::vector<int32_t> apexGroups(length, -1);
+        int16_t apexGroups_arr[max_apex_per_group];
+        size_t apexcount = groupRegsByApex(&validRegressions, apexGroups_arr);
         assert(apexcount < INT16_MAX);
 
         for (int16_t groupNum = 0; groupNum < (int16_t)apexcount; groupNum++)
         {
-            int32_t stableApex = groupApexIsStable(&validRegressions, apexGroups, groupNum);
+            int32_t stableApex = groupApexIsStable(&validRegressions, apexGroups_arr, groupNum);
             if (stableApex == -1)
             {
                 // equivalent to only one possible apex being in the data, no complex deconvolution is required
-                size_t chosenOne = selectFromGroup(&validRegressions, intensities, apexGroups, groupNum);
+                size_t chosenOne = selectFromGroup(&validRegressions, intensities, apexGroups_arr, groupNum);
                 validRegressions[chosenOne].isValid = true;
             }
             else
             {
+                size_t chosenOne = selectFromGroup(&validRegressions, intensities, apexGroups_arr, groupNum);
+                validRegressions[chosenOne].isValid = true;
+#if false
                 if (log_qpeaks(intensities, x_axis, intensities_log, df, length, result))
                     exit(1); // NOLINT @todo this could actually be a target for parallelising someday
                 return -1;
+#endif
             }
         }
 
@@ -355,11 +360,13 @@ namespace qAlgorithms
         return 0;
     }
 
-    static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions, int16_t apexGroups[])
+    static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions,
+                                  int16_t apexGroups[],
+                                  size_t groupSize)
     {
         const size_t length = validRegressions->size();
 
-        assert(length < max_apex_per_group);
+        assert(length <= groupSize);
 
         // keep a record of which apex group a given peak belongs to. We assume that
         // 256 far exceeds the number of possible groups even for large inputs

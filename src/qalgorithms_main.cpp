@@ -95,6 +95,8 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
     EVALUATE_MIXED_POLARITY:
         // @todo MS2 support here!
         const std::vector<uint32_t> selectedIndices = filter_spectra(&inputFile, true, currentPolarity, true);
+        std::vector<float> tic_vec;
+        get_TIC(&inputFile, &selectedIndices, &tic_vec);
 
         if (selectedIndices.empty())
         {

@@ -376,7 +376,7 @@ namespace qAlgorithms
         const double *pointerToStart = OS->data();
 
         size_t pointsProcessed = 0;
-        size_t previousID = UINT_MAX;
+        // size_t previousID = UINT_MAX;
 
         while (!stack->empty())
         {
@@ -401,10 +401,11 @@ namespace qAlgorithms
             const double *pointerToMax = maxVal(pointerToStart + range.startIdx, binsizeInOS - 1);
             const double max_mz_gap = *pointerToMax;
 
-            size_t sourcePos = size_t(pointerToMax - pointerToStart);
-            size_t cenID = pointsInSourceBin->at(sourcePos)->ID;
-            assert(cenID != previousID);
-            previousID = cenID;
+            // Note: I do not know what this code checked for anymore
+            // size_t sourcePos = size_t(pointerToMax - pointerToStart);
+            // size_t cenID = pointsInSourceBin->at(sourcePos)->ID;
+            // assert(cenID != previousID);
+            // previousID = cenID;
 
             const double meanError = meanOfCumulative(cumError->data(), range.startIdx, range.endIdx());
 

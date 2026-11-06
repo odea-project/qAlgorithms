@@ -94,6 +94,10 @@ namespace qAlgorithms
                         const std::vector<uint32_t> *indices,
                         std::vector<float> *const RTs);
 
+    void get_TIC(const XML_File *file,
+                 const std::vector<uint32_t> *indices,
+                 std::vector<float> *const tic_vec);
+
     int32_t get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
                          std::vector<float> *const spectrum_mz,
                          std::vector<float> *const spectrum_int,

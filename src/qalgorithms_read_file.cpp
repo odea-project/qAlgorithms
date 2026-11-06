@@ -44,6 +44,7 @@ inline int32_t zng_compress(uint8_t *dest, size_t *destLen, const uint8_t *sourc
 namespace qAlgorithms
 {
     static bool isCentroided_fun(const XML_File *file);
+    static float spectrum_tic(const XML_File *file, const size_t specNum);
 
     static Polarities get_polarity_mode(const XML_File *file)
     {
@@ -256,7 +257,7 @@ namespace qAlgorithms
         }
 
         return 0;
-    };
+    }
 
     void get_spectra_RT(const XML_File *file, const std::vector<uint32_t> *indices, std::vector<float> *const RTs)
     {
@@ -272,7 +273,25 @@ namespace qAlgorithms
             float RT = spectrum_rt(file, specNum);
             RT_data[specNum] = RT;
         }
-    };
+    }
+
+    void get_TIC(const XML_File *file,
+                 const std::vector<uint32_t> *indices,
+                 std::vector<float> *const tic_vec)
+    {
+        const size_t idxSize = indices->size();
+        assert(!file->defective);
+        assert(idxSize > 0);
+
+        tic_vec->resize(idxSize);
+        float *RT_data = tic_vec->data();
+
+        for (size_t specNum = 0; specNum < idxSize; ++specNum)
+        {
+            float RT = spectrum_tic(file, specNum);
+            RT_data[specNum] = RT;
+        }
+    }
 
     std::vector<uint32_t> filter_spectra(const XML_File *file,
                                          const bool ms1,
@@ -454,6 +473,18 @@ namespace qAlgorithms
 
         float timescale = unit_minutes ? 60 : 1; // output is always in seconds -> * 60 if time is minutes
         return rt_val * timescale;
+    }
+
+    static float spectrum_tic(const XML_File *file, const size_t specNum)
+    {
+        assert(specNum < file->number_spectra);
+        const pugi::xml_node *spec = file->linknodes->data() + specNum;
+
+        const pugi::xml_node tic_node = spec->find_child_by_attribute("cvParam",
+                                                                      "accession",
+                                                                      "1000285");
+
+        return tic_node.attribute("value").as_float();
     }
 
     // Decodes a Base64 string into a string with binary data using the simdutf library subset chosen by '--with-base64'
