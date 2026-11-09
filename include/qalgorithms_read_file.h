@@ -98,10 +98,10 @@ namespace qAlgorithms
                  const std::vector<uint32_t> *indices,
                  std::vector<float> *const tic_vec);
 
-    int32_t get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
-                         std::vector<float> *const spectrum_mz,
-                         std::vector<float> *const spectrum_int,
-                         size_t index);
+    float get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
+                       std::vector<float> *const spectrum_mz,
+                       std::vector<float> *const spectrum_int,
+                       size_t index);
 
     bool spectrum_is_compressed(const XML_File *file, const size_t specNum);
 
@@ -112,6 +112,8 @@ namespace qAlgorithms
     uint32_t spectrum_ms_level(const XML_File *file, const size_t specNum);
 
     Polarities spectrum_polarity(const XML_File *file, const size_t specNum);
+
+    float spectrum_tic(const XML_File *file, const size_t specNum);
 
     float spectrum_rt(const XML_File *file, const size_t specNum);
 

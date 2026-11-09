@@ -44,7 +44,6 @@ inline int32_t zng_compress(uint8_t *dest, size_t *destLen, const uint8_t *sourc
 namespace qAlgorithms
 {
     static bool isCentroided_fun(const XML_File *file);
-    static float spectrum_tic(const XML_File *file, const size_t specNum);
 
     static Polarities get_polarity_mode(const XML_File *file)
     {
@@ -212,10 +211,10 @@ namespace qAlgorithms
         return 0;
     }
 
-    int32_t get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
-                         std::vector<float> *const spectrum_mz,
-                         std::vector<float> *const spectrum_int,
-                         size_t index)
+    float get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
+                       std::vector<float> *const spectrum_mz,
+                       std::vector<float> *const spectrum_int,
+                       size_t index)
     {
         assert(spectrum_mz->empty() && spectrum_int->empty());
         assert(!file->defective);
@@ -253,10 +252,16 @@ namespace qAlgorithms
             (void)fprintf(stderr, "Error: spectrum %zu could not be decoded as base64 "
                                   "correctly. Ensure the input file is not corrupted.\n",
                           index);
-            return 2;
+            return -1;
         }
 
-        return 0;
+        float total_intensity = 0;
+        for (size_t i = 0; i < spectrum_size; i++)
+        {
+            total_intensity += (*spectrum_int)[i];
+        }
+
+        return total_intensity;
     }
 
     void get_spectra_RT(const XML_File *file, const std::vector<uint32_t> *indices, std::vector<float> *const RTs)
@@ -475,7 +480,7 @@ namespace qAlgorithms
         return rt_val * timescale;
     }
 
-    static float spectrum_tic(const XML_File *file, const size_t specNum)
+    float spectrum_tic(const XML_File *file, const size_t specNum)
     {
         assert(specNum < file->number_spectra);
         const pugi::xml_node *spec = file->linknodes->data() + specNum;

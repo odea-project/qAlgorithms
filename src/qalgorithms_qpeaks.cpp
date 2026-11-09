@@ -1219,11 +1219,13 @@ namespace qAlgorithms
 
         for (size_t specNum = 0; specNum < selectedIndices->size(); specNum++)
         {
-            int32_t ok = get_spectrum(data,
-                                      &spectrum_mz,
-                                      &spectrum_int,
-                                      selectedIndices->at(specNum));
-            assert(ok == 0);
+            float total_intensity = get_spectrum(data,
+                                                 &spectrum_mz,
+                                                 &spectrum_int,
+                                                 selectedIndices->at(specNum));
+            assert(total_intensity > 0);
+
+            float spectrum_tic_val = spectrum_tic(data, specNum);
 
             const size_t peaksFound = qpeaks_find(spectrum_int.data(),
                                                   spectrum_mz.data(),
