@@ -1220,6 +1220,7 @@ namespace qAlgorithms
 
     size_t findCentroids(const XML_File *data,
                          const std::vector<uint32_t> *selectedIndices,
+                         QualityTracker *tracker,
                          std::vector<CentroidPeak> *centroids)
     {
         assert(!data->defective);
@@ -1231,6 +1232,8 @@ namespace qAlgorithms
         spectrum_int.reserve(1000);
         std::vector<RegressionGauss> ret;
 
+#define COMPARE_TIC false
+#if COMPARE_TIC
         struct
         {
             float tic_thermo;
@@ -1238,9 +1241,11 @@ namespace qAlgorithms
             float sum_ana;
             float sum_num;
         } typedef TicComps;
-
         std::vector<TicComps> compare_total_intensities(selectedIndices->size());
-
+#endif
+        tracker->spectraCount = selectedIndices->size();
+        tracker->centroidCoverageAnalytic = 0;
+        tracker->centroidCoverageNumeric = 0;
         for (size_t specNum = 0; specNum < selectedIndices->size(); specNum++)
         {
             int32_t error = get_spectrum(data,
@@ -1255,25 +1260,23 @@ namespace qAlgorithms
                                                   spectrum_int.size(),
                                                   &ret);
 
-            float total_retained_num = 0;
-            float total_retained_ana = 0;
             for (size_t p = 0; p < peaksFound; p++)
             {
                 const RegressionGauss *peak = ret.data() + p;
                 size_t id = centroids->size();
 
                 // check recovery in centroids by numeric and analytic integral
-                total_retained_ana += peak->area / peak->delta_x;
-
+                tracker->centroidCoverageAnalytic += peak->area / peak->delta_x;
                 for (int32_t i = peak->span.startIdx; i <= peak->span.endIdx(); i++)
                 {
-                    total_retained_num += spectrum_int[i];
+                    tracker->centroidCoverageNumeric += spectrum_int[i];
                 }
 
                 centroids->push_back(regToCen(peak, id, specNum));
             }
-            compare_total_intensities[specNum].sum_ana = total_retained_ana;
-            compare_total_intensities[specNum].sum_num = total_retained_num;
+#if COMPARE_TIC
+            compare_total_intensities[specNum].sum_ana = tracker->centroidCoverageAnalytic;
+            compare_total_intensities[specNum].sum_num = centroidCoverageNumeric;
             compare_total_intensities[specNum].tic_thermo = spectrum_tic(data, specNum);
             float total_intensity = 0;
             for (size_t i = 0; i < spectrum_int.size(); i++)
@@ -1286,12 +1289,13 @@ namespace qAlgorithms
             // printf("%f, ", spectrum_tic_val / total_intensity);
 
             // printf("%.3f, ", total_retained_num / total_intensity);
-
+#endif
             spectrum_mz.clear();
             spectrum_int.clear();
             ret.clear();
         }
-
+        tracker->centroidCount = centroids->size();
+#if COMPARE_TIC
         double max1 = 0, max2 = 0, max3 = 0, max4 = 0;
         for (size_t i = 0; i < compare_total_intensities.size(); i++)
         {
@@ -1315,7 +1319,7 @@ namespace qAlgorithms
                    compare_total_intensities[i].sum_ana,
                    compare_total_intensities[i].sum_num);
         }
-
+#endif
         return centroids->size();
     }
 

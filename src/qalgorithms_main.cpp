@@ -120,6 +120,8 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
                                  filename);
         }
 
+        QualityTracker tracker;
+
 #pragma region "centroiding"
         std::vector<float> retentionTimes;
         get_spectra_RT(&inputFile, &selectedIndices, &retentionTimes);
@@ -134,6 +136,7 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
         size_t centroidCount = findCentroids(&inputFile,
                                              &selectedIndices,
+                                             &tracker,
                                              centroids);
 
         assert(centroidCount < UINT32_MAX);
@@ -156,21 +159,20 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
             float currentInt = centroids->at(cenID).area;
             minCenArea = minCenArea < currentInt ? minCenArea : currentInt;
         }
-        size_t totalScans = centroids->back().number_MS1;
 
         clock_t timeEnd = clock();
         double timePassed_s = double(timeEnd - timeStart) / CLOCKS_PER_SEC;
 
         if (!userArgs.silent)
         {
-            printf("    produced %zu centroids from %zu spectra in %0.3f s\n",
-                   centroidCount, totalScans, timePassed_s);
+            printf("    produced %zu centroids from %u spectra in %0.3f s\n",
+                   centroidCount, tracker.spectraCount, timePassed_s);
         }
 
 #pragma region "binning"
         timeStart = clock();
 
-        std::vector<EIC> binnedData = performQbinning(centroids, &retentionTimes);
+        std::vector<EIC> binnedData = performQbinning(centroids, &retentionTimes, &tracker);
 
         timeEnd = clock();
 

@@ -1,6 +1,7 @@
 #ifndef QALGORITHMS_DATATYPES_H
 #define QALGORITHMS_DATATYPES_H
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -28,6 +29,27 @@ namespace qAlgorithms
         positive,
         negative,
         mixed,
+    };
+
+    // keep information regarding counts, volume coverage and other quality statistcs in one struct
+    struct QualityTracker
+    {
+        uint32_t spectraCount = 0;
+
+        uint32_t centroidCount = 0;
+        float centroidCoverageNumeric = 0;
+        float centroidCoverageAnalytic = 0;
+
+        uint32_t binCount = 0;
+        float binCoverageTotal = 0;
+        float binCoverageCentroids = 0;
+        uint32_t centroidsInBins = 0;
+        uint32_t centroidsNotInBins() const
+        {
+            return centroidCount - centroidsInBins;
+        }
+
+        uint32_t featureCount = 0;
     };
 
     struct RegCoeffs

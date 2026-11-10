@@ -23,7 +23,9 @@ namespace qAlgorithms
     /// @param convertRT vector containing the retention time for every scan number
     /// @param verbose if this option is selected, additional progress report is written to standard out
     /// @return returns the centroids as a collection of vectors
-    std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData, const std::vector<float> *retentionTimes);
+    std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData,
+                                     const std::vector<float> *retentionTimes,
+                                     QualityTracker *tracker);
 
     // ###################################################################################################### //
 #pragma region "utility"

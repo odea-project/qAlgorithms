@@ -47,6 +47,7 @@ namespace qAlgorithms
     struct XML_File;                           // forward declaration so at least the header does not couple with read_file
     size_t findCentroids(const XML_File *data, // @todo the internal file representation should be more generic
                          const std::vector<uint32_t> *selectedIndices,
+                         QualityTracker *tracker,
                          std::vector<CentroidPeak> *centroids);
 
     void centroids_to_mzml(const std::filesystem::path *pathSource);

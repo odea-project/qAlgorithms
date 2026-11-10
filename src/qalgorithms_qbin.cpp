@@ -4,7 +4,6 @@
 
 #include <algorithm> // sorting
 #include <cassert>
-#include <climits>
 #include <cstddef>
 #include <cstdint>
 #include <math.h>
@@ -15,7 +14,9 @@ namespace qAlgorithms
     const size_t MAX_SCAN_GAP = 3; // this is the maximum distance in scans which can later be interpolated during feature detection
     const size_t MIN_BIN_SIZE = 5;
 
-    std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData, const std::vector<float> *retentionTimes)
+    std::vector<EIC> performQbinning(const std::vector<CentroidPeak> *centroidedData,
+                                     const std::vector<float> *retentionTimes,
+                                     QualityTracker *tracker)
     {
         // @todo split out subfunctions so the structure is subset -> score -> format
 
@@ -130,6 +131,8 @@ namespace qAlgorithms
             countPointsInBins += eic.df.back(); // interpolated points are already included in the size
         }
         assert(countPointsInBins + activeBins.notInBins.size() == firstBin.pointsInBin.size());
+
+        tracker->binCount = finalBins.size();
         return finalBins;
     }
 
