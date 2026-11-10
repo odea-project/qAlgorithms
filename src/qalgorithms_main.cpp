@@ -95,8 +95,6 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
     EVALUATE_MIXED_POLARITY:
         // @todo MS2 support here!
         const std::vector<uint32_t> selectedIndices = filter_spectra(&inputFile, true, currentPolarity, true);
-        std::vector<float> tic_vec;
-        get_TIC(&inputFile, &selectedIndices, &tic_vec);
 
         if (selectedIndices.empty())
         {
@@ -125,6 +123,13 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
 #pragma region "centroiding"
         std::vector<float> retentionTimes;
         get_spectra_RT(&inputFile, &selectedIndices, &retentionTimes);
+
+        std::vector<float> tic_vec;
+        get_TIC(&inputFile, &selectedIndices, &tic_vec);
+        printf("\n%f", tic_vec[0]);
+        for (size_t tic = 0; tic < tic_vec.size(); tic++)
+            printf(",%f", tic_vec[tic]);
+        printf("\n\n");
 
         std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
         size_t centroidCount = findCentroids(&inputFile,
