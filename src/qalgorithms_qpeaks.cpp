@@ -168,13 +168,13 @@ namespace qAlgorithms
 
         // advance so the next loop has less iterations on ranges that are too small
         size_t rangeStart = 0;
-        while ((intensity_base[rangeStart] > minIntensity_global) && (rangeStart < length - 1))
+        while ((rangeStart < length - 1) && (intensity_base[rangeStart] > minIntensity_global))
             rangeStart += 1;
 
         for (size_t pointIdx = rangeStart; pointIdx < length; pointIdx++)
         {
             // expand the region while y values are large enough
-            while ((intensity_base[pointIdx] > minIntensity_global) && (pointIdx < length - 1))
+            while ((pointIdx < length - 1) && (intensity_base[pointIdx] > minIntensity_global))
                 pointIdx += 1;
 
             // since the current point is out-of-range at this point, there is no +1 for the range
