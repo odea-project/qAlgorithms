@@ -424,6 +424,7 @@ static void test_singlePeak()
                             simulated_log.data(),
                             nullptr,
                             simulated.size(),
+                            0,
                             &validRegs);
 
     assert(validRegs.size() == 1, "incorrect number of regressions found\n", NULL);

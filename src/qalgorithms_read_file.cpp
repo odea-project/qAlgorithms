@@ -211,10 +211,10 @@ namespace qAlgorithms
         return 0;
     }
 
-    float get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
-                       std::vector<float> *const spectrum_mz,
-                       std::vector<float> *const spectrum_int,
-                       size_t index)
+    int32_t get_spectrum(const XML_File *file, // this only extracts data that is in profile mode.
+                         std::vector<float> *const spectrum_mz,
+                         std::vector<float> *const spectrum_int,
+                         size_t index)
     {
         assert(spectrum_mz->empty() && spectrum_int->empty());
         assert(!file->defective);
@@ -255,13 +255,7 @@ namespace qAlgorithms
             return -1;
         }
 
-        float total_intensity = 0;
-        for (size_t i = 0; i < spectrum_size; i++)
-        {
-            total_intensity += (*spectrum_int)[i];
-        }
-
-        return total_intensity;
+        return 0;
     }
 
     void get_spectra_RT(const XML_File *file, const std::vector<uint32_t> *indices, std::vector<float> *const RTs)

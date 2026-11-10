@@ -51,6 +51,7 @@ namespace qAlgorithms
         const float *intensities_log,
         const uint16_t *const df,
         const size_t length,
+        const int32_t trueRangeStart,
         std::vector<RegressionGauss> *result);
 
     /// @brief adjust the height of a regression to better fit the exponential data
@@ -79,7 +80,7 @@ namespace qAlgorithms
         const size_t length,
         RegressionGauss *mutateReg);
 
-    static void adjustRegression(RegressionGauss *reg, const float *x_values);
+    static void adjustRegression(RegressionGauss *reg, const float *x_values, const int32_t trueRangeStart);
 
     // take a jacobian matrix as input and return the transpose at scale
     static double matProductReg(const double J[4], const size_t scale);
@@ -105,13 +106,14 @@ namespace qAlgorithms
 
     // -------------------------------------- //
 
-    static void adjustRegression(RegressionGauss *reg, const float *x_values)
+    static void adjustRegression(RegressionGauss *reg, const float *x_values, const int32_t trueRangeStart)
     {
         assert(reg->isValid);
 
         float position = reg->position;
         size_t leftOfApex = size_t(position);
         float delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
+        reg->delta_x = delta_x;
         // position is determined relative to the point left of the apex
         float apexFraction = delta_x * position - trunc(position);
         reg->position = x_values[leftOfApex] + apexFraction;
@@ -120,6 +122,10 @@ namespace qAlgorithms
         reg->fwhm = (float)fullWidthHalfMax(&reg->coeffs, reg->height, delta_x);
 
         reg->dqs = erfc(reg->area_unc / reg->area);
+
+        // the range given in the runningRegression function relates to the subset of a spectrum
+        // or bin that was extracted somewhere else initially. To keep traceability, add it back in.
+        reg->span.startIdx += trueRangeStart;
     }
 
     int32_t qpeaks_find(
@@ -156,7 +162,7 @@ namespace qAlgorithms
             intensity_base_log[i] = log(intensity_base[i]);
         }
 
-        // The minimum intensity is "> e ", because this way we know that all log intensities
+        // The minimum intensity is "> e", because this way we know that all log intensities
         // treated in the program will be > 1. This reduces the risk of high floating point
         // errors when multiplying a number << 1 with one >> 1.
 
@@ -182,11 +188,13 @@ namespace qAlgorithms
 
                 assert(intensities_log[newLen - 1] > 1);
 
+                // it would be nicer to have the final peak forming not in the regression function @todo
                 regression_on_continuum(intensities,
                                         x_axis,
                                         intensities_log,
                                         df,
                                         newLen,
+                                        (int32_t)rangeStart, // the cast ist inelegant, but more than int_max spectra are unlikely
                                         result);
             }
             rangeStart = pointIdx + 1;
@@ -273,6 +281,7 @@ namespace qAlgorithms
         const float *intensities_log,
         const uint16_t *const df,
         const size_t length,
+        const int32_t trueRangeStart,
         std::vector<RegressionGauss> *result)
     {
 
@@ -311,7 +320,7 @@ namespace qAlgorithms
             if (fullCoverage)
             {
                 reg->isValid = true;
-                adjustRegression(reg, x_axis);
+                adjustRegression(reg, x_axis, trueRangeStart);
                 result->push_back(*reg);
             }
             // if there is no full coverage, we must assume that the peak is just noise. There
@@ -357,7 +366,7 @@ namespace qAlgorithms
             RegressionGauss *reg = validRegressions.data() + peak;
             if (reg->isValid)
             {
-                adjustRegression(reg, x_axis);
+                adjustRegression(reg, x_axis, trueRangeStart);
                 result->push_back(*reg);
             }
         }
@@ -1202,6 +1211,7 @@ namespace qAlgorithms
             reg->position_unc,
             reg->dqs,
             id,
+            reg->span,
             specNum,
             reg->coeffs.scale,
             reg->numCompetitors,
@@ -1221,15 +1231,23 @@ namespace qAlgorithms
         spectrum_int.reserve(1000);
         std::vector<RegressionGauss> ret;
 
+        struct
+        {
+            float tic_thermo;
+            float total_int;
+            float sum_ana;
+            float sum_num;
+        } typedef TicComps;
+
+        std::vector<TicComps> compare_total_intensities(selectedIndices->size());
+
         for (size_t specNum = 0; specNum < selectedIndices->size(); specNum++)
         {
-            float total_intensity = get_spectrum(data,
-                                                 &spectrum_mz,
-                                                 &spectrum_int,
-                                                 selectedIndices->at(specNum));
-            assert(total_intensity > 0);
-
-            float spectrum_tic_val = spectrum_tic(data, specNum);
+            int32_t error = get_spectrum(data,
+                                         &spectrum_mz,
+                                         &spectrum_int,
+                                         selectedIndices->at(specNum));
+            assert(error == 0);
 
             const size_t peaksFound = qpeaks_find(spectrum_int.data(),
                                                   spectrum_mz.data(),
@@ -1237,17 +1255,67 @@ namespace qAlgorithms
                                                   spectrum_int.size(),
                                                   &ret);
 
+            float total_retained_num = 0;
+            float total_retained_ana = 0;
             for (size_t p = 0; p < peaksFound; p++)
             {
                 const RegressionGauss *peak = ret.data() + p;
                 size_t id = centroids->size();
+
+                // check recovery in centroids by numeric and analytic integral
+                total_retained_ana += peak->area / peak->delta_x;
+
+                for (int32_t i = peak->span.startIdx; i <= peak->span.endIdx(); i++)
+                {
+                    total_retained_num += spectrum_int[i];
+                }
+
                 centroids->push_back(regToCen(peak, id, specNum));
             }
+            compare_total_intensities[specNum].sum_ana = total_retained_ana;
+            compare_total_intensities[specNum].sum_num = total_retained_num;
+            compare_total_intensities[specNum].tic_thermo = spectrum_tic(data, specNum);
+            float total_intensity = 0;
+            for (size_t i = 0; i < spectrum_int.size(); i++)
+            {
+                total_intensity += spectrum_int[i];
+            }
+            compare_total_intensities[specNum].total_int = total_intensity;
+
+            // note: The ratio between sum of intensities and tic is constant to two digits
+            // printf("%f, ", spectrum_tic_val / total_intensity);
+
+            // printf("%.3f, ", total_retained_num / total_intensity);
 
             spectrum_mz.clear();
             spectrum_int.clear();
             ret.clear();
         }
+
+        double max1 = 0, max2 = 0, max3 = 0, max4 = 0;
+        for (size_t i = 0; i < compare_total_intensities.size(); i++)
+        {
+            max1 = max(max1, compare_total_intensities[i].sum_ana);
+            max2 = max(max2, compare_total_intensities[i].sum_num);
+            max3 = max(max3, compare_total_intensities[i].tic_thermo);
+            max4 = max(max4, compare_total_intensities[i].total_int);
+        }
+
+        printf("  TIC  | total  | integr | numric\n");
+        for (size_t i = 0; i < compare_total_intensities.size(); i++)
+        {
+            compare_total_intensities[i].sum_ana /= (float)max1;
+            compare_total_intensities[i].sum_num /= (float)max2;
+            compare_total_intensities[i].tic_thermo /= (float)max3;
+            compare_total_intensities[i].total_int /= (float)max4;
+
+            printf("%0.4f | %0.4f | %0.4f | %0.4f\n",
+                   compare_total_intensities[i].tic_thermo,
+                   compare_total_intensities[i].total_int,
+                   compare_total_intensities[i].sum_ana,
+                   compare_total_intensities[i].sum_num);
+        }
+
         return centroids->size();
     }
 

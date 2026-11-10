@@ -59,6 +59,7 @@ namespace qAlgorithms
         float jaccard = 0;
         float fwhm = 0;
         float dqs = 0;
+        float delta_x = 0;
         uint16_t df = 0;            // degrees of freedom, interpolated data points will not be considered
         uint8_t numCompetitors = 0; // number of points that were discarded in favour of this regression
         int8_t apexGroup = -1;
@@ -76,6 +77,7 @@ namespace qAlgorithms
         uint32_t ID = 0;
         // the binning tolerates at most three non-occurrences of a mass in order, but should not include interpolated spectra for this.
         // for conversion, number_MS1 is also the index into a vector that stores the "corrected" scan numbers after interpolation
+        Span_i32 spectrum_trace = {0, 0};
         uint16_t number_MS1 = 0;
         // uint32_t df = 0; // degrees of freedom
         uint16_t scale = 0;
