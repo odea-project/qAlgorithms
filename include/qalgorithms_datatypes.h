@@ -35,10 +35,14 @@ namespace qAlgorithms
     struct QualityTracker
     {
         uint32_t spectraCount = 0;
+        size_t totalProfilePoints = 0;
+        size_t totalProfilePointsNonzero = 0;
 
         uint32_t centroidCount = 0;
+        size_t profilePointsInCentroids = 0;
         float centroidCoverageNumeric = 0;
         float centroidCoverageAnalytic = 0;
+        float meanJaccard = 0;
 
         uint32_t binCount = 0;
         float binCoverageTotal = 0;
@@ -95,6 +99,7 @@ namespace qAlgorithms
         float area = 0;
         float width = 0;
         float heightUncertainty = 0, areaUncertainty = 0, mzUncertainty = 0;
+        float jaccard = 0;
         float DQSC = 0;
         uint32_t ID = 0;
         // the binning tolerates at most three non-occurrences of a mass in order, but should not include interpolated spectra for this.

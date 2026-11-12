@@ -1209,6 +1209,7 @@ namespace qAlgorithms
             reg->height_unc,
             reg->area_unc,
             reg->position_unc,
+            reg->jaccard,
             reg->dqs,
             id,
             reg->span,
@@ -1246,6 +1247,8 @@ namespace qAlgorithms
         tracker->spectraCount = selectedIndices->size();
         tracker->centroidCoverageAnalytic = 0;
         tracker->centroidCoverageNumeric = 0;
+        tracker->totalProfilePoints = 0;
+        tracker->totalProfilePointsNonzero = 0;
         for (size_t specNum = 0; specNum < selectedIndices->size(); specNum++)
         {
             int32_t error = get_spectrum(data,
@@ -1259,6 +1262,7 @@ namespace qAlgorithms
                                                   nullptr,
                                                   spectrum_int.size(),
                                                   &ret);
+            tracker->totalProfilePoints += spectrum_mz.size();
 
             for (size_t p = 0; p < peaksFound; p++)
             {
@@ -1295,6 +1299,12 @@ namespace qAlgorithms
             ret.clear();
         }
         tracker->centroidCount = centroids->size();
+        tracker->meanJaccard = 0;
+        size_t totalPoints for (size_t i = 0; i < centroids->size(); i++)
+        {
+            tracker->meanJaccard += centroids->at(i).jaccard * float(centroids->at(i).scale * 2 + 1);
+        }
+
 #if COMPARE_TIC
         double max1 = 0, max2 = 0, max3 = 0, max4 = 0;
         for (size_t i = 0; i < compare_total_intensities.size(); i++)
