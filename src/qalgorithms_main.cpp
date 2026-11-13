@@ -126,12 +126,12 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         std::vector<float> retentionTimes;
         get_spectra_RT(&inputFile, &selectedIndices, &retentionTimes);
 
-        std::vector<float> tic_vec;
-        get_TIC(&inputFile, &selectedIndices, &tic_vec);
-        printf("\n%f", tic_vec[0]);
-        for (size_t tic = 0; tic < tic_vec.size(); tic++)
-            printf(",%f", tic_vec[tic]);
-        printf("\n\n");
+        // std::vector<float> tic_vec;
+        // get_TIC(&inputFile, &selectedIndices, &tic_vec);
+        // printf("\n%f", tic_vec[0]);
+        // for (size_t tic = 0; tic < tic_vec.size(); tic++)
+        //     printf(",%f", tic_vec[tic]);
+        // printf("\n\n");
 
         std::vector<CentroidPeak> *centroids = new std::vector<CentroidPeak>;
         size_t centroidCount = findCentroids(&inputFile,
@@ -167,6 +167,10 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
         {
             printf("    produced %zu centroids from %u spectra in %0.3f s\n",
                    centroidCount, tracker.spectraCount, timePassed_s);
+            // if(userArgs.verboseProgress)
+            printf("    Non-zero points preserved in centroids: %0.2f%%. Mean Jaccard: %0.4f\n",
+                   100 * ((double)tracker.profilePointsInCentroids / (double)tracker.totalProfilePointsNonzero),
+                   tracker.meanJaccardCentroids);
         }
 
 #pragma region "binning"

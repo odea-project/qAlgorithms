@@ -37,12 +37,13 @@ namespace qAlgorithms
         uint32_t spectraCount = 0;
         size_t totalProfilePoints = 0;
         size_t totalProfilePointsNonzero = 0;
+        float meanJaccardNonzero = 0;
 
         uint32_t centroidCount = 0;
         size_t profilePointsInCentroids = 0;
         float centroidCoverageNumeric = 0;
         float centroidCoverageAnalytic = 0;
-        float meanJaccard = 0;
+        float meanJaccardCentroids = 0;
 
         uint32_t binCount = 0;
         float binCoverageTotal = 0;

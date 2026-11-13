@@ -998,7 +998,7 @@ namespace qAlgorithms
         double x = 0;
         for (size_t i = 0; i < length; i++)
         {
-            double difference = obs[i] - (intercept - slope * x);
+            double difference = obs[i] - (intercept + slope * x);
             RSS += difference * difference;
             x += 1;
         }
@@ -1248,7 +1248,7 @@ namespace qAlgorithms
         tracker->centroidCoverageAnalytic = 0;
         tracker->centroidCoverageNumeric = 0;
         tracker->totalProfilePoints = 0;
-        tracker->totalProfilePointsNonzero = 0;
+        size_t zeroPoints = 0;
         for (size_t specNum = 0; specNum < selectedIndices->size(); specNum++)
         {
             int32_t error = get_spectrum(data,
@@ -1256,13 +1256,15 @@ namespace qAlgorithms
                                          &spectrum_int,
                                          selectedIndices->at(specNum));
             assert(error == 0);
+            tracker->totalProfilePoints += spectrum_mz.size();
+            for (size_t i = 0; i < spectrum_int.size(); i++)
+                zeroPoints += (size_t)(spectrum_int.at(i) == 0);
 
             const size_t peaksFound = qpeaks_find(spectrum_int.data(),
                                                   spectrum_mz.data(),
                                                   nullptr,
                                                   spectrum_int.size(),
                                                   &ret);
-            tracker->totalProfilePoints += spectrum_mz.size();
 
             for (size_t p = 0; p < peaksFound; p++)
             {
@@ -1298,12 +1300,18 @@ namespace qAlgorithms
             spectrum_int.clear();
             ret.clear();
         }
+        tracker->totalProfilePointsNonzero = tracker->totalProfilePoints - zeroPoints;
         tracker->centroidCount = centroids->size();
-        tracker->meanJaccard = 0;
-        size_t totalPoints for (size_t i = 0; i < centroids->size(); i++)
+        tracker->meanJaccardCentroids = 0;
+        tracker->profilePointsInCentroids = 0;
+        for (size_t i = 0; i < centroids->size(); i++)
         {
-            tracker->meanJaccard += centroids->at(i).jaccard * float(centroids->at(i).scale * 2 + 1);
+            CentroidPeak *cen = centroids->data() + i;
+            size_t cenPoints = cen->scale * 2 + 1;
+            tracker->profilePointsInCentroids += cenPoints;
+            tracker->meanJaccardCentroids += cen->jaccard * (float)cenPoints;
         }
+        tracker->meanJaccardCentroids /= (float)tracker->profilePointsInCentroids;
 
 #if COMPARE_TIC
         double max1 = 0, max2 = 0, max3 = 0, max4 = 0;
