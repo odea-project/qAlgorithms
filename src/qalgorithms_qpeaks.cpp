@@ -90,6 +90,8 @@ namespace qAlgorithms
     // utility functions for calculating regression values
     static double regAt(const RegCoeffs *coeff, const double x);
 
+    static Span_i32 calcRegSpan(const RegCoeffs *coeffs);
+
     static double fullWidthHalfMax(const RegCoeffs *coeff, const double height, const double delta_x);
 
     // this one does not include b0
@@ -101,6 +103,8 @@ namespace qAlgorithms
     static double peakArea(const RegCoeffs *c, const double delta_x, const double mse, double *uncert);
 
     static inline double peakPosition(const RegCoeffs *c);
+
+    static bool apexIsLocalMax(const double apex, const float *intensities, const size_t length);
 
     const double minIntensity_global = 2.7182818284590452; // exp(1) == e
 
@@ -168,7 +172,7 @@ namespace qAlgorithms
 
         // advance so the next loop has less iterations on ranges that are too small
         size_t rangeStart = 0;
-        while ((rangeStart < length - 1) && (intensity_base[rangeStart] > minIntensity_global))
+        while ((rangeStart < length - 1) && (intensity_base[rangeStart] < minIntensity_global))
             rangeStart += 1;
 
         for (size_t pointIdx = rangeStart; pointIdx < length; pointIdx++)
@@ -177,8 +181,7 @@ namespace qAlgorithms
             while ((pointIdx < length - 1) && (intensity_base[pointIdx] > minIntensity_global))
                 pointIdx += 1;
 
-            // since the current point is out-of-range at this point, there is no +1 for the range
-            const size_t newLen = pointIdx - rangeStart;
+            const size_t newLen = pointIdx - rangeStart + 1;
             if (newLen >= MINLENGTH)
             {
                 const float *intensities = intensity_base + rangeStart;
@@ -188,7 +191,7 @@ namespace qAlgorithms
 
                 assert(intensities_log[newLen - 1] > 1);
 
-                // it would be nicer to have the final peak forming not in the regression function @todo
+                // it would be nicer to have the final peak forming not in the regression function  @todo
                 regression_on_continuum(intensities,
                                         x_axis,
                                         intensities_log,
@@ -205,7 +208,19 @@ namespace qAlgorithms
 
 #pragma region "running regression"
 
-    static Span_i32 calcRegSpan(const RegCoeffs *coeffs);
+    static bool apexIsLocalMax(const double apex, const float *intensities, const size_t length)
+    {
+        size_t apex_pos = max((int)apex, 2);
+        assert(apex_pos + 2 < length);
+
+        const float *ar = intensities + apex_pos - 2;
+
+        // Hypothesis: one of the three points next to the apex must be a local maximum
+        bool hasLocalMax = (ar[0] < ar[1] && ar[1] > ar[2]) ||
+                           (ar[1] < ar[2] && ar[2] > ar[3]) ||
+                           (ar[2] < ar[3] && ar[3] > ar[4]);
+        return hasLocalMax;
+    }
 
     static size_t validateRegressions(
         const float *intensities,
@@ -891,9 +906,17 @@ namespace qAlgorithms
         // correctB0 by original coefficients
 
         float position = (float)peakPosition(coeffs);
+        float apex = (float)coeffs->x0 + position;
+
         // to prevent potential errors, reject those regressions which do not have the apex in the
-        // regression window with at least one point tp the side.
+        // regression window with at least one point to the side.
         if ((int32_t)abs(position) + 2 > coeffs->scale)
+        {
+            return invalid_apex;
+        }
+        // the measured data must contain a local maximum close to the apex (is this also true for LC?)
+        bool isLocalMax = apexIsLocalMax(apex, intensities, length);
+        if (!isLocalMax)
         {
             return invalid_apex;
         }
@@ -956,7 +979,7 @@ namespace qAlgorithms
         // is correctness of the peak shape as a volume, not strictly the fitted curve
 
         mutateReg->df = df_sum;
-        mutateReg->position = (float)coeffs->x0 + position;
+        mutateReg->position = apex;
         mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict, length);
         mutateReg->height = (float)exp(regAt(coeffs, peakPosition(coeffs)));
         assert(mutateReg->position > 1);

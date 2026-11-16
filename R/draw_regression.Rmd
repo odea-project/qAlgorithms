@@ -160,7 +160,7 @@ $5 = {coeffs = {b0 = 8.3967810590049297, b1 = -0.017087503483421473, b2 = -0.221
 (gdb) print validRegressions.at(3)
 $6 = {coeffs = {b0 = 8.110450055343982, b1 = -0.60268929130152626, b2 = -0.26689039555408556, b3 = 0.09065176789324525, scale = 3, x0 = 4}, span = {startIdx = 1, length = 7}, area = 5.28271246,
   position = 2.87090492, height = 4678.33154, area_unc = 0.000516470871, position_unc = 0.129805461, height_unc = 1.80232167, jaccard = 0.978864849, fwhm = 0, dqs = 0, df = 3, numCompetitors = 0 '\000',
-  apexGroup = -1 '\377', isValid = false}
+  apexGroup = -1 '\377', isValid = false}y
 (gdb) print validRegressions.at(10)
 $7 = {coeffs = {b0 = 8.0159779038391985, b1 = -0.6949333283209026, b2 = -0.27687441665122581, b3 = 0.16087995289990964, scale = 4, x0 = 4}, span = {startIdx = 0, length = 7}, area = 4.82350016,
   position = 2.74503875, height = 4684.59668, area_unc = 8.69887663e-05, position_unc = 0.113294274, height_unc = 1.38006592, jaccard = 0.924721003, fwhm = 0, dqs = 0, df = 3, numCompetitors = 0 '\000',
