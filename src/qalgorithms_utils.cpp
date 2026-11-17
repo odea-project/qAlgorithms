@@ -25,6 +25,7 @@ namespace qAlgorithms
         double n2 = count_2 * count_2 * (count_2 - 1);
         size_t df = size_t((1 / count_1 + u / count_2) * (1 / count_1 + u / count_2) / (1 / n1 + u * u / n2));
 
+        assert(df < MAX_TVAL_COUNT);
         double t_refval = T_VALUES[df]; // @todo support more alphas than 0.05 - maybe return the p-value instead? Also support one / two sided
         bool reject_H0 = t > t_refval;
         return reject_H0;

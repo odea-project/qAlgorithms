@@ -28,7 +28,7 @@ namespace qAlgorithms
     // --- internal function declarations --- //
 
     // copy relevant values from regression struct to centroid struct - not all fields supported
-    static inline CentroidPeak regToCen(const RegressionGauss *reg, uint16_t id, uint16_t specNum);
+    static inline CentroidPeak regToCen(const RegressionGauss *reg, uint32_t id, uint16_t specNum);
 
     static size_t groupRegsByApex(const std::vector<RegressionGauss> *validRegressions,
                                   int16_t apexGroups[],
@@ -119,7 +119,7 @@ namespace qAlgorithms
         float delta_x = x_values[leftOfApex + 1] - x_values[leftOfApex];
         reg->delta_x = delta_x;
         // position is determined relative to the point left of the apex
-        float apexFraction = delta_x * position - trunc(position);
+        float apexFraction = delta_x * (position - trunc(position));
         reg->position = x_values[leftOfApex] + apexFraction;
         reg->position_unc *= delta_x;
 
@@ -932,10 +932,11 @@ namespace qAlgorithms
         // }
 
         // @todo differentiate between tests performed in log and exp domain better
-        // everything involving the RSS is dependent on b0!
+        // everything involving the RSS is dependent on b0, which was adjusted before
+        // calling this function
         double RSS_log = calcRSS_log(mutateReg, intensities_log);
         assert(RSS_log > 0);
-        // double RSS_exp = calcRSS(predict->data(), intensities, &regSpan);
+        // double RSS_exp = calcRSS(predict, intensities, &regSpan);
         // assert(RSS_exp > 0);
         // double mse_exp = RSS_exp / double(df_sum);
         double mse_log = RSS_log / double(df_sum);
@@ -964,7 +965,7 @@ namespace qAlgorithms
         float uncert_height = (float)peakHeightUncert(coeffs, mse_log);
         mutateReg->height_unc = uncert_height;
 
-        size_t leftOfApex = (size_t)position;
+        size_t leftOfApex = (size_t)apex;
         float delta_x = x_axis[leftOfApex + 1] - x_axis[leftOfApex];
         double uncertainty = -1;
         mutateReg->area = (float)peakArea(coeffs, delta_x, mse_log, &uncertainty);
@@ -981,7 +982,10 @@ namespace qAlgorithms
 
         mutateReg->df = df_sum;
         mutateReg->position = apex;
-        mutateReg->jaccard = (float)calcJaccardIdx(intensities, predict, length);
+        // @todo can the not-included points be sensibly integrated into the score?
+        mutateReg->jaccard = (float)calcJaccardIdx(intensities + regSpan.startIdx,
+                                                   predict + regSpan.startIdx,
+                                                   regSpan.length);
         mutateReg->height = (float)exp(regAt(coeffs, peakPosition(coeffs)));
         assert(mutateReg->position > 1);
 
@@ -1098,6 +1102,7 @@ namespace qAlgorithms
         const double inv_E = qalgo_matInverse[coeffs->scale].E;
         double divisor = sqrt(inv_E * mse);
         double t_value = testCoeff / divisor; // test against mean 0
+        assert(df_sum < MAX_TVAL_COUNT);
         return t_value < T_VALUES[df_sum];
     }
 
@@ -1120,11 +1125,11 @@ namespace qAlgorithms
         for (size_t j = 0; j < length; j++)
         {
             // multiplication with zero is used instead of a continue so this can be vectorised.
-            bool interpolated = values[j] == 0;
-            float w = (float)interpolated * weight[j];
+            bool notInterpolated = values[j] != 0;
+            float w = (float)notInterpolated * weight[j];
             sum_weighted_x += values[j] * w;
             sum_weight += w;
-            realPoints += (size_t)interpolated; // interpolated points do not count!
+            realPoints += (size_t)notInterpolated; // interpolated points do not count!
         }
         double dpoints = (double)realPoints;
 
@@ -1197,10 +1202,15 @@ namespace qAlgorithms
         for (size_t eic_ID = 0; eic_ID < eicCount; eic_ID++)
         {
             const EIC *bin = EICs->data() + eic_ID;
+
+            // check if used RT and bin RT are identical. This should be the case for continuous data
             const float *rt = convertRT->data() + bin->scanNumbers[0];
+            for (size_t i = 0; i < bin->RT.size(); i++)
+                assert(bin->RT[i] == rt[i]);
+
             size_t binLen = bin->df.size();
             qpeaks_find(bin->ints_area.data(),
-                        rt,
+                        bin->RT.data(),
                         bin->df.data(),
                         binLen,
                         &peaks);
@@ -1223,7 +1233,7 @@ namespace qAlgorithms
 
 #pragma region "find centroids"
 
-    static inline CentroidPeak regToCen(const RegressionGauss *reg, uint16_t id, uint16_t specNum)
+    static inline CentroidPeak regToCen(const RegressionGauss *reg, uint32_t id, uint16_t specNum)
     {
         return {
             reg->position,
@@ -1284,16 +1294,17 @@ namespace qAlgorithms
             for (size_t i = 0; i < spectrum_int.size(); i++)
                 zeroPoints += (size_t)(spectrum_int.at(i) == 0);
 
-            const size_t peaksFound = qpeaks_find(spectrum_int.data(),
-                                                  spectrum_mz.data(),
-                                                  nullptr,
-                                                  spectrum_int.size(),
-                                                  &ret);
-
-            for (size_t p = 0; p < peaksFound; p++)
+            int32_t peaksFound = qpeaks_find(spectrum_int.data(),
+                                             spectrum_mz.data(),
+                                             nullptr,
+                                             spectrum_int.size(),
+                                             &ret);
+            assert(peaksFound >= 0);
+            assert(centroids->size() + (size_t)peaksFound < INT32_MAX);
+            for (int32_t p = 0; p < peaksFound; p++)
             {
                 const RegressionGauss *peak = ret.data() + p;
-                size_t id = centroids->size();
+                int32_t id = (int32_t)centroids->size();
 
                 // check recovery in centroids by numeric and analytic integral
                 tracker->centroidCoverageAnalytic += peak->area / peak->delta_x;
@@ -1335,7 +1346,7 @@ namespace qAlgorithms
             tracker->profilePointsInCentroids += cenPoints;
             tracker->meanJaccardCentroids += cen->jaccard * (float)cenPoints;
         }
-        tracker->meanJaccardCentroids /= (float)tracker->profilePointsInCentroids;
+        tracker->meanJaccardCentroids /= (float)tracker->profilePointsInCentroids; // @todo this is not the correct mean for the jaccard index!
 
 #if COMPARE_TIC
         double max1 = 0, max2 = 0, max3 = 0, max4 = 0;
