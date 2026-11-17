@@ -258,7 +258,9 @@ namespace qAlgorithms
         return 0;
     }
 
-    void get_spectra_RT(const XML_File *file, const std::vector<uint32_t> *indices, std::vector<float> *const RTs)
+    void get_spectra_RT(const XML_File *file,
+                        const std::vector<uint32_t> *indices,
+                        std::vector<float> *const RTs)
     {
         const size_t idxSize = indices->size();
         assert(!file->defective);
@@ -267,8 +269,9 @@ namespace qAlgorithms
         RTs->resize(idxSize);
         float *RT_data = RTs->data();
 
-        for (size_t specNum = 0; specNum < idxSize; ++specNum)
+        for (size_t idx = 0; idx < idxSize; ++idx)
         {
+            size_t specNum = indices->at(idx);
             float RT = spectrum_rt(file, specNum);
             RT_data[specNum] = RT;
         }
@@ -285,8 +288,9 @@ namespace qAlgorithms
         tic_vec->resize(idxSize);
         float *tic_data = tic_vec->data();
 
-        for (size_t specNum = 0; specNum < idxSize; ++specNum)
+        for (size_t idx = 0; idx < idxSize; ++idx)
         {
+            size_t specNum = indices->at(idx);
             float tic_val = spectrum_tic(file, specNum);
             tic_data[specNum] = tic_val;
         }

@@ -178,10 +178,10 @@ namespace qAlgorithms
         for (size_t pointIdx = rangeStart; pointIdx < length; pointIdx++)
         {
             // expand the region while y values are large enough
-            while ((pointIdx < length - 1) && (intensity_base[pointIdx] > minIntensity_global))
+            while ((pointIdx < length) && (intensity_base[pointIdx] > minIntensity_global))
                 pointIdx += 1;
 
-            const size_t newLen = pointIdx - rangeStart + 1;
+            const size_t newLen = pointIdx - rangeStart;
             if (newLen >= MINLENGTH)
             {
                 const float *intensities = intensity_base + rangeStart;
@@ -201,6 +201,7 @@ namespace qAlgorithms
                                         result);
             }
             rangeStart = pointIdx + 1;
+            pointIdx = rangeStart + 1; // prevent infinite loops when a series of negative values is entered
         }
 
         return (int32_t)result->size();

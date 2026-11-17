@@ -73,7 +73,7 @@ PeakTest pt_04 = {
 };
 
 PeakTest pt_05 = {
-    // this peak lead to unresolvable regression conflicts in a version of the new regression elimination
+    // this peak led to unresolvable regression conflicts in a version of the new regression elimination
     {1566.37317, 6721.91357, 10333.0713, 12963.7285, 18588.1035, 23554.9043, 26401.1895, 27222.6621, 27128.6387, 18343.3789, 9999.44727, 823.102112},
     {8},
     __COUNTER__,
@@ -91,6 +91,36 @@ PeakTest pt_06 = {
     {4, 11.5, 19},
     __COUNTER__,
 };
+
+PeakTest pt_07 = {
+    // LC signal isolated from a standard measurement. Expected shape of a very good peak
+    {0, 0, 12747.3671875, 0, 16298.396484375, 16740.056640625, 0, 14666.13671875, 0, 23418.0234375,
+     28377.416015625, 0, 35563.1875, 0, 25104.416015625, 0, 0, 0, 0, 20581.0625, 0, 25009.076171875,
+     16473.109375, 0, 19125.41015625, 20631.95703125, 22274.482421875, 17626.125, 25394.701171875,
+     13845.6884765625, 30796.712890625, 30229.978515625, 22029.93359375, 9059696, 71042832, 170410528,
+     242420896, 235038320, 235817760, 184493648, 137615216, 125958464, 83027880, 53461132, 29884756,
+     19495260, 11503240, 5038318.5, 2866084, 2060206.375, 1485631.625, 1543311, 1068619, 1186316.5,
+     966313.25, 1182772.625, 1050788.5, 1002157.375, 982012.5, 725728.1875, 710662.8125, 631445.1875,
+     545575.625, 554967.5, 650907.6875, 642670.1875, 512941.71875, 589984.5625, 577998.3125, 339497.21875,
+     626302.625, 594940.3125, 616952.5625, 432223.625, 477514.25, 316156.1875, 369261.46875, 358590.0625,
+     269422.125, 323926.125, 321517, 328959.875, 401079.9375, 330573.0625, 429530.5625, 514657.8125, 333754.03125},
+    {38},
+    __COUNTER__,
+};
+
+PeakTest pt_08 = {
+    // baseline signal from the same measurement as the above signal
+    {545575.625, 554967.5, 650907.6875, 642670.1875, 512941.71875, 589984.5625, 577998.3125, 339497.21875,
+     626302.625, 594940.3125, 616952.5625, 432223.625, 477514.25, 316156.1875, 369261.46875, 358590.0625,
+     269422.125, 323926.125, 321517, 328959.875, 401079.9375, 330573.0625, 429530.5625, 514657.8125,
+     333754.03125, 330902.28125, 389649.46875, 335281.5, 403823.6875, 409494.78125, 434175.9375, 456981.09375,
+     603719.75, 362215.3125, 455673.40625, 480822.625, 436252.90625, 501881.65625, 456792.875, 408546.40625,
+     471603.34375, 496738.09375, 395096.40625, 480802.0625, 432489.5, 393210.25, 399871.3125, 402673.03125,
+     412353.21875, 429826.1875, 456175.15625},
+    {},
+    __COUNTER__,
+};
+
 // NOLINTEND
 
 static int test_qpeaks_aux(const PeakTest *test, size_t line)
@@ -99,33 +129,60 @@ static int test_qpeaks_aux(const PeakTest *test, size_t line)
     std::vector<RegressionGauss> result;
     std::vector<float> data_x(len, 0);
     for (size_t i = 0; i < len; i++)
-        data_x[i] = ((float)(i + 1) * 0.6F);
+        data_x[i] = ((float)(i + 1)); // x is one-indexed because this follows the convention in R plots
 
+    size_t expect = test->expect_apex.size();
     size_t count = qpeaks_find(test->intensity.data(),
                                data_x.data(),
                                nullptr,
                                len,
                                &result);
-    size_t expect = test->expect_apex.size();
+    int failures = 0;
+    // check if enough regressions were found
     if (count != expect)
     {
         printf("Test %zu, line %zu: expected %zu peaks, found %zu\n",
                test->ID, line, expect, count);
-        return 1;
+        failures += 1;
     }
-    return 0;
+    // control if the chosen regressions were located correctly with one point of tolerance
+    // the function guarantees output sorted by apex, so we can just check the supplied ground
+    // truth values in order
+    for (size_t apex = 0; apex < min(expect, count); apex++)
+    {
+        float apex_expect = test->expect_apex.at(apex);
+        float apex_observ = result.at(apex).position;
+        if (abs(apex_expect - apex_observ) > 1)
+        {
+            printf("Test %zu, line %zu: expected apex at %0.1f, found at %0.4f\n",
+                   test->ID, line, apex_expect, apex_observ);
+            failures += 1;
+        }
+    }
+    return failures;
 }
-#define test_qpeaks(test) (test_qpeaks_aux(test, __LINE__))
 
 static int test_qpeaks_set(void)
 {
     int fails = 0;
-    fails += test_qpeaks(&pt_01);
-    fails += test_qpeaks(&pt_02);
-    fails += test_qpeaks(&pt_03);
-    fails += test_qpeaks(&pt_04);
-    fails += test_qpeaks(&pt_05);
-    fails += test_qpeaks(&pt_06); // removed until deconvolution is introduced, second apex is only four distinct points
+#define test_qpeaks(test) (fails += test_qpeaks_aux(&pt_##test, __LINE__))
+    constexpr size_t final_test_count = __COUNTER__; // NOLINT
+    static_assert(final_test_count < 100, "Error: Too many test cases specified, solve this better\n");
+
+    constexpr size_t testblock_start = __LINE__; // NOLINT
+    //               ### This line intentionally left blank ###
+    test_qpeaks(01);
+    test_qpeaks(02);
+    test_qpeaks(03);
+    test_qpeaks(04);
+    test_qpeaks(05);
+    test_qpeaks(06);
+    test_qpeaks(07);
+    test_qpeaks(08);
+    //               ### This line intentionally left blank ###
+    constexpr size_t testblock_end = __LINE__; // NOLINT
+    static_assert(testblock_end - testblock_start == final_test_count + 2, "A test was added but not included\n");
+    assert(fails == 0, "Incomplete peak recovery\n");
     return fails;
 }
 
@@ -558,11 +615,11 @@ int main()
     // initialise seed for noise generating funtions
     srand(1234); // NOLINT
 
-    test_qpeaks_set();
-
     test_singlePeak();
     test_areaPrediction();
     control_sim_gauss();
+
+    test_qpeaks_set();
 
     // survey_EMG();
 
