@@ -2,6 +2,7 @@
 #include "qalgorithms_qpeaks.h"
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <vector>
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
@@ -22,8 +23,9 @@ using namespace qAlgorithms;
 // NOLINTBEGIN
 struct PeakTest
 {
-    std::vector<float> intensity = {0};
-    size_t expect_count = 0;
+    std::vector<float> intensity = {};
+    std::vector<float> expect_apex = {};
+    const size_t ID = __COUNTER__;
 };
 
 PeakTest pt_01 = {
@@ -32,14 +34,18 @@ PeakTest pt_01 = {
     // second, smaller peak despite the apexes being far enough apart. Interesting, at the
     // time of writing, no regression with positive coefficients was taken into consideration
     {8862.04883, 17619.8887, 23784.2598, 22516.0684, 17171.5332, 14893.7227, 16483.5371, 16239.6406, 11697.918, 5697.0332},
-    2};
+    {3, 7.5},
+    __COUNTER__,
+};
 
 PeakTest pt_02 = {
     // Peak with slightly increased baseline on the right tail that proved difficult to detect
     // in beta versions of the program. This was due to the Chi-square filter not functioning for
     // the data after reversing the log transform
     {16427.9434, 34097.4414, 42639.7266, 102040.758, 264363.312, 486761.125, 909302, 783670.375, 404226.625, 194167.844, 81423.1406, 63319.4688, 62018.1602, 27416.2754},
-    1};
+    {7},
+    __COUNTER__,
+};
 
 PeakTest pt_03 = {
 
@@ -53,19 +59,25 @@ PeakTest pt_03 = {
      236.623123, 269.473999, 227.634735, 233.807373, 215.515015, 292.07547, 241.878036, 247.750275, 246.052521, 226.036819, 233.290924, 191.461838, 226.269302,
      249.507401, 242.797043, 183.200607, 280.93985, 254.288147, 229.075333, 258.677795, 218.803909, 225.112, 216.144104, 248.790497, 236.507645, 228.74855,
      261.456085, 217.647079, 254.565613, 240.973572, 266.561127, 234.288925, 231.6884, 282.011963},
-    0};
+    {},
+    __COUNTER__,
+};
 
 PeakTest pt_04 = {
 
     // This data contains three peaks, but only the two less intense ones were found.
     // The new apex grouping function marked them as conflicting, which should not be the case.
     {28913.7539, 15335.7256, 31011.6035, 59799.4961, 30304.0547, 101.776535, 7791.06396, 16737.2637, 7326.88721, 5033.8501, 11136.9746, 12789.5098, 7660.45898, 2526.31592},
-    3};
+    {4, 8, 11.5},
+    __COUNTER__,
+};
 
 PeakTest pt_05 = {
     // this peak lead to unresolvable regression conflicts in a version of the new regression elimination
     {1566.37317, 6721.91357, 10333.0713, 12963.7285, 18588.1035, 23554.9043, 26401.1895, 27222.6621, 27128.6387, 18343.3789, 9999.44727, 823.102112},
-    1};
+    {8},
+    __COUNTER__,
+};
 
 PeakTest pt_06 = {
     // This peak system produced groups that did not correctly group apexes before eliminating regressions.
@@ -76,10 +88,12 @@ PeakTest pt_06 = {
     {629.24292, 1937.10291, 3530.98169, 4416.47412, 3860.57593, 2283.37793, 1097.28284, 1384.93604,
      2879.35815, 4468.28662, 5404.12451, 5281.40186, 2488.4541, 234.448563, 522.505859, 3366.85596,
      10939.0303, 18904.9043, 24883.1719, 19762.5625, 11631.5967, 4173.91699, 858.461609},
-    3};
+    {4, 11.5, 19},
+    __COUNTER__,
+};
 // NOLINTEND
 
-static int test_qpeaks_find(const PeakTest *test)
+static int test_qpeaks_aux(const PeakTest *test, size_t line)
 {
     const size_t len = test->intensity.size();
     std::vector<RegressionGauss> result;
@@ -92,20 +106,27 @@ static int test_qpeaks_find(const PeakTest *test)
                                nullptr,
                                len,
                                &result);
-    size_t expect = test->expect_count;
-    assert(count == expect, "Expected %zu peaks, found %zu", expect, count);
+    size_t expect = test->expect_apex.size();
+    if (count != expect)
+    {
+        printf("Test %zu, line %zu: expected %zu peaks, found %zu\n",
+               test->ID, line, expect, count);
+        return 1;
+    }
     return 0;
 }
+#define test_qpeaks(test) (test_qpeaks_aux(test, __LINE__))
 
 static int test_qpeaks_set(void)
 {
-    test_qpeaks_find(&pt_06);
-    test_qpeaks_find(&pt_05);
-    test_qpeaks_find(&pt_04);
-    test_qpeaks_find(&pt_03);
-    test_qpeaks_find(&pt_02);
-    // test_qpeaks_find(&pt_01); // removed until deconvolution is introduced, second apex is only four distinct points
-    return 0;
+    int fails = 0;
+    fails += test_qpeaks(&pt_01);
+    fails += test_qpeaks(&pt_02);
+    fails += test_qpeaks(&pt_03);
+    fails += test_qpeaks(&pt_04);
+    fails += test_qpeaks(&pt_05);
+    fails += test_qpeaks(&pt_06); // removed until deconvolution is introduced, second apex is only four distinct points
+    return fails;
 }
 
 static float peakVal_gauss(double x, double apex, double height, double sdev)
