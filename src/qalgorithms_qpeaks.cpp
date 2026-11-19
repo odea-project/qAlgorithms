@@ -150,10 +150,6 @@ namespace qAlgorithms
             return -2;
         }
 
-        // @todo the assumtion that all values of x are equidistant is conrolled. If gaps are
-        // found, the missing values are interpolated assuming an exponential rate of change.
-        // this should happen before calling this function (?)
-
         /*
         The fitting routine assumes that all present peaks have a modified gaussian base function.
         This means that no baseline exists. Baseline substraction, if appropriate, has to be performed
@@ -191,7 +187,6 @@ namespace qAlgorithms
 
                 assert(intensities_log[newLen - 1] > 1);
 
-                // it would be nicer to have the final peak forming not in the regression function  @todo
                 regression_on_continuum(intensities,
                                         x_axis,
                                         intensities_log,
@@ -300,6 +295,10 @@ namespace qAlgorithms
         const int32_t trueRangeStart,
         std::vector<RegressionGauss> *result)
     {
+
+        // @todo the assumtion that all values of x are equidistant is conrolled. If gaps are
+        // found, the missing values are interpolated assuming an exponential rate of change.
+        // Such a function would then also produce delta x for the entire data.
 
         // coefficients for single-b0 peaks, spans all regressions over a peak window
         // all entries in coeff are sorted by scale and position in ascending order - this is not checked!
@@ -1341,7 +1340,7 @@ namespace qAlgorithms
         tracker->profilePointsInCentroids = 0;
         for (size_t i = 0; i < centroids->size(); i++)
         {
-            CentroidPeak *cen = centroids->data() + i;
+            const CentroidPeak *cen = centroids->data() + i;
             size_t cenPoints = cen->scale * 2 + 1;
             tracker->profilePointsInCentroids += cenPoints;
             tracker->meanJaccardCentroids += cen->jaccard * (float)cenPoints;

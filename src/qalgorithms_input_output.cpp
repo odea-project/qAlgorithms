@@ -543,7 +543,9 @@ namespace qAlgorithms
         for (size_t i = 1; i < tasknumber; i++)
         {
             if (tasklist[i].filesize == prevsize)
+                a;
             {
+                // @todo replace this by a check for the SHA-1 value. That also removes the file size check for uniqueness
                 const size_t readLength = 25000;
                 std::ifstream fileConflict;
                 char firstChars[readLength];

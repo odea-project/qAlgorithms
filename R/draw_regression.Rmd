@@ -182,6 +182,8 @@ ggplot()+
     geom_point()+
     geom_qreg_batch(batch = batch, x_axis = x_axis)+
     ylim(0, max(y_axis * 1.1))
+
+# ggsave("../../peak_triplett.png")
 ```
 
 ```{r}
@@ -212,5 +214,32 @@ ggplot()+
     aes(x = x_axis, y = y_axis)+
     geom_point()+
     geom_qreg_batch(batch = batch, x_axis = x_axis)+
+    ylim(0, max(y_axis * 1.1))
+# ggsave("../../peak_single_large.png")
+
+ggplot()+
+    aes(x = x_axis, y = y_axis)+
+    geom_point()+
+    geom_qreg_batch(batch = batch, x_axis = x_axis)+
     ylim(0, 2000000)
+# ggsave("../../peak_single_zoom.png")
+```
+
+```{r}
+y_axis = c(28913.7539, 15335.7256, 31011.6035, 59799.4961, 30304.0547, 101.776535, 7791.06396, 16737.2637, 7326.88721, 5033.8501, 11136.9746, 12789.5098, 7660.45898, 2526.31592)
+
+x_axis = 0:(length(y_axis)-1)
+
+testdata = r"((gdb) print validRegressions.at(0)
+$4 = {coeffs = {b0 = 11.08403543198043, b1 = 1.2307103872299088, b2 = 0.23244886738911852, b3 = -2.2520517792020591, scale = 2, x0 = 3}, span = {startIdx = 1, length = 5}, area = 0, position = 0, height = 0,
+  area_unc = 0, position_unc = 0, height_unc = 0, jaccard = 0, fwhm = 0, dqs = 0, delta_x = 0, df = 0, numCompetitors = 0 '\000', apexGroup = -1 '\377', isValid = false})"
+
+batch = parse_gdb_batch(testdata)
+
+ggplot()+
+    aes(x = x_axis, y = y_axis)+
+    geom_point()+
+    geom_qreg_batch(batch = batch, x_axis = x_axis)+
+    ylim(0, max(y_axis * 1.1))
+    
 ```

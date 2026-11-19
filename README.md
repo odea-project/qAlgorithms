@@ -203,7 +203,7 @@ The function fitted to the simulated data has also been changed to provide even 
 For details on the implementation, refer to `src/qalgorithms_qbin.cpp`. The method
 used to determine the critical value for the used test is described [in the documentation](./docs/explanation_critval_qbinning.md).
 
-## Acknoledements
+## Acknowledgements
 While we minimize overall library usage, some functionality is only possible because of
 libraries written by others under permissive open-source licenses. In alphabetical order:
 * [Cephes](https://www.moshier.net/doubldoc.html), used for calculating the F statistic.
