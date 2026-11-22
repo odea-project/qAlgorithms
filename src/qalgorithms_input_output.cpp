@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
+#include <cstring>
 #include <filesystem> // printing absolute path in case read fails
 #include <fstream>    // write peaks to file @todo remove
 #include <iostream>
@@ -463,8 +464,44 @@ namespace qAlgorithms
 
 #pragma region "file reading"
 
+    static int makeTaskItem(const char *inString, TaskItem *task)
+    {
+        const char str_mzml[] = ".mzML";
+
+        // @todo pass in string length?
+        namespace fs = std::filesystem;
+        fs::path *p = &task->inputPath;
+
+        *p = fs::path(inString);
+        if (!fs::exists(*p))
+        {
+            (void)fprintf(stderr, "Warning: the file \"%s\" does not exist.\n", p->c_str());
+            return -1;
+        }
+
+        bool is_mzml = (std::strcmp(str_mzml, p->extension().c_str()) == 0);
+        if (is_mzml)
+        {
+            task->process.fileType = SourceFileType::mzML;
+            task->centroid.fileType = SourceFileType::mzML;
+        }
+        else
+        {
+            (void)fprintf(stderr, "Warning: only %s files are not supported. The file \"%s\" has been skipped.\n",
+                          p->extension().c_str(), inString);
+        }
+    }
+
+    std::vector<TaskItem> controlInput(const UserInputSettings *args)
+    {
+
+        const std::vector<std::string> *inputTasks = &args->inputPaths;
+        const size_t numEntries = inputTasks->size();
+        std::vector<TaskItem> retTasks(numEntries);
+    }
+
     // NOLINTBEGIN(concurrency-mt-unsafe)
-    std::vector<std::filesystem::path> controlInput(const UserInputSettings *args)
+    std::vector<std::filesystem::path> controlInput_old(const UserInputSettings *args)
     {
         const std::vector<std::string> *inputTasks = &args->inputPaths;
         const std::string filetype = ".mzML"; // @todo change this if other filetpes should be supported
@@ -543,7 +580,6 @@ namespace qAlgorithms
         for (size_t i = 1; i < tasknumber; i++)
         {
             if (tasklist[i].filesize == prevsize)
-                a;
             {
                 // @todo replace this by a check for the SHA-1 value. That also removes the file size check for uniqueness
                 const size_t readLength = 25000;

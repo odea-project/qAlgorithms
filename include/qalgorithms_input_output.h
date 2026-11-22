@@ -3,6 +3,8 @@
 
 #include "qalgorithms_datatypes.h"
 #include "qalgorithms_logging.h"
+#include "qalgorithms_read_file.h"
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -84,7 +86,7 @@ namespace qAlgorithms
     {
         // input path
         // output path
-        // filetype enum in
+        SourceFileType fileType = unknown_filetype;
         // filetype enum out
     };
 
@@ -92,20 +94,25 @@ namespace qAlgorithms
     {
         // input path
         // output dir
-        // filetype enum in
+        SourceFileType fileType = unknown_filetype;
     };
 
     struct TaskItem
     {
-        const ProcessTask *const process = nullptr;
-        const CentroidTask *const centroid = nullptr;
-        const QPeaks_log_mapping *const errorRestoreTask = nullptr;
+        std::filesystem::path inputPath;
+        size_t fileSize = 0;
+
+        // only the one specified by TaskType is valid
+        ProcessTask process;
+        CentroidTask centroid;
+        QPeaks_log_mapping errorRestoreTask;
 
         const UserInputSettings *const settings = nullptr;
         TaskType type = tt_error;
     };
 
-    std::vector<std::filesystem::path> controlInput(const UserInputSettings *args);
+    std::vector<std::filesystem::path> controlInput_old(const UserInputSettings *args);
+    std::vector<TaskItem> controlInput(const UserInputSettings *args);
 
 #pragma endregion "file reading"
 

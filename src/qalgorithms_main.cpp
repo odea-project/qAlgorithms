@@ -26,7 +26,7 @@ int main(int argc, const char *argv[]) // NOLINTBEGIN(concurrency-mt-unsafe)
     }
 
     // the final task list contains only unique files, sorted by filesize
-    const std::vector<std::filesystem::path> tasklist = controlInput(&userArgs);
+    const std::vector<std::filesystem::path> tasklist = controlInput_old(&userArgs);
 
     clock_t absoluteStart = clock();
 

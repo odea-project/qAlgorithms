@@ -11,7 +11,7 @@
 
 namespace qAlgorithms
 {
-    enum SourceFileType // NOLINT (performance-enum-size)
+    enum SourceFileType : uint8_t
     {
         unknown_filetype,
         mzML,
