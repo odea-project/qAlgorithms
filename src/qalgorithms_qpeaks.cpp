@@ -196,7 +196,7 @@ namespace qAlgorithms
                                         result);
             }
             rangeStart = pointIdx + 1;
-            pointIdx = rangeStart + 1; // prevent infinite loops when a series of negative values is entered
+            pointIdx = rangeStart; // will be incremented when the loop continues
         }
 
         return (int32_t)result->size();

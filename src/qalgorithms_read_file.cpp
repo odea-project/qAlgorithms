@@ -273,7 +273,7 @@ namespace qAlgorithms
         {
             size_t specNum = indices->at(idx);
             float RT = spectrum_rt(file, specNum);
-            RT_data[specNum] = RT;
+            RT_data[idx] = RT;
         }
     }
 
@@ -292,7 +292,7 @@ namespace qAlgorithms
         {
             size_t specNum = indices->at(idx);
             float tic_val = spectrum_tic(file, specNum);
-            tic_data[specNum] = tic_val;
+            tic_data[idx] = tic_val;
         }
     }
 

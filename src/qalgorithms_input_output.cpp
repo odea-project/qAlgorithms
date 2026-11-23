@@ -464,9 +464,10 @@ namespace qAlgorithms
 
 #pragma region "file reading"
 
+#ifdef todo_rework_tasklist
     static int makeTaskItem(const char *inString, TaskItem *task)
     {
-        const char str_mzml[] = ".mzML";
+        const path_char str_mzml[] = ".mzML";
 
         // @todo pass in string length?
         namespace fs = std::filesystem;
@@ -479,7 +480,7 @@ namespace qAlgorithms
             return -1;
         }
 
-        bool is_mzml = (std::strcmp(str_mzml, p->extension().c_str()) == 0);
+        bool is_mzml = (std::strcmp(str_mzml, p->extension().c_str()) == 0); // note: this will need to use wchars on windows
         if (is_mzml)
         {
             task->process.fileType = SourceFileType::mzML;
@@ -499,7 +500,7 @@ namespace qAlgorithms
         const size_t numEntries = inputTasks->size();
         std::vector<TaskItem> retTasks(numEntries);
     }
-
+#endif
     // NOLINTBEGIN(concurrency-mt-unsafe)
     std::vector<std::filesystem::path> controlInput_old(const UserInputSettings *args)
     {
